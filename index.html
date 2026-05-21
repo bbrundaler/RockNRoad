@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Des Pyrénées vers l'Alsace · Connexion</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  background:linear-gradient(160deg,#0a1a0c 0%,#1a3a10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  position:relative;overflow:hidden;
+}
+body::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 70%,rgba(200,168,75,.12),transparent 55%),
+             radial-gradient(ellipse at 70% 30%,rgba(44,110,138,.1),transparent 55%);
+}
+/* Particules décoratives */
+.dots{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.dot{position:absolute;border-radius:50%;background:rgba(200,168,75,.15);animation:float linear infinite;}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{transform:translateY(-100px) rotate(720deg);opacity:0;}}
+
+.card{
+  position:relative;z-index:10;
+  background:rgba(245,239,224,.97);
+  border-radius:20px;
+  padding:48px 44px;
+  width:100%;max-width:420px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+  border:1px solid rgba(200,168,75,.3);
+}
+.logo{text-align:center;margin-bottom:32px;}
+.logo-icon{font-size:48px;display:block;margin-bottom:12px;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.logo-badge{
+  display:inline-block;background:rgba(200,168,75,.15);
+  border:1px solid rgba(200,168,75,.4);
+  color:#8B6914;font-size:10px;letter-spacing:4px;
+  text-transform:uppercase;padding:5px 18px;border-radius:30px;margin-bottom:14px;
+}
+.logo h1{
+  font-family:'Playfair Display',serif;
+  font-size:28px;color:#1A1208;line-height:1.2;margin-bottom:4px;
+}
+.logo h1 em{color:#C8A84B;font-style:italic;}
+.logo p{font-size:12px;color:#888;letter-spacing:1.5px;}
+
+.divider{
+  width:50px;height:2px;background:linear-gradient(90deg,transparent,#C8A84B,transparent);
+  margin:20px auto 28px;
+}
+
+.form-group{margin-bottom:18px;}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:7px;}
+input{
+  width:100%;padding:13px 16px;
+  border:2px solid #E8DECE;border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:14px;color:#1A1208;
+  background:white;transition:border-color .25s,box-shadow .25s;outline:none;
+}
+input:focus{border-color:#C8A84B;box-shadow:0 0 0 3px rgba(200,168,75,.15);}
+input::placeholder{color:#bbb;}
+
+.btn{
+  width:100%;padding:14px;margin-top:8px;
+  background:linear-gradient(135deg,#1A1208,#3a2a18);
+  color:#C8A84B;font-family:'Inter',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  border:none;border-radius:9px;cursor:pointer;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,#C8A84B,#8B6914);
+  opacity:0;transition:opacity .3s;
+}
+.btn:hover::before{opacity:1;}
+.btn:hover{color:#1A1208;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.btn span{position:relative;z-index:1;}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+.error{
+  background:#fff0ee;border:1px solid #ffccc7;
+  border-radius:8px;padding:11px 14px;
+  font-size:12.5px;color:#cc3300;margin-top:14px;
+  display:none;align-items:center;gap:8px;
+}
+.error.show{display:flex;}
+
+.loading{
+  display:none;align-items:center;justify-content:center;
+  gap:10px;margin-top:14px;font-size:12.5px;color:#888;
+}
+.loading.show{display:flex;}
+.spinner{
+  width:18px;height:18px;border:2px solid #E8DECE;
+  border-top-color:#C8A84B;border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.footer-note{
+  text-align:center;margin-top:24px;
+  font-size:11px;color:#aaa;line-height:1.6;
+}
+.footer-note span{color:#C8A84B;}
+</style>
+</head>
+<body>
+
+<div class="dots" id="dots"></div>
+
+<div class="card">
+  <div class="logo">
+    <span class="logo-icon">🐾</span>
+    <div class="logo-badge">Carnet de Voyage · Famille</div>
+    <h1>Des Pyrénées<br>vers <em>l'Alsace</em></h1>
+    <p>Été 2025 · Accès privé</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="form-group">
+    <label>Adresse email</label>
+    <input type="email" id="email" placeholder="votre@email.com" autocomplete="email"/>
+  </div>
+  <div class="form-group">
+    <label>Mot de passe</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+  </div>
+
+  <button class="btn" id="loginBtn" onclick="login()">
+    <span>Accéder au carnet →</span>
+  </button>
+
+  <div class="error" id="error">
+    <span>⚠️</span>
+    <span id="errorMsg">Email ou mot de passe incorrect.</span>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>Connexion en cours...</span>
+  </div>
+
+  <div class="footer-note">
+    Accès réservé · <span>Famille Alsacienne</span><br>
+    🏔️ Pyrénées · 🌊 Atlantique · 🍷 Bourgogne
+  </div>
+</div>
+
+<script>
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://cazqllstxhuecoqpktwm.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Vérifier si déjà connecté
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.href = 'carnet.html';
+})();
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+async function login() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('loginBtn');
+  const errorEl  = document.getElementById('error');
+  const loadEl   = document.getElementById('loading');
+
+  // Reset
+  errorEl.classList.remove('show');
+
+  if (!email || !password) {
+    document.getElementById('errorMsg').textContent = 'Veuillez remplir tous les champs.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  // Loading
+  btn.disabled = true;
+  loadEl.classList.add('show');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  loadEl.classList.remove('show');
+  btn.disabled = false;
+
+  if (error) {
+    document.getElementById('errorMsg').textContent = 'Email ou mot de passe incorrect.';
+    errorEl.classList.add('show');
+    // Shake animation
+    const card = document.querySelector('.card');
+    card.style.animation = 'shake .4s ease';
+    setTimeout(() => card.style.animation = '', 400);
+    return;
+  }
+
+  // Succès → redirection
+  window.location.href = 'carnet.html';
+}
+
+// Enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+// ── Particules décoratives ────────────────────────────────────────────────────
+const container = document.getElementById('dots');
+for (let i = 0; i < 12; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  const size = Math.random() * 8 + 4;
+  dot.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${Math.random() * 100}%;
+    animation-duration:${Math.random() * 15 + 10}s;
+    animation-delay:${Math.random() * 10}s;
+  `;
+  container.appendChild(dot);
+}
+</script>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+</style>
+</body>
+</html>
