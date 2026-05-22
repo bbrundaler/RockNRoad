@@ -345,7 +345,7 @@ footer span{color:var(--gold);}
 nav#main-nav { display: none !important; }
 
 /* Body avec sidebar */
-body { display: flex; min-height: 100vh; background: #0f0f0f; }
+body { display: flex; min-height: 100vh; background: #0f0f0f; overflow-x: hidden; }
 
 /* ══ SIDEBAR ══ */
 #sidebar {
@@ -478,7 +478,7 @@ body { display: flex; min-height: 100vh; background: #0f0f0f; }
 /* ══ MAIN CONTENT ══ */
 #app-main {
   margin-left: var(--sidebar-w);
-  width: calc(100% - var(--sidebar-w));
+  width: calc(100vw - var(--sidebar-w));
   min-height: 100vh;
   background: var(--creme);
   display: flex;
@@ -496,6 +496,7 @@ body { display: flex; min-height: 100vh; background: #0f0f0f; }
   justify-content: space-between;
   position: sticky; top: 0; z-index: 100;
   box-shadow: 0 1px 12px rgba(0,0,0,.05);
+  width: 100%;
 }
 .top-bar-title {
   font-family: 'Playfair Display', serif;
@@ -529,6 +530,7 @@ body { display: flex; min-height: 100vh; background: #0f0f0f; }
 .hero {
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
   background: linear-gradient(160deg,#0a1a0c 0%,#1a3a10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
