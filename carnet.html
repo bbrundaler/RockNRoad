@@ -2073,3 +2073,98 @@ function updateTopVoyageBtn() {
 setInterval(updateTopVoyageBtn, 800);
 updateTopVoyageBtn();
 </script>
+
+<script>
+// ══ ROCKNROAD — Voyage JS ═════════════════════════════════════════════════════
+let rnrVoyage = JSON.parse(localStorage.getItem('rr_voyage_full') || '[]');
+
+function toggleVoyageCard(id, nom, lat, lng, region, type) {
+  var exists = rnrVoyage.find(function(v){ return v.id === id; });
+  if (exists) {
+    rnrVoyage = rnrVoyage.filter(function(v){ return v.id !== id; });
+    var btn = document.getElementById('vcard-'+id);
+    if (btn) { btn.classList.remove('in-voyage'); btn.textContent = '🧭 Mon Voyage'; }
+    showVoyageToast('"'+nom+'" retiré');
+  } else {
+    rnrVoyage.push({ id:id, nom:nom, lat:lat, lng:lng, region:region||'', type:type||'Site' });
+    var btn = document.getElementById('vcard-'+id);
+    if (btn) { btn.classList.add('in-voyage'); btn.textContent = '✅ Dans Mon Voyage'; }
+    showVoyageToast('✅ "'+nom+'" ajouté !');
+  }
+  localStorage.setItem('rr_voyage_full', JSON.stringify(rnrVoyage));
+  localStorage.setItem('rr_voyage', JSON.stringify(rnrVoyage.map(function(v){ return v.id; })));
+  updateVoyageFloater();
+}
+
+function updateVoyageFloater() {
+  var floater = document.getElementById('voyage-floater');
+  if (!floater) {
+    floater = document.createElement('div');
+    floater.id = 'voyage-floater';
+    floater.style.cssText = [
+      'position:fixed','bottom:24px','left:50%','transform:translateX(-50%)',
+      'z-index:9999','background:#1A1208','color:#C8A84B',
+      'border:2px solid #C8A84B','border-radius:30px',
+      'padding:13px 28px','font-size:13px','font-weight:700',
+      'cursor:pointer','box-shadow:0 4px 24px rgba(0,0,0,.4)',
+      'white-space:nowrap','display:none','font-family:Inter,sans-serif',
+      'transition:all .3s'
+    ].join(';');
+    floater.onclick = function(){ window.location.href = 'voyage.html'; };
+    document.body.appendChild(floater);
+  }
+  if (rnrVoyage.length > 0) {
+    floater.style.display = 'block';
+    floater.innerHTML = '🧭 Mon Voyage &nbsp;·&nbsp; <strong style="color:white;">' + 
+      rnrVoyage.length + '</strong> lieu' + (rnrVoyage.length > 1 ? 'x' : '') + 
+      ' &nbsp;→&nbsp; Voir l'itinéraire';
+    // Aussi mettre à jour le bouton top bar
+    var topBtn = document.getElementById('top-voyage-btn');
+    var topCnt = document.getElementById('top-voyage-count');
+    if (topBtn && topCnt) {
+      topBtn.classList.add('visible');
+      topCnt.textContent = rnrVoyage.length;
+    }
+  } else {
+    floater.style.display = 'none';
+    var topBtn = document.getElementById('top-voyage-btn');
+    if (topBtn) topBtn.classList.remove('visible');
+  }
+}
+
+function showVoyageToast(msg) {
+  var t = document.getElementById('voyage-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'voyage-toast';
+    t.style.cssText = [
+      'position:fixed','top:72px','right:20px','z-index:9999',
+      'padding:11px 18px','background:#2C5016','color:white',
+      'border-radius:8px','font-size:13px','font-weight:600',
+      'transform:translateY(-20px)','opacity:0',
+      'transition:all .3s','pointer-events:none',
+      'font-family:Inter,sans-serif'
+    ].join(';');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.transform = 'translateY(0)';
+  t.style.opacity = '1';
+  setTimeout(function(){
+    t.style.transform = 'translateY(-20px)';
+    t.style.opacity = '0';
+  }, 2500);
+}
+
+// Restaurer l'état des boutons au chargement
+function restoreVoyageBtns() {
+  rnrVoyage.forEach(function(v) {
+    var btn = document.getElementById('vcard-'+v.id);
+    if (btn) { btn.classList.add('in-voyage'); btn.textContent = '✅ Dans Mon Voyage'; }
+  });
+  updateVoyageFloater();
+}
+
+// Init
+restoreVoyageBtns();
+</script>
