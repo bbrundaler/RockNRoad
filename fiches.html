@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RockNRoad · Mes Fiches</title>
+<title>RockNRoad Aventures · Mes Fiches</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -139,15 +139,20 @@ body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);}
 </div>
 
 <div id="main">
-  <header class="header">
-    <a href="carnet.html" class="header-logo">🐾 RockNRoad</a>
-    <nav class="header-nav">
-      <a href="carnet.html" class="nav-link">🗺 Carnet</a>
-      <a href="fiches.html" class="nav-link active">📍 Mes Fiches</a>
-      <a href="voyage.html" class="nav-link">🧭 Mon Voyage</a>
-      <a href="admin.html" class="nav-link">➕ Créer</a>
+  <header style="background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,168,75,.15);flex-shrink:0;">
+    <a href="carnet.html" style="font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;">
+      🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span>
+      <span style="font-size:10px;color:rgba(200,168,75,.5);letter-spacing:4px;text-transform:uppercase;font-family:Inter,sans-serif;">Aventures</span>
+    </a>
+    <nav style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="carnet.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🗺 Carnet</a>
+      <a href="fiches.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;" style="color:#C8A84B;border-color:rgba(200,168,75,.4);">🗂️ Mes Fiches</a>
+      <a href="voyage.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🧭 Mon Voyage</a>
+      <a href="admin.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">➕ Créer</a>
+      
+      <a href="https://www.google.com/maps/d/viewer?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🗺️ Maps ↗</a>
     </nav>
-    <button class="logout-btn" onclick="logout()">⏏ Déco</button>
+    <button onclick="logout()" style="background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;">⏏ Déco</button>
   </header>
 
   <div class="container">
