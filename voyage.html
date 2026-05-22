@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Mon Voyage</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;}
+body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);}
+#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
+#auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;
+  border-radius:50%;animation:spin 1s linear infinite;margin-top:18px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#main{display:none;}
+
+.header{background:var(--dark);padding:16px 24px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:2px solid var(--gold);}
+.header-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:18px;text-decoration:none;}
+.header-nav{display:flex;gap:8px;}
+.nav-link{color:rgba(245,239,224,.6);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  text-decoration:none;padding:7px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);transition:all .2s;}
+.nav-link:hover,.nav-link.active{color:var(--gold);border-color:var(--gold);}
+.logout-btn{background:none;border:1px solid rgba(200,168,75,.3);color:var(--gold);
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 12px;border-radius:6px;cursor:pointer;}
+
+.layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 58px);}
+
+/* LISTE GAUCHE */
+.sidebar{background:white;border-right:1px solid #e8dece;overflow-y:auto;display:flex;flex-direction:column;}
+.sidebar-header{padding:20px;border-bottom:1px solid #f0ece4;flex-shrink:0;}
+.sidebar-title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px;}
+.sidebar-title em{color:var(--gold);font-style:italic;}
+.sidebar-sub{font-size:12px;color:#888;}
+.sidebar-actions{display:flex;gap:8px;margin-top:12px;}
+.clear-btn{padding:8px 14px;background:#fff0ee;border:1px solid #ffccc7;color:#cc4400;
+  font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;transition:all .2s;}
+.clear-btn:hover{background:#ffe0dc;}
+.add-more-btn{flex:1;padding:8px 14px;background:var(--gold);color:var(--dark);
+  font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;text-decoration:none;
+  text-align:center;transition:all .2s;}
+.add-more-btn:hover{background:#dbb948;}
+
+.stops-list{flex:1;padding:12px;}
+.stop-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;
+  background:#fafaf8;border:1px solid #f0ece4;margin-bottom:8px;cursor:grab;
+  transition:all .2s;position:relative;}
+.stop-item:hover{background:#fffdf0;border-color:var(--gold);}
+.stop-item.dragging{opacity:.5;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.stop-num{width:28px;height:28px;border-radius:50%;background:var(--dark);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.stop-info{flex:1;min-width:0;}
+.stop-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-region{font-size:10px;color:#888;}
+.stop-dist{font-size:10px;color:var(--gold);font-weight:600;margin-top:1px;}
+.stop-remove{width:24px;height:24px;border-radius:50%;background:#f0ece4;border:none;
+  color:#888;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;flex-shrink:0;}
+.stop-remove:hover{background:#ffe0dc;color:#cc4400;}
+.drag-handle{color:#ccc;font-size:14px;cursor:grab;flex-shrink:0;}
+
+/* TOTAL DISTANCE */
+.total-bar{padding:14px 20px;background:var(--dark);flex-shrink:0;}
+.total-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.total-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);}
+.total-label{font-size:11px;color:rgba(245,239,224,.55);margin-top:1px;}
+
+/* CARTE */
+.map-area{position:relative;flex:1;}
+#map{width:100%;height:100%;}
+.map-controls{position:absolute;top:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
+.map-ctrl-btn{background:white;border:1px solid #e8dece;border-radius:8px;padding:8px 14px;
+  font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1);
+  transition:all .2s;color:var(--dark);}
+.map-ctrl-btn:hover{background:var(--gold);color:var(--dark);}
+
+/* EMPTY STATE */
+.empty-voyage{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;text-align:center;padding:40px;color:#888;}
+.empty-voyage .icon{font-size:56px;margin-bottom:16px;}
+.empty-voyage h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--dark);margin-bottom:8px;}
+.empty-voyage p{font-size:14px;line-height:1.6;max-width:300px;margin-bottom:20px;}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
+  .sidebar{max-height:45vh;}
+  .header-nav{display:none;}
+}
+</style>
+<!-- Leaflet pour la carte -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<div id="auth-check">
+  <div style="font-size:48px;">🐾</div>
+  <h2>RockNRoad</h2>
+  <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Chargement...</p>
+  <div class="spinner"></div>
+</div>
+
+<div id="main" style="display:none;">
+  <header class="header">
+    <a href="carnet.html" class="header-logo">🐾 RockNRoad</a>
+    <nav class="header-nav">
+      <a href="carnet.html" class="nav-link">🗺 Carnet</a>
+      <a href="fiches.html" class="nav-link">📍 Mes Fiches</a>
+      <a href="voyage.html" class="nav-link active">🧭 Mon Voyage</a>
+      <a href="admin.html" class="nav-link">➕ Créer</a>
+    </nav>
+    <button class="logout-btn" onclick="logout()">⏏ Déco</button>
+  </header>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">🧭 Mon <em>Voyage</em></div>
+        <div class="sidebar-sub">Glissez pour réordonner · Cliquez ✕ pour retirer</div>
+        <div class="sidebar-actions">
+          <button class="clear-btn" onclick="clearAll()">🗑 Tout effacer</button>
+          <a href="fiches.html" class="add-more-btn">➕ Ajouter des lieux</a>
+        </div>
+      </div>
+      <div class="stops-list" id="stopsList"></div>
+      <div class="total-bar" id="totalBar">
+        <div class="total-row">
+          <div>
+            <div class="total-label">Distance totale estimée</div>
+            <div class="total-val" id="totalDist">— km</div>
+          </div>
+          <div>
+            <div class="total-label">Nombre d'étapes</div>
+            <div class="total-val" id="totalStops">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARTE -->
+    <div class="map-area">
+      <div id="map"></div>
+      <div class="map-controls">
+        <button class="map-ctrl-btn" onclick="fitAll()">🎯 Vue globale</button>
+        <button class="map-ctrl-btn" onclick="printMap()">🖨️ Imprimer</button>
+      </div>
+      <div class="empty-voyage" id="emptyVoyage" style="position:absolute;inset:0;background:rgba(245,239,224,.95);display:none;">
+        <div class="icon">🧭</div>
+        <h3>Votre voyage est vide</h3>
+        <p>Rendez-vous sur "Mes Fiches" et cliquez sur "Ajouter au Voyage" pour chaque lieu que vous souhaitez visiter.</p>
+        <a href="fiches.html" style="background:var(--gold);color:var(--dark);font-weight:700;
+          padding:12px 24px;border-radius:8px;text-decoration:none;font-size:13px;">
+          📍 Voir mes fiches →
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL = 'https://cazqllstxhuecoqpktwm.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+const { createClient } = supabase;
+const sb = createClient(SURL, SKEY);
+
+let map, routeLayer, markers = [];
+let voyageIds = JSON.parse(localStorage.getItem('rr_voyage') || '[]');
+let voyageLieux = [];
+
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'index.html'; return; }
+  document.getElementById('auth-check').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  initMap();
+  loadVoyage();
+}
+async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+
+// ── Init carte Leaflet ────────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map').setView([46.5, 2.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 18
+  }).addTo(map);
+  routeLayer = L.layerGroup().addTo(map);
+}
+
+// ── Charger les lieux sélectionnés ────────────────────────────────────────────
+async function loadVoyage() {
+  if (!voyageIds.length) {
+    showEmpty(true); renderSidebar(); return;
+  }
+  const { data } = await sb.from('lieux')
+    .select('*')
+    .in('id', voyageIds);
+
+  // Respecter l'ordre de sélection
+  voyageLieux = voyageIds
+    .map(id => data?.find(l => l.id === id))
+    .filter(Boolean);
+
+  showEmpty(false);
+  renderSidebar();
+  renderMap();
+}
+
+function showEmpty(show) {
+  document.getElementById('emptyVoyage').style.display = show ? 'flex' : 'none';
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('stopsList');
+  if (!voyageLieux.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font-size:13px;">Aucun lieu sélectionné</div>';
+    document.getElementById('totalDist').textContent = '— km';
+    document.getElementById('totalStops').textContent = '0';
+    return;
+  }
+
+  list.innerHTML = voyageLieux.map((l, i) => `
+    <div class="stop-item" draggable="true" data-id="${l.id}"
+         ondragstart="dragStart(event,'${l.id}')"
+         ondragover="dragOver(event)"
+         ondrop="dragDrop(event,'${l.id}')">
+      <span class="drag-handle">⠿</span>
+      <div class="stop-num">${i+1}</div>
+      <div class="stop-info">
+        <div class="stop-name">${l.nom}</div>
+        <div class="stop-region">${l.sous_region || l.region} · ${l.type}</div>
+        ${i > 0 && voyageLieux[i-1].lat && l.lat ?
+          `<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat, voyageLieux[i-1].lng, l.lat, l.lng)} km depuis étape préc.</div>` : ''}
+      </div>
+      <button class="stop-remove" onclick="removeStop('${l.id}')">✕</button>
+    </div>
+  `).join('');
+
+  // Total distance
+  let total = 0;
+  for (let i = 1; i < voyageLieux.length; i++) {
+    const a = voyageLieux[i-1], b = voyageLieux[i];
+    if (a.lat && b.lat) total += calcDist(a.lat, a.lng, b.lat, b.lng);
+  }
+  document.getElementById('totalDist').textContent = total > 0 ? Math.round(total) + ' km' : '— km';
+  document.getElementById('totalStops').textContent = voyageLieux.length;
+}
+
+// ── Carte Leaflet ─────────────────────────────────────────────────────────────
+function renderMap() {
+  routeLayer.clearLayers();
+  markers = [];
+
+  const validLieux = voyageLieux.filter(l => l.lat && l.lng);
+  if (!validLieux.length) return;
+
+  validLieux.forEach((l, i) => {
+    const icon = L.divIcon({
+      html: `<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;
+               display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
+               border:3px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.3);">${i+1}</div>`,
+      className: '',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+
+    const marker = L.marker([l.lat, l.lng], { icon })
+      .addTo(routeLayer)
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif;min-width:180px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${l.nom}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:6px;">${l.region} · ${l.type}</div>
+          ${l.description ? `<div style="font-size:12px;color:#555;margin-bottom:6px;">${l.description.substring(0,100)}...</div>` : ''}
+          ${l.dog_friendly ? '<span style="background:#e8f4e8;color:#2C5016;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">🐕 Dog-Friendly</span>' : ''}
+        </div>
+      `);
+    markers.push(marker);
+  });
+
+  // Tracer l'itinéraire
+  if (validLieux.length > 1) {
+    const coords = validLieux.map(l => [l.lat, l.lng]);
+    // Ligne principale
+    L.polyline(coords, {
+      color: '#C8A84B',
+      weight: 4,
+      opacity: 0.9,
+      dashArray: '12, 6'
+    }).addTo(routeLayer);
+    // Halo
+    L.polyline(coords, {
+      color: 'rgba(200,168,75,0.2)',
+      weight: 10,
+      opacity: 1
+    }).addTo(routeLayer);
+
+    // Flèches de direction
+    coords.forEach((coord, i) => {
+      if (i < coords.length - 1) {
+        const mid = [(coord[0]+coords[i+1][0])/2, (coord[1]+coords[i+1][1])/2];
+        const angle = Math.atan2(coords[i+1][1]-coord[1], coords[i+1][0]-coord[0]) * 180/Math.PI;
+        const arrowIcon = L.divIcon({
+          html: `<div style="transform:rotate(${angle}deg);color:#C8A84B;font-size:16px;line-height:1;">▶</div>`,
+          className: '', iconSize: [20,20], iconAnchor: [10,10]
+        });
+        L.marker(mid, { icon: arrowIcon }).addTo(routeLayer);
+      }
+    });
+  }
+
+  fitAll();
+}
+
+function fitAll() {
+  const validLieux = voyageLieux.filter(l => l.lat && l.lng);
+  if (!validLieux.length) return;
+  if (validLieux.length === 1) {
+    map.setView([validLieux[0].lat, validLieux[0].lng], 12);
+  } else {
+    map.fitBounds(validLieux.map(l => [l.lat, l.lng]), { padding: [40, 40] });
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function removeStop(id) {
+  voyageIds = voyageIds.filter(v => v !== id);
+  voyageLieux = voyageLieux.filter(l => l.id !== id);
+  localStorage.setItem('rr_voyage', JSON.stringify(voyageIds));
+  renderSidebar();
+  renderMap();
+  if (!voyageLieux.length) showEmpty(true);
+}
+
+function clearAll() {
+  if (!confirm('Effacer tout le voyage ?')) return;
+  voyageIds = []; voyageLieux = [];
+  localStorage.setItem('rr_voyage', JSON.stringify([]));
+  renderSidebar(); routeLayer.clearLayers(); showEmpty(true);
+}
+
+// ── Drag & Drop pour réordonner ───────────────────────────────────────────────
+let draggedId = null;
+function dragStart(e, id) { draggedId = id; e.target.classList.add('dragging'); }
+function dragOver(e) { e.preventDefault(); }
+function dragDrop(e, targetId) {
+  e.preventDefault();
+  document.querySelectorAll('.stop-item').forEach(el => el.classList.remove('dragging'));
+  if (draggedId === targetId) return;
+  const fromIdx = voyageLieux.findIndex(l => l.id === draggedId);
+  const toIdx   = voyageLieux.findIndex(l => l.id === targetId);
+  const item = voyageLieux.splice(fromIdx, 1)[0];
+  voyageLieux.splice(toIdx, 0, item);
+  voyageIds = voyageLieux.map(l => l.id);
+  localStorage.setItem('rr_voyage', JSON.stringify(voyageIds));
+  renderSidebar();
+  renderMap();
+}
+
+// ── Distance Haversine ────────────────────────────────────────────────────────
+function calcDist(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLng = (lng2-lng1) * Math.PI/180;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function printMap() { window.print(); }
+
+checkAuth();
+</script>
+</body>
+</html>
