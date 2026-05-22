@@ -1256,6 +1256,108 @@ body {
   .inner { padding: 16px 14px 60px !important; }
 }
 </style>
+<style>
+/* ══ SITE CARDS — Boutons inline ══ */
+
+/* Réduire la description */
+.site-desc {
+  font-size: 12.5px !important;
+  color: #5a4a32 !important;
+  line-height: 1.55 !important;
+  margin-bottom: 8px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* Dog tag compact */
+.dog-tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: #edf7ed !important;
+  color: #2C5016 !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  padding: 3px 9px !important;
+  border-radius: 20px !important;
+  margin-bottom: 6px !important;
+  border: 1px solid rgba(44,80,22,.15) !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Conseil compact */
+.conseil-box {
+  background: rgba(200,168,75,.07) !important;
+  border-left: 3px solid rgba(200,168,75,.4) !important;
+  padding: 5px 9px !important;
+  font-size: 11px !important;
+  color: #6B5F4A !important;
+  line-height: 1.45 !important;
+  border-radius: 0 5px 5px 0 !important;
+  margin-bottom: 10px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* Boutons site en ligne horizontale */
+.site-card .maps-btn,
+.site-card .google-btn,
+.site-card .voyage-add-btn {
+  display: inline-flex !important;
+  width: auto !important;
+  padding: 7px 11px !important;
+  font-size: 10.5px !important;
+  border-radius: 6px !important;
+  margin-top: 0 !important;
+}
+
+/* Container boutons site */
+.site-card .maps-btn {
+  background: #1a1208 !important;
+  color: #C8A84B !important;
+  font-weight: 700 !important;
+  border: none !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+.site-card .google-btn {
+  background: #fff8e8 !important;
+  border: 1px solid rgba(200,168,75,.3) !important;
+  color: #8B6914 !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+.site-card .voyage-add-btn {
+  background: rgba(200,168,75,.08) !important;
+  border: 1px solid rgba(200,168,75,.25) !important;
+  color: #8B6914 !important;
+  font-weight: 700 !important;
+  font-family: 'Inter', sans-serif !important;
+  cursor: pointer !important;
+}
+.site-card .voyage-add-btn.in-voyage {
+  background: #2C5016 !important;
+  color: white !important;
+  border-color: #2C5016 !important;
+}
+
+/* Wrapper boutons automatique */
+.site-actions-row {
+  display: flex !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  margin-top: auto !important;
+  padding-top: 10px !important;
+}
+</style>
 </head>
 <body>
 
@@ -1611,9 +1713,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Village de poupée perché avec des ruelles en forte pente au milieu des géants de pierre. Balade magnifique à faire à pied avec le chien au cœur d'un cirque naturel impressionnant.</p>
     <div class="dog-tag">✅ 100% dog-friendly — balade idéale avec le Golden</div>
     <div class="conseil-box">💡 Village peu fréquenté. Route étroite depuis la vallée d'Aspe. Fraîcheur garantie.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Lescun+Pyrénées+village" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Village+de+Lescun+Pyr%C3%A9n%C3%A9es+cirque" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-lescun-pyr" onclick="toggleVoyageCard('lescun-pyr','Village de Lescun & son Cirque',42.931,-0.643,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/cauterets.jpg');background-size:cover;background-position:center">
@@ -1625,9 +1729,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Fort militaire vertigineux accroché à la falaise dans les gorges du gave d'Aspe. Route en lacets spectaculaire, vue plongeante sur la vallée. Site historique classé, chargé d'histoire depuis Napoléon jusqu'à la Seconde Guerre mondiale.</p>
     <div class="dog-tag">✅ Extérieurs et sentiers dog-friendly en laisse</div>
     <div class="conseil-box">💡 Route d'accès étroite et spectaculaire. Accessible à pied depuis le parking en bas. Vue vertigineuse sur les gorges. À faire le matin pour la lumière.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Fort+du+Portalet+Vallée+d+Aspe" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Fort+du+Portalet+Vall%C3%A9e+Aspe+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-portalet-pyr" onclick="toggleVoyageCard('portalet-pyr','Fort du Portalet',42.872,-0.598,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/picmidi.jpg');background-size:cover;background-position:center">
@@ -1639,9 +1745,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Éblouissante avec ses remparts intacts du XVIe siècle. Première cité bastionnée de France. L'histoire à portée de main pour votre fille. Promenade sur les remparts incontournable.</p>
     <div class="dog-tag">✅ Chien accepté partout sur les remparts</div>
     <div class="conseil-box">💡 Marché le samedi matin très animé. Village classé. Baignade dans le Gave juste en bas.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Navarrenx+remparts+Béarn" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Cit%C3%A9+Fortifi%C3%A9e+Navarrenx+B%C3%A9arn" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-navarrenx-pyr" onclick="toggleVoyageCard('navarrenx-pyr','Cité Fortifiée de Navarrenx',43.323,-0.759,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/lourdes.jpg');background-size:cover;background-position:center">
@@ -1653,9 +1761,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Un vrai château fort du XIVe siècle avec donjon, machicoulis et vue panoramique sur les Pyrénées. Histoire vivante parfaite pour votre fille. Chiens acceptés partout même à l'intérieur !</p>
     <div class="dog-tag">✅ Chiens acceptés à l'intérieur du château !</div>
     <div class="conseil-box">💡 Petit château très bien conservé. Visite guidée possible. Vue à 360° depuis le donjon.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Château+Fort+Mauvezin+Bigorre" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Ch%C3%A2teau+Fort+Mauvezin+Bigorre" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-mauvezin-pyr" onclick="toggleVoyageCard('mauvezin-pyr','Château Fort de Mauvezin',43.043,0.119,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/grottes.jpg')">
@@ -1667,9 +1777,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">L'une des plus grandes merveilles naturelles de France. La Grande Cascade culmine à 423 m. Accessible à pied, à cheval ou à âne depuis le village de Gavarnie.</p>
     <div class="dog-tag">✅ Sentier dog-friendly toute l'année</div>
     <div class="conseil-box">💡 Partir avant 8h. Compter 3h aller-retour. Veste indispensable même en été.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Cirque+de+Gavarnie" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Cirque+de+Gavarnie+UNESCO+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-gavarnie-pyr" onclick="toggleVoyageCard('gavarnie-pyr','Cirque de Gavarnie',42.726,-0.01,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/saintsavin.jpg')">
@@ -1681,9 +1793,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Cascades spectaculaires et Lac de Gaube aux eaux turquoise entouré de sommets enneigés. Télécabine disponible pour monter plus haut.</p>
     <div class="dog-tag">✅ Sentiers larges et ombragés</div>
     <div class="conseil-box">💡 Télécabine depuis le parking. Vérifier acceptation chiens en cabine.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Pont+d+Espagne+Cauterets" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Pont+Espagne+Lac+Gaube+Cauterets+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-cauterets-pyr" onclick="toggleVoyageCard('cauterets-pyr','Pont d\'Espagne & Lac de Gaube',42.886,-0.144,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/dunepilat.jpg')">
@@ -1695,9 +1809,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">5 km de galeries sur 5 niveaux. Visite en barque sur lac souterrain puis en petit train. À seulement 30 min du départ !</p>
     <div class="dog-tag">✅ Chiens acceptés (même en bateau et petit train !)</div>
     <div class="conseil-box">💡 Durée 1h15. Température 13°C constante. Billetterie en ligne conseillée.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Grottes+de+Betharram" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Grottes+de+B%C3%A9tharram+visite+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-betharram-pyr" onclick="toggleVoyageCard('betharram-pyr','Grottes de Bétharram',43.069,-0.095,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/capferret.jpg')">
@@ -1709,9 +1825,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Abbaye bénédictine du XIe siècle classée Monument Historique. Cloître roman remarquable, peintures murales médiévales.</p>
     <div class="dog-tag">✅ Village et extérieurs dog-friendly</div>
     <div class="conseil-box">💡 Village calme et peu touristique. Marché le week-end.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Abbaye+Saint-Savin+65" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Abbaye+Saint-Savin+Hautes-Pyr%C3%A9n%C3%A9es+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-saintsavin-pyr" onclick="toggleVoyageCard('saintsavin-pyr','Abbaye de Saint-Savin',43.069,-0.153,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div></div>
   <div class="divl"><div class="divl-t">⛺ Les 8 campings recommandés</div></div>
@@ -1897,9 +2015,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Plus haute dune d'Europe (110 m). Vue imprenable sur la forêt de pins et l'Atlantique. Incontournable. En été, y aller en fin de journée pour un coucher de soleil mémorable.</p>
     <div class="dog-tag">✅ Chiens en laisse autorisés sur toute la dune !</div>
     <div class="conseil-box">💡 Fin de journée recommandée en été (coucher de soleil). Parking payant. Montée 15-20 min.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Dune+du+Pilat" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Dune+du+Pilat+Arcachon+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-pilat-atl" onclick="toggleVoyageCard('pilat-atl','Dune du Pilat',44.594,-1.212,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/laclandes.jpg')">
@@ -1911,9 +2031,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Prenez la navette maritime depuis Arcachon avec les vélos et le chien (accepté à bord). Roulez jusqu'au village en bois de L'Herbe pour déguster des huîtres face au Bassin.</p>
     <div class="dog-tag">✅ Chien accepté sur la navette maritime !</div>
     <div class="conseil-box">💡 Navette Arcachon–Cap Ferret toutes les 30 min. Vélos acceptés à bord. Rouler jusqu'à L'Herbe.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Cap+Ferret+Gironde" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Cap+Ferret+villages+ostr%C3%A9icoles+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-capferret-atl" onclick="toggleVoyageCard('capferret-atl','Cap Ferret & Villages Ostréicoles',44.634,-1.25,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/ostreicole.jpg')">
@@ -1925,9 +2047,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Des centaines de km de voies vertes plates et goudronnées, totalement interdites aux voitures. Le paradis pour vos vélos électriques sous l'odeur des pins maritimes.</p>
     <div class="dog-tag">✅ Paradis pour les chiens — pistes larges</div>
     <div class="conseil-box">💡 App Vélo Landes pour les itinéraires. Voies vertes interdites aux voitures.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Forêt+des+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=For%C3%AAt+des+Landes+piste+cyclable+v%C3%A9lo+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-foretlandes-atl" onclick="toggleVoyageCard('foretlandes-atl','Forêt des Landes à Vélo',43.95,-1.334,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/vieuxboucau.jpg')">
@@ -1939,9 +2063,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Lacs naturels aux eaux claires et chaudes. Baignade, kayak, stand-up paddle. Plages calmes et peu fréquentées.</p>
     <div class="dog-tag">✅ Zones chien sur plusieurs plages</div>
     <div class="conseil-box">💡 Lac de Léon parmi les plus beaux. Éviter le week-end d'août.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Lac+de+Leon+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Lac+de+L%C3%A9on+Landes+baignade+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-laclandes-atl" onclick="toggleVoyageCard('laclandes-atl','Lacs des Landes',43.88,-1.31,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/reims.jpg')">
@@ -1953,9 +2079,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">L'Herbe, Claouey, Grand Piquey : cabanes colorées sur pilotis, huîtres fraîches avec vue sur le Bassin d'Arcachon.</p>
     <div class="dog-tag">✅ Villages très dog-friendly</div>
     <div class="conseil-box">💡 Village de L'Herbe le plus pittoresque. Cabanes ouvertes dès 10h. Prévoir liquide.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=L+Herbe+Cap+Ferret" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=cabanes+ostr%C3%A9icoles+L+Herbe+Cap+Ferret+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-ostreicole-atl" onclick="toggleVoyageCard('ostreicole-atl','Cabanes Ostréicoles du Bassin',44.71,-1.238,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/mercier.jpg')">
@@ -1967,9 +2095,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Lac marin naturel, surf, plage immense et sauvage. Couchers de soleil spectaculaires sur l'Atlantique.</p>
     <div class="dog-tag">✅ Grandes plages dog-friendly</div>
     <div class="conseil-box">💡 Coucher de soleil depuis la plage Nord inoubliable.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Vieux-Boucau-les-Bains" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Vieux-Boucau+plage+c%C3%B4te+sauvage+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-vieuxboucau-atl" onclick="toggleVoyageCard('vieuxboucau-atl','Vieux-Boucau & Côte Sauvage',43.794,-1.398,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/hautvillers.jpg');background-size:cover;background-position:center">
@@ -1981,9 +2111,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Une incroyable ville fortifiée perchée sur son rocher avec des ruelles du Moyen-Âge. Très peu connue des touristes mais absolument magnifique. Un coup de cœur garanti.</p>
     <div class="dog-tag">✅ Très dog-friendly — ruelles et remparts accessibles</div>
     <div class="conseil-box">💡 Peu fréquentée même en été. Marché le dimanche. À 30 min de Bordeaux.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Saint-Macaire+cité+médiévale+Gironde" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Cit%C3%A9+M%C3%A9di%C3%A9vale+Saint-Macaire+Gironde+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-saintmacaire-atl" onclick="toggleVoyageCard('saintmacaire-atl','Cité Médiévale de Saint-Macaire',44.568,-0.226,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/chateau.jpg');background-size:cover;background-position:center">
@@ -1995,9 +2127,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Une des plus belles bastides du Sud-Ouest, restée intacte depuis le XIVe siècle. Place centrale pavée superbe à découvrir. Architecture médiévale remarquablement préservée.</p>
     <div class="dog-tag">✅ Village dog-friendly — place et ruelles accessibles</div>
     <div class="conseil-box">💡 Marché le dimanche matin. Village viticole — dégustation d'Armagnac possible.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Labastide-d+Armagnac+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Labastide+d+Armagnac+bastide+m%C3%A9di%C3%A9vale+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-labastide-atl" onclick="toggleVoyageCard('labastide-atl','Labastide-d\'Armagnac',43.978,-0.237,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div></div>
   <div class="divl"><div class="divl-t">⛺ Les 7 campings recommandés</div></div>
@@ -2162,9 +2296,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Le plus grand chantier médiéval du monde ! On construit un château fort avec les techniques du XIIIe siècle. Un musée vivant à ciel ouvert fascinant, parfait pour votre fille.</p>
     <div class="dog-tag">✅ Chiens très chaleureusement acceptés partout sur le site !</div>
     <div class="conseil-box">💡 Prévoir 3-4h minimum. Ouvert de mi-mars à mi-novembre. Site immense. Toutou-bars sur place !</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Château+de+Guédelon" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Ch%C3%A2teau+de+Gu%C3%A9delon+chantier+m%C3%A9di%C3%A9val+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-guedelon-bou" onclick="toggleVoyageCard('guedelon-bou','Château de Guédelon',47.593,3.195,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/lacardenne.jpg');background-size:cover;background-position:center">
@@ -2176,9 +2312,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Colline éternelle classée UNESCO avec un village médiéval fortifié magnifique qui monte jusqu'à la basilique romane. Les ruelles pavées sont superbes à parcourir avec le chien.</p>
     <div class="dog-tag">✅ Ruelles pavées dog-friendly en laisse</div>
     <div class="conseil-box">💡 Monter tôt le matin pour éviter la foule en été. Vue panoramique depuis la basilique.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Vézelay+basilique+UNESCO" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Village+V%C3%A9zelay+UNESCO+basilique+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-vezelay-bou" onclick="toggleVoyageCard('vezelay-bou','Village Perché de Vézelay',47.466,3.744,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/autun.jpg');background-size:cover;background-position:center">
@@ -2190,9 +2328,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Village fortifié perché sur son éperon rocheux avec un château fort militaire imposant. Vue extraordinaire sur le canal de Bourgogne et la plaine. Parfait pour votre fille.</p>
     <div class="dog-tag">✅ Village et extérieurs immédiats accessibles en laisse</div>
     <div class="conseil-box">💡 Vue imprenable depuis les remparts. Village classé parmi les plus beaux de France.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Châteauneuf-en-Auxois+château" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Ch%C3%A2teau+Ch%C3%A2teauneuf+en+Auxois+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-chateauneuf-bou" onclick="toggleVoyageCard('chateauneuf-bou','Château de Châteauneuf-en-Auxois',47.206,4.643,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/beaune.jpg');background-size:cover;background-position:center">
@@ -2204,9 +2344,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Piste cyclable plate et ombragée le long du canal et de ses écluses historiques. Sous les grands platanes centenaires, entre villages vignerons et péniches colorées.</p>
     <div class="dog-tag">✅ Idéal avec le chien sur la piste cyclable</div>
     <div class="conseil-box">💡 Piste plate — parfaite pour toute la famille. Nombreux villages et écluses à découvrir.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Canal+de+Bourgogne+vélo" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Canal+de+Bourgogne+v%C3%A9lo+cyclable+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-canal-bou" onclick="toggleVoyageCard('canal-bou','Canal de Bourgogne à Vélo',47.32,4.555,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/canalbourgogne.jpg');background-size:cover;background-position:center">
@@ -2218,9 +2360,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">Ancienne capitale romaine de Gaule avec théâtre romain, portes antiques et cathédrale romane magnifique. Un voyage dans le temps incroyable pour les passionnés d'histoire.</p>
     <div class="dog-tag">✅ Ville très dog-friendly — sites extérieurs accessibles</div>
     <div class="conseil-box">💡 Théâtre romain gratuit. Cathédrale magnifique. Ville peu fréquentée. Belle halte culturelle.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Autun+cathédrale+Saône-et-Loire" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Autun+Cath%C3%A9drale+Saint-Lazare+ville+romaine+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-autun-bou" onclick="toggleVoyageCard('autun-bou','Autun & Cathédrale Saint-Lazare',46.951,4.299,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div><div class="site-card">
   <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/chateauneuf.jpg');background-size:cover;background-position:center">
@@ -2232,9 +2376,11 @@ Libres de choisir sur place</div></div>
     <p class="site-desc">La capitale des vins de Bourgogne avec ses fameux Hospices aux toits colorés en tuiles vernissées. Centre médiéval remarquablement préservé. Route des Grands Crus à vélo.</p>
     <div class="dog-tag">✅ Extérieurs et ruelles accessibles en laisse</div>
     <div class="conseil-box">💡 Marché le samedi. Visite des Hospices payante mais magnifique. Dégustation incontournable.</div>
+        <div class="site-actions-row">
     <a href="https://maps.google.com/?q=Beaune+Hospices+Bourgogne" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         <a href="https://www.google.com/search?q=Beaune+Hospices+de+Beaune+Bourgogne+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
         <button class="voyage-add-btn" id="vcard-beaune-bou" onclick="toggleVoyageCard('beaune-bou','Beaune & Hospices de Beaune',47.026,4.84,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
   </div>
 </div></div>
   <div class="divl"><div class="divl-t">⛺ Les 4 campings recommandés</div></div>
