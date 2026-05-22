@@ -20,7 +20,7 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --sb:200px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;
+  --sb:215px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;
   --creme:#F7F3EC;--beige:#EDE6D8;--text:#1a1208;--muted:#6B5F4A;
   --pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;
   --sh:0 2px 12px rgba(0,0,0,.07);--shhov:0 8px 28px rgba(0,0,0,.13);--r:10px;
@@ -32,13 +32,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 #sidebar::-webkit-scrollbar{display:none;}
 .sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;cursor:pointer;}
 .sb-logo-paw{font-size:16px;margin-bottom:7px;display:block;opacity:.6;}
-.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;letter-spacing:-.5px;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:white;line-height:1;letter-spacing:-.5px;}
 .sb-logo-title span{color:var(--gold);}
-.sb-logo-sub{font-size:8px;color:rgba(200,168,75,.45);letter-spacing:5px;text-transform:uppercase;margin-top:3px;display:block;}
+.sb-logo-sub{font-size:9px;color:rgba(200,168,75,.5);letter-spacing:5px;text-transform:uppercase;margin-top:3px;display:block;}
 .sb-group{padding:12px 10px 4px;flex-shrink:0;}
-.sb-group-label{font-size:7.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 8px;margin-bottom:3px;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
 .sb-sep{height:1px;background:rgba(200,168,75,.06);margin:5px 14px;}
-.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;background:none;border:none;color:rgba(245,239,224,.52);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;color:rgba(245,239,224,.6);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
 .sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(245,239,224,.82);}
 .sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
 .sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.75;}
@@ -164,11 +164,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .ov-card-map .ov-btn{background:var(--gold);color:var(--dark);}
 
 /* DISTANCES */
-.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;}
 .dcard{background:white;border-radius:8px;padding:12px 14px;box-shadow:var(--sh);text-align:center;}
-.dfrom{font-size:8px;color:#bbb;text-transform:uppercase;letter-spacing:1px;}
-.dkm{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);}
-.dt{font-size:9.5px;color:var(--muted);}
+.dfrom{font-size:9px;color:#999;font-weight:600;margin-bottom:2px;}
+.dkm{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:1px;}
+.dt{font-size:10px;color:var(--muted);}
 
 /* RESPONSIVE */
 @media(max-width:1200px){.sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:repeat(3,1fr)!important;}}
@@ -275,6 +275,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <span class="sb-label">RockNRoad Maps</span>
       <span style="font-size:9px;color:rgba(200,168,75,.5);">↗</span>
     </a>
+    <a class="sb-btn" href="voyage.html">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span class="sb-label">Mon Voyage</span>
+    </a>
     <button class="sb-btn" id="snav-fiche" onclick="showTab('fiche')">
       <span class="sb-dot sb-dot-grey"></span>
       <span class="sb-label">Fiche récap</span>
@@ -293,10 +297,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
     <a class="sb-btn" href="fiches.html">
       <span class="sb-dot sb-dot-grey"></span>
       <span class="sb-label">Mes Fiches</span>
-    </a>
-    <a class="sb-btn" href="voyage.html">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span class="sb-label">Mon Voyage</span>
     </a>
     <a class="sb-btn" href="admin.html">
       <span class="sb-dot sb-dot-grey"></span>
@@ -883,6 +883,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   </div>
   <div class="camp-footer">
     <a href="tel:+33556832415" class="tel-btn">📞 +33 5 56 83 24 15</a>
+            <a href="https://europe.huttopia.com/site/camping-bassin-arcachon/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-arcachon" onclick="toggleVoyageCard('huttopia-arcachon','Huttopia Arcachon',44.573,-1.187,'Atlantique','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -897,7 +900,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
     <span class="camp-tag">🚐 Teardrop</span>
     <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33556608851" class="tel-btn">📞 +33 5 56 60 88 51</a>
+  <div class="camp-footer">
+    <a href="tel:+33556608851" class="tel-btn">📞 +33 5 56 60 88 51</a>
             <a href="https://www.trucvert.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-truc-vert" onclick="toggleVoyageCard('truc-vert','Camping Le Truc Vert',44.68,-1.22,'Atlantique','Camping')">🧭</button>
   </div>
@@ -1149,9 +1153,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
   <!-- Distances -->
   <div class="dgrid" style="margin-top:20px;">
-    <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">Départ → Pyrénées</div><div class="dkm">≈ 40 km</div><div class="dt">45 min · Via Laruns</div></div>
-    <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">Pyrénées → Landes</div><div class="dkm">≈ 180 km</div><div class="dt">2h · Via Pau</div></div>
-    <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">Landes → Bourgogne</div><div class="dkm">≈ 500 km</div><div class="dt">5h · Via Clermont-Fd</div></div>
+    <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">🏠 Domicile → Pyrénées</div><div class="dkm">≈ 40 km</div><div class="dt">45 min depuis Arudy</div></div>
+    <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">🏔️ Pyrénées → Landes</div><div class="dkm">≈ 180 km</div><div class="dt">2h · Via Pau</div></div>
+    <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">🌊 Landes → Bourgogne</div><div class="dkm">≈ 500 km</div><div class="dt">5h · Via Clermont-Fd</div></div>
 
   </div>
 
@@ -1568,7 +1572,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 </div>
 
-  <footer style="background:#0d0d0d;color:rgba(245,239,224,.35);text-align:center;padding:32px 20px;font-size:11px;letter-spacing:2px;">
+  <footer style="background:#0d0d0d;color:rgba(245,239,224,.35);text-align:center;padding:18px 20px;font-size:11px;letter-spacing:2px;">
     <div style="font-size:26px;margin-bottom:10px;">🐾</div>
     <div style="font-family:'Playfair Display',serif;font-size:18px;color:rgba(200,168,75,.7);margin-bottom:6px;">RockNRoad · Aventures</div>
     <div style="margin-top:4px;">⛺ 19 Campings &nbsp;·&nbsp; 🗺 22 Sites</div>
