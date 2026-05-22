@@ -960,6 +960,302 @@ body {
 }
 </style>
 
+
+<style>
+/* ══ CORRECTIONS TYPOGRAPHIE & CONTRASTE ══════════════════════════════════════ */
+
+/* Sidebar — meilleur contraste */
+.sb-btn { color: rgba(245,239,224,.65) !important; }
+.sb-btn:hover { color: rgba(245,239,224,.95) !important; }
+.sb-btn.active { color: #C8A84B !important; }
+.sb-group-label { color: rgba(255,255,255,.35) !important; }
+
+/* Titres de section divl */
+.divl {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px; margin-top: 8px;
+}
+.divl::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--beige,#EDE6D8), transparent);
+}
+.divl-t {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+  color: #1a1208; white-space: nowrap;
+}
+
+/* Titres campings */
+.camps-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+  color: #1a1208; margin-top: 32px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.camps-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, #EDE6D8, transparent);
+}
+
+/* Notice box */
+.notice-box, .reserve-box {
+  background: rgba(200,168,75,.07);
+  border: 1px solid rgba(200,168,75,.2);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: 13px; color: #5a4a32; line-height: 1.65;
+  margin-bottom: 20px;
+}
+.notice-box strong, .reserve-box strong { color: #1a1208; }
+
+/* Cards grid 3 colonnes */
+.sites-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px,1fr)) !important;
+  gap: 20px !important;
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Camp grid 3 colonnes */
+.camps-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px,1fr)) !important;
+  gap: 16px !important;
+  margin-top: 16px !important;
+}
+
+/* Camp card — mise en page propre */
+.camp-card {
+  background: white !important;
+  border-radius: 10px !important;
+  padding: 18px !important;
+  box-shadow: 0 2px 14px rgba(0,0,0,.07) !important;
+  border-top: 3px solid #E8DECE !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+.camp-card.coup-coeur { border-top-color: #C8A84B !important; }
+.camp-name {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #1a1208 !important;
+  line-height: 1.3 !important;
+  margin-bottom: 0 !important;
+}
+.camp-lieu {
+  font-size: 11px !important;
+  color: #999 !important;
+  margin: 4px 0 8px !important;
+}
+.camp-stars {
+  background: #2C5016 !important;
+  color: white !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+}
+.camp-desc {
+  font-size: 12.5px !important;
+  color: #5a4a32 !important;
+  line-height: 1.55 !important;
+  margin-bottom: 10px !important;
+}
+.camp-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  margin-bottom: 12px !important;
+}
+.camp-tag {
+  background: #f5f0e8 !important;
+  color: #5a4a32 !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  padding: 2px 8px !important;
+  border-radius: 10px !important;
+}
+.camp-footer {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  border-top: 1px solid #f5f0e8 !important;
+  padding-top: 10px !important;
+  margin-top: auto !important;
+}
+.tel-btn {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #1a5a7a !important;
+  text-decoration: none !important;
+}
+.web-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: #f0f4ff !important;
+  border: 1px solid #c0d0f0 !important;
+  color: #2a5aaa !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+}
+
+/* Bouton Mon Voyage camping */
+.camp-voyage-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(200,168,75,.08) !important;
+  border: 1px solid rgba(200,168,75,.25) !important;
+  color: #8B6914 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-family: 'Inter', sans-serif !important;
+  margin-left: auto !important;
+}
+.camp-voyage-btn:hover { background: rgba(200,168,75,.18) !important; }
+.camp-voyage-btn.in-voyage {
+  background: #2C5016 !important;
+  color: white !important;
+  border-color: #2C5016 !important;
+}
+
+/* Site card — structure propre */
+.site-card {
+  background: white !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.site-photo {
+  height: 200px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+.site-body {
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+.site-name {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: #1a1208 !important;
+  margin-bottom: 7px !important;
+  line-height: 1.25 !important;
+}
+.site-desc {
+  font-size: 13px !important;
+  color: #5a4a32 !important;
+  line-height: 1.6 !important;
+  margin-bottom: 10px !important;
+}
+.dog-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: #edf7ed !important;
+  color: #2C5016 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  margin-bottom: 8px !important;
+}
+.tip-box {
+  background: rgba(200,168,75,.07) !important;
+  border-left: 3px solid rgba(200,168,75,.4) !important;
+  border-radius: 0 7px 7px 0 !important;
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  color: #5a4a32 !important;
+  line-height: 1.55 !important;
+  margin-bottom: 12px !important;
+}
+.site-actions {
+  display: flex !important;
+  gap: 7px !important;
+  flex-wrap: wrap !important;
+  margin-top: auto !important;
+}
+.maps-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: #1a1208 !important;
+  color: #C8A84B !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 8px 14px !important;
+  border-radius: 7px !important;
+  border: none !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+.google-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: #fff8e8 !important;
+  border: 1px solid rgba(200,168,75,.3) !important;
+  color: #8B6914 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 7px 12px !important;
+  border-radius: 7px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+}
+.voyage-add-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(200,168,75,.08) !important;
+  border: 1px solid rgba(200,168,75,.25) !important;
+  color: #8B6914 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 7px 12px !important;
+  border-radius: 7px !important;
+  cursor: pointer !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.voyage-add-btn.in-voyage {
+  background: #2C5016 !important;
+  color: white !important;
+  border-color: #2C5016 !important;
+}
+
+/* Inner padding */
+.inner { padding: 24px 28px 80px !important; }
+
+/* Section hero compact */
+.section-hero { padding: 20px 28px 0 !important; }
+.section-hero-inner {
+  border-radius: 12px !important;
+  padding: 20px 24px !important;
+}
+
+@media(max-width:900px) {
+  .sites-grid { grid-template-columns: 1fr !important; }
+  .camps-grid { grid-template-columns: 1fr !important; }
+  .inner { padding: 16px 14px 60px !important; }
+}
+</style>
 </head>
 <body>
 
@@ -1302,20 +1598,7 @@ Libres de choisir sur place</div></div>
   </div>
 </div></div>
 <div class="inner">
-  <div class="sh pyr-hero">
-    <div class="sh-days">5</div>
-    <span class="sh-label">Étape 1 · Jours 1 à 5 · Béarn & Bigorre</span>
-    <h2>🏔️ Pyrénées</h2>
-    <p>À 40 km du départ, une montagne sauvage et fortifiée vous attend. Cirques glaciaires, châteaux forts, cités médiévales, grottes et sanctuaires — un début de voyage grandiose !</p>
-    <p class="sh-meta">📍 Pyrénées-Atlantiques & Hautes-Pyrénées · ≈ 40 km depuis Arudy · 4–5 nuits</p>
-    <div class="sh-badges">
-      <span class="sh-badge">🏘️ Lescun · Vue grandiose</span>
-      <span class="sh-badge">🏯 Fort du Portalet</span>
-      <span class="sh-badge">🏰 Navarrenx · Mauvezin</span>
-      <span class="sh-badge">🏔️ Gavarnie · Cauterets</span>
-      <span class="sh-badge">🦇 Grottes Bétharram (chien OK !)</span>
-    </div>
-  </div>
+  
   <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
   <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
   <div class="sites-grid"><div class="site-card">
@@ -1443,13 +1726,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Coup de cœur absolu ! Accueil exceptionnel, cadre de rêve au cœur des Pyrénées. Sanitaires impeccables, calme total.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33620899070" class="tel-btn">📞 +33 6 20 89 90 70</a>
+  <div class="camp-footer">
+    <a href="tel:+33620899070" class="tel-btn">📞 +33 6 20 89 90 70</a>
             <a href="https://www.passuslupi.fr/fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-passus-lupi" onclick="toggleVoyageCard('passus-lupi','Camping Passus Lupi',42.921,0.405,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1460,13 +1745,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Aux portes du Cirque de Gavarnie. Vue imprenable sur les sommets dès le réveil. Idéal pour la randonnée.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33562924841" class="tel-btn">📞 +33 5 62 92 48 41</a>
+  <div class="camp-footer">
+    <a href="tel:+33562924841" class="tel-btn">📞 +33 5 62 92 48 41</a>
             <a href="https://www.camping-le-hounta.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-le-hounta" onclick="toggleVoyageCard('le-hounta','Camping Le Hounta',42.738,-0.014,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1477,13 +1764,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Familial et bien équipé. Piscine chauffée, grande aire pour véhicules avec remorque. Point de départ idéal.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33562970167" class="tel-btn">📞 +33 5 62 97 01 67</a>
+  <div class="camp-footer">
+    <a href="tel:+33562970167" class="tel-btn">📞 +33 5 62 97 01 67</a>
             <a href="https://www.camping-cabaliros.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-cabaliros" onclick="toggleVoyageCard('cabaliros','Camping Cabaliros',43.0,-0.096,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1494,13 +1783,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Au bord du Gave de Pau. Village thermal à 5 min. Excellente base pour explorer les vallées pyrénéennes.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33562928557" class="tel-btn">📞 +33 5 62 92 85 57</a>
+  <div class="camp-footer">
+    <a href="tel:+33562928557" class="tel-btn">📞 +33 5 62 92 85 57</a>
             <a href="https://www.campingbergerie65.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-la-bergerie" onclick="toggleVoyageCard('la-bergerie','Camping La Bergerie',42.87,-0.002,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1511,13 +1802,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">L'esprit Huttopia par excellence. Grands emplacements sous les arbres, très calme. Idéal près des remparts de Navarrenx.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33559660897" class="tel-btn">📞 +33 5 59 66 08 97</a>
+  <div class="camp-footer">
+    <a href="tel:+33559660897" class="tel-btn">📞 +33 5 59 66 08 97</a>
             <a href="https://europe.huttopia.com/site/camping-nature-en-bearn/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-huttopia-bearn" onclick="toggleVoyageCard('huttopia-bearn','Huttopia Nature en Béarn',43.322,-0.76,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1528,13 +1821,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">À deux pas d'Arudy, ultra-ombragé et calme. Parfait comme camp de base nature pour rayonner dans les Pyrénées.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33559057468" class="tel-btn">📞 +33 5 59 05 74 68</a>
+  <div class="camp-footer">
+    <a href="tel:+33559057468" class="tel-btn">📞 +33 5 59 05 74 68</a>
             <a href="https://www.campinglerey.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-le-rey" onclick="toggleVoyageCard('le-rey','Camping Le Rey',43.084,-0.418,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1545,13 +1840,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Au pied des remparts historiques. Grands arbres et le Gave juste à côté pour baigner le chien. Très bien situé.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33559661000" class="tel-btn">📞 +33 5 59 66 10 00</a>
+  <div class="camp-footer">
+    <a href="tel:+33559661000" class="tel-btn">📞 +33 5 59 66 10 00</a>
             <a href="https://www.camping-beaurivage-navarrenx.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-beau-rivage" onclick="toggleVoyageCard('beau-rivage','Camping Beau Rivage',43.322,-0.758,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1562,13 +1859,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Emplacements spacieux et arborés, très sauvage et tourné vers la rando. Parfait pour l'étape Lescun et Vallée d'Aspe.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33559345177" class="tel-btn">📞 +33 5 59 34 51 77</a>
+  <div class="camp-footer">
+    <a href="tel:+33559345177" class="tel-btn">📞 +33 5 59 34 51 77</a>
             <a href="https://www.campingaspe.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-daspe" onclick="toggleVoyageCard('daspe','Camping d'Aspe',43.21,-0.554,'Pyrénées','Camping')">🧭</button>
+  </div>
 </div></div>
 </div></div>
 
@@ -1585,20 +1884,7 @@ Libres de choisir sur place</div></div>
   </div>
 </div></div>
 <div class="inner">
-  <div class="sh atl-hero">
-    <div class="sh-days">6</div>
-    <span class="sh-label">Étape 2 · Jours 6 à 11 · Landes & Gironde</span>
-    <h2>🌊 Côte Atlantique</h2>
-    <p>La forêt des Landes, les lacs intérieurs, les plages sauvages, le Bassin d'Arcachon et ses villages ostréicoles. Le paradis du vélo électrique avec des centaines de km de voies vertes !</p>
-    <p class="sh-meta">📍 Landes + Gironde · ≈ 180 km depuis les Pyrénées · 5–6 nuits</p>
-    <div class="sh-badges">
-      <span class="sh-badge">🏖️ Dune du Pilat (coucher de soleil !)</span>
-      <span class="sh-badge">⛵ Cap Ferret (navette + vélos + chien)</span>
-      <span class="sh-badge">🌲 Voies vertes interdites aux voitures</span>
-      <span class="sh-badge">🏰 Saint-Macaire peu connue</span>
-      <span class="sh-badge">🦪 Huîtres à L'Herbe</span>
-    </div>
-  </div>
+  
   <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
   <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
   <div class="sites-grid"><div class="site-card">
@@ -1726,13 +2012,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">En pleine forêt de pins, au bord d'un ruisseau. Très sauvage, accès direct aux pistes cyclables. Le top Huttopia.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33558902630" class="tel-btn">📞 +33 5 58 90 26 30</a>
+  <div class="camp-footer">
+    <a href="tel:+33558902630" class="tel-btn">📞 +33 5 58 90 26 30</a>
             <a href="https://europe.huttopia.com/site/camping-landes-sud/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-huttopia-landes" onclick="toggleVoyageCard('huttopia-landes','Huttopia Landes Sud',43.883,-1.226,'Atlantique','Camping')">🧭</button>
+  </div>
             <a href="https://europe.huttopia.com/site/camping-arcachon/" target="_blank" class="web-btn">🌐 Site officiel</a>
 </div><div class="camp-card">
   <div class="camp-header">
@@ -1744,13 +2032,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Petit camping familial exemplaire, propre et calme. Emplacement privé en bord de forêt. Restaurant raisonnable.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33558429437" class="tel-btn">📞 +33 5 58 42 94 37</a>
+  <div class="camp-footer">
+    <a href="tel:+33558429437" class="tel-btn">📞 +33 5 58 42 94 37</a>
             <a href="https://www.campingloceane.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-loceane" onclick="toggleVoyageCard('loceane','Camping L'Océane',43.969,-1.324,'Atlantique','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1761,13 +2051,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Grand emplacement ombragé bord de lac. Sports nautiques, restaurant La Pailotte adjacent.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33558483072" class="tel-btn">📞 +33 5 58 48 30 72</a>
+  <div class="camp-footer">
+    <a href="tel:+33558483072" class="tel-btn">📞 +33 5 58 48 30 72</a>
             <a href="https://www.camping-azurivage.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-azurivage" onclick="toggleVoyageCard('azurivage','Camping Azu'Rivage',43.655,-1.334,'Atlantique','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1778,13 +2070,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">À 2 km de la plage, idéal avec les vélos. Entre Bayonne, Hossegor et Biarritz.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33559453065" class="tel-btn">📞 +33 5 59 45 30 65</a>
+  <div class="camp-footer">
+    <a href="tel:+33559453065" class="tel-btn">📞 +33 5 59 45 30 65</a>
             <a href="https://www.camping-lou-pignada.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-lou-pignada" onclick="toggleVoyageCard('lou-pignada','Camping Lou Pignada Ondres',43.561,-1.507,'Atlantique','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1795,11 +2089,12 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">À deux pas de la Dune du Pilat, niché sous une pinède très dense. Idéal pour être au cœur du Bassin d'Arcachon.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33556832415" class="tel-btn">📞 +33 5 56 83 24 15</a>
+  <div class="camp-footer">
+    <a href="tel:+33556832415" class="tel-btn">📞 +33 5 56 83 24 15</a>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1810,13 +2105,14 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">100% nature, aucun mobil-home, uniquement des emplacements au milieu des pins sauvages. L'esprit glamping nature parfait pour un Teardrop !</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
   <a href="tel:+33556608851" class="tel-btn">📞 +33 5 56 60 88 51</a>
             <a href="https://www.trucvert.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-truc-vert" onclick="toggleVoyageCard('truc-vert','Camping Le Truc Vert',44.68,-1.22,'Atlantique','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1827,13 +2123,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Très arboré et fleuri, calme. Parfait pour rayonner à vélo entre les grands lacs landais et l'océan Atlantique.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33558098432" class="tel-btn">📞 +33 5 58 09 84 32</a>
+  <div class="camp-footer">
+    <a href="tel:+33558098432" class="tel-btn">📞 +33 5 58 09 84 32</a>
             <a href="https://www.camping-presverts-biscarrosse.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-pres-verts" onclick="toggleVoyageCard('pres-verts','Camping Les Prés Verts',44.376,-1.165,'Atlantique','Camping')">🧭</button>
+  </div>
 </div></div>
 </div></div>
 
@@ -1851,20 +2149,7 @@ Libres de choisir sur place</div></div>
   </div>
 </div></div>
 <div class="inner">
-  <div class="sh bou-hero">
-    <div class="sh-days">4</div>
-    <span class="sh-label">Étape 3 · Jours 12 à 15 · Bourgogne</span>
-    <h2>🍷 Bourgogne</h2>
-    <p>Châteaux forts en construction, villages perchés classés UNESCO, canal historique à vélo et grands vins de Bourgogne. L'étape de transition parfaite avant l'arrivée en Alsace !</p>
-    <p class="sh-meta">📍 Yonne & Côte-d'Or · ≈ 500 km depuis les Landes · 3–4 nuits</p>
-    <div class="sh-badges">
-      <span class="sh-badge">🏗️ Guédelon (chien partout !)</span>
-      <span class="sh-badge">⛪ Vézelay · UNESCO</span>
-      <span class="sh-badge">🏰 Châteauneuf perché</span>
-      <span class="sh-badge">🚴 Canal à vélo</span>
-      <span class="sh-badge">🍷 Beaune · Grands Crus</span>
-    </div>
-  </div>
+  
   <div class="divl"><div class="divl-t">🗺 Les 6 lieux à visiter</div></div>
   <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
   <div class="sites-grid"><div class="site-card">
@@ -1964,11 +2249,12 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">En plein cœur de la Bourgogne historique. Bordé par un étang, très boisé et calme. Parfait pour le Teardrop + la tente.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33380900223" class="tel-btn">📞 +33 3 80 90 02 23</a>
+  <div class="camp-footer">
+    <a href="tel:+33380900223" class="tel-btn">📞 +33 3 80 90 02 23</a>
             <a href="https://europe.huttopia.com/site/camping-etang-de-fouche/" target="_blank" class="web-btn">🌐 Site officiel</a>
 </div><div class="camp-card">
   <div class="camp-header">
@@ -1980,13 +2266,14 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Option si remontée par le Jura vers l'Alsace. Emplacements XXL en pleine nature arborée au pied du Jura.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
   <a href="tel:+33450416401" class="tel-btn">📞 +33 4 50 41 64 01</a>
             <a href="https://europe.huttopia.com/site/village-valserine/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-huttopia-vals" onclick="toggleVoyageCard('huttopia-vals','Huttopia Valserine',46.385,5.999,'Bourgogne','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1997,13 +2284,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Petit camping verdoyant et calme au pied de la colline historique de Vézelay. Idéal pour explorer le village classé UNESCO.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33386332418" class="tel-btn">📞 +33 3 86 33 24 18</a>
+  <div class="camp-footer">
+    <a href="tel:+33386332418" class="tel-btn">📞 +33 3 86 33 24 18</a>
             <a href="https://www.camping-vezelay.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-vezelay-camp" onclick="toggleVoyageCard('vezelay-camp','Camping de Vézelay L'Ermitage',47.465,3.745,'Bourgogne','Camping')">🧭</button>
+  </div>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -2014,13 +2303,15 @@ Libres de choisir sur place</div></div>
   </div>
   <p class="camp-desc">Dans un grand parc arboré avec étang, très ombragé. Ambiance nature et espace. À quelques km du chantier de Guédelon.</p>
   <div class="camp-tags">
-    <span class="tag tag-dog">🐕 Chien OK</span>
-    <span class="tag tag-tear">🚐 Teardrop</span>
-    <span class="tag tag-tent">⛺ Tente</span>
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
   </div>
-  <a href="tel:+33386745510" class="tel-btn">📞 +33 3 86 74 55 10</a>
+  <div class="camp-footer">
+    <a href="tel:+33386745510" class="tel-btn">📞 +33 3 86 74 55 10</a>
             <a href="https://www.campingsoulangis.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
             <button class="voyage-add-btn" id="vcard-soulangis" onclick="toggleVoyageCard('soulangis','Camping Au Bois de Soulangis',47.595,3.201,'Bourgogne','Camping')">🧭</button>
+  </div>
 </div></div>
 </div></div>
 
