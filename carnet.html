@@ -52,430 +52,223 @@ checkAuth();
 
 <style>
 
-#auth-check{
-  position:fixed;inset:0;z-index:99999;
-  background:linear-gradient(160deg,#0a1a0c,#2C5016 40%,#5a2808 80%,#C8A84B);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  color:white;font-family:'Inter',sans-serif;transition:opacity .6s ease;
-}
-#auth-check .aicon{font-size:52px;margin-bottom:16px;}
-#auth-check h2{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:8px;}
-#auth-check p{font-size:12px;opacity:.65;letter-spacing:2px;}
-.auth-spinner{
-  width:36px;height:36px;border:3px solid rgba(200,168,75,.3);
-  border-top-color:#C8A84B;border-radius:50%;
-  animation:aspin 1s linear infinite;margin:20px auto 0;
-}
-@keyframes aspin{to{transform:rotate(360deg)}}
-#main-content{display:none;}
-.logout-btn{
-  background:rgba(255,255,255,.1);border:1px solid rgba(200,168,75,.4);
-  color:#C8A84B;font-size:10px;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;padding:8px 16px;border-radius:6px;
-  cursor:pointer;transition:all .2s;margin-left:6px;
-}
-.logout-btn:hover{background:rgba(200,168,75,.2);}
-.user-badge{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(200,168,75,.15);border:1px solid rgba(200,168,75,.3);
-  border-radius:20px;padding:4px 12px 4px 8px;
-  font-size:11px;color:rgba(245,239,224,.75);
-}
-.user-avatar{
-  width:22px;height:22px;border-radius:50%;
-  background:#C8A84B;color:#1A1208;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;
-}
+/* ══════════════════════════════════════════════════════
+   ROCKNROAD — DESIGN SYSTÈME v2
+   Style: Luxury Travel Magazine × Modern App
+   Inspiration: Airbnb / National Geographic / Apple
+══════════════════════════════════════════════════════ */
 
-
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--beige:#E8DECE;
-  --pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;--warn:#cc4400;
-  --r:12px;--sh:0 4px 24px rgba(0,0,0,.09);
-}
-html{scroll-behavior:smooth;}
-body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);line-height:1.6;}
-
-/* HERO */
-.hero{min-height:100vh;background:linear-gradient(160deg,#0a1a0c 0%,#162e10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:60px 20px;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at 25% 75%,rgba(200,168,75,.12),transparent 55%),
-             radial-gradient(ellipse at 75% 25%,rgba(44,82,120,.12),transparent 55%);}
-.hero-badge{background:rgba(200,168,75,.18);border:1px solid rgba(200,168,75,.45);
-  color:var(--gold);font-size:11px;letter-spacing:5px;text-transform:uppercase;
-  padding:8px 26px;border-radius:40px;margin-bottom:30px;display:inline-block;position:relative;}
-.hero h1{font-family:'Playfair Display',serif;font-size:clamp(36px,8vw,90px);
-  color:white;line-height:1.05;margin-bottom:16px;position:relative;}
-.hero h1 em{color:var(--gold);font-style:italic;}
-.divider{width:60px;height:2px;background:var(--gold);margin:22px auto;position:relative;}
-.divider::before,.divider::after{content:'◆';position:absolute;top:-8px;color:var(--gold);font-size:9px;}
-.divider::before{left:-16px;}.divider::after{right:-16px;}
-.hero-sub{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:3px;margin-bottom:50px;position:relative;}
-.hero-stats{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;position:relative;margin-bottom:50px;}
-.stat{text-align:center;color:white;}
-.stat-v{font-family:'Playfair Display',serif;font-size:38px;color:var(--gold);display:block;line-height:1;}
-.stat-l{font-size:9px;letter-spacing:3px;text-transform:uppercase;opacity:.55;margin-top:4px;display:block;}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;}
-.btn-g{background:var(--gold);color:var(--dark);font-weight:700;font-size:13px;letter-spacing:.5px;
-  padding:14px 32px;border-radius:8px;text-decoration:none;border:none;cursor:pointer;
-  transition:all .3s;}
-.btn-g:hover{background:#dbb948;transform:translateY(-2px);box-shadow:0 8px 24px rgba(200,168,75,.4);}
-.btn-o{background:transparent;color:white;font-weight:600;font-size:13px;
-  padding:13px 32px;border-radius:8px;text-decoration:none;border:2px solid rgba(255,255,255,.35);
-  cursor:pointer;transition:all .3s;}
-.btn-o:hover{border-color:white;background:rgba(255,255,255,.08);}
-.scroll-h{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
-  color:rgba(255,255,255,.35);font-size:10px;letter-spacing:3px;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
-
-/* NAV */
-nav{position:sticky;top:0;z-index:100;background:rgba(18,10,4,.97);
-  backdrop-filter:blur(14px);border-bottom:1px solid rgba(200,168,75,.25);}
-.nav-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
-.nav-logo{font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);text-decoration:none;padding:16px 0;white-space:nowrap;}
-.nav-links{display:flex;}
-.nb{background:none;border:none;color:rgba(245,239,224,.45);font-family:'Inter',sans-serif;
-  font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:20px 12px;
-  cursor:pointer;border-bottom:2px solid transparent;transition:all .25s;white-space:nowrap;}
-.nb:hover{color:var(--gold);}
-.nb.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600;}
-.hamburger{display:none;background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:16px;}
-
-/* SECTIONS */
-.section{display:none;animation:fadeUp .35s ease;}
-.section.active{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.inner{max-width:1120px;margin:0 auto;padding:56px 24px 80px;}
-.sec-title{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,48px);color:var(--dark);margin-bottom:8px;}
-.sec-title em{color:var(--gold);font-style:italic;}
-.sec-lead{font-size:15px;line-height:1.85;color:#5a4a32;border-left:3px solid var(--gold);
-  padding-left:20px;margin-bottom:48px;max-width:680px;}
-
-/* OVERVIEW */
-.ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:40px;}
-.ov-card{background:white;border-radius:var(--r);padding:22px;border-top:4px solid var(--gold);box-shadow:var(--sh);}
-.ov-icon{font-size:26px;margin-bottom:9px;}
-.ov-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:5px;}
-.ov-val{font-size:13.5px;color:var(--dark);font-weight:500;line-height:1.5;white-space:pre-line;}
-.acte-box{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.28);
-  border-radius:var(--r);padding:26px 30px;margin-bottom:28px;font-size:14.5px;line-height:1.9;color:#5a4a32;}
-.acte-box strong{color:#6B3010;}
-.info-banner{background:white;border-radius:var(--r);padding:18px 22px;margin-bottom:20px;
-  border-left:5px solid var(--gold);box-shadow:var(--sh);font-size:13.5px;color:#5a4a32;}
-.info-banner strong{color:var(--dark);}
-
-/* STAGE HEROES */
-.sh{border-radius:var(--r);padding:38px 46px;color:white;position:relative;overflow:hidden;margin-bottom:36px;}
-.sh::before{content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at 15% 50%,rgba(255,255,255,.07),transparent 55%);}
-.sh-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:9px;display:block;position:relative;}
-.sh h2{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,38px);margin-bottom:12px;position:relative;}
-.sh p{font-size:14.5px;line-height:1.75;opacity:.9;max-width:560px;position:relative;}
-.sh-meta{font-size:11.5px;opacity:.58;margin-top:14px;position:relative;}
-.sh-badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px;position:relative;}
-.sh-badge{background:rgba(255,255,255,.14);padding:5px 15px;border-radius:30px;font-size:11.5px;font-weight:600;}
-.sh-days{position:absolute;right:38px;top:24px;font-family:'Playfair Display',serif;
-  font-size:96px;color:rgba(255,255,255,.08);line-height:1;}
-.pyr-hero{background:linear-gradient(135deg,#091a0a,#2C5016);}
-.atl-hero{background:linear-gradient(135deg,#051828,#1a5a7a);}
-.bou-hero{background:linear-gradient(135deg,#1a0828,#6B3288);}
-
-/* DIVIDERS */
-.divl{display:flex;align-items:center;gap:14px;margin:44px 0 28px;}
-.divl::before,.divl::after{content:'';flex:1;height:1px;background:var(--beige);}
-.divl-t{font-family:'Playfair Display',serif;font-size:20px;color:var(--dark);white-space:nowrap;}
-.camp-intro{color:#888;font-size:12.5px;margin-bottom:18px;line-height:1.6;
-  background:#fffdf5;border:1px solid #ede0c4;border-radius:8px;padding:14px 18px;}
-
-/* SITE CARDS */
-.sites-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:22px;margin-bottom:56px;}
-.site-card{background:white;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);
-  transition:transform .3s,box-shadow .3s;}
-.site-card:hover{transform:translateY(-5px);box-shadow:0 14px 40px rgba(0,0,0,.14);}
-.site-photo{height:215px;background-size:cover;background-position:center;
-  position:relative;background-color:#d4cbb8;}
-.site-photo::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.48) 0%,transparent 50%);}
-.site-emoji{position:absolute;top:11px;left:11px;z-index:2;
-  background:rgba(0,0,0,.5);width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:16px;}
-.site-overlay{position:absolute;bottom:11px;left:11px;z-index:2;}
-.type-badge{background:rgba(200,168,75,.92);color:white;font-size:8.5px;
-  font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;}
-.site-body{padding:18px 18px 16px;}
-.site-name{font-family:'Playfair Display',serif;font-size:17px;color:var(--dark);margin-bottom:7px;}
-.site-desc{font-size:12.5px;color:#5a4a32;line-height:1.65;margin-bottom:10px;}
-.dog-tag{display:inline-block;background:#e8f4e8;color:#2C5016;
-  font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:9px;}
-.dog-tag-warn{display:inline-block;background:#ffe8e0;color:var(--warn);
-  font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:9px;
-  border:1px solid rgba(204,68,0,.2);}
-.conseil-box{background:#fef9ee;border-left:3px solid var(--gold);
-  padding:8px 11px;border-radius:0 6px 6px 0;font-size:11.5px;color:#6B4226;
-  line-height:1.55;margin-bottom:12px;}
-.maps-btn{display:inline-flex;align-items:center;gap:5px;background:var(--dark);
-  color:white;font-size:11px;font-weight:600;padding:7px 16px;border-radius:6px;
-  text-decoration:none;transition:background .2s;letter-spacing:.3px;}
-.maps-btn:hover{background:#333;}
-
-/* CAMP CARDS */
-.camps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:18px;margin-bottom:56px;}
-.camp-card{background:white;border-radius:var(--r);overflow:hidden;
-  box-shadow:var(--sh);border-top:4px solid var(--gold);}
-.camp-header{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 8px;gap:8px;}
-.camp-name{font-weight:700;font-size:13.5px;color:var(--dark);line-height:1.3;margin-bottom:3px;}
-.camp-lieu{font-size:10.5px;color:#aaa;}
-.camp-note{background:#2C5016;color:white;font-size:12px;font-weight:700;
-  padding:4px 10px;border-radius:5px;flex-shrink:0;white-space:nowrap;}
-.camp-desc{padding:0 18px 8px;font-size:12.5px;color:#5a4a32;line-height:1.6;}
-.camp-tags{padding:0 18px 8px;display:flex;gap:5px;flex-wrap:wrap;}
-.tag{font-size:9.5px;padding:2px 9px;border-radius:20px;font-weight:700;}
-.tag-dog{background:#e8f4e8;color:#2C5016;}
-.tag-tear{background:#fef6e4;color:#8B6914;}
-.tag-tent{background:#f0ede8;color:#6B4226;}
-.tel-btn{display:flex;align-items:center;gap:7px;margin:2px 18px 16px;
-  background:#f8f4f0;border-radius:7px;padding:11px 15px;
-  font-size:13.5px;font-weight:700;color:#1a5a7a;text-decoration:none;
-  border:1px solid #e8dece;transition:background .2s;}
-.tel-btn:hover{background:#e4f0f8;}
-
-/* TIMELINE */
-.timeline{position:relative;padding-left:48px;}
-.timeline::before{content:'';position:absolute;left:18px;top:0;bottom:0;width:2px;
-  background:linear-gradient(#2C5016 0%,#1a5a7a 40%,#6B3288 70%,#C8A84B 100%);}
-.tl-item{position:relative;margin-bottom:18px;background:white;border-radius:10px;
-  padding:16px 52px 16px 20px;box-shadow:var(--sh);}
-.tl-dot{position:absolute;left:-36px;top:16px;width:34px;height:34px;
-  border-radius:50%;border:3px solid white;display:flex;align-items:center;
-  justify-content:center;font-size:15px;box-shadow:0 0 0 2px rgba(0,0,0,.08);}
-.tl-day{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:3px;font-weight:600;}
-.tl-titre{font-family:'Playfair Display',serif;font-size:16px;color:var(--dark);margin-bottom:3px;}
-.tl-desc{font-size:12.5px;color:#5a4a32;line-height:1.6;}
-
-/* CARTE */
-.carte-sw{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap;}
-.ctab{padding:11px 26px;border-radius:8px;font-size:12.5px;font-weight:700;
-  cursor:pointer;border:2px solid;transition:all .2s;background:white;}
-.ctab.pyr-t{border-color:var(--pyr);color:var(--pyr);}
-.ctab.pyr-t.active{background:var(--pyr);color:white;}
-.ctab.bou-t{border-color:var(--bou);color:var(--bou);}
-.ctab.bou-t.active{background:var(--bou);color:white;}
-.cpanel{display:none;}.cpanel.active{display:block;}
-.cw{border-radius:var(--r);overflow:hidden;border:3px solid var(--gold);box-shadow:var(--sh);}
-.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:18px;}
-.dcard{background:white;border-radius:9px;padding:14px;text-align:center;box-shadow:var(--sh);}
-.dfrom{font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-bottom:4px;}
-.dkm{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--dark);}
-.dt{font-size:10.5px;color:#5a4a32;margin-top:2px;}
-
-/* TIPS */
-.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:28px;}
-.tip-card{background:white;border-radius:10px;padding:20px;box-shadow:var(--sh);border-top:3px solid #2C5016;}
-.tip-title{font-weight:700;font-size:13.5px;margin-bottom:10px;}
-.tip-list{list-style:none;}
-.tip-list li{padding:3.5px 0;font-size:12.5px;color:#5a4a32;}
-.tip-list li::before{content:'✓ ';color:#2C5016;font-weight:700;}
-.script-box{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.28);
-  border-radius:var(--r);padding:22px 26px;font-size:14px;line-height:1.85;color:#5a4a32;}
-
-/* FOOTER */
-footer{background:var(--dark);color:rgba(245,239,224,.38);text-align:center;padding:44px 20px;font-size:11.5px;letter-spacing:1.5px;}
-footer span{color:var(--gold);}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .nav-links{display:none;flex-direction:column;position:absolute;top:58px;left:0;right:0;
-    background:rgba(18,10,4,.98);padding:6px 0;border-bottom:1px solid rgba(200,168,75,.25);}
-  .nav-links.open{display:flex;}
-  .nb{padding:13px 22px;border-bottom:none;border-left:3px solid transparent;text-align:left;}
-  .nb.active{border-left-color:var(--gold);border-bottom:none;}
-  .hamburger{display:block;}
-  nav{position:relative;}
-  .sh{padding:26px 22px;}.sh-days{display:none;}
-  .inner{padding:36px 15px 60px;}
-}
-@media(max-width:480px){
-  .sites-grid,.camps-grid{grid-template-columns:1fr;}
-  .ov-grid{grid-template-columns:1fr 1fr;}
-  .hero-stats{gap:20px;}
-}
-
-.web-btn{display:inline-flex;align-items:center;gap:5px;margin-top:6px;margin-left:0;
-  background:#f0f4ff;border:1px solid #c0d0f0;color:#2a5aaa;font-size:11.5px;font-weight:600;
-  padding:6px 14px;border-radius:6px;text-decoration:none;transition:background .2s;}
-.web-btn:hover{background:#dce8ff;}
-
-
-.google-btn{
-  display:inline-flex;align-items:center;gap:5px;
-  background:#fff8e8;border:1px solid rgba(200,168,75,.4);
-  color:#8B6914;font-size:11px;font-weight:700;
-  padding:7px 14px;border-radius:6px;text-decoration:none;
-  transition:all .2s;letter-spacing:.3px;
-}
-.google-btn:hover{background:#fef0c0;border-color:#C8A84B;}
-
-
-.voyage-add-btn{
-  display:inline-flex;align-items:center;gap:5px;
-  background:linear-gradient(135deg,#1A1208,#3a2a18);
-  color:#C8A84B;font-size:11px;font-weight:700;
-  padding:7px 14px;border-radius:6px;border:none;cursor:pointer;
-  transition:all .2s;letter-spacing:.3px;
-}
-.voyage-add-btn:hover{background:#C8A84B;color:#1A1208;}
-.voyage-add-btn.in-voyage{background:#2C5016;color:white;}
-.voyage-add-btn.in-voyage::before{content:'✅ ';}
-
-
-/* ══ SIDEBAR LAYOUT ══ */
 :root {
-  --sidebar-w: 240px;
-  --header-h: 0px;
-  --gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--beige:#E8DECE;
-  --pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;--warn:#cc4400;
-  --r:12px;--sh:0 4px 24px rgba(0,0,0,.09);
+  --sidebar-w: 210px;
+  --gold: #C8A84B;
+  --gold-light: #dbb948;
+  --dark: #0f0f0f;
+  --dark2: #1a1a14;
+  --creme: #F7F3EC;
+  --beige: #EDE6D8;
+  --text: #1a1208;
+  --text-muted: #6B5F4A;
+  --pyr: #2C5016;
+  --atl: #1a5a7a;
+  --bou: #6B3288;
+  --r: 10px;
+  --sh: 0 2px 16px rgba(0,0,0,.08);
+  --sh-hover: 0 8px 32px rgba(0,0,0,.14);
 }
 
-/* Reset nav existante */
-nav#main-nav { display: none !important; }
+/* ── Reset & Base ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--dark);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-/* Body avec sidebar */
-body { display: flex; min-height: 100vh; background: #0f0f0f; overflow-x: hidden; }
-
-/* ══ SIDEBAR ══ */
+/* ══════════════════════════════════════════════════════
+   SIDEBAR — Compact & Élégante
+══════════════════════════════════════════════════════ */
 #sidebar {
   width: var(--sidebar-w);
   min-height: 100vh;
-  background: linear-gradient(180deg, #0d0d0d 0%, #141208 40%, #1a1208 100%);
-  border-right: 1px solid rgba(200,168,75,.15);
+  background: #111109;
+  border-right: 1px solid rgba(200,168,75,.1);
   display: flex;
   flex-direction: column;
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 200;
-  transition: transform .3s ease;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
 }
+#sidebar::-webkit-scrollbar { display: none; }
 
-/* Logo */
+/* Logo compact */
 .sb-logo {
-  padding: 28px 20px 20px;
-  border-bottom: 1px solid rgba(200,168,75,.1);
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid rgba(200,168,75,.08);
   flex-shrink: 0;
 }
-.sb-logo-icon { font-size: 32px; margin-bottom: 6px; display: block; }
+.sb-logo-icon { font-size: 20px; margin-bottom: 4px; display: block; }
 .sb-logo-title {
   font-family: 'Playfair Display', serif;
-  font-size: 22px; color: white; line-height: 1.1;
-  margin-bottom: 2px;
+  font-size: 17px;
+  color: white;
+  line-height: 1;
+  letter-spacing: -.3px;
 }
 .sb-logo-title span { color: var(--gold); }
 .sb-logo-sub {
-  font-size: 10px; color: rgba(200,168,75,.6);
-  letter-spacing: 3px; text-transform: uppercase;
+  font-size: 8px;
+  color: rgba(200,168,75,.45);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  display: block;
 }
 
-/* Nav groups */
+/* Groupes nav */
 .sb-group {
-  padding: 16px 12px 8px;
+  padding: 10px 8px 4px;
   flex-shrink: 0;
 }
 .sb-group-label {
-  font-size: 9px; font-weight: 700; letter-spacing: 3px;
-  text-transform: uppercase; color: rgba(255,255,255,.25);
-  padding: 0 8px; margin-bottom: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.2);
+  padding: 0 6px;
+  margin-bottom: 3px;
 }
 .sb-btn {
-  display: flex; align-items: center; gap: 10px;
-  width: 100%; padding: 10px 12px;
-  background: none; border: none;
-  color: rgba(245,239,224,.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  background: none;
+  border: none;
+  color: rgba(245,239,224,.45);
   font-family: 'Inter', sans-serif;
-  font-size: 13px; font-weight: 500;
-  border-radius: 8px; cursor: pointer;
-  transition: all .2s; text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
   text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .sb-btn:hover {
-  background: rgba(200,168,75,.08);
-  color: rgba(245,239,224,.9);
+  background: rgba(200,168,75,.06);
+  color: rgba(245,239,224,.8);
 }
 .sb-btn.active {
-  background: rgba(200,168,75,.15);
+  background: rgba(200,168,75,.12);
   color: var(--gold);
   font-weight: 600;
 }
 .sb-btn .sb-icon {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; flex-shrink: 0;
-  background: rgba(255,255,255,.05);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,.04);
+  transition: all .15s;
 }
-.sb-btn.active .sb-icon {
-  background: rgba(200,168,75,.2);
+.sb-btn.active .sb-icon { background: rgba(200,168,75,.18); }
+.sb-btn.pyr .sb-icon { background: rgba(44,80,22,.25); }
+.sb-btn.atl .sb-icon { background: rgba(26,90,122,.25); }
+.sb-btn.bou .sb-icon { background: rgba(107,50,136,.25); }
+.sb-btn.pyr.active .sb-icon { background: rgba(44,80,22,.45); }
+.sb-btn.atl.active .sb-icon { background: rgba(26,90,122,.45); }
+.sb-btn.bou.active .sb-icon { background: rgba(107,50,136,.45); }
+.sb-badge {
+  background: var(--gold);
+  color: var(--dark);
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
-.sb-btn .sb-label { flex: 1; }
-.sb-btn .sb-badge {
-  background: var(--gold); color: var(--dark);
-  font-size: 9px; font-weight: 800;
-  padding: 2px 6px; border-radius: 10px;
-}
-
-/* Étapes couleurs */
-.sb-btn.pyr .sb-icon { background: rgba(44,80,22,.3); }
-.sb-btn.pyr.active .sb-icon { background: rgba(44,80,22,.5); }
-.sb-btn.atl .sb-icon { background: rgba(26,90,122,.3); }
-.sb-btn.atl.active .sb-icon { background: rgba(26,90,122,.5); }
-.sb-btn.bou .sb-icon { background: rgba(107,50,136,.3); }
-.sb-btn.bou.active .sb-icon { background: rgba(107,50,136,.5); }
-
-/* Séparateur */
 .sb-sep {
-  height: 1px; background: rgba(200,168,75,.08);
-  margin: 8px 16px;
+  height: 1px;
+  background: rgba(200,168,75,.06);
+  margin: 4px 12px;
 }
 
-/* User + logout en bas */
+/* Footer sidebar */
 .sb-footer {
   margin-top: auto;
-  padding: 12px;
-  border-top: 1px solid rgba(200,168,75,.1);
+  padding: 10px 8px;
+  border-top: 1px solid rgba(200,168,75,.08);
   flex-shrink: 0;
 }
 .sb-user {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; border-radius: 8px;
-  background: rgba(255,255,255,.04);
-  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.03);
+  margin-bottom: 5px;
 }
 .sb-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--gold); color: var(--dark);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
-.sb-user-info { flex: 1; min-width: 0; }
 .sb-user-name {
-  font-size: 12px; font-weight: 600; color: rgba(245,239,224,.8);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245,239,224,.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
-.sb-user-role { font-size: 10px; color: rgba(200,168,75,.6); }
 .sb-logout {
-  width: 100%; padding: 8px;
-  background: rgba(200,168,75,.08);
-  border: 1px solid rgba(200,168,75,.15);
-  color: rgba(200,168,75,.7); font-size: 11px; font-weight: 600;
-  letter-spacing: 1px; border-radius: 7px; cursor: pointer;
-  transition: all .2s; font-family: 'Inter', sans-serif;
+  width: 100%;
+  padding: 7px;
+  background: rgba(200,168,75,.06);
+  border: 1px solid rgba(200,168,75,.12);
+  color: rgba(200,168,75,.6);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: 'Inter', sans-serif;
 }
-.sb-logout:hover { background: rgba(200,168,75,.18); color: var(--gold); }
+.sb-logout:hover {
+  background: rgba(200,168,75,.15);
+  color: var(--gold);
+}
 
-/* ══ MAIN CONTENT ══ */
+/* ══════════════════════════════════════════════════════
+   APP MAIN
+══════════════════════════════════════════════════════ */
 #app-main {
   margin-left: var(--sidebar-w);
   width: calc(100vw - var(--sidebar-w));
@@ -486,81 +279,406 @@ body { display: flex; min-height: 100vh; background: #0f0f0f; overflow-x: hidden
   overflow-x: hidden;
 }
 
-/* Top bar subtile */
+/* ── Top Bar ── */
 #top-bar {
-  background: white;
+  background: rgba(247,243,236,.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--beige);
-  padding: 12px 32px;
+  padding: 10px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 1px 12px rgba(0,0,0,.05);
-  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 52px;
 }
 .top-bar-title {
   font-family: 'Playfair Display', serif;
-  font-size: 18px; color: var(--dark);
+  font-size: 16px;
+  color: var(--text);
+  font-weight: 400;
 }
 .top-bar-title span { color: var(--gold); font-style: italic; }
-.top-bar-right { display: flex; align-items: center; gap: 12px; }
+.top-bar-right { display: flex; align-items: center; gap: 10px; }
 .top-voyage-btn {
   display: none;
-  align-items: center; gap: 7px;
-  background: var(--dark); color: var(--gold);
-  font-size: 11px; font-weight: 700; letter-spacing: .5px;
-  padding: 8px 16px; border-radius: 20px; border: none;
-  cursor: pointer; transition: all .2s;
+  align-items: center;
+  gap: 6px;
+  background: var(--dark);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: all .2s;
 }
 .top-voyage-btn.visible { display: flex; }
 .top-voyage-btn:hover { background: var(--gold); color: var(--dark); }
 
 /* Hamburger mobile */
 #sb-toggle {
-  display: none; background: none; border: none;
-  color: var(--dark); font-size: 22px; cursor: pointer;
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
 }
 
-/* Sections */
-.section { display: none; animation: fadeUp .35s ease; flex: 1; }
+/* ══════════════════════════════════════════════════════
+   SECTIONS
+══════════════════════════════════════════════════════ */
+.section { display: none; flex: 1; }
 .section.active { display: block; }
-.inner { max-width: 1120px; margin: 0 auto; padding: 40px 32px 80px; }
 
-/* ══ HERO REPENSÉ ══ */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.section.active { animation: fadeUp .25s ease; }
+
+.inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+}
+
+/* ══════════════════════════════════════════════════════
+   HERO — Uniquement sur Vue d'ensemble (section overview)
+══════════════════════════════════════════════════════ */
 .hero {
-  min-height: 100vh;
   width: 100%;
-  max-width: 100%;
-  background: linear-gradient(160deg,#0a1a0c 0%,#1a3a10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center; padding: 60px 20px;
-  position: relative; overflow: hidden;
+  min-height: 60vh;
+  max-height: 70vh;
+  background: linear-gradient(160deg,#0a1a0c 0%,#1a3a10 30%,#2C5016 55%,#5a2808 82%,#C8A84B 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 20px 40px;
+  position: relative;
+  overflow: hidden;
 }
 .hero::before {
-  content: '';position: absolute;inset: 0;
-  background: radial-gradient(ellipse at 25% 75%,rgba(200,168,75,.12),transparent 55%),
-              radial-gradient(ellipse at 75% 25%,rgba(44,110,138,.12),transparent 55%);
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 25% 75%,rgba(200,168,75,.1),transparent 55%),
+              radial-gradient(ellipse at 75% 25%,rgba(44,110,138,.1),transparent 55%);
 }
 
-/* ══ RESPONSIVE SIDEBAR ══ */
+/* ══════════════════════════════════════════════════════
+   SECTION HEADERS (pour Pyrénées, Atlantique, etc.)
+══════════════════════════════════════════════════════ */
+.section-hero {
+  width: 100%;
+  padding: 28px 28px 0;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.section-hero-inner {
+  border-radius: 14px;
+  padding: 24px 28px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.sh-pyr { background: linear-gradient(135deg,#0a1a0c,#2C5016); }
+.sh-atl { background: linear-gradient(135deg,#041420,#1a5a7a); }
+.sh-bou { background: linear-gradient(135deg,#160820,#6B3288); }
+.section-hero-inner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size: 24px 24px;
+}
+.sh-num {
+  position: absolute; right: 20px; top: 10px;
+  font-family: 'Playfair Display', serif;
+  font-size: 80px;
+  color: rgba(255,255,255,.05);
+  line-height: 1;
+  font-weight: 700;
+}
+.sh-label {
+  font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+  opacity: .55; margin-bottom: 5px; position: relative;
+}
+.sh-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; position: relative; margin-bottom: 4px;
+}
+.sh-meta { font-size: 11px; opacity: .55; position: relative; }
+.sh-tags {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-top: 12px; position: relative;
+}
+.sh-tag {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════
+   CARDS — Design moderne
+══════════════════════════════════════════════════════ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+.site-card {
+  background: white;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--sh);
+  transition: transform .2s, box-shadow .2s;
+  position: relative;
+}
+.site-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-hover);
+}
+.site-photo {
+  height: 200px;
+  background: #d4cbb8;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+.site-photo::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top,rgba(0,0,0,.55),transparent 55%);
+}
+.site-type-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(4px);
+  color: white; font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 20px;
+}
+.site-dog {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  font-size: 16px;
+  background: rgba(0,0,0,.4);
+  backdrop-filter: blur(4px);
+  border-radius: 20px; padding: 2px 6px;
+}
+.site-region-tag {
+  position: absolute; bottom: 10px; left: 10px; z-index: 2;
+  color: white; font-size: 9px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 8px;
+}
+.site-body { padding: 16px; }
+.site-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--text); margin-bottom: 6px; line-height: 1.2;
+}
+.site-desc {
+  font-size: 12.5px; color: var(--text-muted);
+  line-height: 1.6; margin-bottom: 10px;
+}
+.site-dog-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #edf7ed; color: #2C5016;
+  font-size: 10px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px;
+  margin-bottom: 8px;
+}
+.site-tip {
+  background: rgba(200,168,75,.08);
+  border-left: 3px solid rgba(200,168,75,.4);
+  border-radius: 0 6px 6px 0;
+  padding: 7px 10px;
+  font-size: 11.5px; color: var(--text-muted);
+  line-height: 1.5; margin-bottom: 10px;
+}
+.site-actions {
+  display: flex; gap: 7px; flex-wrap: wrap;
+}
+.btn-maps {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--dark); color: var(--gold);
+  font-size: 11px; font-weight: 700;
+  padding: 8px 14px; border-radius: 7px;
+  border: none; cursor: pointer; text-decoration: none;
+  transition: all .2s;
+}
+.btn-maps:hover { background: #333; }
+.btn-google, .google-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: white; color: #5a4a32;
+  font-size: 11px; font-weight: 600;
+  padding: 7px 12px; border-radius: 7px;
+  border: 1px solid var(--beige); cursor: pointer;
+  text-decoration: none; transition: all .2s;
+}
+.btn-google:hover, .google-btn:hover { background: var(--beige); }
+.voyage-add-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(200,168,75,.1);
+  border: 1px solid rgba(200,168,75,.3);
+  color: #8B6914; font-size: 11px; font-weight: 700;
+  padding: 7px 13px; border-radius: 7px; cursor: pointer;
+  transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.voyage-add-btn:hover { background: rgba(200,168,75,.2); }
+.voyage-add-btn.in-voyage {
+  background: #2C5016; color: white; border-color: #2C5016;
+}
+
+/* ══════════════════════════════════════════════════════
+   CAMP CARDS — Nouveau design
+══════════════════════════════════════════════════════ */
+.camp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+.camp-card {
+  background: white;
+  border-radius: var(--r);
+  padding: 16px;
+  box-shadow: var(--sh);
+  border-top: 3px solid transparent;
+  transition: all .2s;
+  position: relative;
+}
+.camp-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-hover);
+}
+.camp-card.top { border-top-color: var(--gold); }
+.camp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.camp-name {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); line-height: 1.3; flex: 1;
+}
+.camp-stars {
+  background: #2C5016; color: white;
+  font-size: 10px; font-weight: 800;
+  padding: 3px 8px; border-radius: 6px;
+  flex-shrink: 0; white-space: nowrap;
+}
+.camp-lieu {
+  font-size: 10.5px; color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.camp-tags {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-bottom: 10px;
+}
+.camp-tag {
+  background: #f0ece4; color: #5a4a32;
+  font-size: 9px; font-weight: 600;
+  padding: 2px 7px; border-radius: 10px;
+}
+.camp-footer {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 8px; flex-wrap: wrap;
+  border-top: 1px solid #f5f0e8;
+  padding-top: 10px; margin-top: 4px;
+}
+.camp-tel {
+  font-size: 12px; font-weight: 600;
+  color: var(--atl); text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+}
+.camp-links { display: flex; gap: 6px; }
+.camp-web {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f0f4ff; border: 1px solid #c8d8f0;
+  color: #2a5aaa; font-size: 10px; font-weight: 700;
+  padding: 5px 10px; border-radius: 6px;
+  text-decoration: none; transition: all .2s;
+}
+.camp-web:hover { background: #dce8ff; }
+.camp-voyage-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(200,168,75,.1);
+  border: 1px solid rgba(200,168,75,.3);
+  color: #8B6914; font-size: 10px; font-weight: 700;
+  padding: 5px 10px; border-radius: 6px; cursor: pointer;
+  transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.camp-voyage-btn:hover { background: rgba(200,168,75,.2); }
+.camp-voyage-btn.in-voyage {
+  background: #2C5016; color: white; border-color: #2C5016;
+}
+
+/* ══════════════════════════════════════════════════════
+   SECTION TITLES
+══════════════════════════════════════════════════════ */
+.sec-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; color: var(--text);
+  margin-bottom: 4px; margin-top: 28px;
+}
+.sec-title em { color: var(--gold); font-style: italic; }
+.sec-sub {
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.sec-divider {
+  width: 40px; height: 2px;
+  background: linear-gradient(90deg,var(--gold),transparent);
+  margin: 10px 0 20px;
+}
+
+/* ══════════════════════════════════════════════════════
+   OVERLAY MOBILE
+══════════════════════════════════════════════════════ */
 #sb-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.5); z-index: 190;
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 190;
+  backdrop-filter: blur(2px);
 }
 
-@media(max-width: 900px) {
-  #sidebar {
-    transform: translateX(-100%);
-  }
-  #sidebar.open {
-    transform: translateX(0);
-  }
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════ */
+@media(max-width:900px) {
+  #sidebar { transform: translateX(-100%); transition: transform .25s ease; }
+  #sidebar.open { transform: translateX(0); }
   #sb-overlay.open { display: block; }
-  #app-main { margin-left: 0; }
+  #app-main { margin-left: 0; width: 100vw; }
   #sb-toggle { display: block; }
-  #top-bar { padding: 12px 16px; }
-  .inner { padding: 24px 14px 60px; }
+  #top-bar { padding: 10px 16px; }
+  .inner { padding: 20px 14px 60px; }
+  .cards-grid { grid-template-columns: 1fr; }
+  .camp-grid { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════════ */
+@media print {
+  #sidebar, #top-bar { display: none; }
+  #app-main { margin-left: 0; width: 100%; }
+  .section { display: block !important; }
 }
 
 </style>
@@ -598,8 +716,8 @@ body { display: flex; min-height: 100vh; background: #0f0f0f; overflow-x: hidden
   <div class="sb-group">
     <div class="sb-group-label">Navigation</div>
     <button class="sb-btn active" id="snav-overview" onclick="showTab('overview')">
-      <span class="sb-icon">📋</span>
-      <span class="sb-label">Vue d'ensemble</span>
+      <span class="sb-icon">🏠</span>
+      <span class="sb-label">Accueil</span>
     </button>
     <button class="sb-btn" id="snav-itinerary" onclick="showTab('itinerary')">
       <span class="sb-icon">🗺</span>
@@ -863,7 +981,19 @@ Libres de choisir sur place</div></div>
 </div></div>
 
 <!-- PYRÉNÉES -->
-<div class="section" id="tab-pyrenees"><div class="inner">
+<div class="section" id="tab-pyrenees">
+<div class="section-hero"><div class="section-hero-inner sh-pyr">
+  <div class="sh-num">1</div>
+  <div class="sh-label">Étape 1 · Jours 1–5 · Béarn & Bigorre</div>
+  <div class="sh-title">🏔️ Pyrénées</div>
+  <div class="sh-meta">📍 Pyrénées-Atlantiques & Hautes-Pyrénées · ≈ 40 km depuis Arudy</div>
+  <div class="sh-tags">
+    <span class="sh-tag">🏘️ Lescun</span><span class="sh-tag">🏯 Portalet</span>
+    <span class="sh-tag">🏰 Navarrenx</span><span class="sh-tag">🏔️ Gavarnie</span>
+    <span class="sh-tag">🦇 Bétharram (chien OK !)</span>
+  </div>
+</div></div>
+<div class="inner">
   <div class="sh pyr-hero">
     <div class="sh-days">5</div>
     <span class="sh-label">Étape 1 · Jours 1 à 5 · Béarn & Bigorre</span>
@@ -1011,6 +1141,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33620899070" class="tel-btn">📞 +33 6 20 89 90 70</a>
             <a href="https://www.passuslupi.fr/fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-passus-lupi" onclick="toggleVoyageCard('passus-lupi','Camping Passus Lupi',42.921,0.405,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1027,6 +1158,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33562924841" class="tel-btn">📞 +33 5 62 92 48 41</a>
             <a href="https://www.camping-le-hounta.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-le-hounta" onclick="toggleVoyageCard('le-hounta','Camping Le Hounta',42.738,-0.014,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1043,6 +1175,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33562970167" class="tel-btn">📞 +33 5 62 97 01 67</a>
             <a href="https://www.camping-cabaliros.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-cabaliros" onclick="toggleVoyageCard('cabaliros','Camping Cabaliros',43.0,-0.096,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1059,6 +1192,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33562928557" class="tel-btn">📞 +33 5 62 92 85 57</a>
             <a href="https://www.campingbergerie65.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-la-bergerie" onclick="toggleVoyageCard('la-bergerie','Camping La Bergerie',42.87,-0.002,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1075,6 +1209,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33559660897" class="tel-btn">📞 +33 5 59 66 08 97</a>
             <a href="https://europe.huttopia.com/site/camping-nature-en-bearn/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-bearn" onclick="toggleVoyageCard('huttopia-bearn','Huttopia Nature en Béarn',43.322,-0.76,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1091,6 +1226,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33559057468" class="tel-btn">📞 +33 5 59 05 74 68</a>
             <a href="https://www.campinglerey.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-le-rey" onclick="toggleVoyageCard('le-rey','Camping Le Rey',43.084,-0.418,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1107,6 +1243,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33559661000" class="tel-btn">📞 +33 5 59 66 10 00</a>
             <a href="https://www.camping-beaurivage-navarrenx.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-beau-rivage" onclick="toggleVoyageCard('beau-rivage','Camping Beau Rivage',43.322,-0.758,'Pyrénées','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1123,11 +1260,23 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33559345177" class="tel-btn">📞 +33 5 59 34 51 77</a>
             <a href="https://www.campingaspe.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-daspe" onclick="toggleVoyageCard('daspe','Camping d'Aspe',43.21,-0.554,'Pyrénées','Camping')">🧭</button>
 </div></div>
 </div></div>
 
 <!-- ATLANTIQUE -->
-<div class="section" id="tab-atlantique"><div class="inner">
+<div class="section" id="tab-atlantique">
+<div class="section-hero"><div class="section-hero-inner sh-atl">
+  <div class="sh-num">2</div>
+  <div class="sh-label">Étape 2 · Jours 6–11 · Landes & Gironde</div>
+  <div class="sh-title">🌊 Atlantique</div>
+  <div class="sh-meta">📍 Landes + Gironde · ≈ 180 km depuis les Pyrénées</div>
+  <div class="sh-tags">
+    <span class="sh-tag">🏖️ Dune du Pilat</span><span class="sh-tag">⛵ Cap Ferret</span>
+    <span class="sh-tag">🌲 Forêt vélo</span><span class="sh-tag">🏰 Saint-Macaire</span>
+  </div>
+</div></div>
+<div class="inner">
   <div class="sh atl-hero">
     <div class="sh-days">6</div>
     <span class="sh-label">Étape 2 · Jours 6 à 11 · Landes & Gironde</span>
@@ -1275,6 +1424,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33558902630" class="tel-btn">📞 +33 5 58 90 26 30</a>
             <a href="https://europe.huttopia.com/site/camping-landes-sud/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-landes" onclick="toggleVoyageCard('huttopia-landes','Huttopia Landes Sud',43.883,-1.226,'Atlantique','Camping')">🧭</button>
             <a href="https://europe.huttopia.com/site/camping-arcachon/" target="_blank" class="web-btn">🌐 Site officiel</a>
 </div><div class="camp-card">
   <div class="camp-header">
@@ -1292,6 +1442,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33558429437" class="tel-btn">📞 +33 5 58 42 94 37</a>
             <a href="https://www.campingloceane.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-loceane" onclick="toggleVoyageCard('loceane','Camping L'Océane',43.969,-1.324,'Atlantique','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1308,6 +1459,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33558483072" class="tel-btn">📞 +33 5 58 48 30 72</a>
             <a href="https://www.camping-azurivage.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-azurivage" onclick="toggleVoyageCard('azurivage','Camping Azu'Rivage',43.655,-1.334,'Atlantique','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1324,6 +1476,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33559453065" class="tel-btn">📞 +33 5 59 45 30 65</a>
             <a href="https://www.camping-lou-pignada.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-lou-pignada" onclick="toggleVoyageCard('lou-pignada','Camping Lou Pignada Ondres',43.561,-1.507,'Atlantique','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1355,6 +1508,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33556608851" class="tel-btn">📞 +33 5 56 60 88 51</a>
             <a href="https://www.trucvert.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-truc-vert" onclick="toggleVoyageCard('truc-vert','Camping Le Truc Vert',44.68,-1.22,'Atlantique','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1371,11 +1525,24 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33558098432" class="tel-btn">📞 +33 5 58 09 84 32</a>
             <a href="https://www.camping-presverts-biscarrosse.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-pres-verts" onclick="toggleVoyageCard('pres-verts','Camping Les Prés Verts',44.376,-1.165,'Atlantique','Camping')">🧭</button>
 </div></div>
 </div></div>
 
 <!-- BOURGOGNE -->
-<div class="section" id="tab-bourgogne"><div class="inner">
+<div class="section" id="tab-bourgogne">
+<div class="section-hero"><div class="section-hero-inner sh-bou">
+  <div class="sh-num">3</div>
+  <div class="sh-label">Étape 3 · Jours 12–15 · Yonne & Côte-d'Or</div>
+  <div class="sh-title">🍷 Bourgogne</div>
+  <div class="sh-meta">📍 Yonne & Côte-d'Or · ≈ 500 km depuis les Landes</div>
+  <div class="sh-tags">
+    <span class="sh-tag">🏗️ Guédelon (chien partout !)</span>
+    <span class="sh-tag">⛪ Vézelay UNESCO</span>
+    <span class="sh-tag">🍷 Beaune</span>
+  </div>
+</div></div>
+<div class="inner">
   <div class="sh bou-hero">
     <div class="sh-days">4</div>
     <span class="sh-label">Étape 3 · Jours 12 à 15 · Bourgogne</span>
@@ -1511,6 +1678,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33450416401" class="tel-btn">📞 +33 4 50 41 64 01</a>
             <a href="https://europe.huttopia.com/site/village-valserine/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-vals" onclick="toggleVoyageCard('huttopia-vals','Huttopia Valserine',46.385,5.999,'Bourgogne','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1527,6 +1695,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33386332418" class="tel-btn">📞 +33 3 86 33 24 18</a>
             <a href="https://www.camping-vezelay.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-vezelay-camp" onclick="toggleVoyageCard('vezelay-camp','Camping de Vézelay L'Ermitage',47.465,3.745,'Bourgogne','Camping')">🧭</button>
 </div><div class="camp-card">
   <div class="camp-header">
     <div>
@@ -1543,6 +1712,7 @@ Libres de choisir sur place</div></div>
   </div>
   <a href="tel:+33386745510" class="tel-btn">📞 +33 3 86 74 55 10</a>
             <a href="https://www.campingsoulangis.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-soulangis" onclick="toggleVoyageCard('soulangis','Camping Au Bois de Soulangis',47.595,3.201,'Bourgogne','Camping')">🧭</button>
 </div></div>
 </div></div>
 
