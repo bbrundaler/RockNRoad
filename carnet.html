@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Des Pyrénées vers l'Alsace · Carnet 2025</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+
+
+
+
+
+
+
+
+
+
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sb:200px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;
+  --creme:#F7F3EC;--beige:#EDE6D8;--text:#1a1208;--muted:#6B5F4A;
+  --pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;
+  --sh:0 2px 12px rgba(0,0,0,.07);--shhov:0 8px 28px rgba(0,0,0,.13);--r:10px;
+}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:var(--sb);min-height:100vh;background:var(--dark2);border-right:1px solid rgba(200,168,75,.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
+#sidebar::-webkit-scrollbar{display:none;}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;cursor:pointer;}
+.sb-logo-paw{font-size:16px;margin-bottom:7px;display:block;opacity:.6;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;letter-spacing:-.5px;}
+.sb-logo-title span{color:var(--gold);}
+.sb-logo-sub{font-size:8px;color:rgba(200,168,75,.45);letter-spacing:5px;text-transform:uppercase;margin-top:3px;display:block;}
+.sb-group{padding:12px 10px 4px;flex-shrink:0;}
+.sb-group-label{font-size:7.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:0 8px;margin-bottom:3px;}
+.sb-sep{height:1px;background:rgba(200,168,75,.06);margin:5px 14px;}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:7px 10px;background:none;border:none;color:rgba(245,239,224,.52);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
+.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(245,239,224,.82);}
+.sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.75;}
+.sb-dot-pyr{background:var(--pyr);}
+.sb-dot-atl{background:var(--atl);}
+.sb-dot-bou{background:var(--bou);}
+.sb-dot-gold{background:var(--gold);}
+.sb-dot-grey{background:rgba(255,255,255,.22);}
+.sb-badge{background:rgba(200,168,75,.18);color:var(--gold);font-size:8px;font-weight:800;padding:1px 5px;border-radius:8px;margin-left:auto;flex-shrink:0;}
+.sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);margin-bottom:5px;}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.sb-user-name{font-size:11px;font-weight:600;color:rgba(245,239,224,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.1);color:rgba(200,168,75,.55);font-size:10px;font-weight:600;letter-spacing:1px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
+#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;}
+
+/* APP MAIN */
+#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;overflow-x:hidden;}
+#top-bar{background:rgba(247,243,236,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--beige);padding:0 28px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
+#sb-toggle{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;}
+.top-voyage-btn{display:none;align-items:center;gap:6px;background:var(--dark);color:var(--gold);font-size:10.5px;font-weight:700;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;}
+.top-voyage-btn.visible{display:flex;}
+.top-voyage-btn:hover{background:var(--gold);color:var(--dark);}
+
+/* SECTIONS */
+.section{display:none;flex:1;}
+.section.active{display:block;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.inner{max-width:1280px;margin:0 auto;padding:24px 28px 80px;}
+
+/* HERO */
+.hero{width:100%;min-height:50vh;background:linear-gradient(155deg,#0a1a0c 0%,#1a3a10 30%,#2C5016 58%,#5a2808 82%,#C8A84B 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px 34px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 70%,rgba(200,168,75,.08),transparent 55%),radial-gradient(ellipse at 75% 30%,rgba(44,110,138,.06),transparent 55%);}
+
+/* SECTION HEADER COMPACT */
+.sh-compact{border-radius:10px;padding:16px 22px;color:white;margin:20px 28px 0;position:relative;overflow:hidden;}
+.sh-compact::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);background-size:22px 22px;}
+.sh-pyr{background:linear-gradient(135deg,#0a1a0c,#2C5016);}
+.sh-atl{background:linear-gradient(135deg,#041420,#1a5a7a);}
+.sh-bou{background:linear-gradient(135deg,#160820,#6B3288);}
+.sh-title{font-family:'Playfair Display',serif;font-size:20px;position:relative;margin-bottom:3px;}
+.sh-meta{font-size:10.5px;opacity:.5;position:relative;}
+.sh-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;position:relative;}
+.sh-tag{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);padding:2px 9px;border-radius:20px;font-size:9px;font-weight:500;}
+
+/* SECTION TITLE */
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:5px;margin-top:22px;}
+.sec-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--beige),transparent);}
+.sec-head-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--text);white-space:nowrap;}
+.sec-sub{font-size:11.5px;color:var(--muted);margin-bottom:16px;}
+.notice{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.18);border-radius:8px;padding:10px 14px;font-size:12px;color:#5a4a32;line-height:1.65;margin-bottom:18px;}
+.notice strong{color:var(--text);}
+
+/* GRIDS 4 colonnes */
+.sites-grid,.camps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;}
+
+/* SITE CARD */
+.site-card{background:white;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
+.site-card:hover{transform:translateY(-3px);box-shadow:var(--shhov);}
+.site-photo{height:160px;background:#d4cbb8;background-size:cover!important;background-position:center!important;position:relative;flex-shrink:0;}
+.site-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),transparent 50%);}
+.site-overlay{position:absolute;bottom:7px;left:9px;right:9px;z-index:2;}
+.type-badge{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.85);}
+.site-emoji{display:none!important;}
+.site-body{padding:13px;display:flex;flex-direction:column;flex:1;}
+.site-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.25;}
+.site-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.dog-tag{display:inline-flex;align-items:center;gap:3px;background:#edf7ed;color:#2C5016;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.conseil-box{background:rgba(200,168,75,.06);border-left:2px solid rgba(200,168,75,.35);padding:4px 7px;font-size:10px;color:var(--muted);line-height:1.4;border-radius:0 4px 4px 0;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
+.maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--text);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
+.maps-btn:hover{background:#333;}
+.google-btn{display:inline-flex;align-items:center;gap:3px;background:#fff8e8;border:1px solid rgba(200,168,75,.28);color:#8B6914;font-size:9.5px;font-weight:600;padding:5px 9px;border-radius:5px;text-decoration:none;cursor:pointer;transition:all .15s;}
+.google-btn:hover{background:#fef0c0;}
+.voyage-add-btn{display:inline-flex;align-items:center;gap:3px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);color:#8B6914;font-size:9.5px;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.voyage-add-btn:hover{background:rgba(200,168,75,.18);}
+.voyage-add-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
+
+/* CAMP CARD */
+.camp-card{background:white;border-radius:var(--r);padding:14px;box-shadow:var(--sh);border-top:3px solid var(--beige);transition:all .2s;display:flex;flex-direction:column;}
+.camp-card:hover{transform:translateY(-2px);box-shadow:var(--shhov);}
+.camp-card.coup-coeur{border-top-color:var(--gold);}
+.camp-header{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:3px;}
+.camp-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3;flex:1;}
+.camp-stars,.camp-note{background:#2C5016;color:white;font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:4px;flex-shrink:0;}
+.camp-lieu{font-size:9.5px;color:#999;margin-bottom:5px;}
+.camp-desc{font-size:10.5px;color:var(--muted);line-height:1.45;margin-bottom:7px;}
+.camp-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;}
+.camp-tag{background:#f5f0e8;color:#5a4a32;font-size:8px;font-weight:600;padding:2px 6px;border-radius:8px;}
+.camp-footer{display:flex;align-items:center;flex-wrap:wrap;gap:5px;border-top:1px solid #f5f0e8;padding-top:8px;margin-top:auto;}
+.tel-btn{font-size:10.5px;font-weight:600;color:var(--atl);text-decoration:none;}
+.tel-btn:hover{color:#0d3d5a;}
+.web-btn{display:inline-flex;align-items:center;gap:3px;background:#f0f4ff;border:1px solid #c0d0f0;color:#2a5aaa;font-size:8.5px;font-weight:700;padding:4px 8px;border-radius:5px;text-decoration:none;transition:all .15s;}
+.web-btn:hover{background:#dce8ff;}
+.camp-voyage-btn,.voyage-add-btn.camp-voyage{display:inline-flex;align-items:center;gap:3px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);color:#8B6914;font-size:8.5px;font-weight:700;padding:4px 8px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;margin-left:auto;}
+.camp-voyage-btn:hover{background:rgba(200,168,75,.18);}
+.camp-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
+
+/* OVERVIEW */
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:22px 28px 28px;}
+.ov-card{background:white;border-radius:var(--r);padding:20px;box-shadow:var(--sh);cursor:pointer;transition:all .2s;border-top:3px solid transparent;}
+.ov-card:hover{transform:translateY(-3px);box-shadow:var(--shhov);}
+.ov-card-pyr{border-top-color:var(--pyr);}
+.ov-card-atl{border-top-color:var(--atl);}
+.ov-card-bou{border-top-color:var(--bou);}
+.ov-card-map{border-top-color:var(--gold);}
+.ov-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;border-radius:7px;}
+.ov-card-pyr .ov-icon{background:rgba(44,80,22,.1);}
+.ov-card-atl .ov-icon{background:rgba(26,90,122,.1);}
+.ov-card-bou .ov-icon{background:rgba(107,50,136,.1);}
+.ov-card-map .ov-icon{background:rgba(200,168,75,.1);}
+.ov-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.ov-sub{font-size:10.5px;color:var(--muted);margin-bottom:12px;}
+.ov-btn{font-size:10px;font-weight:700;padding:6px 13px;border-radius:6px;border:none;cursor:pointer;transition:all .15s;}
+.ov-card-pyr .ov-btn{background:var(--pyr);color:white;}
+.ov-card-atl .ov-btn{background:var(--atl);color:white;}
+.ov-card-bou .ov-btn{background:var(--bou);color:white;}
+.ov-card-map .ov-btn{background:var(--gold);color:var(--dark);}
+
+/* DISTANCES */
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;}
+.dcard{background:white;border-radius:8px;padding:12px 14px;box-shadow:var(--sh);text-align:center;}
+.dfrom{font-size:8px;color:#bbb;text-transform:uppercase;letter-spacing:1px;}
+.dkm{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);}
+.dt{font-size:9.5px;color:var(--muted);}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:repeat(3,1fr)!important;}}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s;}
+  #sidebar.open{transform:translateX(0);}
+  #sb-overlay.open{display:block;}
+  #app-main{margin-left:0;width:100vw;}
+  #sb-toggle{display:block;}
+  #top-bar{padding:0 14px;}
+  .inner{padding:14px 12px 60px;}
+  .sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:1fr!important;}
+  .sh-compact{margin:14px 14px 0;}
+}
+@media print{#sidebar,#top-bar{display:none;}#app-main{margin-left:0;width:100%;}.section{display:block!important;}}
+</style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div id="auth-check">
+  <div class="aicon">🐾</div>
+  <h2>Des Pyrénées vers l'Alsace</h2>
+  <p>Vérification de l'accès...</p>
+  <div class="auth-spinner"></div>
+</div>
+
+<!-- Contenu protégé -->
+<div id="main-content">
+
+
+<!-- HERO -->
+
+
+<!-- ══ OVERLAY MOBILE ══ -->
+<div id="sb-overlay" onclick="closeSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<div id="sidebar">
+  <!-- Logo -->
+  <div class="sb-logo">
+    <span class="sb-logo-icon">🐾</span>
+    <div class="sb-logo-title">Rock<span>N</span>Road</div>
+    <div class="sb-logo-sub">Aventures</div>
+  </div>
+
+  <!-- Navigation principale -->
+  <div class="sb-group">
+    <div class="sb-group-label">Navigation</div>
+    <button class="sb-btn active" id="snav-overview" onclick="showTab('overview')">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span class="sb-label">Accueil</span>
+    </button>
+    <button class="sb-btn" id="snav-itinerary" onclick="showTab('itinerary')">
+      <span class="sb-dot sb-dot-pyr"></span>
+      <span class="sb-label">Itinéraire</span>
+    </button>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <!-- Étapes -->
+  <div class="sb-group">
+    <div class="sb-group-label">Étapes 2025</div>
+    <button class="sb-btn pyr" id="snav-pyrenees" onclick="showTab('pyrenees')">
+      <span class="sb-icon">🏔️</span>
+      <span class="sb-label">Pyrénées</span>
+      <span class="sb-badge">8</span>
+    </button>
+    <button class="sb-btn atl" id="snav-atlantique" onclick="showTab('atlantique')">
+      <span class="sb-icon">🌊</span>
+      <span class="sb-label">Atlantique</span>
+      <span class="sb-badge">8</span>
+    </button>
+    <button class="sb-btn bou" id="snav-bourgogne" onclick="showTab('bourgogne')">
+      <span class="sb-icon">🍷</span>
+      <span class="sb-label">Bourgogne</span>
+      <span class="sb-badge">6</span>
+    </button>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <!-- Outils -->
+  <div class="sb-group">
+    <div class="sb-group-label">Outils</div>
+    <button class="sb-btn" id="snav-carte" onclick="showTab('carte')">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span class="sb-label">Carte interactive</span>
+    </button>
+    <a class="sb-btn" href="https://www.google.com/maps/d/viewer?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno" target="_blank">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span class="sb-label">RockNRoad Maps</span>
+      <span style="font-size:9px;color:rgba(200,168,75,.5);">↗</span>
+    </a>
+    <button class="sb-btn" id="snav-fiche" onclick="showTab('fiche')">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span class="sb-label">Fiche récap</span>
+    </button>
+    <button class="sb-btn" id="snav-tips" onclick="showTab('tips')">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span class="sb-label">Conseils</span>
+    </button>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <!-- Mes lieux -->
+  <div class="sb-group">
+    <div class="sb-group-label">Mes Lieux</div>
+    <a class="sb-btn" href="fiches.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span class="sb-label">Mes Fiches</span>
+    </a>
+    <a class="sb-btn" href="voyage.html">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span class="sb-label">Mon Voyage</span>
+    </a>
+    <a class="sb-btn" href="admin.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span class="sb-label">Créer une fiche</span>
+    </a>
+  </div>
+
+  <!-- Footer user -->
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">B</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sb-username">Chargement...</div>
+        <div class="sb-user-role">Famille RockNRoad</div>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
+  </div>
+</div>
+
+<!-- ══ APP MAIN ══ -->
+<div id="app-main">
+
+  <!-- Top bar -->
+  <div id="top-bar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button id="sb-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="top-bar-title" id="top-bar-title">Vue d'<span>ensemble</span></div>
+    </div>
+    <div class="top-bar-right">
+      <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
+        🧭 <span id="top-voyage-count">0</span> lieu(x) · Voir l'itinéraire
+      </button>
+    </div>
+  </div>
+
+
+
+
+
+<!-- OVERVIEW -->
+<div class="section active" id="tab-overview">
+<section class="hero" id="top">
+  <div style="position:relative;z-index:2;max-width:580px;">
+    <div style="font-size:9.5px;letter-spacing:6px;color:rgba(200,168,75,.55);text-transform:uppercase;margin-bottom:16px;">Family Road Trip App</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(52px,9vw,100px);color:white;line-height:.92;letter-spacing:-3px;">Rock<span style="color:#C8A84B;">N</span>Road</h1>
+    <div style="font-size:clamp(12px,1.8vw,16px);color:rgba(200,168,75,.65);letter-spacing:8px;text-transform:uppercase;margin:10px 0 18px;font-weight:300;">Aventures</div>
+    <div style="width:44px;height:1px;background:rgba(200,168,75,.35);margin:0 auto 16px;"></div>
+    <p style="font-size:12.5px;color:rgba(255,255,255,.45);letter-spacing:.3px;line-height:1.8;">Votre carnet de voyage familial<br><span style="font-size:11px;">Pyrénées &middot; Atlantique &middot; Bourgogne &middot; et plus encore</span></p>
+  </div>
+</section>
+<div class="ov-grid">
+  <div class="ov-card ov-card-pyr" onclick="showTab('pyrenees')">
+    <div class="ov-icon" style="font-size:14px;color:#2C5016;">&#9650;</div>
+    <div class="ov-name">Pyr&eacute;n&eacute;es</div>
+    <div class="ov-sub">8 sites &middot; 8 campings</div>
+    <button class="ov-btn">Explorer &rarr;</button>
+  </div>
+  <div class="ov-card ov-card-atl" onclick="showTab('atlantique')">
+    <div class="ov-icon" style="font-size:14px;color:#1a5a7a;">&#9670;</div>
+    <div class="ov-name">Atlantique</div>
+    <div class="ov-sub">8 sites &middot; 7 campings</div>
+    <button class="ov-btn">Explorer &rarr;</button>
+  </div>
+  <div class="ov-card ov-card-bou" onclick="showTab('bourgogne')">
+    <div class="ov-icon" style="font-size:14px;color:#6B3288;">&#9679;</div>
+    <div class="ov-name">Bourgogne</div>
+    <div class="ov-sub">6 sites &middot; 4 campings</div>
+    <button class="ov-btn">Explorer &rarr;</button>
+  </div>
+  <div class="ov-card ov-card-map" onclick="showTab('carte')">
+    <div class="ov-icon" style="font-size:14px;color:#C8A84B;">&#9711;</div>
+    <div class="ov-name">Carte &amp; Outils</div>
+    <div class="ov-sub">42 marqueurs &middot; My Maps</div>
+    <button class="ov-btn">Voir &rarr;</button>
+  </div>
+</div>
+</div>
+
+<div class="section" id="tab-pyrenees">
+<div class="sh-compact sh-pyr"><div class="sh-title">Pyr&eacute;n&eacute;es</div><div class="sh-meta">B&eacute;arn &middot; Hautes-Pyr&eacute;n&eacute;es &middot; &asymp; 40 km depuis Arudy</div><div class="sh-tags"><span class="sh-tag">Lescun</span><span class="sh-tag">Portalet</span><span class="sh-tag">Navarrenx</span><span class="sh-tag">Gavarnie</span><span class="sh-tag">B&eacute;tharram &mdash; chien OK</span></div></div>
+<div class="inner">
+  
+  <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
+  <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
+  <div class="sites-grid"><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/gavarnie.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Village perché · Vallée d'Aspe (64)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Village de Lescun & son Cirque</h3>
+    <p class="site-desc">Village de poupée perché avec des ruelles en forte pente au milieu des géants de pierre. Balade magnifique à faire à pied avec le chien au cœur d'un cirque naturel impressionnant.</p>
+    <div class="dog-tag">✅ 100% dog-friendly — balade idéale avec le Golden</div>
+    <div class="conseil-box">💡 Village peu fréquenté. Route étroite depuis la vallée d'Aspe. Fraîcheur garantie.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Lescun+Pyrénées+village" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Village+de+Lescun+Pyr%C3%A9n%C3%A9es+cirque" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-lescun-pyr" onclick="toggleVoyageCard('lescun-pyr','Village de Lescun & son Cirque',42.931,-0.643,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/cauterets.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Fort militaire · Vallée d'Aspe (64)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Fort du Portalet</h3>
+    <p class="site-desc">Fort militaire vertigineux accroché à la falaise dans les gorges du gave d'Aspe. Route en lacets spectaculaire, vue plongeante sur la vallée. Site historique classé, chargé d'histoire depuis Napoléon jusqu'à la Seconde Guerre mondiale.</p>
+    <div class="dog-tag">✅ Extérieurs et sentiers dog-friendly en laisse</div>
+    <div class="conseil-box">💡 Route d'accès étroite et spectaculaire. Accessible à pied depuis le parking en bas. Vue vertigineuse sur les gorges. À faire le matin pour la lumière.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Fort+du+Portalet+Vallée+d+Aspe" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Fort+du+Portalet+Vall%C3%A9e+Aspe+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-portalet-pyr" onclick="toggleVoyageCard('portalet-pyr','Fort du Portalet',42.872,-0.598,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/picmidi.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Première cité bastionnée de France · Béarn (64)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Cité Fortifiée de Navarrenx</h3>
+    <p class="site-desc">Éblouissante avec ses remparts intacts du XVIe siècle. Première cité bastionnée de France. L'histoire à portée de main pour votre fille. Promenade sur les remparts incontournable.</p>
+    <div class="dog-tag">✅ Chien accepté partout sur les remparts</div>
+    <div class="conseil-box">💡 Marché le samedi matin très animé. Village classé. Baignade dans le Gave juste en bas.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Navarrenx+remparts+Béarn" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Cit%C3%A9+Fortifi%C3%A9e+Navarrenx+B%C3%A9arn" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-navarrenx-pyr" onclick="toggleVoyageCard('navarrenx-pyr','Cité Fortifiée de Navarrenx',43.323,-0.759,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/lourdes.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Château médiéval XIVe · Bigorre (65)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Château Fort de Mauvezin</h3>
+    <p class="site-desc">Un vrai château fort du XIVe siècle avec donjon, machicoulis et vue panoramique sur les Pyrénées. Histoire vivante parfaite pour votre fille. Chiens acceptés partout même à l'intérieur !</p>
+    <div class="dog-tag">✅ Chiens acceptés à l'intérieur du château !</div>
+    <div class="conseil-box">💡 Petit château très bien conservé. Visite guidée possible. Vue à 360° depuis le donjon.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Château+Fort+Mauvezin+Bigorre" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Ch%C3%A2teau+Fort+Mauvezin+Bigorre" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-mauvezin-pyr" onclick="toggleVoyageCard('mauvezin-pyr','Château Fort de Mauvezin',43.043,0.119,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/grottes.jpg')">
+    <div class="site-overlay"><span class="type-badge">Patrimoine UNESCO · Hautes-Pyrénées</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Cirque de Gavarnie</h3>
+    <p class="site-desc">L'une des plus grandes merveilles naturelles de France. La Grande Cascade culmine à 423 m. Accessible à pied, à cheval ou à âne depuis le village de Gavarnie.</p>
+    <div class="dog-tag">✅ Sentier dog-friendly toute l'année</div>
+    <div class="conseil-box">💡 Partir avant 8h. Compter 3h aller-retour. Veste indispensable même en été.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Cirque+de+Gavarnie" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Cirque+de+Gavarnie+UNESCO+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-gavarnie-pyr" onclick="toggleVoyageCard('gavarnie-pyr','Cirque de Gavarnie',42.726,-0.01,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/saintsavin.jpg')">
+    <div class="site-overlay"><span class="type-badge">Site Naturel · Cauterets (65)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Pont d'Espagne & Lac de Gaube</h3>
+    <p class="site-desc">Cascades spectaculaires et Lac de Gaube aux eaux turquoise entouré de sommets enneigés. Télécabine disponible pour monter plus haut.</p>
+    <div class="dog-tag">✅ Sentiers larges et ombragés</div>
+    <div class="conseil-box">💡 Télécabine depuis le parking. Vérifier acceptation chiens en cabine.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Pont+d+Espagne+Cauterets" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Pont+Espagne+Lac+Gaube+Cauterets+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-cauterets-pyr" onclick="toggleVoyageCard('cauterets-pyr','Pont d\'Espagne & Lac de Gaube',42.886,-0.144,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/dunepilat.jpg')">
+    <div class="site-overlay"><span class="type-badge">Grottes · Saint-Pé-de-Bigorre (65)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Grottes de Bétharram</h3>
+    <p class="site-desc">5 km de galeries sur 5 niveaux. Visite en barque sur lac souterrain puis en petit train. À seulement 30 min du départ !</p>
+    <div class="dog-tag">✅ Chiens acceptés (même en bateau et petit train !)</div>
+    <div class="conseil-box">💡 Durée 1h15. Température 13°C constante. Billetterie en ligne conseillée.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Grottes+de+Betharram" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Grottes+de+B%C3%A9tharram+visite+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-betharram-pyr" onclick="toggleVoyageCard('betharram-pyr','Grottes de Bétharram',43.069,-0.095,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/capferret.jpg')">
+    <div class="site-overlay"><span class="type-badge">Patrimoine · Vallée de Cauterets (65)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Abbaye de Saint-Savin</h3>
+    <p class="site-desc">Abbaye bénédictine du XIe siècle classée Monument Historique. Cloître roman remarquable, peintures murales médiévales.</p>
+    <div class="dog-tag">✅ Village et extérieurs dog-friendly</div>
+    <div class="conseil-box">💡 Village calme et peu touristique. Marché le week-end.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Abbaye+Saint-Savin+65" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Abbaye+Saint-Savin+Hautes-Pyr%C3%A9n%C3%A9es+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-saintsavin-pyr" onclick="toggleVoyageCard('saintsavin-pyr','Abbaye de Saint-Savin',43.069,-0.153,'Pyrénées','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div></div>
+  <div class="divl"><div class="divl-t">⛺ Les 8 campings recommandés</div></div>
+  <div class="camp-intro">🏕️ <strong>En plein été :</strong> réserver au minimum 2–3 semaines à l'avance. Précisez toujours : <em>teardrop (≈10m) + tente additionnelle + chien Golden Retriever + 3 personnes + branchement 16A</em>.</div>
+  <div class="camps-grid"><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Camping Passus Lupi</div>
+      <div class="camp-lieu">📍 Saint-Béat-Lez (31)</div>
+    </div>
+    <div class="camp-note">4.9 ★</div>
+  </div>
+  <p class="camp-desc">Coup de cœur absolu ! Accueil exceptionnel, cadre de rêve au cœur des Pyrénées. Sanitaires impeccables, calme total.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33620899070" class="tel-btn">📞 +33 6 20 89 90 70</a>
+            <a href="https://www.passuslupi.fr/fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-passus-lupi" onclick="toggleVoyageCard('passus-lupi','Camping Passus Lupi',42.921,0.405,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Camping Le Hounta</div>
+      <div class="camp-lieu">📍 Gavarnie (65)</div>
+    </div>
+    <div class="camp-note">4.7 ★</div>
+  </div>
+  <p class="camp-desc">Aux portes du Cirque de Gavarnie. Vue imprenable sur les sommets dès le réveil. Idéal pour la randonnée.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33562924841" class="tel-btn">📞 +33 5 62 92 48 41</a>
+            <a href="https://www.camping-le-hounta.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-le-hounta" onclick="toggleVoyageCard('le-hounta','Camping Le Hounta',42.738,-0.014,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Cabaliros</div>
+      <div class="camp-lieu">📍 Argelès-Gazost (65)</div>
+    </div>
+    <div class="camp-note">4.4 ★</div>
+  </div>
+  <p class="camp-desc">Familial et bien équipé. Piscine chauffée, grande aire pour véhicules avec remorque. Point de départ idéal.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33562970167" class="tel-btn">📞 +33 5 62 97 01 67</a>
+            <a href="https://www.camping-cabaliros.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-cabaliros" onclick="toggleVoyageCard('cabaliros','Camping Cabaliros',43.0,-0.096,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping La Bergerie</div>
+      <div class="camp-lieu">📍 Luz-Saint-Sauveur (65)</div>
+    </div>
+    <div class="camp-note">4.3 ★</div>
+  </div>
+  <p class="camp-desc">Au bord du Gave de Pau. Village thermal à 5 min. Excellente base pour explorer les vallées pyrénéennes.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33562928557" class="tel-btn">📞 +33 5 62 92 85 57</a>
+            <a href="https://www.campingbergerie65.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-la-bergerie" onclick="toggleVoyageCard('la-bergerie','Camping La Bergerie',42.87,-0.002,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Huttopia Nature en Béarn</div>
+      <div class="camp-lieu">📍 Proche Navarrenx (64)</div>
+    </div>
+    <div class="camp-note">4.5 ★</div>
+  </div>
+  <p class="camp-desc">L'esprit Huttopia par excellence. Grands emplacements sous les arbres, très calme. Idéal près des remparts de Navarrenx.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33559660897" class="tel-btn">📞 +33 5 59 66 08 97</a>
+            <a href="https://europe.huttopia.com/site/camping-nature-en-bearn/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-bearn" onclick="toggleVoyageCard('huttopia-bearn','Huttopia Nature en Béarn',43.322,-0.76,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Le Rey</div>
+      <div class="camp-lieu">📍 Louvie-Juzon (64)</div>
+    </div>
+    <div class="camp-note">4.3 ★</div>
+  </div>
+  <p class="camp-desc">À deux pas d'Arudy, ultra-ombragé et calme. Parfait comme camp de base nature pour rayonner dans les Pyrénées.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33559057468" class="tel-btn">📞 +33 5 59 05 74 68</a>
+            <a href="https://www.campinglerey.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-le-rey" onclick="toggleVoyageCard('le-rey','Camping Le Rey',43.084,-0.418,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Beau Rivage</div>
+      <div class="camp-lieu">📍 Navarrenx (64)</div>
+    </div>
+    <div class="camp-note">4.2 ★</div>
+  </div>
+  <p class="camp-desc">Au pied des remparts historiques. Grands arbres et le Gave juste à côté pour baigner le chien. Très bien situé.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33559661000" class="tel-btn">📞 +33 5 59 66 10 00</a>
+            <a href="https://www.camping-beaurivage-navarrenx.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-beau-rivage" onclick="toggleVoyageCard('beau-rivage','Camping Beau Rivage',43.322,-0.758,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping d'Aspe</div>
+      <div class="camp-lieu">📍 Gurmençon (64)</div>
+    </div>
+    <div class="camp-note">4.1 ★</div>
+  </div>
+  <p class="camp-desc">Emplacements spacieux et arborés, très sauvage et tourné vers la rando. Parfait pour l'étape Lescun et Vallée d'Aspe.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33559345177" class="tel-btn">📞 +33 5 59 34 51 77</a>
+            <a href="https://www.campingaspe.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-daspe" onclick="toggleVoyageCard('daspe','Camping d'Aspe',43.21,-0.554,'Pyrénées','Camping')">🧭</button>
+  </div>
+</div></div>
+</div></div>
+
+<!-- ATLANTIQUE -->
+<div class="section" id="tab-atlantique">
+<div class="sh-compact sh-atl"><div class="sh-title">Atlantique</div><div class="sh-meta">Landes &middot; Gironde &middot; &asymp; 180 km depuis les Pyr&eacute;n&eacute;es</div><div class="sh-tags"><span class="sh-tag">Dune du Pilat</span><span class="sh-tag">Cap Ferret</span><span class="sh-tag">For&ecirc;t v&eacute;lo</span><span class="sh-tag">Saint-Macaire</span></div></div>
+<div class="inner">
+  
+  <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
+  <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
+  <div class="sites-grid"><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/foretlandes.jpg')">
+    <div class="site-overlay"><span class="type-badge">Site Naturel · Gironde</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Dune du Pilat</h3>
+    <p class="site-desc">Plus haute dune d'Europe (110 m). Vue imprenable sur la forêt de pins et l'Atlantique. Incontournable. En été, y aller en fin de journée pour un coucher de soleil mémorable.</p>
+    <div class="dog-tag">✅ Chiens en laisse autorisés sur toute la dune !</div>
+    <div class="conseil-box">💡 Fin de journée recommandée en été (coucher de soleil). Parking payant. Montée 15-20 min.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Dune+du+Pilat" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Dune+du+Pilat+Arcachon+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-pilat-atl" onclick="toggleVoyageCard('pilat-atl','Dune du Pilat',44.594,-1.212,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/laclandes.jpg')">
+    <div class="site-overlay"><span class="type-badge">Presqu'île · Gironde</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Cap Ferret & Villages Ostréicoles</h3>
+    <p class="site-desc">Prenez la navette maritime depuis Arcachon avec les vélos et le chien (accepté à bord). Roulez jusqu'au village en bois de L'Herbe pour déguster des huîtres face au Bassin.</p>
+    <div class="dog-tag">✅ Chien accepté sur la navette maritime !</div>
+    <div class="conseil-box">💡 Navette Arcachon–Cap Ferret toutes les 30 min. Vélos acceptés à bord. Rouler jusqu'à L'Herbe.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Cap+Ferret+Gironde" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Cap+Ferret+villages+ostr%C3%A9icoles+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-capferret-atl" onclick="toggleVoyageCard('capferret-atl','Cap Ferret & Villages Ostréicoles',44.634,-1.25,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/ostreicole.jpg')">
+    <div class="site-overlay"><span class="type-badge">Parc Naturel · Landes</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Forêt des Landes à Vélo</h3>
+    <p class="site-desc">Des centaines de km de voies vertes plates et goudronnées, totalement interdites aux voitures. Le paradis pour vos vélos électriques sous l'odeur des pins maritimes.</p>
+    <div class="dog-tag">✅ Paradis pour les chiens — pistes larges</div>
+    <div class="conseil-box">💡 App Vélo Landes pour les itinéraires. Voies vertes interdites aux voitures.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Forêt+des+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=For%C3%AAt+des+Landes+piste+cyclable+v%C3%A9lo+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-foretlandes-atl" onclick="toggleVoyageCard('foretlandes-atl','Forêt des Landes à Vélo',43.95,-1.334,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/vieuxboucau.jpg')">
+    <div class="site-overlay"><span class="type-badge">Léon · Hossegor · Cazaux</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Lacs des Landes</h3>
+    <p class="site-desc">Lacs naturels aux eaux claires et chaudes. Baignade, kayak, stand-up paddle. Plages calmes et peu fréquentées.</p>
+    <div class="dog-tag">✅ Zones chien sur plusieurs plages</div>
+    <div class="conseil-box">💡 Lac de Léon parmi les plus beaux. Éviter le week-end d'août.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Lac+de+Leon+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Lac+de+L%C3%A9on+Landes+baignade+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-laclandes-atl" onclick="toggleVoyageCard('laclandes-atl','Lacs des Landes',43.88,-1.31,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/reims.jpg')">
+    <div class="site-overlay"><span class="type-badge">Patrimoine Maritime · Gironde</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Cabanes Ostréicoles du Bassin</h3>
+    <p class="site-desc">L'Herbe, Claouey, Grand Piquey : cabanes colorées sur pilotis, huîtres fraîches avec vue sur le Bassin d'Arcachon.</p>
+    <div class="dog-tag">✅ Villages très dog-friendly</div>
+    <div class="conseil-box">💡 Village de L'Herbe le plus pittoresque. Cabanes ouvertes dès 10h. Prévoir liquide.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=L+Herbe+Cap+Ferret" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=cabanes+ostr%C3%A9icoles+L+Herbe+Cap+Ferret+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-ostreicole-atl" onclick="toggleVoyageCard('ostreicole-atl','Cabanes Ostréicoles du Bassin',44.71,-1.238,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/mercier.jpg')">
+    <div class="site-overlay"><span class="type-badge">Station Landaise · Landes</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Vieux-Boucau & Côte Sauvage</h3>
+    <p class="site-desc">Lac marin naturel, surf, plage immense et sauvage. Couchers de soleil spectaculaires sur l'Atlantique.</p>
+    <div class="dog-tag">✅ Grandes plages dog-friendly</div>
+    <div class="conseil-box">💡 Coucher de soleil depuis la plage Nord inoubliable.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Vieux-Boucau-les-Bains" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Vieux-Boucau+plage+c%C3%B4te+sauvage+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-vieuxboucau-atl" onclick="toggleVoyageCard('vieuxboucau-atl','Vieux-Boucau & Côte Sauvage',43.794,-1.398,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/hautvillers.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Ville fortifiée · Gironde</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Cité Médiévale de Saint-Macaire</h3>
+    <p class="site-desc">Une incroyable ville fortifiée perchée sur son rocher avec des ruelles du Moyen-Âge. Très peu connue des touristes mais absolument magnifique. Un coup de cœur garanti.</p>
+    <div class="dog-tag">✅ Très dog-friendly — ruelles et remparts accessibles</div>
+    <div class="conseil-box">💡 Peu fréquentée même en été. Marché le dimanche. À 30 min de Bordeaux.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Saint-Macaire+cité+médiévale+Gironde" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Cit%C3%A9+M%C3%A9di%C3%A9vale+Saint-Macaire+Gironde+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-saintmacaire-atl" onclick="toggleVoyageCard('saintmacaire-atl','Cité Médiévale de Saint-Macaire',44.568,-0.226,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/chateau.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Bastide médiévale · Landes</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Labastide-d'Armagnac</h3>
+    <p class="site-desc">Une des plus belles bastides du Sud-Ouest, restée intacte depuis le XIVe siècle. Place centrale pavée superbe à découvrir. Architecture médiévale remarquablement préservée.</p>
+    <div class="dog-tag">✅ Village dog-friendly — place et ruelles accessibles</div>
+    <div class="conseil-box">💡 Marché le dimanche matin. Village viticole — dégustation d'Armagnac possible.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Labastide-d+Armagnac+Landes" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Labastide+d+Armagnac+bastide+m%C3%A9di%C3%A9vale+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-labastide-atl" onclick="toggleVoyageCard('labastide-atl','Labastide-d\'Armagnac',43.978,-0.237,'Atlantique','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div></div>
+  <div class="divl"><div class="divl-t">⛺ Les 7 campings recommandés</div></div>
+  <div class="camp-intro">🏕️ <strong>En plein été :</strong> les campings du Bassin d'Arcachon et des Landes sont très demandés. Réserver 4–6 semaines à l'avance pour juillet-août ! Huttopia Arcachon et Le Truc Vert sont particulièrement prisés.</div>
+  <div class="camps-grid"><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Huttopia Landes Sud</div>
+      <div class="camp-lieu">📍 Saint-Michel-Escalus (40)</div>
+    </div>
+    <div class="camp-note">4.5 ★</div>
+  </div>
+  <p class="camp-desc">En pleine forêt de pins, au bord d'un ruisseau. Très sauvage, accès direct aux pistes cyclables. Le top Huttopia.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33558902630" class="tel-btn">📞 +33 5 58 90 26 30</a>
+            <a href="https://europe.huttopia.com/site/camping-landes-sud/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-landes" onclick="toggleVoyageCard('huttopia-landes','Huttopia Landes Sud',43.883,-1.226,'Atlantique','Camping')">🧭</button>
+  </div>
+            <a href="https://europe.huttopia.com/site/camping-arcachon/" target="_blank" class="web-btn">🌐 Site officiel</a>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Camping L'Océane ★★★★</div>
+      <div class="camp-lieu">📍 Vielle-Saint-Girons (40)</div>
+    </div>
+    <div class="camp-note">4.5 ★</div>
+  </div>
+  <p class="camp-desc">Petit camping familial exemplaire, propre et calme. Emplacement privé en bord de forêt. Restaurant raisonnable.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33558429437" class="tel-btn">📞 +33 5 58 42 94 37</a>
+            <a href="https://www.campingloceane.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-loceane" onclick="toggleVoyageCard('loceane','Camping L'Océane',43.969,-1.324,'Atlantique','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Azu'Rivage</div>
+      <div class="camp-lieu">📍 Azur, Landes (40)</div>
+    </div>
+    <div class="camp-note">3.9 ★</div>
+  </div>
+  <p class="camp-desc">Grand emplacement ombragé bord de lac. Sports nautiques, restaurant La Pailotte adjacent.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33558483072" class="tel-btn">📞 +33 5 58 48 30 72</a>
+            <a href="https://www.camping-azurivage.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-azurivage" onclick="toggleVoyageCard('azurivage','Camping Azu'Rivage',43.655,-1.334,'Atlantique','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Lou Pignada Ondres</div>
+      <div class="camp-lieu">📍 Ondres, Landes (40)</div>
+    </div>
+    <div class="camp-note">3.8 ★</div>
+  </div>
+  <p class="camp-desc">À 2 km de la plage, idéal avec les vélos. Entre Bayonne, Hossegor et Biarritz.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33559453065" class="tel-btn">📞 +33 5 59 45 30 65</a>
+            <a href="https://www.camping-lou-pignada.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-lou-pignada" onclick="toggleVoyageCard('lou-pignada','Camping Lou Pignada Ondres',43.561,-1.507,'Atlantique','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Huttopia Arcachon</div>
+      <div class="camp-lieu">📍 La Teste-de-Buch (33)</div>
+    </div>
+    <div class="camp-note">4.6 ★</div>
+  </div>
+  <p class="camp-desc">À deux pas de la Dune du Pilat, niché sous une pinède très dense. Idéal pour être au cœur du Bassin d'Arcachon.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33556832415" class="tel-btn">📞 +33 5 56 83 24 15</a>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Camping Le Truc Vert</div>
+      <div class="camp-lieu">📍 Cap Ferret (33)</div>
+    </div>
+    <div class="camp-note">4.7 ★</div>
+  </div>
+  <p class="camp-desc">100% nature, aucun mobil-home, uniquement des emplacements au milieu des pins sauvages. L'esprit glamping nature parfait pour un Teardrop !</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <a href="tel:+33556608851" class="tel-btn">📞 +33 5 56 60 88 51</a>
+            <a href="https://www.trucvert.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-truc-vert" onclick="toggleVoyageCard('truc-vert','Camping Le Truc Vert',44.68,-1.22,'Atlantique','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Les Prés Verts</div>
+      <div class="camp-lieu">📍 Lac de Biscarrosse (40)</div>
+    </div>
+    <div class="camp-note">4.2 ★</div>
+  </div>
+  <p class="camp-desc">Très arboré et fleuri, calme. Parfait pour rayonner à vélo entre les grands lacs landais et l'océan Atlantique.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33558098432" class="tel-btn">📞 +33 5 58 09 84 32</a>
+            <a href="https://www.camping-presverts-biscarrosse.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-pres-verts" onclick="toggleVoyageCard('pres-verts','Camping Les Prés Verts',44.376,-1.165,'Atlantique','Camping')">🧭</button>
+  </div>
+</div></div>
+</div></div>
+
+<!-- BOURGOGNE -->
+<div class="section" id="tab-bourgogne">
+<div class="sh-compact sh-bou"><div class="sh-title">Bourgogne</div><div class="sh-meta">Yonne &middot; C&ocirc;te-d&apos;Or &middot; &asymp; 500 km depuis les Landes</div><div class="sh-tags"><span class="sh-tag">Gu&eacute;delon</span><span class="sh-tag">V&eacute;zelay</span><span class="sh-tag">Canal v&eacute;lo</span><span class="sh-tag">Beaune</span></div></div>
+<div class="inner">
+  
+  <div class="divl"><div class="divl-t">🗺 Les 6 lieux à visiter</div></div>
+  <p style="color:#888;font-size:12.5px;margin-bottom:20px;margin-top:-16px">Plus de sites que vous ne pourrez en faire — choisissez selon vos envies sur place !</p>
+  <div class="sites-grid"><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/ardenne.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Chantier médiéval · Puisaye (89)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Château de Guédelon</h3>
+    <p class="site-desc">Le plus grand chantier médiéval du monde ! On construit un château fort avec les techniques du XIIIe siècle. Un musée vivant à ciel ouvert fascinant, parfait pour votre fille.</p>
+    <div class="dog-tag">✅ Chiens très chaleureusement acceptés partout sur le site !</div>
+    <div class="conseil-box">💡 Prévoir 3-4h minimum. Ouvert de mi-mars à mi-novembre. Site immense. Toutou-bars sur place !</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Château+de+Guédelon" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Ch%C3%A2teau+de+Gu%C3%A9delon+chantier+m%C3%A9di%C3%A9val+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-guedelon-bou" onclick="toggleVoyageCard('guedelon-bou','Château de Guédelon',47.593,3.195,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/lacardenne.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Classé UNESCO · Yonne (89)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Village Perché de Vézelay</h3>
+    <p class="site-desc">Colline éternelle classée UNESCO avec un village médiéval fortifié magnifique qui monte jusqu'à la basilique romane. Les ruelles pavées sont superbes à parcourir avec le chien.</p>
+    <div class="dog-tag">✅ Ruelles pavées dog-friendly en laisse</div>
+    <div class="conseil-box">💡 Monter tôt le matin pour éviter la foule en été. Vue panoramique depuis la basilique.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Vézelay+basilique+UNESCO" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Village+V%C3%A9zelay+UNESCO+basilique+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-vezelay-bou" onclick="toggleVoyageCard('vezelay-bou','Village Perché de Vézelay',47.466,3.744,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/autun.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Village fortifié perché · Côte-d'Or (21)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Château de Châteauneuf-en-Auxois</h3>
+    <p class="site-desc">Village fortifié perché sur son éperon rocheux avec un château fort militaire imposant. Vue extraordinaire sur le canal de Bourgogne et la plaine. Parfait pour votre fille.</p>
+    <div class="dog-tag">✅ Village et extérieurs immédiats accessibles en laisse</div>
+    <div class="conseil-box">💡 Vue imprenable depuis les remparts. Village classé parmi les plus beaux de France.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Châteauneuf-en-Auxois+château" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Ch%C3%A2teau+Ch%C3%A2teauneuf+en+Auxois+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-chateauneuf-bou" onclick="toggleVoyageCard('chateauneuf-bou','Château de Châteauneuf-en-Auxois',47.206,4.643,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/beaune.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Voie verte · Côte-d'Or (21)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Canal de Bourgogne à Vélo</h3>
+    <p class="site-desc">Piste cyclable plate et ombragée le long du canal et de ses écluses historiques. Sous les grands platanes centenaires, entre villages vignerons et péniches colorées.</p>
+    <div class="dog-tag">✅ Idéal avec le chien sur la piste cyclable</div>
+    <div class="conseil-box">💡 Piste plate — parfaite pour toute la famille. Nombreux villages et écluses à découvrir.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Canal+de+Bourgogne+vélo" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Canal+de+Bourgogne+v%C3%A9lo+cyclable+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-canal-bou" onclick="toggleVoyageCard('canal-bou','Canal de Bourgogne à Vélo',47.32,4.555,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/canalbourgogne.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Ville Romaine & Médiévale · Saône-et-Loire (71)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Autun & Cathédrale Saint-Lazare</h3>
+    <p class="site-desc">Ancienne capitale romaine de Gaule avec théâtre romain, portes antiques et cathédrale romane magnifique. Un voyage dans le temps incroyable pour les passionnés d'histoire.</p>
+    <div class="dog-tag">✅ Ville très dog-friendly — sites extérieurs accessibles</div>
+    <div class="conseil-box">💡 Théâtre romain gratuit. Cathédrale magnifique. Ville peu fréquentée. Belle halte culturelle.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Autun+cathédrale+Saône-et-Loire" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Autun+Cath%C3%A9drale+Saint-Lazare+ville+romaine+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-autun-bou" onclick="toggleVoyageCard('autun-bou','Autun & Cathédrale Saint-Lazare',46.951,4.299,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div><div class="site-card">
+  <div class="site-photo" style="background-image:url('https://cazqllstxhuecoqpktwm.supabase.co/storage/v1/object/public/photos-lieux/carnet-2025/chateauneuf.jpg');background-size:cover;background-position:center">
+    <div class="site-overlay"><span class="type-badge">Capitale des vins · Côte-d'Or (21)</span></div>
+  </div>
+  <div class="site-body">
+    <h3 class="site-name">Beaune & Hospices de Beaune</h3>
+    <p class="site-desc">La capitale des vins de Bourgogne avec ses fameux Hospices aux toits colorés en tuiles vernissées. Centre médiéval remarquablement préservé. Route des Grands Crus à vélo.</p>
+    <div class="dog-tag">✅ Extérieurs et ruelles accessibles en laisse</div>
+    <div class="conseil-box">💡 Marché le samedi. Visite des Hospices payante mais magnifique. Dégustation incontournable.</div>
+        <div class="site-actions-row">
+    <a href="https://maps.google.com/?q=Beaune+Hospices+Bourgogne" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="https://www.google.com/search?q=Beaune+Hospices+de+Beaune+Bourgogne+photos" target="_blank" class="google-btn">🔍 Google &amp; Photos</a>
+        <button class="voyage-add-btn" id="vcard-beaune-bou" onclick="toggleVoyageCard('beaune-bou','Beaune & Hospices de Beaune',47.026,4.84,'Bourgogne','Site')">🧭 Mon Voyage</button>
+        </div>
+  </div>
+</div></div>
+  <div class="divl"><div class="divl-t">⛺ Les 4 campings recommandés</div></div>
+  <div class="camp-intro">🏕️ <strong>En Bourgogne :</strong> les campings sont moins saturés qu'en bord de mer, mais réservez quand même 2–3 semaines à l'avance en juillet-août. Huttopia Étang de Fouché est le plus adapté à votre équipement.</div>
+  <div class="camps-grid"><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Huttopia Étang de Fouché</div>
+      <div class="camp-lieu">📍 Arnay-le-Duc (21)</div>
+    </div>
+    <div class="camp-note">4.5 ★</div>
+  </div>
+  <p class="camp-desc">En plein cœur de la Bourgogne historique. Bordé par un étang, très boisé et calme. Parfait pour le Teardrop + la tente.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33380900223" class="tel-btn">📞 +33 3 80 90 02 23</a>
+            <a href="https://europe.huttopia.com/site/camping-etang-de-fouche/" target="_blank" class="web-btn">🌐 Site officiel</a>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">⭐ Camping Huttopia Valserine</div>
+      <div class="camp-lieu">📍 Mijoux - Jura (01)</div>
+    </div>
+    <div class="camp-note">4.4 ★</div>
+  </div>
+  <p class="camp-desc">Option si remontée par le Jura vers l'Alsace. Emplacements XXL en pleine nature arborée au pied du Jura.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <a href="tel:+33450416401" class="tel-btn">📞 +33 4 50 41 64 01</a>
+            <a href="https://europe.huttopia.com/site/village-valserine/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-huttopia-vals" onclick="toggleVoyageCard('huttopia-vals','Huttopia Valserine',46.385,5.999,'Bourgogne','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping de Vézelay L'Ermitage</div>
+      <div class="camp-lieu">📍 Vézelay (89)</div>
+    </div>
+    <div class="camp-note">4.2 ★</div>
+  </div>
+  <p class="camp-desc">Petit camping verdoyant et calme au pied de la colline historique de Vézelay. Idéal pour explorer le village classé UNESCO.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33386332418" class="tel-btn">📞 +33 3 86 33 24 18</a>
+            <a href="https://www.camping-vezelay.com/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-vezelay-camp" onclick="toggleVoyageCard('vezelay-camp','Camping de Vézelay L'Ermitage',47.465,3.745,'Bourgogne','Camping')">🧭</button>
+  </div>
+</div><div class="camp-card">
+  <div class="camp-header">
+    <div>
+      <div class="camp-name">Camping Au Bois de Soulangis</div>
+      <div class="camp-lieu">📍 Proche Guédelon (89)</div>
+    </div>
+    <div class="camp-note">4.1 ★</div>
+  </div>
+  <p class="camp-desc">Dans un grand parc arboré avec étang, très ombragé. Ambiance nature et espace. À quelques km du chantier de Guédelon.</p>
+  <div class="camp-tags">
+    <span class="camp-tag">🐕 Chien OK</span>
+    <span class="camp-tag">🚐 Teardrop</span>
+    <span class="camp-tag">⛺ Tente</span>
+  </div>
+  <div class="camp-footer">
+    <a href="tel:+33386745510" class="tel-btn">📞 +33 3 86 74 55 10</a>
+            <a href="https://www.campingsoulangis.fr/" target="_blank" class="web-btn">🌐 Site officiel</a>
+            <button class="voyage-add-btn" id="vcard-soulangis" onclick="toggleVoyageCard('soulangis','Camping Au Bois de Soulangis',47.595,3.201,'Bourgogne','Camping')">🧭</button>
+  </div>
+</div></div>
+</div></div>
+
+<!-- CARTE -->
+<!-- ══ CARTE ══ -->
+<div class="section" id="tab-carte">
+<div class="inner">
+  <h2 class="sec-title">Carte <em>Interactive</em></h2>
+  <p class="sec-lead">Tous vos sites et campings sur une carte Google — cliquez sur chaque marqueur pour voir les détails. Carte évolutive : ajoutez de nouveaux sites chaque année !</p>
+
+  <!-- Légende couleurs -->
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:7px;background:white;border-radius:20px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:12px;font-weight:600;">
+      <span style="width:14px;height:14px;border-radius:50%;background:#2C5016;display:inline-block;"></span> Sites Pyrénées
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:white;border-radius:20px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:12px;font-weight:600;">
+      <span style="width:14px;height:14px;border-radius:50%;background:#1a5a7a;display:inline-block;"></span> Sites Atlantique
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:white;border-radius:20px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:12px;font-weight:600;">
+      <span style="width:14px;height:14px;border-radius:50%;background:#6B3288;display:inline-block;"></span> Sites Bourgogne
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:white;border-radius:20px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:12px;font-weight:600;">
+      <span style="width:14px;height:14px;border-radius:50%;background:#C8A84B;display:inline-block;"></span> Campings
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;background:white;border-radius:20px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:12px;font-weight:600;">
+      <span style="font-size:14px;">⭐</span> Départ — Arudy
+    </div>
+  </div>
+
+  <!-- Carte Google My Maps -->
+  <div style="border-radius:12px;overflow:hidden;border:3px solid var(--gold);box-shadow:0 6px 28px rgba(0,0,0,.12);">
+    <iframe
+      src="https://www.google.com/maps/d/embed?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno&ll=45.5,1.5&z=6"
+      width="100%"
+      height="580"
+      style="border:none;display:block;"
+      allowfullscreen
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+  </div>
+
+  <p style="font-size:11px;color:#aaa;text-align:center;margin-top:10px;">
+    🗺 Google My Maps · RockNRoad Maps · Cliquez sur les marqueurs pour voir les détails
+    &nbsp;·&nbsp;
+    <a href="https://www.google.com/maps/d/viewer?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno" target="_blank" style="color:var(--gold);text-decoration:none;font-weight:600;">Ouvrir en plein écran ↗</a>
+  </p>
+
+  <!-- Distances -->
+  <div class="dgrid" style="margin-top:20px;">
+    <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">Départ → Pyrénées</div><div class="dkm">≈ 40 km</div><div class="dt">45 min · Via Laruns</div></div>
+    <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">Pyrénées → Landes</div><div class="dkm">≈ 180 km</div><div class="dt">2h · Via Pau</div></div>
+    <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">Landes → Bourgogne</div><div class="dkm">≈ 500 km</div><div class="dt">5h · Via Clermont-Fd</div></div>
+    <div class="dcard" style="border-top:3px solid #C8A84B"><div class="dfrom">Bourgogne → Alsace</div><div class="dkm">≈ 300 km</div><div class="dt">3h · Via Belfort</div></div>
+  </div>
+
+  <!-- Info évolution -->
+  <div style="background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.3);border-radius:10px;padding:16px 20px;margin-top:20px;font-size:13px;color:#5a4a32;line-height:1.7;">
+    🗺 <strong style="color:#1A1208;">Carte évolutive :</strong> Cette carte grandit avec vous ! Depuis votre téléphone, ouvrez 
+    <a href="https://mymaps.google.com" target="_blank" style="color:var(--gold);font-weight:600;">Google My Maps</a>, 
+    trouvez <strong>RockNRoad Maps</strong> et ajoutez de nouveaux sites en 30 secondes. 
+    La carte se met à jour automatiquement ici sans toucher au code du site.
+  </div>
+</div>
+</div>
+<div class="section" id="tab-tips"><div class="inner">
+  <h2 class="sec-title">Conseils & <em>Pratique</em></h2>
+  <p class="sec-lead">Tout ce qu'il faut pour voyager sereinement avec teardrop, vélos et Golden Retriever — en plein été !</p>
+  <div class="info-banner">☀️ <strong>Voyage en plein été :</strong> réservez vos campings le plus tôt possible. Les campings du Bassin d'Arcachon et des Landes se remplissent dès avril-mai pour juillet-août !</div>
+  <div class="tips-grid">
+    <div class="tip-card"><div class="tip-title">🐾 Chien en camping</div><ul class="tip-list"><li>Appeler pour confirmer l'acceptation</li><li>Préciser race &amp; taille (Golden Retriever)</li><li>Demander si emplacements clôturés</li><li>Carnet vaccination à jour (rage)</li><li>Nuit chaude : prévoir ventilation tente</li></ul></div>
+    <div class="tip-card"><div class="tip-title">🌊 Chien sur les plages (été)</div><ul class="tip-list"><li>Juil–août : interdit zone de baignade</li><li>Matin avant 9h : plages souvent autorisées</li><li>Dune du Pilat : laisse OK toute la dune !</li><li>Cap Ferret Bassin : plus permissif qu'Océan</li><li>Toujours avoir une laisse sur soi</li></ul></div>
+    <div class="tip-card"><div class="tip-title">📋 Campings en été</div><ul class="tip-list"><li>Landes/Arcachon : réserver 4–6 sem. avant</li><li>Pyrénées/Bourgogne : 2–3 sem. suffisent</li><li>Mentionner : teardrop + tente + chien + 3p</li><li>Confirmer électricité 16A impérativement</li><li>Demander taille minimale emplacement</li></ul></div>
+    <div class="tip-card"><div class="tip-title">⚡ Vélos électriques</div><ul class="tip-list"><li>Recharge sur borne camping ou prise normale</li><li>App Komoot pour pistes cyclables</li><li>Voies vertes Landes : interdites aux voitures</li><li>Canal de Bourgogne : plat et ombragé</li><li>Antivols U robustes pour les haltes</li></ul></div>
+    <div class="tip-card"><div class="tip-title">🚐 Teardrop pratique</div><ul class="tip-list"><li>Emplacement minimum 10m de long</li><li>Arriver avant 18h pour un bon emplacement</li><li>Laisser le Teardrop au camping certains jours</li><li>Vérifier accès vélos depuis l'emplacement</li><li>GPS : signaler remorque dans les réglages</li></ul></div>
+    <div class="tip-card"><div class="tip-title">🌡️ Chaleur estivale</div><ul class="tip-list"><li>Visiter châteaux &amp; grottes : fraîcheur garantie</li><li>Partir tôt (7–9h) pour les randonnées</li><li>Sieste l'après-midi : adapté au chien aussi</li><li>Eau abondante pour le Golden Retriever</li><li>Dune du Pilat : y aller en soirée !</li></ul></div>
+  </div>
+  <div class="divl"><div class="divl-t">📞 Script de réservation camping</div></div>
+  <div class="script-box">
+    <strong style="color:#6B3010">"Bonjour, je souhaite réserver un emplacement pour une voiture avec remorque teardrop (environ 10 mètres au total), une tente additionnelle à côté, et un chien Golden Retriever. Nous sommes 3 personnes. Avez-vous des emplacements adaptés avec branchement électrique 16A disponibles ?"</strong>
+    <br><br>
+    <strong>Questions à poser impérativement :</strong> taille minimum de l'emplacement · acceptation du chien confirmée · électricité 16A disponible · accès facile aux vélos depuis l'emplacement · date d'ouverture et fermeture
+  </div>
+</div></div>
+
+<!-- FOOTER -->
+
+<!-- FICHE RÉCAPITULATIVE -->
+<div class="section" id="tab-fiche">
+<div class="inner">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:28px;">
+    <div>
+      <h2 class="sec-title">Fiche <em>Récapitulative</em></h2>
+      <p style="font-size:14px;color:#5a4a32;margin-top:6px;">Tous les sites et campings · 3 étapes · À imprimer pour le voyage</p>
+    </div>
+    <button onclick="window.print()" style="background:var(--gold);color:var(--dark);font-weight:700;font-size:13px;padding:12px 24px;border-radius:8px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(200,168,75,.35);transition:all .2s;" onmouseover="this.style.background='#dbb948'" onmouseout="this.style.background='var(--gold)'">🖨️ Imprimer la fiche</button>
+  </div>
+
+
+  <!-- Carte interactive -->
+  <div style="margin-bottom:36px;">
+    <h2 style="font-family:Georgia,serif;font-size:26px;color:#1A1208;margin-bottom:6px;">
+      📍 Carte des <em style="color:#C8A84B;font-style:italic;">22 Sites</em>
+    </h2>
+    <p style="font-size:12px;color:#888;margin-bottom:16px;">Tous vos sites et campings · Cliquez sur un marqueur pour les détails</p>
+    <div style="border-radius:12px;overflow:hidden;border:3px solid #C8A84B;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+      <iframe
+        src="https://www.google.com/maps/d/embed?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno&ll=45.5,1.5&z=6"
+        width="100%" height="420" style="border:none;display:block;" loading="lazy">
+      </iframe>
+    </div>
+  </div>
+
+  <!-- CHAPITRE 1 — PYRÉNÉES -->
+  <div style="margin-bottom:36px;">
+    <div style="background:linear-gradient(135deg,#091a0a,#2C5016);border-radius:10px;padding:20px 26px;color:white;margin-bottom:18px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">5</div>
+      <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 1 · Jours 1 à 5 · Béarn & Bigorre</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🏔️ Pyrénées</div>
+      <div style="font-size:11px;opacity:.6;">📍 Pyrénées-Atlantiques & Hautes-Pyrénées · ≈ 40 km depuis Arudy · 4–5 nuits</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏘️ Lescun</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏯 Fort du Portalet</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Navarrenx</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏯 Mauvezin</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏔️ Gavarnie</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🦇 Bétharram (chien OK !)</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#2C5016;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">🗺 &nbsp;Lieux à visiter</div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">1</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Village de Lescun & son Cirque</div><div style="font-size:9px;color:#888;">Village perché · Vallée d'Aspe (64)</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 100% dog-friendly</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">2</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Fort du Portalet</div><div style="font-size:9px;color:#888;">Fort militaire · Gorges d'Aspe</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Extérieurs accessibles</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">3</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Cité Fortifiée de Navarrenx</div><div style="font-size:9px;color:#888;">1ère cité bastionnée · XVIe s.</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Remparts accessibles</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">4</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Château Fort de Mauvezin</div><div style="font-size:9px;color:#888;">Château XIVe · Donjon · Bigorre</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Chien admis à l'intérieur !</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">5</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Cirque de Gavarnie</div><div style="font-size:9px;color:#888;">Patrimoine UNESCO · Cascade 423 m</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Sentier dog-friendly 3h A/R</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">6</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Pont d'Espagne & Lac de Gaube</div><div style="font-size:9px;color:#888;">Cascades · Lac turquoise · Cauterets</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Sentiers larges</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">7</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Grottes de Bétharram</div><div style="font-size:9px;color:#888;">Barque + petit train · 5 niveaux</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Chien accepté (barque+train)!</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#2C5016;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">8</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Abbaye de Saint-Savin</div><div style="font-size:9px;color:#888;">Monument XIe · Vallée de Cauterets</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Village dog-friendly</span></div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#8B6914;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">⛺ &nbsp;Campings recommandés</div>
+        <div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Camping Passus Lupi</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.9 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Saint-Béat-Lez (31)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33620899070" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 6 20 89 90 70</a>
+            <a href="https://www.passuslupi.fr/fr/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Camping Le Hounta</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.7 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Gavarnie (65)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33562924841" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 62 92 48 41</a>
+            <a href="https://www.camping-le-hounta.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Huttopia Nature en Béarn</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.5 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Proche Navarrenx (64)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33559660897" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 59 66 08 97</a>
+            <a href="https://europe.huttopia.com/site/camping-nature-en-bearn/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Cabaliros</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.4 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Argelès-Gazost (65)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33562970167" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 62 97 01 67</a>
+            <a href="https://www.camping-cabaliros.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping La Bergerie</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.3 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Luz-Saint-Sauveur (65)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33562928557" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 62 92 85 57</a>
+            <a href="https://www.campingbergerie65.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Le Rey</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.3 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Louvie-Juzon (64)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33559057468" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 59 05 74 68</a>
+            <a href="https://www.campinglerey.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Beau Rivage</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.2 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Navarrenx (64)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33559661000" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 59 66 10 00</a>
+            <a href="https://www.camping-beaurivage-navarrenx.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping d'Aspe</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.1 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Gurmençon (64)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33559345177" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 59 34 51 77</a>
+            <a href="https://www.campingaspe.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPITRE 2 — ATLANTIQUE -->
+  <div style="margin-bottom:36px;">
+    <div style="background:linear-gradient(135deg,#051828,#1a5a7a);border-radius:10px;padding:20px 26px;color:white;margin-bottom:18px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">6</div>
+      <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 2 · Jours 6 à 11 · Landes & Gironde</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🌊 Côte Atlantique</div>
+      <div style="font-size:11px;opacity:.6;">📍 Landes + Gironde · ≈ 180 km depuis les Pyrénées · 5–6 nuits</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏖️ Dune du Pilat</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">⛵ Cap Ferret (navette+chien)</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🌲 Voies vertes</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Saint-Macaire</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🦪 Huîtres à L'Herbe</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#1a5a7a;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">🗺 &nbsp;Lieux à visiter</div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">1</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Dune du Pilat</div><div style="font-size:9px;color:#888;">110 m · Plus haute dune d'Europe · Gironde</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Chien en laisse sur toute la dune</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">2</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Cap Ferret & Villages Ostréicoles</div><div style="font-size:9px;color:#888;">Navette maritime · Vélos + chien à bord</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Chien accepté sur la navette !</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">3</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Forêt des Landes à Vélo</div><div style="font-size:9px;color:#888;">Voies vertes · Interdites aux voitures</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Paradis pour les chiens</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">4</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Lacs des Landes</div><div style="font-size:9px;color:#888;">Léon · Hossegor · Cazaux · Baignade</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Zones chien plusieurs plages</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">5</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Cabanes Ostréicoles du Bassin</div><div style="font-size:9px;color:#888;">L'Herbe · Claouey · Grand Piquey</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Villages très dog-friendly</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">6</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Vieux-Boucau & Côte Sauvage</div><div style="font-size:9px;color:#888;">Lac marin · Surf · Couchers de soleil</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Grandes plages dog-friendly</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">7</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Cité Médiévale de Saint-Macaire</div><div style="font-size:9px;color:#888;">Ville fortifiée · Ruelles médiévales</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Remparts accessibles</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#1a5a7a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">8</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Labastide-d'Armagnac</div><div style="font-size:9px;color:#888;">Bastide médiévale intacte · Landes</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Village dog-friendly</span></div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#8B6914;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">⛺ &nbsp;Campings recommandés</div>
+        <div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Camping Le Truc Vert</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.7 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Cap Ferret (33)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33556608851" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 56 60 88 51</a>
+            <a href="https://www.trucvert.fr/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Huttopia Arcachon</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.6 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 La Teste-de-Buch (33)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33556832415" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 56 83 24 15</a>
+            <a href="https://europe.huttopia.com/site/camping-arcachon/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Huttopia Landes Sud</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.5 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Saint-Michel-Escalus (40)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33558902630" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 58 90 26 30</a>
+            <a href="https://europe.huttopia.com/site/camping-landes-sud/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Camping L'Océane ★★★★</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.5 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Vielle-Saint-Girons (40)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33558429437" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 58 42 94 37</a>
+            <a href="https://www.campingloceane.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Les Prés Verts</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.2 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Lac de Biscarrosse (40)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33558098432" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 58 09 84 32</a>
+            <a href="https://www.camping-presverts-biscarrosse.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Azu'Rivage</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">3.9 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Azur, Landes (40)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33558483072" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 58 48 30 72</a>
+            <a href="https://www.camping-azurivage.fr/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Lou Pignada Ondres</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">3.8 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Ondres, Landes (40)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33559453065" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 5 59 45 30 65</a>
+            <a href="https://www.camping-lou-pignada.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPITRE 3 — BOURGOGNE -->
+  <div style="margin-bottom:36px;">
+    <div style="background:linear-gradient(135deg,#1a0828,#6B3288);border-radius:10px;padding:20px 26px;color:white;margin-bottom:18px;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">4</div>
+      <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 3 · Jours 12 à 15 · Yonne & Côte-d'Or</div>
+      <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🍷 Bourgogne</div>
+      <div style="font-size:11px;opacity:.6;">📍 Yonne & Côte-d'Or · ≈ 500 km depuis les Landes · 3–4 nuits</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏗️ Guédelon (chien partout !)</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">⛪ Vézelay · UNESCO</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Châteauneuf perché</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🚴 Canal à vélo</span>
+        <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🍷 Beaune · Grands Crus</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#6B3288;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">🗺 &nbsp;Lieux à visiter</div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">1</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Château de Guédelon</div><div style="font-size:9px;color:#888;">Chantier médiéval XIIIe · Puisaye (89)</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Chien partout · Toutou-bars !</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">2</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Village Perché de Vézelay</div><div style="font-size:9px;color:#888;">Classé UNESCO · Basilique romane (89)</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Ruelles pavées dog-friendly</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">3</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Château de Châteauneuf-en-Auxois</div><div style="font-size:9px;color:#888;">Village fortifié perché · Côte-d'Or</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Village et extérieurs accessibles</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">4</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Canal de Bourgogne à Vélo</div><div style="font-size:9px;color:#888;">Piste plate et ombragée · Écluses</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Idéal avec le chien</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">5</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Autun & Cathédrale Saint-Lazare</div><div style="font-size:9px;color:#888;">Ville romaine · Portes antiques (71)</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Sites extérieurs dog-friendly</span></div>
+        </div><div style="display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="flex-shrink:0;width:21px;height:21px;border-radius:50%;background:#6B3288;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">6</div>
+          <div><div style="font-size:12.5px;font-weight:600;">Beaune & Hospices de Beaune</div><div style="font-size:9px;color:#888;">Toits colorés · Route des Grands Crus</div><span style="display:inline-block;background:#e8f4e8;color:#2C5016;font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:10px;margin-top:2px;">🐕 Centre médiéval dog-friendly</span></div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+        <div style="background:#8B6914;padding:12px 16px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">⛺ &nbsp;Campings recommandés</div>
+        <div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Huttopia Étang de Fouché</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.5 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Arnay-le-Duc (21)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33380900223" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 3 80 90 02 23</a>
+            <a href="https://europe.huttopia.com/site/camping-etang-de-fouche/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">⭐ Huttopia Valserine (Jura)</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.4 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Mijoux - Jura (01)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33450416401" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 4 50 41 64 01</a>
+            <a href="https://europe.huttopia.com/site/village-valserine/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping de Vézelay L'Ermitage</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.2 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Vézelay (89)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33386332418" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 3 86 33 24 18</a>
+            <a href="https://www.camping-vezelay.com/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div><div style="padding:10px 14px;border-bottom:1px solid #f0ece4;">
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;">
+            <div style="font-size:12px;font-weight:700;">Camping Au Bois de Soulangis</div>
+            <div style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;">4.1 ★</div>
+          </div>
+          <div style="font-size:9.5px;color:#888;margin-bottom:3px;">📍 Proche Guédelon (89)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="tel:+33386745510" style="font-size:11.5px;font-weight:600;color:#1a5a7a;text-decoration:none;">📞 +33 3 86 74 55 10</a>
+            <a href="https://www.campingsoulangis.fr/" target="_blank" style="font-size:10.5px;font-weight:600;color:#2a5aaa;background:#f0f4ff;border:1px solid #c0d0f0;padding:2px 9px;border-radius:5px;text-decoration:none;">🌐 Site</a>
+          </div>
+        </div>
+        <div style="padding:12px 14px;border-top:1px solid #f0ece4;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#f8f4f0;border-radius:6px;padding:9px 11px;text-align:center;">
+            <div style="font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Landes → Bourgogne</div>
+            <div style="font-family:Georgia,serif;font-size:16px;font-weight:700;">≈ 500 km</div>
+            <div style="font-size:9px;color:#5a4a32;">5h · Via Clermont-Fd</div>
+          </div>
+          <div style="background:#f8f4f0;border-radius:6px;padding:9px 11px;text-align:center;">
+            <div style="font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Bourgogne → Alsace</div>
+            <div style="font-family:Georgia,serif;font-size:16px;font-weight:700;">≈ 300 km</div>
+            <div style="font-size:9px;color:#5a4a32;">3h · Via Belfort</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script de réservation -->
+  <div style="background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.3);border-radius:10px;padding:18px 22px;font-size:13.5px;line-height:1.85;color:#5a4a32;">
+    <strong style="color:#1A1208;">📞 Script de réservation :</strong><br>
+    <em>"Bonjour, je souhaite réserver un emplacement pour une voiture avec remorque teardrop (environ 10 mètres au total), une tente additionnelle à côté, et un chien Golden Retriever. Nous sommes 3 personnes. Avez-vous des emplacements adaptés avec branchement électrique 16A ?"</em><br><br>
+    <strong>Questions clés :</strong> taille minimum emplacement · chien confirmé · 16A disponible · accès vélos · dates ouverture/fermeture
+  </div>
+
+</div>
+</div>
+
+  <footer style="background:#0d0d0d;color:rgba(245,239,224,.35);text-align:center;padding:32px 20px;font-size:11px;letter-spacing:2px;">
+    <div style="font-size:26px;margin-bottom:10px;">🐾</div>
+    <div style="font-family:'Playfair Display',serif;font-size:18px;color:rgba(200,168,75,.7);margin-bottom:6px;">RockNRoad · Aventures</div>
+    <div>Des Pyrénées vers l'Alsace · 16 jours · Été 2025</div>
+    <div style="margin-top:6px;">🐕 Golden Retriever · 🚐 Teardrop · 🚴 3 Vélos Électriques · ⛺ 19 Campings · 🗺 22 Sites</div>
+  </footer>
+
+</div><!-- /app-main -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const {createClient}=supabase;
+const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href="index.html";return;}
+  const e=session.user.email;
+  const av=document.getElementById("sb-avatar");if(av)av.textContent=e.charAt(0).toUpperCase();
+  const un=document.getElementById("sb-username");if(un)un.textContent=e.split("@")[0];
+  const ac=document.getElementById("auth-check");if(ac){ac.style.opacity="0";setTimeout(()=>ac.style.display="none",500);}
+  const mc=document.getElementById("main-content");if(mc)mc.style.display="block";
+})();
+async function logout(){await sb.auth.signOut();window.location.href="index.html";}
+sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
+
+const TITLES={overview:"Accueil",pyrenees:"Pyrénées",atlantique:"Atlantique",bourgogne:"Bourgogne",carte:"Carte interactive",fiche:"Fiche récap",tips:"Conseils"};
+window.showTab=function(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  const sec=document.getElementById("tab-"+id);if(sec)sec.classList.add("active");
+  document.querySelectorAll(".sb-btn[id^=snav-]").forEach(b=>b.classList.remove("active"));
+  const ab=document.getElementById("snav-"+id);if(ab)ab.classList.add("active");
+  const tb=document.getElementById("top-bar-title");if(tb&&TITLES[id])tb.textContent=TITLES[id];
+  closeSidebar();
+  const am=document.getElementById("app-main");if(am)am.scrollTo(0,0);
+};
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
+
+let rnrVoyage=JSON.parse(localStorage.getItem("rr_voyage_full")||"[]");
+function toggleVoyageCard(id,nom,lat,lng,region,type){
+  const exists=rnrVoyage.find(v=>v.id===id);
+  if(exists){
+    rnrVoyage=rnrVoyage.filter(v=>v.id!==id);
+    const btn=document.getElementById("vcard-"+id);if(btn){btn.classList.remove("in-voyage");btn.textContent="Voyage";}
+    showToast('"'+nom+'" retiré');
+  }else{
+    rnrVoyage.push({id,nom,lat,lng,region:region||"",type:type||"Site"});
+    const btn=document.getElementById("vcard-"+id);if(btn){btn.classList.add("in-voyage");btn.textContent="✓ OK";}
+    showToast('"'+nom+'" ajouté !');
+  }
+  localStorage.setItem("rr_voyage_full",JSON.stringify(rnrVoyage));
+  localStorage.setItem("rr_voyage",JSON.stringify(rnrVoyage.map(v=>v.id)));
+  updateVoyageBtn();
+}
+function updateVoyageBtn(){
+  const btn=document.getElementById("top-voyage-btn");
+  const cnt=document.getElementById("top-voyage-count");
+  if(btn&&cnt){if(rnrVoyage.length>0){btn.classList.add("visible");cnt.textContent=rnrVoyage.length;}else btn.classList.remove("visible");}
+  let fl=document.getElementById("voyage-floater");
+  if(!fl){fl=document.createElement("div");fl.id="voyage-floater";
+    fl.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;background:#0f0d09;color:#C8A84B;border:1.5px solid #C8A84B;border-radius:30px;padding:10px 24px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.35);white-space:nowrap;display:none;font-family:Inter,sans-serif;";
+    fl.onclick=()=>window.location.href="voyage.html";
+    document.body.appendChild(fl);}
+  if(rnrVoyage.length>0){fl.style.display="block";fl.textContent="Voyage · "+rnrVoyage.length+" lieu"+(rnrVoyage.length>1?"x":"")+" →";}else fl.style.display="none";
+}
+function showToast(msg){
+  let t=document.getElementById("rnr-toast");
+  if(!t){t=document.createElement("div");t.id="rnr-toast";t.style.cssText="position:fixed;top:56px;right:16px;z-index:9999;padding:9px 14px;background:#2C5016;color:white;border-radius:6px;font-size:11.5px;font-weight:600;transform:translateY(-14px);opacity:0;transition:all .22s;pointer-events:none;font-family:Inter,sans-serif;";document.body.appendChild(t);}
+  t.textContent=msg;t.style.transform="translateY(0)";t.style.opacity="1";
+  setTimeout(()=>{t.style.transform="translateY(-14px)";t.style.opacity="0";},2000);
+}
+rnrVoyage.forEach(v=>{const btn=document.getElementById("vcard-"+v.id);if(btn){btn.classList.add("in-voyage");btn.textContent="✓ OK";}});
+updateVoyageBtn();
+</script>
