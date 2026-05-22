@@ -171,6 +171,11 @@ const sb = createClient(SURL, SKEY);
 
 let map, routeLayer, markers = [];
 let voyageIds = JSON.parse(localStorage.getItem('rr_voyage') || '[]');
+// Aussi charger depuis rr_voyage_full si dispo
+const _fullData = JSON.parse(localStorage.getItem('rr_voyage_full') || '[]');
+if (_fullData.length > 0 && voyageIds.length === 0) {
+  voyageIds = _fullData.map(v => v.id);
+}
 let voyageLieux = [];
 
 async function checkAuth() {
@@ -195,17 +200,21 @@ function initMap() {
 
 // ── Charger les lieux sélectionnés ────────────────────────────────────────────
 async function loadVoyage() {
-  if (!voyageIds.length) {
+  // Lire depuis rr_voyage_full (stocké par carnet.html avec coords directes)
+  const full = JSON.parse(localStorage.getItem('rr_voyage_full') || '[]');
+
+  if (full.length > 0) {
+    voyageLieux = full.filter(v => v.lat && v.lng);
+    voyageIds = voyageLieux.map(v => v.id);
+    if (voyageLieux.length === 0) { showEmpty(true); renderSidebar(); return; }
+  } else if (voyageIds.length > 0) {
+    // Fallback Supabase pour les lieux de fiches.html
+    const { data } = await sb.from('lieux').select('*').in('id', voyageIds);
+    voyageLieux = voyageIds.map(id => (data||[]).find(l => l.id === id)).filter(Boolean);
+    if (!voyageLieux.length) { showEmpty(true); renderSidebar(); return; }
+  } else {
     showEmpty(true); renderSidebar(); return;
   }
-  const { data } = await sb.from('lieux')
-    .select('*')
-    .in('id', voyageIds);
-
-  // Respecter l'ordre de sélection
-  voyageLieux = voyageIds
-    .map(id => data?.find(l => l.id === id))
-    .filter(Boolean);
 
   showEmpty(false);
   renderSidebar();
