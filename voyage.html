@@ -210,6 +210,7 @@ async function loadVoyage() {
   showEmpty(false);
   renderSidebar();
   renderMap();
+  fixMapSize();
 }
 
 function showEmpty(show) {
@@ -317,6 +318,18 @@ function renderMap() {
 
   fitAll();
 }
+
+function fixMapSize() {
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize(true);
+      fitAll();
+    }
+  }, 300);
+}
+
+// Appeler fixMapSize quand la fenêtre change de taille
+window.addEventListener('resize', () => { if(map) map.invalidateSize(); });
 
 function fitAll() {
   const validLieux = voyageLieux.filter(l => l.lat && l.lng);
