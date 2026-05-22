@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Des Pyrénées vers l'Alsace · Carnet 2025</title>
+<title>RockNRoad · Aventures · Carnet 2025</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
@@ -69,7 +69,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .section{display:none;flex:1;}
 .section.active{display:block;animation:fadeUp .2s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.inner{max-width:1280px;margin:0 auto;padding:24px 28px 80px;}
+.inner{max-width:1600px;margin:0 auto;padding:24px 32px 80px;}
 
 /* HERO */
 .hero{width:100%;min-height:50vh;background:linear-gradient(155deg,#0a1a0c 0%,#1a3a10 30%,#2C5016 58%,#5a2808 82%,#C8A84B 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px 34px;position:relative;overflow:hidden;}
@@ -93,23 +93,26 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .sec-sub{font-size:11.5px;color:var(--muted);margin-bottom:16px;}
 .notice{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.18);border-radius:8px;padding:10px 14px;font-size:12px;color:#5a4a32;line-height:1.65;margin-bottom:18px;}
 .notice strong{color:var(--text);}
+.divl{clear:both;position:relative;z-index:1;margin-bottom:14px;margin-top:8px;}
+.divl-t{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;}
+.divl-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--beige),transparent);}
 
 /* GRIDS 4 colonnes */
-.sites-grid,.camps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;}
+.sites-grid,.camps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:16px;}
 
 /* SITE CARD */
 .site-card{background:white;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
 .site-card:hover{transform:translateY(-3px);box-shadow:var(--shhov);}
-.site-photo{height:160px;background:#d4cbb8;background-size:cover!important;background-position:center!important;position:relative;flex-shrink:0;}
+.site-photo{height:200px;background:#d4cbb8;background-size:cover!important;background-position:center!important;position:relative;flex-shrink:0;}
 .site-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),transparent 50%);}
 .site-overlay{position:absolute;bottom:7px;left:9px;right:9px;z-index:2;}
 .type-badge{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.85);}
 .site-emoji{display:none!important;}
-.site-body{padding:13px;display:flex;flex-direction:column;flex:1;}
-.site-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.25;}
-.site-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.site-body{padding:16px;display:flex;flex-direction:column;flex:1;}
+.site-name{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.25;}
+.site-desc{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .dog-tag{display:inline-flex;align-items:center;gap:3px;background:#edf7ed;color:#2C5016;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.conseil-box{background:rgba(200,168,75,.06);border-left:2px solid rgba(200,168,75,.35);padding:4px 7px;font-size:10px;color:var(--muted);line-height:1.4;border-radius:0 4px 4px 0;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.conseil-box{background:rgba(200,168,75,.06);border-left:2px solid rgba(200,168,75,.35);padding:5px 8px;font-size:10.5px;color:var(--muted);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
 .maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--text);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
 .maps-btn:hover{background:#333;}
@@ -188,7 +191,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <!-- Auth overlay -->
 <div id="auth-check">
   <div class="aicon">🐾</div>
-  <h2>Des Pyrénées vers l'Alsace</h2>
+  <h2>RockNRoad · Aventures</h2>
   <p>Vérification de l'accès...</p>
   <div class="auth-spinner"></div>
 </div>
@@ -206,7 +209,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <!-- ══ SIDEBAR ══ -->
 <div id="sidebar">
   <!-- Logo -->
-  <div class="sb-logo">
+  <div class="sb-logo" onclick="showTab('overview')" style="cursor:pointer;">
     <span class="sb-logo-icon">🐾</span>
     <div class="sb-logo-title">Rock<span>N</span>Road</div>
     <div class="sb-logo-sub">Aventures</div>
@@ -219,10 +222,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <span class="sb-dot sb-dot-grey"></span>
       <span class="sb-label">Accueil</span>
     </button>
-    <button class="sb-btn" id="snav-itinerary" onclick="showTab('itinerary')">
-      <span class="sb-dot sb-dot-pyr"></span>
-      <span class="sb-label">Itinéraire</span>
-    </button>
+
   </div>
 
   <div class="sb-sep"></div>
@@ -1135,7 +1135,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
     <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">Départ → Pyrénées</div><div class="dkm">≈ 40 km</div><div class="dt">45 min · Via Laruns</div></div>
     <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">Pyrénées → Landes</div><div class="dkm">≈ 180 km</div><div class="dt">2h · Via Pau</div></div>
     <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">Landes → Bourgogne</div><div class="dkm">≈ 500 km</div><div class="dt">5h · Via Clermont-Fd</div></div>
-    <div class="dcard" style="border-top:3px solid #C8A84B"><div class="dfrom">Bourgogne → Alsace</div><div class="dkm">≈ 300 km</div><div class="dt">3h · Via Belfort</div></div>
+
   </div>
 
   <!-- Info évolution -->
@@ -1535,11 +1535,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
             <div style="font-family:Georgia,serif;font-size:16px;font-weight:700;">≈ 500 km</div>
             <div style="font-size:9px;color:#5a4a32;">5h · Via Clermont-Fd</div>
           </div>
-          <div style="background:#f8f4f0;border-radius:6px;padding:9px 11px;text-align:center;">
-            <div style="font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Bourgogne → Alsace</div>
-            <div style="font-family:Georgia,serif;font-size:16px;font-weight:700;">≈ 300 km</div>
-            <div style="font-size:9px;color:#5a4a32;">3h · Via Belfort</div>
-          </div>
+
         </div>
       </div>
     </div>
@@ -1558,7 +1554,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <footer style="background:#0d0d0d;color:rgba(245,239,224,.35);text-align:center;padding:32px 20px;font-size:11px;letter-spacing:2px;">
     <div style="font-size:26px;margin-bottom:10px;">🐾</div>
     <div style="font-family:'Playfair Display',serif;font-size:18px;color:rgba(200,168,75,.7);margin-bottom:6px;">RockNRoad · Aventures</div>
-    <div>Des Pyrénées vers l'Alsace · 16 jours · Été 2025</div>
+    <div>Pyrénées · Atlantique · Bourgogne · Été 2025</div>
     <div style="margin-top:6px;">🐕 Golden Retriever · 🚐 Teardrop · 🚴 3 Vélos Électriques · ⛺ 19 Campings · 🗺 22 Sites</div>
   </footer>
 
