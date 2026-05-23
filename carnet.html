@@ -262,53 +262,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <!-- VOYAGE -->
   <div class="sb-group">
     <div class="sb-group-label">Voyage</div>
-
-    <!-- Région France -->
-    <button class="sb-btn" id="snav-france" onclick="toggleSbSub('france')">
+    <button class="sb-btn" id="snav-france" onclick="showTab('alsace')">
       <span style="font-size:13px;">🇫🇷</span>
       <span class="sb-label">Région France</span>
-      <span class="sb-arrow">▶</span>
     </button>
-    <div class="sb-sub" id="sbsub-france">
-      <button class="sb-sub-btn" id="snav-pyrenees" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-      <button class="sb-sub-btn" id="snav-atlantique" onclick="showTab('atlantique')">🌊 Atlantique</button>
-      <button class="sb-sub-btn" id="snav-bourgogne" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-      <div id="sb-france-dyn"></div>
-    </div>
-
-    <!-- Région Europe -->
-    <button class="sb-btn" id="snav-europe" onclick="toggleSbSub('europe')">
+    <button class="sb-btn" id="snav-europe" onclick="showTab('allemagne')">
       <span style="font-size:13px;">🌍</span>
       <span class="sb-label">Région Europe</span>
-      <span class="sb-arrow">▶</span>
     </button>
-    <div class="sb-sub" id="sbsub-europe">
-      <button class="sb-sub-btn" id="snav-allemagne" onclick="showTab('allemagne')">🇩🇪 Allemagne</button>
-      <button class="sb-sub-btn" id="snav-suisse" onclick="showTab('suisse')">🇨🇭 Suisse</button>
-      <button class="sb-sub-btn" id="snav-autriche" onclick="showTab('autriche')">🇦🇹 Autriche</button>
-      <button class="sb-sub-btn" id="snav-italie" onclick="showTab('italie')">🇮🇹 Italie</button>
-      <button class="sb-sub-btn" id="snav-espagne" onclick="showTab('espagne')">🇪🇸 Espagne</button>
-      <button class="sb-sub-btn" id="snav-portugal" onclick="showTab('portugal')">🇵🇹 Portugal</button>
-      <button class="sb-sub-btn" id="snav-belgique" onclick="showTab('belgique')">🇧🇪 Belgique</button>
-      <button class="sb-sub-btn" id="snav-luxembourg" onclick="showTab('luxembourg')">🇱🇺 Luxembourg</button>
-      <button class="sb-sub-btn" id="snav-pays-bas" onclick="showTab('pays-bas')">🇳🇱 Pays-Bas</button>
-      <button class="sb-sub-btn" id="snav-croatie" onclick="showTab('croatie')">🇭🇷 Croatie</button>
-    </div>
-
-    <!-- Monde -->
-    <button class="sb-btn" id="snav-monde" onclick="toggleSbSub('monde')">
+    <button class="sb-btn" id="snav-monde-btn" onclick="showTab('nepal')">
       <span style="font-size:13px;">✈️</span>
       <span class="sb-label">Monde</span>
-      <span class="sb-arrow">▶</span>
     </button>
-    <div class="sb-sub" id="sbsub-monde">
-      <button class="sb-sub-btn" id="snav-nepal" onclick="showTab('nepal')">🏔️ Népal</button>
-      <button class="sb-sub-btn" id="snav-vietnam" onclick="showTab('vietnam')">🌿 Vietnam</button>
-      <button class="sb-sub-btn" id="snav-egypte" onclick="showTab('egypte')">🏛️ Égypte</button>
-      <button class="sb-sub-btn" id="snav-afriquedu-sud" onclick="showTab('afriquesud')">🦁 Afrique du Sud</button>
-      <button class="sb-sub-btn" id="snav-srilanka" onclick="showTab('srilanka')">🌴 Sri Lanka</button>
-      <button class="sb-sub-btn" id="snav-mexique" onclick="showTab('mexique')">🌵 Mexique</button>
-    </div>
   </div>
 
   <div class="sb-sep"></div>
@@ -430,11 +395,42 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 </div>
 
+
+<!-- ══ SECTION ALSACE (France - région par défaut) ══ -->
+<div class="section" id="tab-alsace">
+<div class="region-topbar visible" id="rtb-alsace-bar">
+  <button class="rtb-btn active" onclick="showTab('alsace')" id="rtb-alsace-btn">🥨 Alsace</button>
+  <button class="rtb-btn" onclick="showTab('pyrenees')" id="rtb-als-pyr">🏔️ Pyrénées</button>
+  <button class="rtb-btn" onclick="showTab('atlantique')" id="rtb-als-atl">🌊 Atlantique</button>
+  <button class="rtb-btn" onclick="showTab('bourgogne')" id="rtb-als-bou">🍷 Bourgogne</button>
+  <div id="rtb-dyn-alsace" style="display:contents;"></div>
+</div>
+<div class="sh-compact sh-als" style="background:linear-gradient(135deg,#8B2020 0%,#5a1010 60%,#3a0808 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
+  <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.06;line-height:1;">🥨</div>
+  <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:6px;letter-spacing:-.5px;">Alsace</h2>
+  <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Depuis Avenheim-Schnersheim · Sur place · Votre région</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;" id="alsace-tags">
+    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🥨 Alsace</span>
+    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🍷 Route des vins</span>
+    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Villages médiévaux</span>
+  </div>
+</div>
+<div class="inner" id="alsace-content">
+  <div style="text-align:center;padding:40px 20px;color:#aaa;">
+    <div style="font-size:40px;margin-bottom:10px;">🥨</div>
+    <h3 style="font-family:'Playfair Display',serif;font-size:20px;color:#1a1208;margin-bottom:6px;">Vos fiches Alsace apparaîtront ici</h3>
+    <p style="font-size:13px;margin-bottom:16px;">Créez votre première fiche Alsace — elle s'affichera automatiquement dans cette section.</p>
+    <a href="admin.html" style="display:inline-block;background:var(--gold);color:var(--dark);font-weight:700;font-size:12px;padding:10px 22px;border-radius:8px;text-decoration:none;">➕ Créer une fiche Alsace</a>
+  </div>
+</div>
+</div>
+
 <div class="section" id="tab-pyrenees">
 <div class="region-topbar visible" id="rtb-pyrenees">
+  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
   <button class="rtb-btn active" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-  <button class="rtb-btn " onclick="showTab('atlantique')">🌊 Atlantique</button>
-  <button class="rtb-btn " onclick="showTab('bourgogne')">🍷 Bourgogne</button>
+  <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
+  <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-pyrenees" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-pyr"><div class="sh-title">Pyr&eacute;n&eacute;es</div><div class="sh-meta">B&eacute;arn &middot; Hautes-Pyr&eacute;n&eacute;es &middot; &asymp; 40 km depuis Arudy</div><div class="sh-tags"><span class="sh-tag">Lescun</span><span class="sh-tag">Portalet</span><span class="sh-tag">Navarrenx</span><span class="sh-tag">Gavarnie</span><span class="sh-tag">B&eacute;tharram &mdash; chien OK</span></div></div>
@@ -723,9 +719,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <!-- ATLANTIQUE -->
 <div class="section" id="tab-atlantique">
 <div class="region-topbar visible" id="rtb-atlantique">
-  <button class="rtb-btn " onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
+  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
+  <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
   <button class="rtb-btn active" onclick="showTab('atlantique')">🌊 Atlantique</button>
-  <button class="rtb-btn " onclick="showTab('bourgogne')">🍷 Bourgogne</button>
+  <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-atlantique" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-atl"><div class="sh-title">Atlantique</div><div class="sh-meta">Landes &middot; Gironde &middot; &asymp; 180 km depuis les Pyr&eacute;n&eacute;es</div><div class="sh-tags"><span class="sh-tag">Dune du Pilat</span><span class="sh-tag">Cap Ferret</span><span class="sh-tag">For&ecirc;t v&eacute;lo</span><span class="sh-tag">Saint-Macaire</span></div></div>
@@ -996,8 +993,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <!-- BOURGOGNE -->
 <div class="section" id="tab-bourgogne">
 <div class="region-topbar visible" id="rtb-bourgogne">
-  <button class="rtb-btn " onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-  <button class="rtb-btn " onclick="showTab('atlantique')">🌊 Atlantique</button>
+  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
+  <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
+  <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
   <button class="rtb-btn active" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-bourgogne" style="display:contents;"></div>
 </div>
@@ -1686,7 +1684,7 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
   const mc=document.getElementById("main-content");if(mc)mc.style.display="block";
   // Handle hash navigation from other pages
   const hash=window.location.hash.replace('#','');
-  const validTabs=['overview','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
+  const validTabs=['overview','alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
   if(hash && validTabs.includes(hash)){
     showTab(hash);
   }
@@ -1712,11 +1710,27 @@ async function loadDynamicFiches(){
     });
     
     // Régions statiques déjà gérées dans le HTML
-    const staticRegions=['pyrenees','atlantique','bourgogne'];
+    const staticRegions=['pyrenees','atlantique','bourgogne','alsace'];
     
     // Pour les régions statiques : ajouter les nouvelles fiches si pas déjà présentes
     // Pour les nouvelles régions : créer un tab dynamique
     const appMain=document.getElementById('app-main');
+    
+    // Populate Alsace section specifically
+    const alsaceKey='alsace';
+    if(byRegion[alsaceKey]){
+      const alsaceContent=document.getElementById('alsace-content');
+      if(alsaceContent){
+        const sites=byRegion[alsaceKey].filter(l=>l.type==='Site'||!l.type);
+        const campings=byRegion[alsaceKey].filter(l=>l.type==='Camping');
+        const autres=byRegion[alsaceKey].filter(l=>l.type&&l.type!=='Site'&&l.type!=='Camping');
+        let html='';
+        if(sites.length){html+=`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div><div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`;}
+        if(campings.length){html+=`<div class="divl" style="margin-top:20px;"><div class="divl-t">⛺ ${campings.length} camping${campings.length>1?'s':''}</div></div><div class="sites-grid">${campings.map(l=>makeDynCard(l,'camping')).join('')}</div>`;}
+        if(autres.length){html+=`<div class="divl" style="margin-top:20px;"><div class="divl-t">📍 Autres</div></div><div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`;}
+        if(html) alsaceContent.innerHTML=html;
+      }
+    }
     
     Object.keys(byRegion).forEach(regionKey=>{
       const lieux=byRegion[regionKey];
@@ -1727,8 +1741,9 @@ async function loadDynamicFiches(){
         let tabId='tab-dyn-'+regionKey;
         if(!document.getElementById(tabId)){
           createDynamicTab(tabId, regionName, lieux, appMain);
-          addDynSidebarBtn(tabId, regionName, regionKey);
-  addDynRegionTopbar(regionName, regionKey);
+          // Only add to topbar for non-home regions
+  if(regionKey!=='alsace') addDynSidebarBtn(tabId, regionName, regionKey);
+  if(regionKey!=='alsace') addDynRegionTopbar(regionName, regionKey);
         }
       }
     });
@@ -1857,7 +1872,7 @@ function openEditModal(id){
   window.location.href='fiches.html?edit='+id;
 }
 
-const TITLES={overview:'Accueil',pyrenees:'Pyrénées',atlantique:'Atlantique',bourgogne:'Bourgogne',carte:'Carte interactive',fiche:'Fiche récap',tips:'Conseils',allemagne:'Allemagne',suisse:'Suisse',autriche:'Autriche',italie:'Italie',espagne:'Espagne',portugal:'Portugal',belgique:'Belgique',luxembourg:'Luxembourg','pays-bas':'Pays-Bas',croatie:'Croatie',nepal:'Népal',vietnam:'Vietnam',egypte:'Égypte',afriquesud:'Afrique du Sud',srilanka:'Sri Lanka',mexique:'Mexique'};
+const TITLES={overview:'Accueil',alsace:'Alsace',pyrenees:'Pyrénées',atlantique:'Atlantique',bourgogne:'Bourgogne',carte:'Carte interactive',fiche:'Fiche récap',tips:'Conseils',allemagne:'Allemagne',suisse:'Suisse',autriche:'Autriche',italie:'Italie',espagne:'Espagne',portugal:'Portugal',belgique:'Belgique',luxembourg:'Luxembourg','pays-bas':'Pays-Bas',croatie:'Croatie',nepal:'Népal',vietnam:'Vietnam',egypte:'Égypte',afriquesud:'Afrique du Sud',srilanka:'Sri Lanka',mexique:'Mexique'};
 window.showTab=function(id){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   const sec=document.getElementById("tab-"+id);if(sec)sec.classList.add("active");
@@ -1867,19 +1882,23 @@ window.showTab=function(id){
   closeSidebar();
   const am=document.getElementById("app-main");if(am)am.scrollTo(0,0);
   if(history.replaceState) history.replaceState(null,null,'#'+id);
-  // Update region topbar active state (sync all 3 French topbars)
-  const franceMap={pyrenees:0,atlantique:1,bourgogne:2};
-  if(id in franceMap){
-    ['pyrenees','atlantique','bourgogne'].forEach(tab=>{
-      const tb=document.getElementById('rtb-'+tab);
+  // Update region topbar active state — sync all French topbars by onclick
+  const franceTabs=['alsace','pyrenees','atlantique','bourgogne'];
+  if(franceTabs.includes(id)){
+    // Sync all topbars (alsace-bar, rtb-pyrenees, rtb-atlantique, rtb-bourgogne)
+    ['rtb-alsace-bar','rtb-pyrenees','rtb-atlantique','rtb-bourgogne'].forEach(tbId=>{
+      const tb=document.getElementById(tbId);
       if(!tb)return;
-      tb.querySelectorAll('.rtb-btn').forEach((btn,i)=>{
-        btn.classList.toggle('active', i===franceMap[id]);
+      tb.querySelectorAll('.rtb-btn').forEach(btn=>{
+        const oc=btn.getAttribute('onclick')||'';
+        btn.classList.toggle('active', oc.includes("'"+id+"'"));
       });
     });
+    // Activate sidebar "Région France" button
+    document.getElementById('snav-france')?.classList.add('active');
   }
   // Auto-open parent sub-menu
-  const franceIds=['pyrenees','atlantique','bourgogne'];
+  const franceIds=['alsace','pyrenees','atlantique','bourgogne'];
   const europeIds=['allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie'];
   const mondeIds=['nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
   if(franceIds.includes(id)||id.startsWith('dyn-')){ 
