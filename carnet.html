@@ -207,10 +207,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 @media(max-width:900px){.tips-grid{grid-template-columns:1fr!important;}}
 
 /* BANDEAU RÉGION FIXE */
-.region-topbar{display:none;position:sticky;top:46px;z-index:99;background:rgba(15,13,9,.95);
-  backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.12);
+.region-topbar{display:none;position:sticky;top:0;z-index:150;background:rgba(15,13,9,.97);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(200,168,75,.15);
   padding:0 20px;height:44px;align-items:center;overflow-x:auto;scrollbar-width:none;
-  white-space:nowrap;gap:4px;}
+  white-space:nowrap;gap:4px;box-shadow:0 2px 12px rgba(0,0,0,.4);}
 .region-topbar::-webkit-scrollbar{display:none;}
 .region-topbar.visible{display:flex;}
 .rtb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:none;
@@ -433,7 +434,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-pyrenees" style="display:contents;"></div>
 </div>
-<div class="sh-compact sh-pyr"><div class="sh-title">Pyr&eacute;n&eacute;es</div><div class="sh-meta">B&eacute;arn &middot; Hautes-Pyr&eacute;n&eacute;es &middot; &asymp; 40 km depuis Arudy</div><div class="sh-tags"><span class="sh-tag">Lescun</span><span class="sh-tag">Portalet</span><span class="sh-tag">Navarrenx</span><span class="sh-tag">Gavarnie</span><span class="sh-tag">B&eacute;tharram &mdash; chien OK</span></div></div>
+<div class="sh-compact sh-pyr"><div class="sh-title">Pyr&eacute;n&eacute;es</div><div class="sh-meta">Béarn &middot; Hautes-Pyrénées &middot; ≈ 860 km depuis Avenheim-Schnersheim &middot; Via Pau</div><div class="sh-tags"><span class="sh-tag">Lescun</span><span class="sh-tag">Portalet</span><span class="sh-tag">Navarrenx</span><span class="sh-tag">Gavarnie</span><span class="sh-tag">B&eacute;tharram &mdash; chien OK</span></div></div>
 <div class="inner">
   
   <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
@@ -725,7 +726,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-atlantique" style="display:contents;"></div>
 </div>
-<div class="sh-compact sh-atl"><div class="sh-title">Atlantique</div><div class="sh-meta">Landes &middot; Gironde &middot; &asymp; 180 km depuis les Pyr&eacute;n&eacute;es</div><div class="sh-tags"><span class="sh-tag">Dune du Pilat</span><span class="sh-tag">Cap Ferret</span><span class="sh-tag">For&ecirc;t v&eacute;lo</span><span class="sh-tag">Saint-Macaire</span></div></div>
+<div class="sh-compact sh-atl"><div class="sh-title">Atlantique</div><div class="sh-meta">Gironde &middot; Landes &middot; &asymp; 870 km depuis Avenheim-Schnersheim &middot; Via Bordeaux</div><div class="sh-tags"><span class="sh-tag">Dune du Pilat</span><span class="sh-tag">Cap Ferret</span><span class="sh-tag">For&ecirc;t v&eacute;lo</span><span class="sh-tag">Saint-Macaire</span></div></div>
 <div class="inner">
   
   <div class="divl"><div class="divl-t">🗺 Les 8 lieux à visiter</div></div>
@@ -999,7 +1000,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <button class="rtb-btn active" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
   <div id="rtb-dyn-bourgogne" style="display:contents;"></div>
 </div>
-<div class="sh-compact sh-bou"><div class="sh-title">Bourgogne</div><div class="sh-meta">Yonne &middot; C&ocirc;te-d&apos;Or &middot; &asymp; 500 km depuis les Landes</div><div class="sh-tags"><span class="sh-tag">Gu&eacute;delon</span><span class="sh-tag">V&eacute;zelay</span><span class="sh-tag">Canal v&eacute;lo</span><span class="sh-tag">Beaune</span></div></div>
+<div class="sh-compact sh-bou"><div class="sh-title">Bourgogne</div><div class="sh-meta">Côte-d'Or &middot; Yonne &middot; &asymp; 280 km depuis Avenheim-Schnersheim &middot; Via Dijon</div><div class="sh-tags"><span class="sh-tag">Gu&eacute;delon</span><span class="sh-tag">V&eacute;zelay</span><span class="sh-tag">Canal v&eacute;lo</span><span class="sh-tag">Beaune</span></div></div>
 <div class="inner">
   
   <div class="divl"><div class="divl-t">🗺 Les 6 lieux à visiter</div></div>
@@ -1223,9 +1224,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
   <!-- Distances -->
   <div class="dgrid" style="margin-top:20px;">
-    <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">🏠 Domicile → Pyrénées</div><div class="dkm">≈ 40 km</div><div class="dt">45 min depuis Arudy</div></div>
-    <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">🏔️ Pyrénées → Landes</div><div class="dkm">≈ 180 km</div><div class="dt">2h · Via Pau</div></div>
-    <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">🌊 Landes → Bourgogne</div><div class="dkm">≈ 500 km</div><div class="dt">5h · Via Clermont-Fd</div></div>
+    <div class="dcard" style="border-top:3px solid #2C5016"><div class="dfrom">🏠 Avenheim → Pyrénées</div><div class="dkm">≈ 860 km</div><div class="dt">8h30 · Via Pau</div></div>
+    <div class="dcard" style="border-top:3px solid #1a5a7a"><div class="dfrom">🏔️ Avenheim → Atlantique</div><div class="dkm">≈ 870 km</div><div class="dt">8h · Via Bordeaux</div></div>
+    <div class="dcard" style="border-top:3px solid #6B3288"><div class="dfrom">🌊 Avenheim → Bourgogne</div><div class="dkm">≈ 280 km</div><div class="dt">2h45 · Via Dijon</div></div>
 
   </div>
 
@@ -1292,7 +1293,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">5</div>
       <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 1 · Jours 1 à 5 · Béarn & Bigorre</div>
       <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🏔️ Pyrénées</div>
-      <div style="font-size:11px;opacity:.6;">📍 Pyrénées-Atlantiques & Hautes-Pyrénées · ≈ 40 km depuis Arudy · 4–5 nuits</div>
+      <div style="font-size:11px;opacity:.6;">📍 Pyrénées-Atlantiques & Hautes-Pyrénées · ≈ 860 km depuis Avenheim-Schnersheim · Via Pau · 4–5 nuits</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏘️ Lescun</span>
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏯 Fort du Portalet</span>
@@ -1424,7 +1425,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">6</div>
       <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 2 · Jours 6 à 11 · Landes & Gironde</div>
       <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🌊 Côte Atlantique</div>
-      <div style="font-size:11px;opacity:.6;">📍 Landes + Gironde · ≈ 180 km depuis les Pyrénées · 5–6 nuits</div>
+      <div style="font-size:11px;opacity:.6;">📍 Landes + Gironde · ≈ 870 km depuis Avenheim-Schnersheim · Via Bordeaux · 5–6 nuits</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏖️ Dune du Pilat</span>
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">⛵ Cap Ferret (navette+chien)</span>
@@ -1545,7 +1546,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <div style="position:absolute;right:20px;top:10px;font-family:Georgia,serif;font-size:60px;color:rgba(255,255,255,.07);line-height:1;">4</div>
       <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;opacity:.6;margin-bottom:5px;">Étape 3 · Jours 12 à 15 · Yonne & Côte-d'Or</div>
       <div style="font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">🍷 Bourgogne</div>
-      <div style="font-size:11px;opacity:.6;">📍 Yonne & Côte-d'Or · ≈ 500 km depuis les Landes · 3–4 nuits</div>
+      <div style="font-size:11px;opacity:.6;">📍 Yonne & Côte-d'Or · ≈ 280 km depuis Avenheim-Schnersheim · Via Dijon · 3–4 nuits</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏗️ Guédelon (chien partout !)</span>
         <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">⛪ Vézelay · UNESCO</span>
@@ -1622,7 +1623,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
         </div>
         <div style="padding:12px 14px;border-top:1px solid #f0ece4;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="background:#f8f4f0;border-radius:6px;padding:9px 11px;text-align:center;">
-            <div style="font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Landes → Bourgogne</div>
+            <div style="font-size:8px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Avenheim → Bourgogne</div>
             <div style="font-family:Georgia,serif;font-size:16px;font-weight:700;">≈ 500 km</div>
             <div style="font-size:9px;color:#5a4a32;">5h · Via Clermont-Fd</div>
           </div>
