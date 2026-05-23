@@ -9,10 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;--atl:#1a5a7a;--r:10px;}
+:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;--r:10px;}
 body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);min-height:100vh;}
-
-/* AUTH */
 #auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
 #auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
@@ -20,443 +18,395 @@ body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);mi
   border-radius:50%;animation:spin 1s linear infinite;margin:18px auto 0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 #main{display:none;}
-
-/* HEADER */
-header{background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid rgba(200,168,75,.15);}
-.hlogo{font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;
-  display:flex;align-items:center;gap:10px;}
+header{background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,168,75,.15);}
+.hlogo{font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
 .hlogo span{font-size:10px;color:rgba(200,168,75,.5);letter-spacing:4px;text-transform:uppercase;font-family:Inter,sans-serif;}
 nav{display:flex;gap:8px;flex-wrap:wrap;}
-.hn{display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;
-  letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;
-  border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;}
+.hn{display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;}
 .hn:hover,.hn.active{color:var(--gold);border-color:rgba(200,168,75,.4);}
-.hbtn{background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);
-  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;
-  border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
-
-/* LAYOUT 2 COLONNES */
-.layout{display:grid;grid-template-columns:1fr 420px;gap:0;min-height:calc(100vh - 57px);}
-.col-left{padding:36px 32px 80px;border-right:1px solid rgba(0,0,0,.08);}
-.col-right{background:#faf7f2;padding:28px 24px;position:sticky;top:57px;height:calc(100vh - 57px);
-  overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
-
-/* TITRES */
-.page-title{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:4px;}
+.hbtn{background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
+.layout{display:grid;grid-template-columns:1fr 400px;gap:0;min-height:calc(100vh - 57px);}
+.col-left{padding:32px 32px 80px;border-right:1px solid rgba(0,0,0,.08);}
+.col-right{background:#faf7f2;padding:24px 20px;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
 .page-title em{color:var(--gold);font-style:italic;}
-.page-sub{color:#888;font-size:13px;margin-bottom:28px;}
-
-/* CARTE IMPORT */
-.import-card{background:white;border-radius:14px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.07);
-  border:2px solid transparent;transition:border-color .2s;margin-bottom:24px;}
+.page-sub{color:#888;font-size:12px;margin-bottom:24px;}
+.import-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border:2px solid transparent;transition:border-color .2s;margin-bottom:20px;}
 .import-card.active{border-color:var(--gold);}
-.import-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
-.import-label span{background:var(--gold);color:var(--dark);border-radius:50%;width:18px;height:18px;
-  display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;}
-.import-input-row{display:flex;gap:10px;}
-.import-input{flex:1;padding:13px 16px;border:2px solid #E8DECE;border-radius:9px;
-  font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);outline:none;
-  transition:border-color .2s;}
-.import-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.1);}
-.import-btn{padding:13px 18px;background:var(--dark);color:var(--gold);border:none;border-radius:9px;
-  font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;
-  display:flex;align-items:center;gap:6px;}
+.import-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.import-label span{background:var(--gold);color:var(--dark);border-radius:50%;width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;}
+.import-input-row{display:flex;gap:8px;}
+.import-input{flex:1;padding:11px 14px;border:2px solid #E8DECE;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);outline:none;transition:border-color .2s;}
+.import-input:focus{border-color:var(--gold);}
+.import-btn{padding:11px 16px;background:var(--dark);color:var(--gold);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;}
 .import-btn:hover{background:#333;}
 .import-btn:disabled{opacity:.5;cursor:not-allowed;}
-.import-hint{font-size:11px;color:#aaa;margin-top:8px;line-height:1.6;}
-.import-hint a{color:var(--gold);text-decoration:none;}
-
-/* RÉSULTAT IMPORT */
-.import-result{display:none;background:linear-gradient(135deg,rgba(44,80,22,.06),rgba(200,168,75,.06));
-  border:1px solid rgba(200,168,75,.2);border-radius:10px;padding:16px;margin-top:14px;}
+.import-hint{font-size:10px;color:#aaa;margin-top:7px;line-height:1.6;}
+.import-result{display:none;background:linear-gradient(135deg,rgba(44,80,22,.05),rgba(200,168,75,.05));border:1px solid rgba(200,168,75,.2);border-radius:9px;padding:14px;margin-top:12px;}
 .import-result.show{display:block;}
-.ir-header{display:flex;align-items:flex-start;gap:12px;}
-.ir-photo{width:60px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#ddd;}
-.ir-info{flex:1;}
-.ir-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:3px;}
+.ir-header{display:flex;align-items:flex-start;gap:11px;}
+.ir-photo{width:56px;height:56px;border-radius:7px;object-fit:cover;flex-shrink:0;background:#ddd;}
+.ir-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:2px;}
 .ir-meta{font-size:11px;color:#888;}
-.ir-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-.ir-badge{background:rgba(44,80,22,.1);color:var(--green);font-size:10px;font-weight:700;
-  padding:3px 9px;border-radius:20px;}
+.ir-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+.ir-badge{background:rgba(44,80,22,.1);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
 .ir-badge.gold{background:rgba(200,168,75,.15);color:#8B6914;}
-
-/* SÉPARATEUR OU */
-.sep-ou{display:flex;align-items:center;gap:12px;margin:20px 0;color:#ccc;font-size:11px;font-weight:600;}
+/* Photos galerie import */
+.ir-photos{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.ir-photos img{width:60px;height:45px;object-fit:cover;border-radius:5px;cursor:pointer;transition:transform .2s;border:2px solid transparent;}
+.ir-photos img:hover{transform:scale(1.05);}
+.ir-photos img.selected{border-color:var(--gold);}
+/* Horaires */
+.ir-horaires{margin-top:8px;font-size:10px;color:#888;line-height:1.6;}
+.sep-ou{display:flex;align-items:center;gap:12px;margin:16px 0;color:#ccc;font-size:10px;font-weight:600;}
 .sep-ou::before,.sep-ou::after{content:'';flex:1;height:1px;background:#e8e0d0;}
-
-/* FORM CARD */
-.form-card{background:white;border-radius:14px;padding:24px;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:18px;}
-.fc-title{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
-  color:#aaa;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #f0ece4;
-  display:flex;align-items:center;gap:8px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:16px;}
+.fc-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f0ece4;display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .fg{margin-bottom:0;}
 .fg.full{grid-column:1/-1;}
-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:#666;margin-bottom:6px;}
-input,select,textarea{width:100%;padding:11px 13px;border:2px solid #E8DECE;border-radius:8px;
-  font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);background:white;
-  transition:border-color .2s;outline:none;resize:vertical;}
-input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.1);}
-textarea{min-height:90px;}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#666;margin-bottom:5px;}
+input,select,textarea{width:100%;padding:10px 12px;border:2px solid #E8DECE;border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);background:white;transition:border-color .2s;outline:none;resize:vertical;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.08);}
+textarea{min-height:80px;}
 input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
-
-/* GPS ROW */
-.gps-row{display:flex;gap:10px;align-items:flex-end;}
-.gps-row .fg{flex:1;margin-bottom:0;}
-.gps-btn{padding:11px 14px;background:var(--dark);color:var(--gold);border:none;border-radius:8px;
-  font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.gps-btn:hover{background:#333;}
-
-/* MAP PREVIEW */
-.map-mini{border-radius:8px;overflow:hidden;margin-top:12px;display:none;border:2px solid rgba(200,168,75,.2);}
-.map-mini iframe{width:100%;height:160px;border:none;display:block;}
-
-/* TOGGLES */
-.toggle-group{display:flex;gap:8px;}
-.tog{flex:1;padding:10px;border:2px solid #E8DECE;border-radius:8px;text-align:center;
-  cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;color:#aaa;}
+/* TAGS */
+.tags-grid{display:flex;flex-wrap:wrap;gap:7px;}
+.tag-opt{padding:6px 12px;border:2px solid #E8DECE;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:#888;user-select:none;}
+.tag-opt:hover{border-color:var(--gold);color:#8B6914;}
+.tag-opt.on{border-color:var(--gold);background:rgba(200,168,75,.12);color:#6B4F10;}
+/* NOTES */
+.notes-row{display:flex;gap:12px;}
+.note-block{flex:1;}
+.note-block label{margin-bottom:6px;}
+.star-row{display:flex;gap:3px;}
+.star{font-size:20px;cursor:pointer;color:#ddd;transition:color .15s;user-select:none;}
+.star.on{color:#C8A84B;}
+/* DOG */
+.toggle-group{display:flex;gap:7px;}
+.tog{flex:1;padding:9px;border:2px solid #E8DECE;border-radius:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;color:#aaa;}
 .tog.active.yes{border-color:var(--green);background:#e8f4e8;color:var(--green);}
-.tog.active.no {border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
-.tog.active.na {border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
-
-/* PHOTO ZONE */
-.photo-zone{border:2px dashed #E8DECE;border-radius:10px;padding:24px;text-align:center;
-  cursor:pointer;transition:all .2s;background:#fdfaf5;position:relative;}
-.photo-zone:hover{border-color:var(--gold);background:#fffdf5;}
+.tog.active.no{border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
+.tog.active.na{border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
+/* GPS */
+.gps-row{display:flex;gap:8px;align-items:flex-end;}
+.gps-row .fg{flex:1;margin-bottom:0;}
+.gps-btn{padding:10px 12px;background:var(--dark);color:var(--gold);border:none;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.map-mini{border-radius:7px;overflow:hidden;margin-top:10px;display:none;border:2px solid rgba(200,168,75,.2);}
+.map-mini iframe{width:100%;height:140px;border:none;display:block;}
+/* PHOTO */
+.photo-zone{border:2px dashed #E8DECE;border-radius:9px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#fdfaf5;position:relative;}
+.photo-zone:hover{border-color:var(--gold);}
 .photo-zone.has-photo{border-style:solid;border-color:var(--gold);}
 .photo-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.photo-preview{width:100%;max-height:180px;object-fit:cover;border-radius:7px;display:none;}
-.photo-ph{color:#ccc;font-size:12px;}
-.photo-ph .pi{font-size:28px;margin-bottom:6px;}
-
-/* COLONNE DROITE - PRÉVISUALISATION */
-.preview-header{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:#aaa;padding-bottom:10px;border-bottom:1px solid #eee;margin-bottom:4px;}
-.preview-card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);}
-.pc-photo{height:160px;background:linear-gradient(135deg,#2C5016 0%,#C8A84B 100%);position:relative;}
+.photo-preview{width:100%;max-height:160px;object-fit:cover;border-radius:6px;display:none;}
+.photo-ph{color:#ccc;font-size:11px;}
+/* COLONNE DROITE */
+.preview-header{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;padding-bottom:8px;border-bottom:1px solid #eee;}
+.preview-card{background:white;border-radius:11px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.1);}
+.pc-photo{height:140px;background:linear-gradient(135deg,#2C5016,#C8A84B);position:relative;}
 .pc-photo img{width:100%;height:100%;object-fit:cover;display:none;}
-.pc-photo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:36px;opacity:.3;}
-.pc-badge{position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,.55);color:white;
-  font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:1px;}
-.pc-body{padding:14px;}
-.pc-name{font-family:'Playfair Display',serif;font-size:15px;margin-bottom:3px;}
-.pc-meta{font-size:10px;color:#aaa;margin-bottom:8px;}
-.pc-desc{font-size:11px;color:#666;line-height:1.55;margin-bottom:10px;}
-.pc-dog{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;
-  background:#edf7ed;color:var(--green);margin-bottom:8px;}
-.pc-btns{display:flex;gap:6px;}
-.pc-btn{flex:1;padding:7px;background:var(--dark);color:var(--gold);font-size:10px;font-weight:700;
-  border:none;border-radius:6px;text-align:center;cursor:pointer;}
-
-/* TIPS */
-.tip-box{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.2);border-radius:9px;
-  padding:14px 16px;}
-.tip-title{font-size:11px;font-weight:700;color:#8B6914;margin-bottom:8px;}
-.tip-list{list-style:none;display:flex;flex-direction:column;gap:5px;}
-.tip-list li{font-size:11px;color:#5a4a32;line-height:1.5;}
-
+.pc-photo-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;opacity:.25;}
+.pc-badge{position:absolute;bottom:7px;left:9px;background:rgba(0,0,0,.55);color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.pc-body{padding:12px;}
+.pc-name{font-family:'Playfair Display',serif;font-size:14px;margin-bottom:2px;}
+.pc-meta{font-size:10px;color:#aaa;margin-bottom:6px;}
+.pc-notes{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+.pc-note-g{font-size:10px;color:#888;}
+.pc-note-g span{color:#C8A84B;font-weight:700;}
+.pc-note-f{font-size:10px;color:#888;}
+.pc-note-f span{color:#2C5016;font-weight:700;}
+.pc-dog{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:6px;}
+.pc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.pc-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(200,168,75,.1);color:#8B6914;}
+.pc-comment{font-size:10px;color:#888;font-style:italic;border-left:2px solid rgba(200,168,75,.3);padding-left:8px;margin-bottom:8px;line-height:1.5;}
+.pc-btns{display:flex;gap:5px;}
+.pc-btn{flex:1;padding:6px;background:var(--dark);color:var(--gold);font-size:9px;font-weight:700;border:none;border-radius:5px;text-align:center;}
+/* API KEY BOX */
+.api-box{background:white;border-radius:10px;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.api-box-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.api-box-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;}
+.api-edit-btn{font-size:10px;font-weight:700;color:var(--gold);background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);padding:3px 10px;border-radius:6px;cursor:pointer;text-decoration:none;transition:all .2s;}
+.api-edit-btn:hover{background:rgba(200,168,75,.2);}
+.api-key-display{font-family:monospace;font-size:11px;color:#888;display:flex;align-items:center;gap:8px;}
+.api-key-status{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.api-key-status.ok{background:#2C5016;}
+.api-key-status.empty{background:#cc4400;}
+/* TIP BOX */
+.tip-box{background:rgba(200,168,75,.07);border:1px solid rgba(200,168,75,.2);border-radius:8px;padding:12px 14px;}
+.tip-title{font-size:10px;font-weight:700;color:#8B6914;margin-bottom:7px;}
+.tip-list{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.tip-list li{font-size:10px;color:#5a4a32;line-height:1.5;}
 /* SUBMIT */
-.submit-zone{background:white;border-radius:14px;padding:20px;box-shadow:0 2px 16px rgba(0,0,0,.07);}
-.submit-btn{width:100%;padding:15px;background:var(--dark);color:var(--gold);
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;
-  text-transform:uppercase;border:none;border-radius:9px;cursor:pointer;transition:all .3s;}
+.submit-zone{background:white;border-radius:12px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.07);}
+.submit-btn{width:100%;padding:14px;background:var(--dark);color:var(--gold);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:8px;cursor:pointer;transition:all .3s;}
 .submit-btn:hover{background:var(--gold);color:var(--dark);}
 .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
-.required-hint{font-size:10px;color:#aaa;text-align:center;margin-top:8px;}
-
-/* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;padding:13px 20px;border-radius:9px;
-  font-size:13px;font-weight:600;z-index:1000;transform:translateY(80px);
-  transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.toast{position:fixed;bottom:22px;right:22px;padding:12px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:1000;transform:translateY(80px);transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .toast.show{transform:translateY(0);}
 .toast.success{background:#2C5016;color:white;}
 .toast.error{background:#cc4400;color:white;}
 .toast.info{background:var(--dark);color:var(--gold);}
-
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr;}
-  .col-right{display:none;}
-  nav{display:none;}
-}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.col-right{display:none;}nav{display:none;}}
 </style>
 </head>
 <body>
-
 <div id="auth-check">
   <div style="font-size:48px;">🐾</div>
   <h2>RockNRoad</h2>
   <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Vérification...</p>
   <div class="spinner"></div>
 </div>
-
 <div id="main">
 <header>
-  <a href="carnet.html" class="hlogo">
-    🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span>
-    <span>Aventures</span>
-  </a>
+  <a href="carnet.html" class="hlogo">🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span><span>Aventures</span></a>
   <nav>
     <a href="carnet.html" class="hn">🗺 Carnet</a>
-    <a href="fiches.html" class="hn">🗂️ Mes Fiches</a>
-    <a href="voyage.html" class="hn">🧭 Mon Voyage</a>
+    <a href="fiches.html" class="hn">🗂️ Fiches</a>
+    <a href="voyage.html" class="hn">🧭 Voyage</a>
     <a href="admin.html" class="hn active">➕ Créer</a>
     <a href="config.html" class="hn">⚙️ Config</a>
   </nav>
   <button onclick="logout()" class="hbtn">⏏ Déco</button>
 </header>
-
 <div class="layout">
+<div class="col-left">
+  <h1 class="page-title">Nouvelle <em>fiche lieu</em></h1>
+  <p class="page-sub">Colle une URL Google Maps — tout se remplit automatiquement 🪄</p>
 
-  <!-- COLONNE GAUCHE : FORMULAIRE -->
-  <div class="col-left">
-    <h1 class="page-title">Nouvelle <em>fiche lieu</em></h1>
-    <p class="page-sub">Colle une URL Google Maps pour remplir automatiquement la fiche 🪄</p>
-
-    <!-- ① IMPORT GOOGLE MAPS -->
-    <div class="import-card" id="importCard">
-      <div class="import-label"><span>1</span> Import automatique Google Maps</div>
-      <div class="import-input-row">
-        <input class="import-input" type="url" id="gmapsUrl"
-          placeholder="https://maps.google.com/... ou https://goo.gl/maps/...">
-        <button class="import-btn" id="importBtn" onclick="importFromMaps()">
-          <span id="importBtnIcon">✨</span> Analyser
-        </button>
-      </div>
-      <div class="import-hint">
-        📱 Sur Google Maps → ouvre la fiche du lieu → bouton <strong>Partager</strong> → <strong>Copier le lien</strong> → colle ici.<br>
-        Ça marche aussi avec les URLs longues depuis un navigateur desktop.
-      </div>
-      <div class="import-result" id="importResult">
-        <div class="ir-header">
-          <img id="ir-photo" class="ir-photo" src="" alt="">
-          <div class="ir-info">
-            <div class="ir-name" id="ir-name">—</div>
-            <div class="ir-meta" id="ir-meta">—</div>
-            <div class="ir-badges" id="ir-badges"></div>
-          </div>
-        </div>
-      </div>
+  <!-- IMPORT -->
+  <div class="import-card" id="importCard">
+    <div class="import-label"><span>1</span> Import automatique Google Maps</div>
+    <div class="import-input-row">
+      <input class="import-input" type="url" id="gmapsUrl" placeholder="https://maps.google.com/... ou https://goo.gl/maps/...">
+      <button class="import-btn" id="importBtn" onclick="importFromMaps()"><span id="importBtnIcon">✨</span> Analyser</button>
     </div>
-
-    <div class="sep-ou">— ou remplis manuellement —</div>
-
-    <!-- ② INFOS PRINCIPALES -->
-    <div class="form-card">
-      <div class="fc-title">📝 Informations principales</div>
-      <div class="form-grid">
-        <div class="fg full">
-          <label>Nom du lieu *</label>
-          <input type="text" id="nom" placeholder="Cascade de l'Onde, Camping du Lac..." oninput="updatePreview()">
-        </div>
-        <div class="fg">
-          <label>Type *</label>
-          <select id="type" onchange="updatePreview()">
-            <option value="">— Choisir —</option>
-            <option value="Site">🏛️ Site à visiter</option>
-            <option value="Camping">⛺ Camping</option>
-            <option value="Plage">🏖️ Plage / Lac</option>
-            <option value="Randonnee">🥾 Randonnée / Vélo</option>
-            <option value="Restaurant">🍽️ Restaurant</option>
-            <option value="Halte">🚗 Halte / Étape</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Région *</label>
-          <select id="region" onchange="updatePreview()">
-            <option value="">— Choisir —</option>
-            <optgroup label="🏔️ Pyrénées"><option value="Pyrenees">Pyrénées</option></optgroup>
-            <optgroup label="🌊 Atlantique">
-              <option value="Atlantique">Atlantique / Landes</option>
-              <option value="Bretagne">Bretagne</option>
-              <option value="Normandie">Normandie</option>
-            </optgroup>
-            <optgroup label="🍷 Centre">
-              <option value="Bourgogne">Bourgogne</option>
-              <option value="Loire">Vallée de la Loire</option>
-              <option value="Auvergne">Auvergne</option>
-            </optgroup>
-            <optgroup label="☀️ Sud">
-              <option value="Provence">Provence / Côte d'Azur</option>
-              <option value="Occitanie">Occitanie</option>
-              <option value="Corse">Corse</option>
-            </optgroup>
-            <optgroup label="Est / Nord">
-              <option value="Alsace">Alsace</option>
-              <option value="Jura">Jura / Franche-Comté</option>
-              <option value="Alpes">Alpes</option>
-              <option value="Ardenne">Ardenne / Champagne</option>
-              <option value="Vosges">Vosges / Lorraine</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Sous-région / Dept</label>
-          <input type="text" id="sousRegion" placeholder="Hautes-Pyrénées (65)..." oninput="updatePreview()">
-        </div>
-        <div class="fg full">
-          <label>Description</label>
-          <textarea id="description" placeholder="Ce qu'on y fait, pourquoi c'est sympa, les bons plans..." oninput="updatePreview()"></textarea>
-        </div>
-        <div class="fg full">
-          <label>Conseil pratique (affiché sur la carte)</label>
-          <input type="text" id="conseil" placeholder="💡 Ex: Partir tôt le matin, parking gratuit 500m..." oninput="updatePreview()">
-        </div>
-        <div class="fg">
-          <label>Note Google ★</label>
-          <select id="note">
-            <option value="">—</option>
-            <option value="5.0">⭐⭐⭐⭐⭐ 5★</option>
-            <option value="4.5">⭐⭐⭐⭐½ 4.5★</option>
-            <option value="4.0">⭐⭐⭐⭐ 4★</option>
-            <option value="3.5">⭐⭐⭐½ 3.5★</option>
-            <option value="3.0">⭐⭐⭐ 3★</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Tag badge (affiché sur photo)</label>
-          <input type="text" id="badge" placeholder="Patrimoine UNESCO · Gironde">
+    <div class="import-hint">📱 Google Maps → fiche du lieu → <strong>Partager</strong> → <strong>Copier le lien</strong> → colle ici</div>
+    <div class="import-result" id="importResult">
+      <div class="ir-header">
+        <img id="ir-photo" class="ir-photo" src="" alt="" style="display:none;">
+        <div>
+          <div class="ir-name" id="ir-name">—</div>
+          <div class="ir-meta" id="ir-meta">—</div>
+          <div class="ir-badges" id="ir-badges"></div>
+          <div class="ir-horaires" id="ir-horaires"></div>
         </div>
       </div>
-    </div>
-
-    <!-- ③ DOG FRIENDLY -->
-    <div class="form-card">
-      <div class="fc-title">🐕 Dog-Friendly</div>
-      <label style="margin-bottom:10px;">Le chien est accepté ?</label>
-      <div class="toggle-group">
-        <div class="tog yes active" id="dogYes" onclick="setDog('yes')">✅ Oui</div>
-        <div class="tog na" id="dogNa"  onclick="setDog('na')">❓ À vérifier</div>
-        <div class="tog no" id="dogNo"  onclick="setDog('no')">❌ Non</div>
-      </div>
-      <input type="hidden" id="dogFriendly" value="true">
-      <div class="fg full" style="margin-top:12px;">
-        <label>Info chien (affiché sur la carte)</label>
-        <input type="text" id="dogInfo" placeholder="✅ Chiens acceptés partout sur le site...">
-      </div>
-    </div>
-
-    <!-- ④ CONTACT (auto-rempli) -->
-    <div class="form-card">
-      <div class="fc-title">📞 Contact &amp; Liens <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:6px;">AUTO si import</span></div>
-      <div class="form-grid">
-        <div class="fg">
-          <label>Téléphone</label>
-          <input type="tel" id="tel" placeholder="+33 5 62...">
-        </div>
-        <div class="fg">
-          <label>Site web</label>
-          <input type="url" id="siteWeb" placeholder="https://...">
-        </div>
-        <div class="fg full">
-          <label>Adresse</label>
-          <input type="text" id="adresse" placeholder="Rue, ville, code postal">
-        </div>
-      </div>
-    </div>
-
-    <!-- ⑤ GPS (auto-rempli) -->
-    <div class="form-card">
-      <div class="fc-title">📍 Localisation GPS <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:6px;">AUTO si import</span></div>
-      <div class="gps-row">
-        <div class="fg">
-          <label>Latitude</label>
-          <input type="number" id="lat" placeholder="42.7260" step="0.0001" onchange="refreshMap()">
-        </div>
-        <div class="fg">
-          <label>Longitude</label>
-          <input type="number" id="lng" placeholder="-0.0100" step="0.0001" onchange="refreshMap()">
-        </div>
-        <button class="gps-btn" onclick="geocodeAddress()">📍 Geocoder</button>
-      </div>
-      <div class="map-mini" id="mapMini">
-        <iframe id="mapFrame" loading="lazy"></iframe>
-      </div>
-    </div>
-
-    <!-- ⑥ PHOTO -->
-    <div class="form-card">
-      <div class="fc-title">📸 Photo</div>
-      <div class="photo-zone" id="photoZone">
-        <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)">
-        <img class="photo-preview" id="photoPreview">
-        <div class="photo-ph" id="photoPh">
-          <div class="pi">📷</div>
-          <div>Cliquez pour choisir une photo</div>
-          <div style="font-size:10px;color:var(--gold);font-weight:700;margin-top:4px;">JPG, PNG — max 5 MB</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUBMIT -->
-    <div class="submit-zone">
-      <button class="submit-btn" id="submitBtn" onclick="saveFiche()">✨ Enregistrer la fiche</button>
-      <div class="required-hint">* Champs obligatoires : Nom, Type, Région</div>
+      <div class="ir-photos" id="ir-photos"></div>
     </div>
   </div>
 
-  <!-- COLONNE DROITE : PRÉVISUALISATION + CONSEILS -->
-  <div class="col-right">
-    <div class="preview-header">👁 Prévisualisation de la fiche</div>
+  <div class="sep-ou">— ou remplis manuellement —</div>
 
-    <div class="preview-card">
-      <div class="pc-photo" id="pcPhoto">
-        <div class="pc-photo-ph">🗺️</div>
-        <img id="pcImg" src="" alt="">
-        <div class="pc-badge" id="pcBadge">Site · Région</div>
-      </div>
-      <div class="pc-body">
-        <div class="pc-name" id="pcName">Nom du lieu</div>
-        <div class="pc-meta" id="pcMeta">Région · Type</div>
-        <div class="pc-dog" id="pcDog">🐕 Chien accepté</div>
-        <div class="pc-desc" id="pcDesc">La description apparaîtra ici...</div>
-        <div class="pc-btns">
-          <div class="pc-btn">📍 Maps</div>
-          <div class="pc-btn">🔍 Google</div>
-          <div class="pc-btn">🧭 Voyage</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tip-box">
-      <div class="tip-title">💡 Comment importer depuis Google Maps</div>
-      <ul class="tip-list">
-        <li>📱 <strong>Mobile :</strong> Ouvre Google Maps, cherche le lieu, appuie sur <em>Partager</em> puis <em>Copier le lien</em></li>
-        <li>💻 <strong>Bureau :</strong> Ouvre la fiche Google Maps, copie l'URL complète dans la barre d'adresse</li>
-        <li>✅ Les URLs <strong>goo.gl/maps</strong>, <strong>maps.app.goo.gl</strong> et URLs longues fonctionnent toutes</li>
-        <li>🔑 Renseigne ta clé API Google ci-dessous pour activer l'import automatique complet</li>
-      </ul>
-    </div>
-
-    <!-- CLEF API -->
-    <div class="form-card" style="margin-bottom:0;">
-      <div class="fc-title">🔑 Clé API Google Places</div>
+  <!-- INFOS PRINCIPALES -->
+  <div class="form-card">
+    <div class="fc-title">📝 Informations principales</div>
+    <div class="form-grid">
+      <div class="fg full"><label>Nom du lieu *</label><input type="text" id="nom" placeholder="Camping du Lac, Cascade de l'Onde..." oninput="updatePreview()"></div>
       <div class="fg">
-        <label>Google Places API Key</label>
-        <input type="password" id="googleApiKey" placeholder="AIzaSy..."
-          value="" oninput="saveApiKey()">
+        <label>Type *</label>
+        <select id="type" onchange="updatePreview()">
+          <option value="">— Choisir —</option>
+          <option value="Site">🏛️ Site à visiter</option>
+          <option value="Camping">⛺ Camping</option>
+          <option value="Plage">🏖️ Plage / Lac</option>
+          <option value="Randonnee">🥾 Randonnée / Vélo</option>
+          <option value="Restaurant">🍽️ Restaurant</option>
+          <option value="Halte">🚗 Halte / Étape</option>
+        </select>
       </div>
-      <div style="font-size:10px;color:#aaa;margin-top:8px;line-height:1.6;">
-        Optionnelle mais recommandée pour l'import automatique complet (nom, GPS, tel, site, note, catégorie).
-        <a href="https://developers.google.com/maps/documentation/places/web-service/get-api-key" target="_blank" style="color:var(--gold);">Obtenir une clé gratuite →</a>
+      <div class="fg">
+        <label>Région *</label>
+        <select id="region" onchange="updatePreview()">
+          <option value="">— Choisir —</option>
+          <option value="Pyrenees">🏔️ Pyrénées / Midi-Pyrénées</option>
+          <option value="Atlantique">🌊 Aquitaine / Landes</option>
+          <option value="Bourgogne">🍷 Bourgogne / Franche-Comté</option>
+          <option value="Bretagne">🦞 Bretagne</option>
+          <option value="Normandie">🏰 Normandie</option>
+          <option value="Loire">🏰 Centre / Val de Loire</option>
+          <option value="Provence">☀️ Provence / Côte d'Azur</option>
+          <option value="Occitanie">🌻 Languedoc-Roussillon</option>
+          <option value="Alsace">🥨 Alsace / Lorraine</option>
+          <option value="Alpes">⛷️ Rhône-Alpes</option>
+          <option value="Auvergne">🌋 Auvergne / Limousin</option>
+          <option value="Ardenne">🌲 Champagne / Ardenne</option>
+          <option value="Nord">🌷 Nord / Picardie / Île-de-France</option>
+          <option value="Corse">🏝️ Corse</option>
+        </select>
+      </div>
+      <div class="fg"><label>Sous-région / Dept</label><input type="text" id="sousRegion" placeholder="Haut-Rhin (68), Gironde (33)..." oninput="updatePreview()"></div>
+      <div class="fg full"><label>Description</label><textarea id="description" placeholder="Ce qu'on y fait, pourquoi c'est sympa, les bons plans..." oninput="updatePreview()"></textarea></div>
+      <div class="fg full"><label>💬 Commentaire famille — pourquoi ce lieu est dans notre carnet</label><textarea id="commentaire" placeholder="Ex: Découvert lors d'un article sur les plus beaux campings d'Alsace, idéal avec le Teardrop car grands emplacements ombragés..." oninput="updatePreview()" style="min-height:65px;"></textarea></div>
+      <div class="fg full"><label>💡 Conseil pratique</label><input type="text" id="conseil" placeholder="Partir tôt le matin, parking gratuit 500m..." oninput="updatePreview()"></div>
+      <div class="fg"><label>Tag badge (affiché sur photo)</label><input type="text" id="badge" placeholder="Camping 2★ · Haut-Rhin" oninput="updatePreview()"></div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="form-card">
+    <div class="fc-title">⭐ Notes</div>
+    <div class="notes-row">
+      <div class="note-block">
+        <label>Note Google (automatique)</label>
+        <select id="noteGoogle" onchange="updatePreview()">
+          <option value="">—</option>
+          <option value="5.0">⭐⭐⭐⭐⭐ 5.0</option>
+          <option value="4.5">⭐⭐⭐⭐½ 4.5</option>
+          <option value="4.0">⭐⭐⭐⭐ 4.0</option>
+          <option value="3.5">⭐⭐⭐½ 3.5</option>
+          <option value="3.0">⭐⭐⭐ 3.0</option>
+        </select>
+      </div>
+      <div class="note-block">
+        <label>Note Famille 🐾</label>
+        <div class="star-row" id="familyStars">
+          <span class="star" data-v="1" onclick="setFamilyStar(1)">★</span>
+          <span class="star" data-v="2" onclick="setFamilyStar(2)">★</span>
+          <span class="star" data-v="3" onclick="setFamilyStar(3)">★</span>
+          <span class="star" data-v="4" onclick="setFamilyStar(4)">★</span>
+          <span class="star" data-v="5" onclick="setFamilyStar(5)">★</span>
+        </div>
+        <input type="hidden" id="noteFamille" value="">
       </div>
     </div>
   </div>
 
-</div>
+  <!-- TAGS -->
+  <div class="form-card">
+    <div class="fc-title">🏷️ Tags rapides</div>
+    <div class="tags-grid" id="tagsGrid">
+      <div class="tag-opt" data-tag="baignade" onclick="toggleTag(this)">🏊 Baignade</div>
+      <div class="tag-opt" data-tag="velo" onclick="toggleTag(this)">🚴 Vélo</div>
+      <div class="tag-opt" data-tag="ombre" onclick="toggleTag(this)">🌳 Ombre</div>
+      <div class="tag-opt" data-tag="calme" onclick="toggleTag(this)">😌 Calme</div>
+      <div class="tag-opt" data-tag="anime" onclick="toggleTag(this)">🎉 Animé</div>
+      <div class="tag-opt" data-tag="gratuit" onclick="toggleTag(this)">🆓 Gratuit</div>
+      <div class="tag-opt" data-tag="chien-plage" onclick="toggleTag(this)">🐕 Chien plage OK</div>
+      <div class="tag-opt" data-tag="vue" onclick="toggleTag(this)">🏔️ Belle vue</div>
+      <div class="tag-opt" data-tag="electricite" onclick="toggleTag(this)">⚡ Électricité</div>
+      <div class="tag-opt" data-tag="piscine" onclick="toggleTag(this)">🏊 Piscine</div>
+      <div class="tag-opt" data-tag="nature" onclick="toggleTag(this)">🌿 Nature</div>
+      <div class="tag-opt" data-tag="historique" onclick="toggleTag(this)">🏰 Historique</div>
+      <div class="tag-opt" data-tag="unesco" onclick="toggleTag(this)">🌍 UNESCO</div>
+      <div class="tag-opt" data-tag="randonnee" onclick="toggleTag(this)">🥾 Rando</div>
+      <div class="tag-opt" data-tag="teardrop" onclick="toggleTag(this)">🚐 Teardrop OK</div>
+      <div class="tag-opt" data-tag="enfants" onclick="toggleTag(this)">👧 Enfants</div>
+    </div>
+  </div>
+
+  <!-- DOG -->
+  <div class="form-card">
+    <div class="fc-title">🐕 Dog-Friendly</div>
+    <div class="toggle-group">
+      <div class="tog yes active" id="dogYes" onclick="setDog('yes')">✅ Oui</div>
+      <div class="tog na" id="dogNa" onclick="setDog('na')">❓ À vérifier</div>
+      <div class="tog no" id="dogNo" onclick="setDog('no')">❌ Non</div>
+    </div>
+    <input type="hidden" id="dogFriendly" value="true">
+    <div class="fg full" style="margin-top:10px;"><label>Info chien</label><input type="text" id="dogInfo" placeholder="Chiens acceptés en laisse partout..."></div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="form-card">
+    <div class="fc-title">📞 Contact &amp; Liens <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:4px;">AUTO si import</span></div>
+    <div class="form-grid">
+      <div class="fg"><label>Téléphone</label><input type="tel" id="tel" placeholder="+33 3 89..."></div>
+      <div class="fg"><label>Site web</label><input type="url" id="siteWeb" placeholder="https://..."></div>
+      <div class="fg full"><label>Adresse</label><input type="text" id="adresse" placeholder="8 Rue des Champs, 68140 Gunsbach"></div>
+    </div>
+  </div>
+
+  <!-- GPS -->
+  <div class="form-card">
+    <div class="fc-title">📍 GPS <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:4px;">AUTO si import</span></div>
+    <div class="gps-row">
+      <div class="fg"><label>Latitude</label><input type="number" id="lat" placeholder="48.045" step="0.000001" onchange="refreshMap()"></div>
+      <div class="fg"><label>Longitude</label><input type="number" id="lng" placeholder="7.178" step="0.000001" onchange="refreshMap()"></div>
+      <button class="gps-btn" onclick="geocodeAddress()">📍 Geocoder</button>
+    </div>
+    <div class="map-mini" id="mapMini"><iframe id="mapFrame" loading="lazy"></iframe></div>
+  </div>
+
+  <!-- PHOTO -->
+  <div class="form-card">
+    <div class="fc-title">📸 Photo</div>
+    <div class="photo-zone" id="photoZone">
+      <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)">
+      <img class="photo-preview" id="photoPreview">
+      <div class="photo-ph" id="photoPh"><div style="font-size:26px;margin-bottom:5px;">📷</div><div>Cliquer pour choisir une photo</div><div style="font-size:10px;color:var(--gold);font-weight:700;margin-top:3px;">JPG, PNG — max 5 MB</div></div>
+    </div>
+    <div id="googlePhotosChoice" style="display:none;margin-top:10px;">
+      <div style="font-size:10px;color:#888;margin-bottom:6px;">Ou utilise une photo Google Maps importée :</div>
+      <div class="ir-photos" id="googlePhotosSelect"></div>
+    </div>
+  </div>
+
+  <div class="submit-zone">
+    <button class="submit-btn" id="submitBtn" onclick="saveFiche()">✨ Enregistrer la fiche</button>
+    <div style="font-size:10px;color:#aaa;text-align:center;margin-top:6px;">* Champs obligatoires : Nom, Type, Région</div>
+  </div>
 </div>
 
+<!-- COLONNE DROITE -->
+<div class="col-right">
+  <div class="preview-header">👁 Prévisualisation</div>
+  <div class="preview-card">
+    <div class="pc-photo" id="pcPhoto">
+      <div class="pc-photo-ph">🗺️</div>
+      <img id="pcImg" src="" alt="">
+      <div class="pc-badge" id="pcBadge">Site · Région</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-name" id="pcName">Nom du lieu</div>
+      <div class="pc-meta" id="pcMeta">Région · Type</div>
+      <div class="pc-notes">
+        <div class="pc-note-g" id="pcNoteG" style="display:none;">Google <span></span>★</div>
+        <div class="pc-note-f" id="pcNoteF" style="display:none;">Famille <span></span>🐾</div>
+      </div>
+      <div class="pc-dog" id="pcDog">🐕 Chien accepté</div>
+      <div class="pc-tags" id="pcTags"></div>
+      <div class="pc-comment" id="pcComment" style="display:none;"></div>
+      <div class="pc-btns"><div class="pc-btn">📍 Maps</div><div class="pc-btn">🔍 Google</div><div class="pc-btn">🧭 Voyage</div></div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    <div class="tip-title">💡 Comment importer depuis Google Maps</div>
+    <ul class="tip-list">
+      <li>📱 <strong>Mobile :</strong> Cherche le lieu → <em>Partager</em> → <em>Copier le lien</em></li>
+      <li>💻 <strong>Bureau :</strong> Ouvre la fiche → copie l'URL complète</li>
+      <li>✅ URLs <strong>goo.gl/maps</strong> et URLs longues OK</li>
+    </ul>
+  </div>
+
+  <!-- API KEY BOX -->
+  <div class="api-box">
+    <div class="api-box-header">
+      <div class="api-box-label">🔑 Clé API Google Places</div>
+      <a href="config.html" class="api-edit-btn">✏️ Modifier</a>
+    </div>
+    <div class="api-key-display">
+      <div class="api-key-status" id="apiKeyStatus"></div>
+      <span id="apiKeyInfo">Chargement...</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
 <div class="toast" id="toast"></div>
-
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+const DEFAULT_KEY='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null, photoFile=null, dogVal='yes';
+let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null;
+
+const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288','Bretagne':'#1a6a5a',
+  'Normandie':'#3a5a8a','Loire':'#6B6B14','Provence':'#8B4513','Occitanie':'#c87a00',
+  'Alsace':'#8B2020','Alpes':'#4a4a8a','Auvergne':'#5a6a3a','Ardenne':'#3a6a3a',
+  'Nord':'#2a4a7a','Corse':'#2a7a5a'};
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 async function checkAuth(){
@@ -465,143 +415,86 @@ async function checkAuth(){
   currentUser=session.user;
   document.getElementById('auth-check').style.display='none';
   document.getElementById('main').style.display='block';
-  // Restaurer clé API (hardcodée par défaut)
-  const savedKey=localStorage.getItem('rnr_gapi');
-  const defaultKey='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
-  document.getElementById('googleApiKey').value=savedKey||defaultKey;
-  if(!savedKey) localStorage.setItem('rnr_gapi',defaultKey);
+  loadApiKey();
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
 
-function saveApiKey(){
-  localStorage.setItem('rnr_gapi',document.getElementById('googleApiKey').value);
-}
-
-// ── IMPORT GOOGLE MAPS ───────────────────────────────────────────────────────
-async function importFromMaps(){
-  const url=document.getElementById('gmapsUrl').value.trim();
-  if(!url){showToast('Colle d\'abord une URL Google Maps','error');return;}
-
-  const btn=document.getElementById('importBtn');
-  const icon=document.getElementById('importBtnIcon');
-  btn.disabled=true; icon.textContent='⏳';
-  showToast('Analyse en cours...','info');
-
-  try{
-    const apiKey=document.getElementById('googleApiKey').value.trim();
-
-    // Étape 1 : extraire coordonnées GPS depuis l'URL
-    const coords=extractCoordsFromUrl(url);
-    if(coords){
-      fillField('lat',coords.lat.toFixed(6));
-      fillField('lng',coords.lng.toFixed(6));
-      refreshMap();
-    }
-
-    // Étape 2 : extraire le nom depuis l'URL
-    const nameFromUrl=extractPlaceNameFromUrl(url);
-    if(nameFromUrl) fillField('nom', nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
-
-    // Étape 3 : Places API via proxy CORS si clé disponible
-    if(apiKey && coords){
-      const ok=await fetchFromPlacesApiProxy(coords, apiKey);
-      if(ok){showImportResult();btn.disabled=false;icon.textContent='✅';
-        showToast('✅ Import complet — nom, GPS, tel, site, note !','success');return;}
-    }
-
-    // Étape 4 : fallback Nominatim (geocodage inverse depuis GPS)
-    if(coords){
-      await reverseGeocode(coords.lat, coords.lng);
-    } else {
-      await tryResolveShortUrl(url);
-    }
-
-    showImportResult();
-    showToast(coords?'GPS extrait ✅ — Complète le nom':'URL analysée — complète les infos','info');
-  }catch(e){
-    showToast('Erreur: '+e.message,'error');
-  }finally{
-    btn.disabled=false; icon.textContent='✨';
+function loadApiKey(){
+  const k=localStorage.getItem('rnr_gapi')||DEFAULT_KEY;
+  if(!localStorage.getItem('rnr_gapi')) localStorage.setItem('rnr_gapi',DEFAULT_KEY);
+  const st=document.getElementById('apiKeyStatus');
+  const info=document.getElementById('apiKeyInfo');
+  if(k&&k.startsWith('AIzaSy')){
+    st.className='api-key-status ok';
+    info.textContent=k.slice(0,8)+'•'.repeat(20)+k.slice(-4)+' — Active';
+  } else {
+    st.className='api-key-status empty';
+    info.textContent='Aucune clé — import limité';
   }
 }
 
-async function reverseGeocode(lat,lng){
+function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
+
+// ── IMPORT ────────────────────────────────────────────────────────────────────
+async function importFromMaps(){
+  const url=document.getElementById('gmapsUrl').value.trim();
+  if(!url){showToast('Colle une URL Google Maps','error');return;}
+  const btn=document.getElementById('importBtn');
+  const icon=document.getElementById('importBtnIcon');
+  btn.disabled=true;icon.textContent='⏳';
+  showToast('Analyse en cours...','info');
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-    const d=await r.json();
-    if(d.display_name){
-      // Extraire ville/commune
-      const addr=d.address||{};
-      const city=addr.village||addr.town||addr.city||addr.municipality||'';
-      const dept=addr.county||addr.state||'';
-      if(city) document.getElementById('ir-meta').textContent=city+(dept?' · '+dept:'');
+    const coords=extractCoordsFromUrl(url);
+    const nameFromUrl=extractPlaceNameFromUrl(url);
+    if(nameFromUrl) fillField('nom',nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
+    if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
+    const apiKey=getApiKey();
+    if(apiKey&&coords){
+      const ok=await fetchFromPlacesApiProxy(coords,apiKey,url);
+      if(ok){showImportResult();icon.textContent='✅';showToast('✅ Import complet !','success');
+        btn.disabled=false;return;}
     }
-  }catch(e){}
+    if(coords) await reverseGeocode(coords.lat,coords.lng);
+    else await tryResolveShortUrl(url);
+    showImportResult();
+    showToast(coords?'GPS ✅ — Complète les infos':'Analysé — complète les infos','info');
+  }catch(e){showToast('Erreur: '+e.message,'error');}
+  finally{btn.disabled=false;icon.textContent='✨';}
 }
 
 function extractCoordsFromUrl(url){
-  // Patterns: @lat,lng | q=lat,lng | ?ll=lat,lng | /place/.../lat,lng
-  const patterns=[
-    /@(-?\d+\.?\d*),(-?\d+\.?\d*)/,
-    /[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
-    /[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
-    /\/(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/,
-  ];
-  for(const p of patterns){
-    const m=url.match(p);
-    if(m) return {lat:parseFloat(m[1]),lng:parseFloat(m[2])};
-  }
+  const patterns=[/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/,/\/(-?\d{1,3}\.\d{4,}),(-?\d{1,3}\.\d{4,})/];
+  for(const p of patterns){const m=url.match(p);if(m)return{lat:parseFloat(m[1]),lng:parseFloat(m[2])};}
+  return null;
+}
+function extractPlaceNameFromUrl(url){
+  const m=url.match(/\/place\/([^/@]+)/);
+  if(m)return decodeURIComponent(m[1].replace(/\+/g,' '));
   return null;
 }
 
-async function tryResolveShortUrl(url){
-  // Utilise un service CORS-friendly pour résoudre les URLs courtes
-  // et extraire le nom du lieu depuis le titre de la page
+async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
   try{
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-    const d=await r.json();
-    if(d.contents){
-      // Extraire le titre
-      const titleMatch=d.contents.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if(titleMatch){
-        let title=titleMatch[1].replace(' - Google Maps','').replace(' - Google Карты','').trim();
-        if(title && title!=='Google Maps'){
-          fillField('nom',title);
-          document.getElementById('ir-name').textContent=title;
-        }
-      }
-      // Extraire coordonnées depuis le contenu résolu
-      const coords=extractCoordsFromUrl(d.contents);
-      if(coords){fillField('lat',coords.lat);fillField('lng',coords.lng);refreshMap();}
-    }
-  }catch(e){/* silencieux */}
-}
-
-async function fetchFromPlacesApiProxy(coords, apiKey){
-  // Utilise le Places API via un proxy CORS (allorigins) pour éviter les blocages navigateur
-  try{
-    // Recherche nearby (plus précis avec coords)
+    // Nearby search
     const nearbyUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=100&key=${apiKey}`;
-    const proxyUrl=`https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`;
-    const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
-    const wrapper=await r.json();
-    if(!wrapper.contents) return false;
-    const nearby=JSON.parse(wrapper.contents);
-    if(!nearby.results?.length) return false;
+    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`,{signal:AbortSignal.timeout(10000)});
+    const w=await r.json();
+    if(!w.contents)return false;
+    const nearby=JSON.parse(w.contents);
+    if(!nearby.results?.length)return false;
     const placeId=nearby.results[0].place_id;
 
-    // Détails du lieu
-    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,types,photos';
-    const detailUrl=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}`;
-    const r2=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`,{signal:AbortSignal.timeout(8000)});
+    // Details
+    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,types,photos,opening_hours,price_level';
+    const detailUrl=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=fr&key=${apiKey}`;
+    const r2=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`,{signal:AbortSignal.timeout(10000)});
     const w2=await r2.json();
-    if(!w2.contents) return false;
+    if(!w2.contents)return false;
     const detail=JSON.parse(w2.contents);
     const p=detail.result;
-    if(!p) return false;
+    if(!p)return false;
 
-    // Remplir les champs
     fillField('nom',p.name||'');
     fillField('adresse',p.formatted_address||'');
     fillField('tel',p.formatted_phone_number||'');
@@ -612,48 +505,110 @@ async function fetchFromPlacesApiProxy(coords, apiKey){
       refreshMap();
     }
     if(p.rating){
-      document.getElementById('note').value=String(Math.round(p.rating*2)/2);
+      const rounded=String(Math.round(p.rating*2)/2);
+      document.getElementById('noteGoogle').value=rounded+'.0'===rounded?rounded+'.0':rounded;
     }
-    // Type
-    const typeMap={'campground':'Camping','campsite':'Camping','lodging':'Halte',
-      'restaurant':'Restaurant','food':'Restaurant','park':'Randonnee',
-      'natural_feature':'Site','tourist_attraction':'Site','museum':'Site',
-      'church':'Site','historical_landmark':'Site','amusement_park':'Site'};
-    if(p.types) for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}
+    // Auto-type
+    const typeMap={'campground':'Camping','campsite':'Camping','rv_park':'Camping','lodging':'Halte',
+      'restaurant':'Restaurant','food':'Restaurant','park':'Randonnee','natural_feature':'Site',
+      'tourist_attraction':'Site','museum':'Site','church':'Site','historical_landmark':'Site',
+      'amusement_park':'Site','beach':'Plage','lake':'Plage'};
+    if(p.types)for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}
 
-    // Photo via proxy
-    if(p.photos?.[0]){
-      const ref=p.photos[0].photo_reference;
-      const photoUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${ref}&key=${apiKey}`;
-      const imgProxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(photoUrl)}`;
-      document.getElementById('ir-photo').src=imgProxy;
+    // Horaires
+    if(p.opening_hours?.weekday_text){
+      const h=p.opening_hours.weekday_text.slice(0,4).join(' · ');
+      document.getElementById('ir-horaires').innerHTML='🕐 '+h;
+    }
+
+    // Photos Google
+    const photos=p.photos||[];
+    const photoContainer=document.getElementById('ir-photos');
+    const googleSelectContainer=document.getElementById('googlePhotosSelect');
+    const googlePhotosChoice=document.getElementById('googlePhotosChoice');
+    photoContainer.innerHTML='';googleSelectContainer.innerHTML='';
+    if(photos.length){
+      googlePhotosChoice.style.display='block';
+      photos.slice(0,5).forEach((ph,i)=>{
+        const ref=ph.photo_reference;
+        const thumbUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=200&photo_reference=${ref}&key=${apiKey}`;
+        const fullUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${apiKey}`;
+        const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(thumbUrl)}`;
+        // Dans résultat import
+        const img=document.createElement('img');
+        img.src=proxy;img.title='Photo '+( i+1);
+        photoContainer.appendChild(img);
+        // Dans sélecteur
+        const img2=document.createElement('img');
+        img2.src=proxy;img2.title='Utiliser cette photo';
+        img2.style.cursor='pointer';
+        img2.onclick=()=>{
+          document.querySelectorAll('#googlePhotosSelect img').forEach(x=>x.classList.remove('selected'));
+          img2.classList.add('selected');
+          selectedGooglePhotoUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`;
+          // Prévisualisation
+          document.getElementById('pcImg').src=selectedGooglePhotoUrl;
+          document.getElementById('pcImg').style.display='block';
+          showToast('Photo sélectionnée ✅','success');
+        };
+        googleSelectContainer.appendChild(img2);
+      });
+      // Utiliser la première photo par défaut dans la prévisualisation
+      const firstProxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photos[0].photo_reference}&key=${apiKey}`)}`;
+      document.getElementById('ir-photo').src=firstProxy;
       document.getElementById('ir-photo').style.display='block';
-      document.getElementById('pcImg').src=imgProxy;
+      document.getElementById('pcImg').src=firstProxy;
       document.getElementById('pcImg').style.display='block';
+      selectedGooglePhotoUrl=firstProxy;
     }
 
-    // Résumé import
+    // Résumé
     document.getElementById('ir-name').textContent=p.name||'';
     document.getElementById('ir-meta').textContent=(p.formatted_address||'').split(',').slice(0,2).join(',');
-    const b=document.getElementById('ir-badges');
-    b.innerHTML='';
-    if(p.rating) b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}</span>`;
+    const b=document.getElementById('ir-badges');b.innerHTML='';
+    if(p.rating)b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}</span>`;
+    if(photos.length)b.innerHTML+=`<span class="ir-badge">📷 ${photos.length} photos</span>`;
     b.innerHTML+=`<span class="ir-badge">📍 GPS</span>`;
-    if(p.formatted_phone_number) b.innerHTML+=`<span class="ir-badge">📞</span>`;
-    if(p.website) b.innerHTML+=`<span class="ir-badge">🌐</span>`;
-    updatePreview();
-    return true;
-  }catch(e){
-    console.warn('Places proxy error:',e.message);
-    return false;
-  }
+    if(p.formatted_phone_number)b.innerHTML+=`<span class="ir-badge">📞</span>`;
+    if(p.website)b.innerHTML+=`<span class="ir-badge">🌐</span>`;
+    if(p.opening_hours)b.innerHTML+=`<span class="ir-badge">🕐 Horaires</span>`;
+    // Tag badge auto
+    if(!document.getElementById('badge').value&&p.types){
+      const sous=document.getElementById('sousRegion').value;
+      document.getElementById('badge').value=(p.types[0]||'')+(sous?' · '+sous:'');
+    }
+    updatePreview();return true;
+  }catch(e){console.warn('Places proxy:',e.message);return false;}
 }
 
-function extractPlaceNameFromUrl(url){
-  // Extraire le nom du lieu depuis l'URL
-  const m=url.match(/\/place\/([^/]+)\//);
-  if(m) return decodeURIComponent(m[1].replace(/\+/g,' '));
-  return null;
+async function reverseGeocode(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`);
+    const d=await r.json();
+    const addr=d.address||{};
+    const city=addr.village||addr.town||addr.city||addr.municipality||'';
+    const dept=addr.county||addr.state_district||'';
+    if(city){document.getElementById('ir-meta').textContent=city+(dept?' · '+dept:'');}
+    if(!document.getElementById('adresse').value&&d.display_name){
+      fillField('adresse',d.display_name.split(',').slice(0,3).join(','));
+    }
+  }catch(e){}
+}
+
+async function tryResolveShortUrl(url){
+  try{
+    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    const d=await r.json();
+    if(d.contents){
+      const titleMatch=d.contents.match(/<title[^>]*>([^<]+)<\/title>/i);
+      if(titleMatch){
+        let title=titleMatch[1].replace(/ - Google Maps.*/,'').trim();
+        if(title&&title!=='Google Maps')fillField('nom',title);
+      }
+      const coords=extractCoordsFromUrl(d.contents);
+      if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
+    }
+  }catch(e){}
 }
 
 function showImportResult(){
@@ -661,87 +616,118 @@ function showImportResult(){
   document.getElementById('importCard').classList.add('active');
 }
 
+// ── GEOCODE / MAP ─────────────────────────────────────────────────────────────
+async function geocodeAddress(){
+  const q=document.getElementById('adresse').value||document.getElementById('nom').value;
+  if(!q){showToast('Entre adresse ou nom','error');return;}
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' France')}&format=json&limit=1`);
+    const d=await r.json();
+    if(d.length){fillField('lat',parseFloat(d[0].lat).toFixed(6));fillField('lng',parseFloat(d[0].lon).toFixed(6));refreshMap();showToast('GPS trouvé ✅','success');}
+    else showToast('Lieu non trouvé','error');
+  }catch(e){showToast('Erreur géoloc','error');}
+}
+
+function refreshMap(){
+  const lat=document.getElementById('lat').value,lng=document.getElementById('lng').value;
+  if(!lat||!lng)return;
+  document.getElementById('mapFrame').src=`https://www.openstreetmap.org/export/embed.html?bbox=${+lng-.04},${+lat-.04},${+lng+.04},${+lat+.04}&layer=mapnik&marker=${lat},${lng}`;
+  document.getElementById('mapMini').style.display='block';
+}
+
 function fillField(id,val){
   const el=document.getElementById(id);
-  if(el && val!==null && val!==undefined && val!==''){
-    el.value=val;
-    el.classList.add('auto-filled');
+  if(el&&val!==null&&val!==undefined&&String(val).trim()!==''){
+    el.value=val;el.classList.add('auto-filled');
     setTimeout(()=>el.classList.remove('auto-filled'),3000);
   }
 }
 
-// ── GPS / MAP ─────────────────────────────────────────────────────────────────
-async function geocodeAddress(){
-  const q=document.getElementById('adresse').value||document.getElementById('nom').value;
-  if(!q){showToast('Entre d\'abord l\'adresse ou le nom','error');return;}
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+' France')}&format=json&limit=1`);
-    const d=await r.json();
-    if(d.length){
-      fillField('lat',parseFloat(d[0].lat).toFixed(5));
-      fillField('lng',parseFloat(d[0].lon).toFixed(5));
-      refreshMap();
-      showToast('Coordonnées trouvées ✅','success');
-    }else{showToast('Lieu non trouvé','error');}
-  }catch(e){showToast('Erreur géolocalisation','error');}
+// ── TAGS ─────────────────────────────────────────────────────────────────────
+function toggleTag(el){
+  const tag=el.dataset.tag;
+  el.classList.toggle('on');
+  if(selectedTags.includes(tag))selectedTags=selectedTags.filter(t=>t!==tag);
+  else selectedTags.push(tag);
+  updatePreview();
 }
 
-function refreshMap(){
-  const lat=document.getElementById('lat').value;
-  const lng=document.getElementById('lng').value;
-  if(!lat||!lng) return;
-  const f=document.getElementById('mapFrame');
-  f.src=`https://www.openstreetmap.org/export/embed.html?bbox=${+lng-.04},${+lat-.04},${+lng+.04},${+lat+.04}&layer=mapnik&marker=${lat},${lng}`;
-  document.getElementById('mapMini').style.display='block';
+// ── NOTES ────────────────────────────────────────────────────────────────────
+function setFamilyStar(v){
+  familyStarVal=v;
+  document.getElementById('noteFamille').value=v;
+  document.querySelectorAll('#familyStars .star').forEach(s=>{
+    s.classList.toggle('on',parseInt(s.dataset.v)<=v);
+  });
+  updatePreview();
 }
 
 // ── DOG ───────────────────────────────────────────────────────────────────────
 function setDog(v){
   dogVal=v;
   document.getElementById('dogFriendly').value=v==='yes'?'true':'false';
-  ['yes','na','no'].forEach(x=>document.getElementById('dog'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active',x===v));
+  ['yes','na','no'].forEach(x=>{
+    const el=document.getElementById('dog'+x.charAt(0).toUpperCase()+x.slice(1));
+    el.className='tog '+x+(x===v?' active':'');
+  });
   updatePreview();
 }
 
 // ── PHOTO ─────────────────────────────────────────────────────────────────────
 function previewPhoto(e){
-  const file=e.target.files[0];
-  if(!file) return;
-  photoFile=file;
+  const file=e.target.files[0];if(!file)return;
+  photoFile=file;selectedGooglePhotoUrl=null;
   const reader=new FileReader();
   reader.onload=ev=>{
-    const img=document.getElementById('photoPreview');
-    img.src=ev.target.result; img.style.display='block';
+    document.getElementById('photoPreview').src=ev.target.result;
+    document.getElementById('photoPreview').style.display='block';
     document.getElementById('photoPh').style.display='none';
     document.getElementById('photoZone').classList.add('has-photo');
-    // Maj prévisualisation
-    const pcImg=document.getElementById('pcImg');
-    pcImg.src=ev.target.result; pcImg.style.display='block';
+    document.getElementById('pcImg').src=ev.target.result;
+    document.getElementById('pcImg').style.display='block';
   };
   reader.readAsDataURL(file);
 }
 
 // ── PRÉVISUALISATION ─────────────────────────────────────────────────────────
-const REGION_COLORS={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288',
-  'Bretagne':'#1a6a5a','Normandie':'#3a5a8a','Provence':'#8B4513','Alsace':'#8B2020',
-  'Alpes':'#4a4a8a','Loire':'#6B6B14','Ardenne':'#3a6a3a'};
 function updatePreview(){
   const nom=document.getElementById('nom').value||'Nom du lieu';
   const region=document.getElementById('region').value||'Région';
   const type=document.getElementById('type').value||'Type';
-  const desc=document.getElementById('description').value||'La description apparaîtra ici...';
+  const desc=document.getElementById('description').value;
+  const comment=document.getElementById('commentaire').value;
   const badge=document.getElementById('badge').value||(type+' · '+region);
-  const col=REGION_COLORS[region]||'#888';
+  const noteG=document.getElementById('noteGoogle').value;
+  const col=RC[region]||'#888';
+
   document.getElementById('pcName').textContent=nom;
   document.getElementById('pcMeta').textContent=region+' · '+type;
-  document.getElementById('pcDesc').textContent=desc.slice(0,120)+(desc.length>120?'...':'');
   document.getElementById('pcBadge').textContent=badge;
   document.getElementById('pcPhoto').style.background=`linear-gradient(135deg,${col}88,${col}44)`;
-  const dogMap={yes:'🐕 Chien accepté',na:'❓ À vérifier',no:'🚫 Chien interdit'};
+
+  // Notes
+  const ngEl=document.getElementById('pcNoteG');
+  const nfEl=document.getElementById('pcNoteF');
+  if(noteG){ngEl.style.display='block';ngEl.querySelector('span').textContent=noteG;}
+  else ngEl.style.display='none';
+  if(familyStarVal){nfEl.style.display='block';nfEl.querySelector('span').textContent='★'.repeat(familyStarVal);}
+  else nfEl.style.display='none';
+
+  // Dog
+  const dogMap={yes:'🐕 Chien accepté',na:'❓ À vérifier',no:'🚫 Interdit'};
   const dogColors={yes:'#edf7ed',na:'#fffbe8',no:'#ffe8e0'};
   const dogTxt={yes:'#2C5016',na:'#8B6914',no:'#cc4400'};
   const d=document.getElementById('pcDog');
-  d.textContent=dogMap[dogVal]; d.style.background=dogColors[dogVal]; d.style.color=dogTxt[dogVal];
+  d.textContent=dogMap[dogVal];d.style.background=dogColors[dogVal];d.style.color=dogTxt[dogVal];
+
+  // Tags
+  const tagsEl=document.getElementById('pcTags');
+  tagsEl.innerHTML=selectedTags.slice(0,6).map(t=>`<span class="pc-tag">${t}</span>`).join('');
+
+  // Comment
+  const cEl=document.getElementById('pcComment');
+  if(comment){cEl.style.display='block';cEl.textContent=comment.slice(0,100)+(comment.length>100?'...':'');}
+  else cEl.style.display='none';
 }
 
 // ── SAVE ──────────────────────────────────────────────────────────────────────
@@ -749,58 +735,57 @@ async function saveFiche(){
   const nom=document.getElementById('nom').value.trim();
   const region=document.getElementById('region').value;
   const type=document.getElementById('type').value;
-  if(!nom||!region||!type){showToast('Remplis Nom, Type et Région *','error');return;}
-
+  if(!nom||!region||!type){showToast('Nom, Type et Région obligatoires','error');return;}
   const btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.textContent='⏳ Enregistrement...';
-
+  btn.disabled=true;btn.textContent='⏳ Enregistrement...';
   try{
     let photo_url=null;
+    // Photo locale prioritaire, sinon Google
     if(photoFile){
       const ext=photoFile.name.split('.').pop();
       const fname=`fiches/${Date.now()}-${nom.replace(/\s+/g,'-').toLowerCase().slice(0,40)}.${ext}`;
       const {error:ue}=await sb.storage.from('photos-lieux').upload(fname,photoFile,{contentType:photoFile.type,upsert:true});
-      if(!ue){
-        const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);
-        photo_url=publicUrl;
-      }
+      if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);photo_url=publicUrl;}
+    } else if(selectedGooglePhotoUrl){
+      photo_url=selectedGooglePhotoUrl;
     }
-
+    const dv=dogVal;
     const {error}=await sb.from('lieux').insert({
       nom,region,type,
       sous_region:document.getElementById('sousRegion').value||null,
       description:document.getElementById('description').value||null,
+      commentaire:document.getElementById('commentaire').value||null,
       conseil:document.getElementById('conseil').value||null,
-      dog_friendly:document.getElementById('dogFriendly').value==='true',
-      dog_info:document.getElementById('dogInfo').value||null,
       badge_text:document.getElementById('badge').value||null,
+      dog_friendly:dv==='yes'?true:dv==='no'?false:null,
+      dog_info:document.getElementById('dogInfo').value||null,
+      note:parseFloat(document.getElementById('noteGoogle').value)||null,
+      note_famille:familyStarVal||null,
+      tags:selectedTags.length?selectedTags:null,
       photo_url,
       lat:parseFloat(document.getElementById('lat').value)||null,
       lng:parseFloat(document.getElementById('lng').value)||null,
       adresse:document.getElementById('adresse').value||null,
       tel:document.getElementById('tel').value||null,
       site_web:document.getElementById('siteWeb').value||null,
-      note:parseFloat(document.getElementById('note').value)||null,
       gmaps_url:document.getElementById('gmapsUrl').value||null,
       cree_par:currentUser.email,
       annee:new Date().getFullYear(),
     });
-
-    if(error) throw error;
+    if(error)throw error;
     showToast('✅ Fiche créée !','success');
     btn.textContent='✅ Enregistrée !';
     setTimeout(()=>{window.location.href='fiches.html';},1400);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
-    btn.disabled=false; btn.textContent='✨ Enregistrer la fiche';
+    btn.disabled=false;btn.textContent='✨ Enregistrer la fiche';
   }
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
 function showToast(msg,type='success'){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast ${type} show`;
-  setTimeout(()=>t.classList.remove('show'),3200);
+  t.textContent=msg;t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
 }
 </script>
 </body>

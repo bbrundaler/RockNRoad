@@ -9,230 +9,176 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;--r:10px;}
+:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;}
 body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);}
-#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
+#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
 #auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
-.spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;
-  border-radius:50%;animation:spin 1s linear infinite;margin-top:18px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;border-radius:50%;animation:spin 1s linear infinite;margin-top:18px;}
 @keyframes spin{to{transform:rotate(360deg)}}
 #main{display:none;}
-
-/* HEADER */
-header{background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
-  border-bottom:1px solid rgba(200,168,75,.15);}
-.hlogo{font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;
-  display:flex;align-items:center;gap:10px;}
+header{background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,168,75,.15);}
+.hlogo{font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
 .hlogo span{font-size:10px;color:rgba(200,168,75,.5);letter-spacing:4px;text-transform:uppercase;font-family:Inter,sans-serif;}
 nav{display:flex;gap:8px;flex-wrap:wrap;}
-.hn{display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;
-  letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;
-  border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;}
+.hn{display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;}
 .hn:hover,.hn.active{color:var(--gold);border-color:rgba(200,168,75,.4);}
-.hbtn{background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);
-  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;
-  border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
-
-.container{max-width:1200px;margin:0 auto;padding:32px 24px 80px;}
-
-/* TOP BAR */
-.top-bar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
-.page-title{font-family:'Playfair Display',serif;font-size:28px;}
+.hbtn{background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
+.container{max-width:1300px;margin:0 auto;padding:28px 24px 80px;}
+.top-bar{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;}
 .page-title em{color:var(--gold);font-style:italic;}
-.add-btn{background:var(--gold);color:var(--dark);font-weight:700;font-size:12px;
-  padding:11px 22px;border-radius:8px;border:none;cursor:pointer;text-decoration:none;
-  display:inline-flex;align-items:center;gap:6px;transition:all .2s;letter-spacing:.5px;}
+.add-btn{background:var(--gold);color:var(--dark);font-weight:700;font-size:12px;padding:10px 20px;border-radius:8px;border:none;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
 .add-btn:hover{background:#dbb948;}
-
 /* FILTRES */
-.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;
-  background:white;border-radius:10px;padding:12px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05);}
-.filter-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;margin-right:4px;}
-select.fs,input.fs{padding:8px 12px;border:1.5px solid #E8DECE;border-radius:7px;
-  font-family:'Inter',sans-serif;font-size:12px;color:var(--dark);background:white;
-  cursor:pointer;outline:none;transition:border-color .2s;}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:white;border-radius:10px;padding:11px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.filter-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;}
+select.fs,input.fs{padding:7px 11px;border:1.5px solid #E8DECE;border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;color:var(--dark);background:white;cursor:pointer;outline:none;transition:border-color .2s;}
 select.fs:focus,input.fs:focus{border-color:var(--gold);}
-input.fs{width:180px;}
-.fbtn{padding:8px 14px;border-radius:7px;font-size:11px;font-weight:600;
-  cursor:pointer;border:1.5px solid #E8DECE;background:white;color:#888;transition:all .2s;}
+input.fs{width:170px;}
+.fbtn{padding:7px 13px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid #E8DECE;background:white;color:#888;transition:all .2s;}
 .fbtn.on{border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
-
-/* STATS BAR */
-.stats-bar{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
-.stat{background:white;border-radius:8px;padding:10px 16px;box-shadow:0 1px 6px rgba(0,0,0,.05);
-  font-size:12px;color:#888;display:flex;align-items:center;gap:6px;}
-.stat strong{font-size:15px;color:var(--dark);font-weight:700;}
-
+/* STATS */
+.stats-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.stat{background:white;border-radius:7px;padding:8px 14px;box-shadow:0 1px 5px rgba(0,0,0,.05);font-size:11px;color:#888;display:flex;align-items:center;gap:5px;}
+.stat strong{font-size:14px;color:var(--dark);font-weight:700;}
 /* VOYAGE BAR */
-.voyage-bar{background:var(--dark);border-radius:10px;padding:13px 18px;margin-bottom:18px;
-  display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.voyage-bar{background:var(--dark);border-radius:9px;padding:12px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .voyage-bar.show{display:flex;}
-.vb-txt{color:rgba(245,239,224,.8);font-size:13px;}
+.vb-txt{color:rgba(245,239,224,.8);font-size:12px;}
 .vb-txt strong{color:var(--gold);}
-.vb-btn{background:var(--gold);color:var(--dark);font-weight:700;font-size:11px;
-  padding:8px 18px;border-radius:7px;border:none;cursor:pointer;text-decoration:none;}
-
-/* GRILLE */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;}
-.card{background:white;border-radius:12px;overflow:hidden;
-  box-shadow:0 3px 14px rgba(0,0,0,.08);transition:all .25s;position:relative;}
-.card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.12);}
-.card-photo{height:190px;background:#d4cbb8;background-size:cover;background-position:center;position:relative;}
+.vb-btn{background:var(--gold);color:var(--dark);font-weight:700;font-size:11px;padding:7px 16px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;}
+/* CARTE FRANCE */
+.map-france-wrap{background:white;border-radius:12px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:16px;}
+.map-france-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:10px;}
+.map-france{display:flex;flex-wrap:wrap;gap:6px;}
+.region-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:2px solid #E8DECE;background:white;cursor:pointer;transition:all .2s;font-size:11px;font-weight:600;color:#888;}
+.region-btn:hover{border-color:var(--gold);color:#8B6914;}
+.region-btn.active{color:white;border-color:transparent;}
+.region-blason{width:18px;height:22px;object-fit:contain;}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:16px;}
+.card{background:white;border-radius:11px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.08);transition:all .22s;position:relative;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.12);}
+.card-photo{height:185px;background:#d4cbb8;background-size:cover;background-position:center;position:relative;}
 .card-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 55%);}
-.card-type{position:absolute;top:10px;left:10px;z-index:2;background:rgba(0,0,0,.5);color:white;
-  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px;}
-.card-dog{position:absolute;top:10px;right:10px;z-index:2;font-size:18px;}
-.card-region{position:absolute;bottom:10px;left:10px;z-index:2;color:white;font-size:9px;
-  font-weight:700;padding:2px 9px;border-radius:10px;letter-spacing:1px;}
-.card-body{padding:14px;}
-.card-name{font-family:'Playfair Display',serif;font-size:16px;margin-bottom:3px;line-height:1.25;}
-.card-meta{font-size:10px;color:#aaa;margin-bottom:6px;}
-.card-note{display:inline-flex;align-items:center;gap:3px;background:#2C5016;color:white;
-  font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:7px;}
-.card-desc{font-size:11.5px;color:#5a4a32;line-height:1.55;margin-bottom:10px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.card-actions{display:flex;gap:6px;flex-wrap:wrap;}
-.btn-voy{flex:1;padding:8px;background:var(--dark);color:var(--gold);
-  font-size:10px;font-weight:700;border:none;border-radius:6px;cursor:pointer;transition:all .2s;}
+.card-type{position:absolute;top:9px;left:9px;z-index:2;background:rgba(0,0,0,.5);color:white;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 9px;border-radius:20px;}
+.card-dog{position:absolute;top:9px;right:9px;z-index:2;font-size:17px;}
+.card-region{position:absolute;bottom:9px;left:9px;z-index:2;color:white;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:1px;display:flex;align-items:center;gap:4px;}
+.card-body{padding:13px;}
+.card-name{font-family:'Playfair Display',serif;font-size:15px;margin-bottom:2px;line-height:1.25;}
+.card-meta{font-size:10px;color:#aaa;margin-bottom:5px;}
+.card-notes{display:flex;gap:8px;align-items:center;margin-bottom:5px;}
+.card-note{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.card-note.google{background:#2C5016;color:white;}
+.card-note.famille{background:rgba(200,168,75,.15);color:#8B6914;}
+.card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px;}
+.card-tag{font-size:9px;padding:1px 6px;border-radius:10px;background:rgba(200,168,75,.1);color:#8B6914;font-weight:600;}
+.card-comment{font-size:10px;color:#888;font-style:italic;border-left:2px solid rgba(200,168,75,.25);padding-left:7px;margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-desc{font-size:11px;color:#5a4a32;line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.card-actions{display:flex;gap:5px;flex-wrap:wrap;}
+.btn-voy{flex:1;padding:7px;background:var(--dark);color:var(--gold);font-size:10px;font-weight:700;border:none;border-radius:6px;cursor:pointer;transition:all .2s;}
 .btn-voy:hover{background:var(--gold);color:var(--dark);}
 .btn-voy.added{background:var(--green);color:white;}
-.btn-g{padding:8px 11px;background:#fff8e8;border:1px solid rgba(200,168,75,.35);
-  color:#8B6914;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;text-decoration:none;transition:all .2s;}
-.btn-g:hover{background:#fef0c0;}
-.btn-m{padding:8px 11px;background:#f0f4ff;border:1px solid #c0d0f0;
-  color:#2a5aaa;font-size:10px;font-weight:700;border-radius:6px;text-decoration:none;transition:all .2s;}
-.btn-m:hover{background:#dce8ff;}
-.btn-edit{padding:8px 11px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);
-  color:#8B6914;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;transition:all .2s;}
-.btn-edit:hover{background:rgba(200,168,75,.2);}
-
-/* MODAL ÉDITION */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;
-  display:none;align-items:center;justify-content:center;padding:20px;}
+.btn-g{padding:7px 10px;background:#fff8e8;border:1px solid rgba(200,168,75,.3);color:#8B6914;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;text-decoration:none;transition:all .2s;}
+.btn-m{padding:7px 10px;background:#f0f4ff;border:1px solid #c0d0f0;color:#2a5aaa;font-size:10px;font-weight:700;border-radius:6px;text-decoration:none;transition:all .2s;}
+.btn-edit{padding:7px 10px;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.25);color:#8B6914;font-size:10px;font-weight:700;border-radius:6px;cursor:pointer;transition:all .2s;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
 .modal-overlay.open{display:flex;}
-.modal{background:white;border-radius:16px;width:100%;max-width:680px;
-  max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.modal-header{padding:20px 24px 16px;border-bottom:1px solid #f0ece4;
-  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:2;}
-.modal-title{font-family:'Playfair Display',serif;font-size:20px;}
+.modal{background:white;border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid #f0ece4;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:2;}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;}
 .modal-title em{color:var(--gold);font-style:italic;}
-.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;padding:4px 8px;}
-.modal-close:hover{color:var(--dark);}
-.modal-body{padding:24px;}
-.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;}
+.modal-body{padding:22px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .mg{margin-bottom:0;}
 .mg.full{grid-column:1/-1;}
-.mlabel{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:#666;margin-bottom:6px;}
-.minput,select.minput,textarea.minput{width:100%;padding:10px 12px;border:2px solid #E8DECE;
-  border-radius:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);
-  background:white;transition:border-color .2s;outline:none;resize:vertical;}
-.minput:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.1);}
-textarea.minput{min-height:80px;}
-.modal-footer{padding:16px 24px;border-top:1px solid #f0ece4;display:flex;gap:10px;
-  position:sticky;bottom:0;background:white;}
-.save-btn{flex:1;padding:12px;background:var(--dark);color:var(--gold);
-  font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  border:none;border-radius:8px;cursor:pointer;transition:all .2s;}
+.mlabel{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#666;margin-bottom:5px;}
+.minput,.minput select,textarea.minput{width:100%;padding:9px 11px;border:2px solid #E8DECE;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);background:white;transition:border-color .2s;outline:none;resize:vertical;}
+.minput:focus{border-color:var(--gold);}
+textarea.minput{min-height:75px;}
+select.minput{appearance:auto;}
+/* Modal dog */
+.dtog-group{display:flex;gap:7px;}
+.dtog{flex:1;padding:8px;border:2px solid #E8DECE;border-radius:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;color:#aaa;}
+.dtog.active.yes{border-color:var(--green);background:#e8f4e8;color:var(--green);}
+.dtog.active.no{border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
+.dtog.active.na{border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
+/* Modal tags */
+.modal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.mtag{padding:5px 11px;border:1.5px solid #E8DECE;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:#888;user-select:none;}
+.mtag:hover{border-color:var(--gold);}
+.mtag.on{border-color:var(--gold);background:rgba(200,168,75,.12);color:#6B4F10;}
+/* Modal stars */
+.mstar-row{display:flex;gap:4px;margin-top:6px;}
+.mstar{font-size:22px;cursor:pointer;color:#ddd;transition:color .15s;}
+.mstar.on{color:#C8A84B;}
+/* Modal photo */
+.mphoto-zone{border:2px dashed #E8DECE;border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:#fdfaf5;position:relative;}
+.mphoto-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.mphoto-prev{width:100%;max-height:130px;object-fit:cover;border-radius:6px;display:none;}
+/* Modal footer */
+.modal-footer{padding:14px 22px;border-top:1px solid #f0ece4;display:flex;gap:8px;position:sticky;bottom:0;background:white;}
+.save-btn{flex:1;padding:11px;background:var(--dark);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:7px;cursor:pointer;transition:all .2s;}
 .save-btn:hover{background:var(--gold);color:var(--dark);}
 .save-btn:disabled{opacity:.5;cursor:not-allowed;}
-.del-btn{padding:12px 16px;background:#fff0f0;border:1px solid #fcc;color:#cc4400;
-  font-size:11px;font-weight:700;border-radius:8px;cursor:pointer;transition:all .2s;}
-.del-btn:hover{background:#ffe0e0;}
-
-/* MODAL PHOTO UPLOAD */
-.mphoto-zone{border:2px dashed #E8DECE;border-radius:9px;padding:20px;text-align:center;
-  cursor:pointer;transition:all .2s;background:#fdfaf5;position:relative;}
-.mphoto-zone:hover{border-color:var(--gold);}
-.mphoto-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.mphoto-prev{width:100%;max-height:150px;object-fit:cover;border-radius:7px;display:none;}
-.mphoto-ph{color:#ccc;font-size:12px;}
-
-/* DOG TOGGLE MODAL */
-.dtog-group{display:flex;gap:8px;}
-.dtog{flex:1;padding:9px;border:2px solid #E8DECE;border-radius:7px;text-align:center;
-  cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;color:#aaa;}
-.dtog.active.yes{border-color:var(--green);background:#e8f4e8;color:var(--green);}
-.dtog.active.no {border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
-.dtog.active.na {border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
-
-/* SQUELETTES */
-.skeleton{background:white;border-radius:12px;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,.06);}
-.sk-p{height:190px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d8 50%,#f0ece4 75%);
-  background-size:200% 100%;animation:shimmer 1.4s infinite;}
-.sk-b{padding:14px;}
-.sk-l{height:13px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d8 50%,#f0ece4 75%);
-  background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;margin-bottom:8px;}
+.del-btn{padding:11px 14px;background:#fff0f0;border:1px solid #fcc;color:#cc4400;font-size:10px;font-weight:700;border-radius:7px;cursor:pointer;}
+/* Squelettes */
+.skeleton{background:white;border-radius:11px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.06);}
+.sk-p{height:185px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d8 50%,#f0ece4 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+.sk-b{padding:13px;}
+.sk-l{height:12px;background:linear-gradient(90deg,#f0ece4 25%,#e8e0d8 50%,#f0ece4 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;margin-bottom:8px;}
 .sk-l.s{width:55%;}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-.empty{text-align:center;padding:60px 20px;color:#888;grid-column:1/-1;}
-.empty-icon{font-size:40px;margin-bottom:12px;}
-.empty h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--dark);margin-bottom:6px;}
-
-.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:9px;
-  font-size:13px;font-weight:600;z-index:1000;transform:translateY(80px);
-  transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.empty{text-align:center;padding:50px 20px;color:#888;grid-column:1/-1;}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--dark);margin-bottom:5px;}
+.toast{position:fixed;bottom:22px;right:22px;padding:11px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:1000;transform:translateY(80px);transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .toast.show{transform:translateY(0);}
 .toast.success{background:#2C5016;color:white;}
 .toast.error{background:#cc4400;color:white;}
 .toast.info{background:var(--dark);color:var(--gold);}
-
 @media(max-width:640px){nav{display:none;}.grid{grid-template-columns:1fr;}.modal-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-
 <div id="auth-check">
   <div style="font-size:48px;">🐾</div>
   <h2>RockNRoad</h2>
-  <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Chargement des fiches...</p>
+  <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Chargement...</p>
   <div class="spinner"></div>
 </div>
-
 <div id="main">
 <header>
-  <a href="carnet.html" class="hlogo">
-    🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span>
-    <span>Aventures</span>
-  </a>
+  <a href="carnet.html" class="hlogo">🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span><span>Aventures</span></a>
   <nav>
     <a href="carnet.html" class="hn">🗺 Carnet</a>
-    <a href="fiches.html" class="hn active">🗂️ Mes Fiches</a>
-    <a href="voyage.html" class="hn">🧭 Mon Voyage</a>
+    <a href="fiches.html" class="hn active">🗂️ Fiches</a>
+    <a href="voyage.html" class="hn">🧭 Voyage</a>
     <a href="admin.html" class="hn">➕ Créer</a>
     <a href="config.html" class="hn">⚙️ Config</a>
   </nav>
   <button onclick="logout()" class="hbtn">⏏ Déco</button>
 </header>
-
 <div class="container">
-
   <div class="top-bar">
     <div>
       <h1 class="page-title">Mes <em>Fiches Lieux</em></h1>
-      <p style="font-size:12px;color:#aaa;margin-top:3px;">Filtrez, éditez et ajoutez à Mon Voyage 🧭</p>
+      <p style="font-size:11px;color:#aaa;margin-top:2px;">Filtrez, éditez, ajoutez à Mon Voyage 🧭</p>
     </div>
     <a href="admin.html" class="add-btn">➕ Nouveau lieu</a>
+  </div>
+
+  <!-- SÉLECTEUR RÉGIONS AVEC BLASONS -->
+  <div class="map-france-wrap">
+    <div class="map-france-title">🗺️ Filtrer par région</div>
+    <div class="map-france" id="regionBtns"></div>
   </div>
 
   <!-- FILTRES -->
   <div class="filters">
     <span class="filter-label">Filtres :</span>
-    <select class="fs" id="filterRegion" onchange="applyFilters()">
-      <option value="">🌍 Toutes régions</option>
-      <option value="Pyrenees">🏔️ Pyrénées</option>
-      <option value="Atlantique">🌊 Atlantique</option>
-      <option value="Bourgogne">🍷 Bourgogne</option>
-      <option value="Bretagne">🦞 Bretagne</option>
-      <option value="Normandie">🏰 Normandie</option>
-      <option value="Provence">☀️ Provence</option>
-      <option value="Alsace">🥨 Alsace</option>
-      <option value="Alpes">⛷️ Alpes</option>
-      <option value="Loire">Loire</option>
-      <option value="Ardenne">Ardenne</option>
-    </select>
     <select class="fs" id="filterType" onchange="applyFilters()">
       <option value="">🗂 Tous types</option>
       <option value="Site">🏛️ Sites</option>
@@ -245,9 +191,11 @@ textarea.minput{min-height:80px;}
     <select class="fs" id="filterSort" onchange="applyFilters()">
       <option value="recent">⏱ Plus récents</option>
       <option value="name">🔤 Alphabétique</option>
-      <option value="note">⭐ Meilleures notes</option>
+      <option value="noteG">⭐ Note Google</option>
+      <option value="noteF">🐾 Note Famille</option>
     </select>
     <button class="fbtn" id="filterDog" onclick="toggleFilter('dog')">🐕 Dog-friendly</button>
+    <button class="fbtn" id="filterFamille" onclick="toggleFilter('famille')">🐾 Note famille</button>
     <input class="fs" type="text" id="searchInput" placeholder="🔍 Rechercher..." oninput="applyFilters()">
   </div>
 
@@ -278,205 +226,234 @@ textarea.minput{min-height:80px;}
     </div>
     <div class="modal-body">
       <input type="hidden" id="editId">
-
-      <!-- PHOTO -->
-      <div style="margin-bottom:18px;">
+      <!-- Photo -->
+      <div style="margin-bottom:16px;">
         <label class="mlabel">📸 Photo</label>
         <div class="mphoto-zone" id="mPhotoZone">
           <input type="file" id="mPhotoInput" accept="image/*" onchange="previewEditPhoto(event)">
           <img class="mphoto-prev" id="mPhotoPreview">
-          <div class="mphoto-ph" id="mPhotoPh">
-            <div style="font-size:24px;margin-bottom:4px;">📷</div>
-            <div>Cliquer pour changer la photo</div>
-          </div>
+          <div id="mPhotoPh" style="color:#ccc;font-size:11px;"><div style="font-size:22px;margin-bottom:4px;">📷</div>Cliquer pour changer</div>
         </div>
-        <div id="mCurrentPhoto" style="font-size:10px;color:#aaa;margin-top:5px;"></div>
       </div>
-
       <div class="modal-grid">
-        <div class="mg full">
-          <label class="mlabel">Nom *</label>
-          <input class="minput" type="text" id="editNom">
-        </div>
+        <div class="mg full"><label class="mlabel">Nom *</label><input class="minput" type="text" id="editNom"></div>
         <div class="mg">
           <label class="mlabel">Type</label>
           <select class="minput" id="editType">
-            <option value="Site">🏛️ Site</option>
-            <option value="Camping">⛺ Camping</option>
-            <option value="Plage">🏖️ Plage / Lac</option>
-            <option value="Randonnee">🥾 Randonnée</option>
-            <option value="Restaurant">🍽️ Restaurant</option>
-            <option value="Halte">🚗 Halte</option>
+            <option value="Site">🏛️ Site</option><option value="Camping">⛺ Camping</option>
+            <option value="Plage">🏖️ Plage</option><option value="Randonnee">🥾 Randonnée</option>
+            <option value="Restaurant">🍽️ Restaurant</option><option value="Halte">🚗 Halte</option>
           </select>
         </div>
         <div class="mg">
           <label class="mlabel">Région</label>
           <select class="minput" id="editRegion">
-            <option value="Pyrenees">Pyrénées</option>
-            <option value="Atlantique">Atlantique</option>
-            <option value="Bourgogne">Bourgogne</option>
-            <option value="Bretagne">Bretagne</option>
-            <option value="Normandie">Normandie</option>
-            <option value="Provence">Provence</option>
-            <option value="Alsace">Alsace</option>
-            <option value="Alpes">Alpes</option>
-            <option value="Loire">Loire</option>
-            <option value="Ardenne">Ardenne</option>
+            <option value="Pyrenees">Pyrénées</option><option value="Atlantique">Atlantique</option>
+            <option value="Bourgogne">Bourgogne</option><option value="Bretagne">Bretagne</option>
+            <option value="Normandie">Normandie</option><option value="Loire">Loire</option>
+            <option value="Provence">Provence</option><option value="Occitanie">Occitanie</option>
+            <option value="Alsace">Alsace</option><option value="Alpes">Alpes</option>
+            <option value="Auvergne">Auvergne</option><option value="Ardenne">Ardenne</option>
+            <option value="Nord">Nord</option><option value="Corse">Corse</option>
+          </select>
+        </div>
+        <div class="mg"><label class="mlabel">Sous-région</label><input class="minput" type="text" id="editSousRegion"></div>
+        <div class="mg full"><label class="mlabel">Description</label><textarea class="minput" id="editDescription"></textarea></div>
+        <div class="mg full"><label class="mlabel">💬 Commentaire famille</label><textarea class="minput" id="editCommentaire" style="min-height:65px;" placeholder="Pourquoi ce lieu est dans notre carnet..."></textarea></div>
+        <div class="mg full"><label class="mlabel">💡 Conseil pratique</label><input class="minput" type="text" id="editConseil"></div>
+        <!-- Notes -->
+        <div class="mg">
+          <label class="mlabel">Note Google ★</label>
+          <select class="minput" id="editNoteGoogle">
+            <option value="">—</option><option value="5.0">⭐⭐⭐⭐⭐ 5.0</option>
+            <option value="4.5">★★★★½ 4.5</option><option value="4.0">★★★★ 4.0</option>
+            <option value="3.5">★★★½ 3.5</option><option value="3.0">★★★ 3.0</option>
           </select>
         </div>
         <div class="mg">
-          <label class="mlabel">Sous-région</label>
-          <input class="minput" type="text" id="editSousRegion">
+          <label class="mlabel">Note Famille 🐾</label>
+          <div class="mstar-row" id="editFamilyStars">
+            <span class="mstar" data-v="1" onclick="setEditFamilyStar(1)">★</span>
+            <span class="mstar" data-v="2" onclick="setEditFamilyStar(2)">★</span>
+            <span class="mstar" data-v="3" onclick="setEditFamilyStar(3)">★</span>
+            <span class="mstar" data-v="4" onclick="setEditFamilyStar(4)">★</span>
+            <span class="mstar" data-v="5" onclick="setEditFamilyStar(5)">★</span>
+          </div>
+          <input type="hidden" id="editNoteFamille" value="">
         </div>
-        <div class="mg">
-          <label class="mlabel">Note ★</label>
-          <select class="minput" id="editNote">
-            <option value="">—</option>
-            <option value="5.0">⭐⭐⭐⭐⭐ 5★</option>
-            <option value="4.5">⭐⭐⭐⭐½ 4.5★</option>
-            <option value="4.0">⭐⭐⭐⭐ 4★</option>
-            <option value="3.5">⭐⭐⭐½ 3.5★</option>
-            <option value="3.0">⭐⭐⭐ 3★</option>
-          </select>
-        </div>
+        <!-- Tags -->
         <div class="mg full">
-          <label class="mlabel">Description</label>
-          <textarea class="minput" id="editDescription"></textarea>
+          <label class="mlabel">🏷️ Tags</label>
+          <div class="modal-tags" id="editTagsGrid">
+            <div class="mtag" data-tag="baignade" onclick="toggleEditTag(this)">🏊 Baignade</div>
+            <div class="mtag" data-tag="velo" onclick="toggleEditTag(this)">🚴 Vélo</div>
+            <div class="mtag" data-tag="ombre" onclick="toggleEditTag(this)">🌳 Ombre</div>
+            <div class="mtag" data-tag="calme" onclick="toggleEditTag(this)">😌 Calme</div>
+            <div class="mtag" data-tag="anime" onclick="toggleEditTag(this)">🎉 Animé</div>
+            <div class="mtag" data-tag="gratuit" onclick="toggleEditTag(this)">🆓 Gratuit</div>
+            <div class="mtag" data-tag="chien-plage" onclick="toggleEditTag(this)">🐕 Chien plage OK</div>
+            <div class="mtag" data-tag="vue" onclick="toggleEditTag(this)">🏔️ Belle vue</div>
+            <div class="mtag" data-tag="electricite" onclick="toggleEditTag(this)">⚡ Électricité</div>
+            <div class="mtag" data-tag="piscine" onclick="toggleEditTag(this)">🏊 Piscine</div>
+            <div class="mtag" data-tag="nature" onclick="toggleEditTag(this)">🌿 Nature</div>
+            <div class="mtag" data-tag="historique" onclick="toggleEditTag(this)">🏰 Historique</div>
+            <div class="mtag" data-tag="unesco" onclick="toggleEditTag(this)">🌍 UNESCO</div>
+            <div class="mtag" data-tag="randonnee" onclick="toggleEditTag(this)">🥾 Rando</div>
+            <div class="mtag" data-tag="teardrop" onclick="toggleEditTag(this)">🚐 Teardrop OK</div>
+            <div class="mtag" data-tag="enfants" onclick="toggleEditTag(this)">👧 Enfants</div>
+          </div>
         </div>
+        <!-- Dog -->
         <div class="mg full">
-          <label class="mlabel">Conseil pratique</label>
-          <input class="minput" type="text" id="editConseil">
-        </div>
-
-        <!-- DOG -->
-        <div class="mg full">
-          <label class="mlabel">Chien accepté ?</label>
+          <label class="mlabel">Chien ?</label>
           <div class="dtog-group">
             <div class="dtog yes" id="edogYes" onclick="setEditDog('yes')">✅ Oui</div>
-            <div class="dtog na"  id="edogNa"  onclick="setEditDog('na')">❓ À vérifier</div>
-            <div class="dtog no"  id="edogNo"  onclick="setEditDog('no')">❌ Non</div>
+            <div class="dtog na" id="edogNa" onclick="setEditDog('na')">❓ À vérifier</div>
+            <div class="dtog no" id="edogNo" onclick="setEditDog('no')">❌ Non</div>
           </div>
           <input type="hidden" id="editDogVal" value="yes">
         </div>
-        <div class="mg full">
-          <label class="mlabel">Info chien</label>
-          <input class="minput" type="text" id="editDogInfo">
-        </div>
-
-        <!-- CONTACT -->
-        <div class="mg">
-          <label class="mlabel">Téléphone</label>
-          <input class="minput" type="tel" id="editTel">
-        </div>
-        <div class="mg">
-          <label class="mlabel">Site web</label>
-          <input class="minput" type="url" id="editSiteWeb">
-        </div>
-        <div class="mg full">
-          <label class="mlabel">Adresse</label>
-          <input class="minput" type="text" id="editAdresse">
-        </div>
-
-        <!-- GPS -->
-        <div class="mg">
-          <label class="mlabel">Latitude</label>
-          <input class="minput" type="number" id="editLat" step="0.0001">
-        </div>
-        <div class="mg">
-          <label class="mlabel">Longitude</label>
-          <input class="minput" type="number" id="editLng" step="0.0001">
-        </div>
+        <div class="mg full"><label class="mlabel">Info chien</label><input class="minput" type="text" id="editDogInfo"></div>
+        <div class="mg"><label class="mlabel">Téléphone</label><input class="minput" type="tel" id="editTel"></div>
+        <div class="mg"><label class="mlabel">Site web</label><input class="minput" type="url" id="editSiteWeb"></div>
+        <div class="mg full"><label class="mlabel">Adresse</label><input class="minput" type="text" id="editAdresse"></div>
+        <div class="mg"><label class="mlabel">Latitude</label><input class="minput" type="number" id="editLat" step="0.000001"></div>
+        <div class="mg"><label class="mlabel">Longitude</label><input class="minput" type="number" id="editLng" step="0.000001"></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="save-btn" id="saveEditBtn" onclick="saveEdit()">💾 Enregistrer</button>
-      <button class="del-btn" onclick="deleteFiche()">🗑 Supprimer</button>
+      <button class="del-btn" onclick="deleteFiche()">🗑</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
+let allLieux=[],voyage=JSON.parse(localStorage.getItem('rr_voyage')||'[]');
+let filters={dog:false,famille:false},activeRegion='';
+let editPhotoFile=null,editDogVal='yes',editFamilyStarVal=0,editTags=[];
 
-let allLieux=[], voyage=JSON.parse(localStorage.getItem('rr_voyage')||'[]');
-let filters={dog:false};
-let editPhotoFile=null, editDogVal='yes';
-
-const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288',
-  'Bretagne':'#1a6a5a','Normandie':'#3a5a8a','Provence':'#8B4513',
-  'Alsace':'#8B2020','Alpes':'#4a4a8a','Loire':'#6B6B14','Ardenne':'#3a6a3a'};
+// Régions avec couleurs et blasons (SVG inline compact)
+const REGIONS=[
+  {id:'Pyrenees',label:'Pyrénées',col:'#2C5016',emoji:'🏔️'},
+  {id:'Atlantique',label:'Aquitaine',col:'#1a5a7a',emoji:'🌊'},
+  {id:'Bourgogne',label:'Bourgogne',col:'#6B3288',emoji:'🍷'},
+  {id:'Bretagne',label:'Bretagne',col:'#1a6a5a',emoji:'🦞'},
+  {id:'Normandie',label:'Normandie',col:'#3a5a8a',emoji:'🐄'},
+  {id:'Loire',label:'Val de Loire',col:'#6B6B14',emoji:'🏰'},
+  {id:'Provence',label:'Provence',col:'#8B4513',emoji:'☀️'},
+  {id:'Occitanie',label:'Languedoc',col:'#c87a00',emoji:'🌻'},
+  {id:'Alsace',label:'Alsace',col:'#8B2020',emoji:'🥨'},
+  {id:'Alpes',label:'Rhône-Alpes',col:'#4a4a8a',emoji:'⛷️'},
+  {id:'Auvergne',label:'Auvergne',col:'#5a6a3a',emoji:'🌋'},
+  {id:'Ardenne',label:'Champagne',col:'#3a6a3a',emoji:'🍾'},
+  {id:'Nord',label:'Nord',col:'#2a4a7a',emoji:'🌷'},
+  {id:'Corse',label:'Corse',col:'#2a7a5a',emoji:'🏝️'},
+];
+const RC={};REGIONS.forEach(r=>RC[r.id]=r.col);
 const TI={'Site':'🏛️','Camping':'⛺','Plage':'🏖️','Randonnee':'🥾','Restaurant':'🍽️','Halte':'🚗'};
-const DOGMAP={true:'🐕',false:'🚫',null:'❓'};
 
-// ── AUTH ──────────────────────────────────────────────────────────────────────
+// Auth
 async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   document.getElementById('auth-check').style.display='none';
   document.getElementById('main').style.display='block';
+  buildRegionBtns();
   loadLieux();
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
 
-// ── LOAD ──────────────────────────────────────────────────────────────────────
+// Boutons régions
+function buildRegionBtns(){
+  const c=document.getElementById('regionBtns');
+  // Bouton "Toutes"
+  const all=document.createElement('button');
+  all.className='region-btn active';all.id='rbtn-all';
+  all.innerHTML='🌍 Toutes';all.style.background='var(--dark)';all.style.color='var(--gold)';
+  all.onclick=()=>setRegion('');c.appendChild(all);
+  REGIONS.forEach(r=>{
+    const btn=document.createElement('button');
+    btn.className='region-btn';btn.id='rbtn-'+r.id;
+    btn.innerHTML=`${r.emoji} ${r.label}`;
+    btn.onclick=()=>setRegion(r.id);
+    c.appendChild(btn);
+  });
+}
+function setRegion(id){
+  activeRegion=id;
+  document.querySelectorAll('.region-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.background='';b.style.color='';
+  });
+  const target=document.getElementById('rbtn-'+(id||'all'));
+  if(target){
+    target.classList.add('active');
+    const r=REGIONS.find(x=>x.id===id);
+    target.style.background=r?r.col:'var(--dark)';
+    target.style.color='white';
+    target.style.borderColor='transparent';
+  }
+  applyFilters();
+}
+
+// Load
 async function loadLieux(){
   const {data,error}=await sb.from('lieux').select('*').order('created_at',{ascending:false});
   if(error||!data?.length){
-    document.getElementById('grid').innerHTML=`<div class="empty"><div class="empty-icon">🗺️</div><h3>Aucune fiche</h3><p>Commencez par <a href="admin.html" style="color:var(--gold)">créer la première fiche</a> !</p></div>`;
+    document.getElementById('grid').innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><h3>Aucune fiche</h3><p>Commencez par <a href="admin.html" style="color:var(--gold)">créer la première fiche</a> !</p></div>';
     return;
   }
-  allLieux=data;
-  renderStats(data);
-  renderCards(data);
+  allLieux=data;renderStats(data);renderCards(data);
 }
 
 function renderStats(data){
   const total=data.length;
-  const types=[...new Set(data.map(l=>l.type))].length;
-  const regions=[...new Set(data.map(l=>l.region))].length;
+  const avecNote=data.filter(l=>l.note_famille).length;
   document.getElementById('statsBar').innerHTML=`
     <div class="stat"><strong>${total}</strong> fiches</div>
-    <div class="stat"><strong>${regions}</strong> régions</div>
-    <div class="stat"><strong>${types}</strong> types</div>
-    <div class="stat"><strong>${data.filter(l=>l.dog_friendly).length}</strong> 🐕 dog-friendly</div>
+    <div class="stat"><strong>${[...new Set(data.map(l=>l.region))].length}</strong> régions</div>
+    <div class="stat"><strong>${data.filter(l=>l.dog_friendly===true).length}</strong> 🐕</div>
+    <div class="stat"><strong>${avecNote}</strong> notées famille</div>
+    <div class="stat"><strong>${data.filter(l=>l.tags?.length).length}</strong> avec tags</div>
   `;
 }
 
 function renderCards(lieux){
   const grid=document.getElementById('grid');
-  if(!lieux.length){
-    grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Essayez d\'autres filtres</p></div>';
-    return;
-  }
+  if(!lieux.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Essayez d\'autres filtres</p></div>';return;}
   grid.innerHTML=lieux.map(l=>{
     const inVoy=voyage.includes(l.id);
     const col=RC[l.region]||'#888';
     const icon=TI[l.type]||'📍';
     const photoStyle=l.photo_url?`background-image:url('${l.photo_url}')`:`background:linear-gradient(135deg,${col}55,${col}22)`;
-    const googleUrl=`https://www.google.com/search?q=${encodeURIComponent(l.nom+' '+l.region+' photos')}`;
-    const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom)}`;
+    const googleUrl=`https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region+' photos')}`;
+    const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
     const dogIcon=l.dog_friendly===true?'🐕':l.dog_friendly===false?'🚫':'❓';
+    const regionData=REGIONS.find(r=>r.id===l.region);
     return `<div class="card" id="card-${l.id}">
       <div class="card-photo" style="${photoStyle}">
         <div class="card-type">${icon} ${l.type||'—'}</div>
         <div class="card-dog">${dogIcon}</div>
-        <div class="card-region" style="background:${col}dd">${l.region||'—'}</div>
+        <div class="card-region" style="background:${col}dd">${regionData?regionData.emoji+' ':''} ${l.region||'—'}</div>
       </div>
       <div class="card-body">
-        ${l.note?`<div class="card-note">★ ${l.note}</div>`:''}
-        <div class="card-name">${l.nom}</div>
+        <div class="card-notes">
+          ${l.note?`<div class="card-note google">★ ${l.note}</div>`:''}
+          ${l.note_famille?`<div class="card-note famille">${'★'.repeat(l.note_famille)} 🐾</div>`:''}
+        </div>
+        <div class="card-name">${l.nom||'—'}</div>
         <div class="card-meta">${l.sous_region||l.region||''}${l.annee?' · '+l.annee:''}</div>
-        ${l.description?`<div class="card-desc">${l.description}</div>`:''}
+        ${l.tags?.length?`<div class="card-tags">${l.tags.slice(0,4).map(t=>`<span class="card-tag">${t}</span>`).join('')}</div>`:''}
+        ${l.commentaire?`<div class="card-comment">${l.commentaire}</div>`:l.description?`<div class="card-desc">${l.description}</div>`:''}
         <div class="card-actions">
-          <button class="btn-voy ${inVoy?'added':''}" onclick="toggleVoyage('${l.id}','${(l.nom||'').replace(/'/g,"\\'")}',${l.lat||0},${l.lng||0})" id="vbtn-${l.id}">
-            ${inVoy?'✅ Voyage':'🧭 Ajouter'}
-          </button>
+          <button class="btn-voy ${inVoy?'added':''}" onclick="toggleVoyage('${l.id}','${(l.nom||'').replace(/'/g,"\\'")}',${l.lat||0},${l.lng||0})" id="vbtn-${l.id}">${inVoy?'✅ Voyage':'🧭 Ajouter'}</button>
           <a href="${googleUrl}" target="_blank" class="btn-g">🔍</a>
           <a href="${mapsUrl}" target="_blank" class="btn-m">📍</a>
           <button class="btn-edit" onclick="openEdit('${l.id}')">✏️</button>
@@ -487,31 +464,27 @@ function renderCards(lieux){
   updateVoyageBar();
 }
 
-// ── FILTRES ───────────────────────────────────────────────────────────────────
-function toggleFilter(f){
-  filters[f]=!filters[f];
-  document.getElementById('filter'+f.charAt(0).toUpperCase()+f.slice(1)).classList.toggle('on',filters[f]);
-  applyFilters();
-}
+// Filtres
+function toggleFilter(f){filters[f]=!filters[f];document.getElementById('filter'+f.charAt(0).toUpperCase()+f.slice(1)).classList.toggle('on',filters[f]);applyFilters();}
 function applyFilters(){
-  const region=document.getElementById('filterRegion').value;
   const type=document.getElementById('filterType').value;
   const sort=document.getElementById('filterSort').value;
   const search=document.getElementById('searchInput').value.toLowerCase();
   let d=[...allLieux];
-  if(region) d=d.filter(l=>l.region===region);
-  if(type)   d=d.filter(l=>l.type===type);
-  if(filters.dog) d=d.filter(l=>l.dog_friendly===true);
-  if(search) d=d.filter(l=>(l.nom||'').toLowerCase().includes(search)||(l.description||'').toLowerCase().includes(search));
-  if(sort==='name') d.sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
-  else if(sort==='note') d.sort((a,b)=>(b.note||0)-(a.note||0));
+  if(activeRegion)d=d.filter(l=>l.region===activeRegion);
+  if(type)d=d.filter(l=>l.type===type);
+  if(filters.dog)d=d.filter(l=>l.dog_friendly===true);
+  if(filters.famille)d=d.filter(l=>l.note_famille);
+  if(search)d=d.filter(l=>(l.nom||'').toLowerCase().includes(search)||(l.description||'').toLowerCase().includes(search)||(l.commentaire||'').toLowerCase().includes(search)||(l.tags||[]).join(' ').includes(search));
+  if(sort==='name')d.sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
+  else if(sort==='noteG')d.sort((a,b)=>(b.note||0)-(a.note||0));
+  else if(sort==='noteF')d.sort((a,b)=>(b.note_famille||0)-(a.note_famille||0));
   renderCards(d);
 }
 
-// ── VOYAGE ────────────────────────────────────────────────────────────────────
+// Voyage
 function toggleVoyage(id,nom,lat,lng){
-  if(voyage.includes(id)) voyage=voyage.filter(v=>v!==id);
-  else voyage.push(id);
+  if(voyage.includes(id))voyage=voyage.filter(v=>v!==id);else voyage.push(id);
   localStorage.setItem('rr_voyage',JSON.stringify(voyage));
   const btn=document.getElementById('vbtn-'+id);
   if(btn){btn.className='btn-voy '+(voyage.includes(id)?'added':'');btn.textContent=voyage.includes(id)?'✅ Voyage':'🧭 Ajouter';}
@@ -519,25 +492,24 @@ function toggleVoyage(id,nom,lat,lng){
   showToast(voyage.includes(id)?`"${nom}" ajouté 🧭`:`"${nom}" retiré`,'success');
 }
 function updateVoyageBar(){
-  const bar=document.getElementById('voyageBar');
   document.getElementById('voyageCount').textContent=voyage.length;
-  bar.classList.toggle('show',voyage.length>0);
+  document.getElementById('voyageBar').classList.toggle('show',voyage.length>0);
 }
 
-// ── ÉDITION MODAL ─────────────────────────────────────────────────────────────
+// ── MODAL ÉDITION ─────────────────────────────────────────────────────────────
 function openEdit(id){
-  const l=allLieux.find(x=>x.id===id||x.id===parseInt(id));
-  if(!l) return;
-  editPhotoFile=null;
+  const l=allLieux.find(x=>String(x.id)===String(id));if(!l)return;
+  editPhotoFile=null;editTags=l.tags||[];editFamilyStarVal=l.note_famille||0;
   document.getElementById('editId').value=l.id;
   document.getElementById('modalNomTitle').textContent=l.nom||'la fiche';
   document.getElementById('editNom').value=l.nom||'';
   document.getElementById('editType').value=l.type||'Site';
   document.getElementById('editRegion').value=l.region||'';
   document.getElementById('editSousRegion').value=l.sous_region||'';
-  document.getElementById('editNote').value=l.note||'';
   document.getElementById('editDescription').value=l.description||'';
+  document.getElementById('editCommentaire').value=l.commentaire||'';
   document.getElementById('editConseil').value=l.conseil||'';
+  document.getElementById('editNoteGoogle').value=l.note?String(l.note):'';
   document.getElementById('editDogInfo').value=l.dog_info||'';
   document.getElementById('editTel').value=l.tel||'';
   document.getElementById('editSiteWeb').value=l.site_web||'';
@@ -547,40 +519,50 @@ function openEdit(id){
   // Dog
   const dv=l.dog_friendly===true?'yes':l.dog_friendly===false?'no':'na';
   setEditDog(dv);
-  // Photo actuelle
-  const ph=document.getElementById('mPhotoPh');
+  // Note famille
+  setEditFamilyStar(l.note_famille||0);
+  // Tags
+  document.querySelectorAll('#editTagsGrid .mtag').forEach(el=>{
+    el.classList.toggle('on',editTags.includes(el.dataset.tag));
+  });
+  // Photo
   const prev=document.getElementById('mPhotoPreview');
-  if(l.photo_url){
-    prev.src=l.photo_url; prev.style.display='block'; ph.style.display='none';
-    document.getElementById('mCurrentPhoto').textContent='Photo actuelle. Cliquez pour en choisir une autre.';
-  }else{
-    prev.style.display='none'; ph.style.display='block';
-    document.getElementById('mCurrentPhoto').textContent='';
-  }
+  const ph=document.getElementById('mPhotoPh');
+  if(l.photo_url){prev.src=l.photo_url;prev.style.display='block';ph.style.display='none';}
+  else{prev.style.display='none';ph.style.display='block';}
   document.getElementById('editModal').classList.add('open');
   document.body.style.overflow='hidden';
 }
-function closeModal(e){if(e.target===document.getElementById('editModal')) closeModalDirect();}
-function closeModalDirect(){
-  document.getElementById('editModal').classList.remove('open');
-  document.body.style.overflow='';
-}
+function closeModal(e){if(e.target===document.getElementById('editModal'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('editModal').classList.remove('open');document.body.style.overflow='';}
 function setEditDog(v){
   editDogVal=v;
   document.getElementById('editDogVal').value=v;
-  ['yes','na','no'].forEach(x=>document.getElementById('edog'+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle('active',x===v));
-  document.getElementById('edogYes').classList.toggle('yes',true);
-  document.getElementById('edogNa').classList.toggle('na',true);
-  document.getElementById('edogNo').classList.toggle('no',true);
+  ['yes','na','no'].forEach(x=>{
+    const el=document.getElementById('edog'+x.charAt(0).toUpperCase()+x.slice(1));
+    el.className='dtog '+x+(x===v?' active':'');
+  });
+}
+function setEditFamilyStar(v){
+  editFamilyStarVal=v;
+  document.getElementById('editNoteFamille').value=v||'';
+  document.querySelectorAll('#editFamilyStars .mstar').forEach(s=>{
+    s.classList.toggle('on',parseInt(s.dataset.v)<=v);
+  });
+}
+function toggleEditTag(el){
+  const tag=el.dataset.tag;
+  el.classList.toggle('on');
+  if(editTags.includes(tag))editTags=editTags.filter(t=>t!==tag);
+  else editTags.push(tag);
 }
 function previewEditPhoto(e){
-  const file=e.target.files[0];
-  if(!file) return;
+  const file=e.target.files[0];if(!file)return;
   editPhotoFile=file;
   const reader=new FileReader();
   reader.onload=ev=>{
-    const p=document.getElementById('mPhotoPreview');
-    p.src=ev.target.result; p.style.display='block';
+    document.getElementById('mPhotoPreview').src=ev.target.result;
+    document.getElementById('mPhotoPreview').style.display='block';
     document.getElementById('mPhotoPh').style.display='none';
   };
   reader.readAsDataURL(file);
@@ -588,29 +570,28 @@ function previewEditPhoto(e){
 async function saveEdit(){
   const id=document.getElementById('editId').value;
   const nom=document.getElementById('editNom').value.trim();
-  if(!nom){showToast('Le nom est obligatoire','error');return;}
+  if(!nom){showToast('Nom obligatoire','error');return;}
   const btn=document.getElementById('saveEditBtn');
-  btn.disabled=true; btn.textContent='⏳ Enregistrement...';
+  btn.disabled=true;btn.textContent='⏳...';
   try{
     let photo_url=undefined;
     if(editPhotoFile){
       const ext=editPhotoFile.name.split('.').pop();
       const fname=`fiches/${Date.now()}-${nom.replace(/\s+/g,'-').toLowerCase().slice(0,40)}.${ext}`;
       const {error:ue}=await sb.storage.from('photos-lieux').upload(fname,editPhotoFile,{contentType:editPhotoFile.type,upsert:true});
-      if(!ue){
-        const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);
-        photo_url=publicUrl;
-      }
+      if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);photo_url=publicUrl;}
     }
     const dv=document.getElementById('editDogVal').value;
+    const nfVal=editFamilyStarVal||null;
     const payload={
-      nom,
-      type:document.getElementById('editType').value,
-      region:document.getElementById('editRegion').value,
+      nom,type:document.getElementById('editType').value,region:document.getElementById('editRegion').value,
       sous_region:document.getElementById('editSousRegion').value||null,
-      note:parseFloat(document.getElementById('editNote').value)||null,
       description:document.getElementById('editDescription').value||null,
+      commentaire:document.getElementById('editCommentaire').value||null,
       conseil:document.getElementById('editConseil').value||null,
+      note:parseFloat(document.getElementById('editNoteGoogle').value)||null,
+      note_famille:nfVal,
+      tags:editTags.length?editTags:null,
       dog_friendly:dv==='yes'?true:dv==='no'?false:null,
       dog_info:document.getElementById('editDogInfo').value||null,
       tel:document.getElementById('editTel').value||null,
@@ -619,35 +600,28 @@ async function saveEdit(){
       lat:parseFloat(document.getElementById('editLat').value)||null,
       lng:parseFloat(document.getElementById('editLng').value)||null,
     };
-    if(photo_url!==undefined) payload.photo_url=photo_url;
+    if(photo_url!==undefined)payload.photo_url=photo_url;
     const {error}=await sb.from('lieux').update(payload).eq('id',id);
-    if(error) throw error;
-    // Mettre à jour la liste locale
-    const idx=allLieux.findIndex(l=>l.id===id||l.id===parseInt(id));
-    if(idx>=0) allLieux[idx]={...allLieux[idx],...payload};
-    showToast('✅ Fiche mise à jour !','success');
-    closeModalDirect();
-    applyFilters();
+    if(error)throw error;
+    const idx=allLieux.findIndex(l=>String(l.id)===String(id));
+    if(idx>=0)allLieux[idx]={...allLieux[idx],...payload};
+    showToast('✅ Mis à jour !','success');
+    closeModalDirect();applyFilters();renderStats(allLieux);
   }catch(e){showToast('Erreur: '+e.message,'error');}
   finally{btn.disabled=false;btn.textContent='💾 Enregistrer';}
 }
 async function deleteFiche(){
   const id=document.getElementById('editId').value;
   const nom=document.getElementById('editNom').value;
-  if(!confirm(`Supprimer définitivement "${nom}" ?`)) return;
+  if(!confirm(`Supprimer "${nom}" définitivement ?`))return;
   const {error}=await sb.from('lieux').delete().eq('id',id);
   if(error){showToast('Erreur suppression','error');return;}
-  allLieux=allLieux.filter(l=>l.id!==id&&l.id!==parseInt(id));
-  showToast('🗑 Fiche supprimée','info');
-  closeModalDirect();
-  applyFilters();
-  renderStats(allLieux);
+  allLieux=allLieux.filter(l=>String(l.id)!==String(id));
+  showToast('🗑 Supprimée','info');closeModalDirect();applyFilters();renderStats(allLieux);
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
 function showToast(msg,type='success'){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast ${type} show`;
+  const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 </script>
