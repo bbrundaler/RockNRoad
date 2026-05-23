@@ -9,8 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;}
-body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);min-height:100vh;}
+:root{--sb:215px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;--creme:#F7F3EC;--green:#2C5016;}
+body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--dark);display:flex;min-height:100vh;}
 #auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
 #auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
@@ -33,7 +33,7 @@ nav{display:flex;gap:8px;}
   font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;
   border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
 
-.container{max-width:640px;margin:0 auto;padding:48px 24px 80px;}
+.container{max-width:640px;margin:0 auto;padding:36px 24px 80px;}
 .page-title{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:6px;}
 .page-title em{color:var(--gold);font-style:italic;}
 .page-sub{color:#aaa;font-size:13px;margin-bottom:36px;}
@@ -95,6 +95,14 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
 .toast.show{transform:translateY(0);}
 .toast.success{background:#2C5016;color:white;}
 .toast.error{background:#cc4400;color:white;}
+
+#sidebar{width:215px;min-height:100vh;background:#161410;border-right:1px solid rgba(200,168,75,.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;}
+.sb-logo{padding:20px 16px 14px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;text-decoration:none;display:block;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
+.sb-group{padding:10px 8px 3px;flex-shrink:0;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:4px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;background:none;border:none;color:rgba(245,239,224,.6);font-family:'Inter',sans-serif;font-size:13px;border-radius:7px;cursor:pointer;text-align:left;text-decoration:none;}
+.sb-btn:hover{background:rgba(200,168,75,.07);}
 </style>
 </head>
 <body>
@@ -184,7 +192,8 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
   </div>
 
 </div>
-</div>
+</div><!-- /app-main -->
+</div><!-- /main -->
 
 <div class="toast" id="toast"></div>
 
@@ -200,7 +209,12 @@ async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   document.getElementById('auth-check').style.display='none';
-  document.getElementById('main').style.display='block';
+  document.getElementById('main').style.display='contents';
+  const name=session.user.email.split('@')[0];
+  const uname=document.getElementById('sb-username');
+  const uav=document.getElementById('sb-avatar');
+  if(uname)uname.textContent=name;
+  if(uav)uav.textContent=name.charAt(0).toUpperCase();
   loadCurrentKey();
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}

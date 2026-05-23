@@ -9,8 +9,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;--green:#2C5016;--r:10px;}
-body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);min-height:100vh;}
+:root{--sb:215px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;--creme:#F7F3EC;--beige:#EDE6D8;--text:#1a1208;--muted:#6B5F4A;--pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;--r:10px;}
+body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+/* body défini dans :root block */
 #auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
 #auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
@@ -25,9 +26,9 @@ nav{display:flex;gap:8px;flex-wrap:wrap;}
 .hn{display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;}
 .hn:hover,.hn.active{color:var(--gold);border-color:rgba(200,168,75,.4);}
 .hbtn{background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;}
-.layout{display:grid;grid-template-columns:1fr 400px;gap:0;min-height:calc(100vh - 57px);}
-.col-left{padding:32px 32px 80px;border-right:1px solid rgba(0,0,0,.08);}
-.col-right{background:#faf7f2;padding:24px 20px;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:0;min-height:calc(100vh - 46px);}
+.col-left{padding:28px 28px 80px;border-right:1px solid rgba(0,0,0,.08);background:var(--creme);}
+.col-right{background:#f5f1ea;padding:20px 18px;position:sticky;top:46px;height:calc(100vh - 46px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
 .page-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
 .page-title em{color:var(--gold);font-style:italic;}
 .page-sub{color:#888;font-size:12px;margin-bottom:24px;}
@@ -148,6 +149,35 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 .toast.error{background:#cc4400;color:white;}
 .toast.info{background:var(--dark);color:var(--gold);}
 @media(max-width:900px){.layout{grid-template-columns:1fr;}.col-right{display:none;}nav{display:none;}}
+
+/* SIDEBAR */
+#sidebar{width:var(--sb);min-height:100vh;background:var(--dark2);border-right:1px solid rgba(200,168,75,.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
+#sidebar::-webkit-scrollbar{display:none;}
+.sb-logo{padding:20px 16px 14px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;text-decoration:none;display:block;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
+.sb-logo-title span{color:var(--gold);}
+.sb-logo-sub{font-size:9px;color:rgba(200,168,75,.5);letter-spacing:5px;text-transform:uppercase;margin-top:3px;display:block;}
+.sb-group{padding:10px 8px 3px;flex-shrink:0;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:4px;}
+.sb-sep{height:1px;background:rgba(200,168,75,.06);margin:4px 12px;}
+.sb-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;background:none;border:none;color:rgba(245,239,224,.6);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
+.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(245,239,224,.85);}
+.sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.75;}
+.sb-dot-pyr{background:var(--pyr);}.sb-dot-atl{background:var(--atl);}.sb-dot-bou{background:var(--bou);}
+.sb-dot-gold{background:var(--gold);}.sb-dot-grey{background:rgba(255,255,255,.22);}
+.sb-badge{background:rgba(200,168,75,.18);color:var(--gold);font-size:8px;font-weight:800;padding:1px 5px;border-radius:8px;margin-left:auto;flex-shrink:0;}
+.sb-footer{margin-top:auto;padding:10px 8px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);margin-bottom:5px;}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.sb-user-name{font-size:11px;font-weight:600;color:rgba(245,239,224,.6);overflow:hidden;text-overflow:ellipsis;flex:1;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.1);color:rgba(200,168,75,.55);font-size:10px;font-weight:600;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;}
+.sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
+#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;}
+.app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;}
+.page-topbar{background:rgba(247,243,236,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--beige);padding:0 24px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.page-topbar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
+@media(max-width:768px){#sidebar{transform:translateX(-100%);transition:transform .25s;}#sidebar.open{transform:translateX(0);}#sb-overlay.open{display:block;}#sb-toggle{display:block!important;}.app-main{margin-left:0;width:100%;}.layout{grid-template-columns:1fr!important;}.col-right{display:none!important;}}
 </style>
 </head>
 <body>
@@ -157,18 +187,63 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Vérification...</p>
   <div class="spinner"></div>
 </div>
-<div id="main">
-<header>
-  <a href="carnet.html" class="hlogo">🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span><span>Aventures</span></a>
-  <nav>
-    <a href="carnet.html" class="hn">🗺 Carnet</a>
-    <a href="fiches.html" class="hn">🗂️ Fiches</a>
-    <a href="voyage.html" class="hn">🧭 Voyage</a>
-    <a href="admin.html" class="hn active">➕ Créer</a>
-    <a href="config.html" class="hn">⚙️ Config</a>
-  </nav>
-  <button onclick="logout()" class="hbtn">⏏ Déco</button>
-</header>
+<div id="main" style="display:contents;">
+
+<!-- SIDEBAR -->
+<div id="sb-overlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open');"></div>
+<div id="sidebar">
+  <a href="carnet.html" class="sb-logo">
+    <div style="font-size:13px;opacity:.5;margin-bottom:5px;">🐾</div>
+    <div class="sb-logo-title">Rock<span>N</span>Road</div>
+    <div class="sb-logo-sub">Aventures</div>
+  </a>
+  <div class="sb-group">
+    <div class="sb-group-label">Navigation</div>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-grey"></span><span>Accueil</span></a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Étapes 2025</div>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-pyr"></span><span>Pyrénées</span><span class="sb-badge">8</span></a>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-atl"></span><span>Atlantique</span><span class="sb-badge">8</span></a>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-bou"></span><span>Bourgogne</span><span class="sb-badge">6</span></a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Outils</div>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span></a>
+    <a class="sb-btn" href="voyage.html"><span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span></a>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span></a>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-grey"></span><span>Conseils</span></a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Mes Lieux</div>
+    <a class="sb-btn" href="fiches.html"><span class="sb-dot sb-dot-grey"></span><span>Mes Fiches</span></a>
+    <a class="sb-btn active" href="admin.html"><span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span></a>
+    <a class="sb-btn" href="config.html"><span class="sb-dot sb-dot-grey"></span><span>⚙️ Config</span></a>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">B</div>
+      <div style="flex:1;overflow:hidden;">
+        <div class="sb-user-name" id="sb-username">Chargement...</div>
+        <div style="font-size:9px;color:rgba(200,168,75,.4);">Famille RockNRoad</div>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
+  </div>
+</div>
+
+<!-- APP MAIN -->
+<div class="app-main">
+<div class="page-topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button id="sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;">☰</button>
+    <span class="page-topbar-title">Nouvelle fiche lieu</span>
+  </div>
+  <a href="fiches.html" style="font-size:11px;color:var(--muted);text-decoration:none;">← Mes Fiches</a>
+</div>
 <div class="layout">
 <div class="col-left">
   <h1 class="page-title">Nouvelle <em>fiche lieu</em></h1>
@@ -394,6 +469,8 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 </div>
 </div>
 </div>
+</div><!-- /app-main -->
+</div><!-- /main -->
 <div class="toast" id="toast"></div>
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
@@ -414,7 +491,12 @@ async function checkAuth(){
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
   document.getElementById('auth-check').style.display='none';
-  document.getElementById('main').style.display='block';
+  document.getElementById('main').style.display='contents';
+  const name=session.user.email.split('@')[0];
+  const uname=document.getElementById('sb-username');
+  const uav=document.getElementById('sb-avatar');
+  if(uname)uname.textContent=name;
+  if(uav)uav.textContent=name.charAt(0).toUpperCase();
   loadApiKey();
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
@@ -773,13 +855,31 @@ async function saveFiche(){
       annee:new Date().getFullYear(),
     });
     if(error)throw error;
-    showToast('✅ Fiche créée !','success');
-    btn.textContent='✅ Enregistrée !';
-    setTimeout(()=>{window.location.href='fiches.html';},1400);
+    showConfirmation(nom, region, type);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
     btn.disabled=false;btn.textContent='✨ Enregistrer la fiche';
   }
+}
+
+
+function showConfirmation(nom, region, type){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,13,9,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`
+    <div style="background:white;border-radius:16px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+      <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+      <h2 style="font-family:Playfair Display,serif;font-size:22px;color:#1a1208;margin-bottom:6px;">Fiche créée !</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:6px;">${nom}</p>
+      <p style="font-size:11px;color:#aaa;margin-bottom:24px;">${region} · ${type}</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="window.location.href='admin.html'" style="padding:12px;background:#1a1208;color:#C8A84B;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;">➕ Créer une autre fiche</button>
+        <button onclick="window.location.href='fiches.html'" style="padding:12px;background:#f5f0e8;color:#1a1208;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">🗂️ Voir mes fiches</button>
+        <button onclick="window.location.href='carnet.html'" style="padding:12px;background:transparent;color:#888;border:1px solid #e8e0d0;border-radius:9px;font-size:12px;cursor:pointer;">🗺 Retour au Carnet</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
 function showToast(msg,type='success'){
