@@ -486,32 +486,55 @@ async function importFromMaps(){
   showToast('Analyse en cours...','info');
 
   try{
-    // Étape 1 : extraire les coordonnées GPS depuis l'URL
-    const coords=extractCoordsFromUrl(url);
-
-    // Étape 2 : essayer l'API Places si clé disponible
     const apiKey=document.getElementById('googleApiKey').value.trim();
-    if(apiKey){
-      const ok=await fetchFromPlacesApi(url,apiKey);
-      if(ok){showImportResult();btn.disabled=false;icon.textContent='✅';return;}
+
+    // Étape 1 : extraire coordonnées GPS depuis l'URL
+    const coords=extractCoordsFromUrl(url);
+    if(coords){
+      fillField('lat',coords.lat.toFixed(6));
+      fillField('lng',coords.lng.toFixed(6));
+      refreshMap();
     }
 
-    // Étape 3 : fallback — on extrait ce qu'on peut de l'URL
+    // Étape 2 : extraire le nom depuis l'URL
+    const nameFromUrl=extractPlaceNameFromUrl(url);
+    if(nameFromUrl) fillField('nom', nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
+
+    // Étape 3 : Places API via proxy CORS si clé disponible
+    if(apiKey && coords){
+      const ok=await fetchFromPlacesApiProxy(coords, apiKey);
+      if(ok){showImportResult();btn.disabled=false;icon.textContent='✅';
+        showToast('✅ Import complet — nom, GPS, tel, site, note !','success');return;}
+    }
+
+    // Étape 4 : fallback Nominatim (geocodage inverse depuis GPS)
     if(coords){
-      fillField('lat',coords.lat); fillField('lng',coords.lng);
-      refreshMap();
-      showToast('GPS extrait ✅ — Complète le nom et les infos','info');
+      await reverseGeocode(coords.lat, coords.lng);
     } else {
-      // Tenter résolution de l'URL courte via un proxy public
       await tryResolveShortUrl(url);
     }
 
     showImportResult();
+    showToast(coords?'GPS extrait ✅ — Complète le nom':'URL analysée — complète les infos','info');
   }catch(e){
-    showToast('Erreur import: '+e.message,'error');
+    showToast('Erreur: '+e.message,'error');
   }finally{
     btn.disabled=false; icon.textContent='✨';
   }
+}
+
+async function reverseGeocode(lat,lng){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const d=await r.json();
+    if(d.display_name){
+      // Extraire ville/commune
+      const addr=d.address||{};
+      const city=addr.village||addr.town||addr.city||addr.municipality||'';
+      const dept=addr.county||addr.state||'';
+      if(city) document.getElementById('ir-meta').textContent=city+(dept?' · '+dept:'');
+    }
+  }catch(e){}
 }
 
 function extractCoordsFromUrl(url){
@@ -552,86 +575,73 @@ async function tryResolveShortUrl(url){
   }catch(e){/* silencieux */}
 }
 
-async function fetchFromPlacesApi(url,apiKey){
+async function fetchFromPlacesApiProxy(coords, apiKey){
+  // Utilise le Places API via un proxy CORS (allorigins) pour éviter les blocages navigateur
   try{
-    // Extraire place_id ou utiliser Find Place from Text
-    const placeName=extractPlaceNameFromUrl(url);
-    const coords=extractCoordsFromUrl(url);
+    // Recherche nearby (plus précis avec coords)
+    const nearbyUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=100&key=${apiKey}`;
+    const proxyUrl=`https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`;
+    const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
+    const wrapper=await r.json();
+    if(!wrapper.contents) return false;
+    const nearby=JSON.parse(wrapper.contents);
+    if(!nearby.results?.length) return false;
+    const placeId=nearby.results[0].place_id;
 
-    let placeId=null;
+    // Détails du lieu
+    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,types,photos';
+    const detailUrl=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}`;
+    const r2=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`,{signal:AbortSignal.timeout(8000)});
+    const w2=await r2.json();
+    if(!w2.contents) return false;
+    const detail=JSON.parse(w2.contents);
+    const p=detail.result;
+    if(!p) return false;
 
-    // Rechercher par coordonnées ou par nom
-    if(coords){
-      const r=await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=50&key=${apiKey}`);
-      const d=await r.json();
-      if(d.results?.[0]) placeId=d.results[0].place_id;
-    }
-
-    if(!placeId && placeName){
-      const r=await fetch(`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(placeName)}&inputtype=textquery&fields=place_id&key=${apiKey}`);
-      const d=await r.json();
-      if(d.candidates?.[0]) placeId=d.candidates[0].place_id;
-    }
-
-    if(!placeId) return false;
-
-    // Récupérer les détails complets
-    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,types,photos,price_level';
-    const r=await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}`);
-    const d=await r.json();
-    if(!d.result) return false;
-
-    const p=d.result;
+    // Remplir les champs
     fillField('nom',p.name||'');
     fillField('adresse',p.formatted_address||'');
     fillField('tel',p.formatted_phone_number||'');
     fillField('siteWeb',p.website||'');
     if(p.geometry?.location){
-      fillField('lat',p.geometry.location.lat);
-      fillField('lng',p.geometry.location.lng);
+      fillField('lat',p.geometry.location.lat.toFixed(6));
+      fillField('lng',p.geometry.location.lng.toFixed(6));
       refreshMap();
     }
-    if(p.rating) document.getElementById('note').value=Math.round(p.rating*2)/2;
-
-    // Type automatique
-    if(p.types){
-      const typeMap={
-        'campground':'Camping','campsite':'Camping',
-        'lodging':'Halte','restaurant':'Restaurant','food':'Restaurant',
-        'park':'Randonnee','natural_feature':'Site','tourist_attraction':'Site',
-        'museum':'Site','church':'Site','historical_landmark':'Site',
-      };
-      for(const t of p.types){
-        if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}
-      }
+    if(p.rating){
+      document.getElementById('note').value=String(Math.round(p.rating*2)/2);
     }
+    // Type
+    const typeMap={'campground':'Camping','campsite':'Camping','lodging':'Halte',
+      'restaurant':'Restaurant','food':'Restaurant','park':'Randonnee',
+      'natural_feature':'Site','tourist_attraction':'Site','museum':'Site',
+      'church':'Site','historical_landmark':'Site','amusement_park':'Site'};
+    if(p.types) for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}
 
-    // Photo (première photo disponible)
+    // Photo via proxy
     if(p.photos?.[0]){
-      const photoRef=p.photos[0].photo_reference;
-      const photoUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${apiKey}`;
-      document.getElementById('ir-photo').src=photoUrl;
+      const ref=p.photos[0].photo_reference;
+      const photoUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${ref}&key=${apiKey}`;
+      const imgProxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(photoUrl)}`;
+      document.getElementById('ir-photo').src=imgProxy;
       document.getElementById('ir-photo').style.display='block';
-      // Remplir la prévisualisation
-      const pcImg=document.getElementById('pcImg');
-      pcImg.src=photoUrl; pcImg.style.display='block';
+      document.getElementById('pcImg').src=imgProxy;
+      document.getElementById('pcImg').style.display='block';
     }
 
-    // Infos résultat
+    // Résumé import
     document.getElementById('ir-name').textContent=p.name||'';
-    document.getElementById('ir-meta').textContent=(p.formatted_address||'').split(',').slice(-3).join(',').trim();
-    const badges=document.getElementById('ir-badges');
-    badges.innerHTML='';
-    if(p.rating) badges.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}</span>`;
-    if(p.types?.[0]) badges.innerHTML+=`<span class="ir-badge">${p.types[0]}</span>`;
-    badges.innerHTML+=`<span class="ir-badge">📍 GPS auto</span>`;
-    if(p.formatted_phone_number) badges.innerHTML+=`<span class="ir-badge">📞 auto</span>`;
-    if(p.website) badges.innerHTML+=`<span class="ir-badge">🌐 auto</span>`;
-
+    document.getElementById('ir-meta').textContent=(p.formatted_address||'').split(',').slice(0,2).join(',');
+    const b=document.getElementById('ir-badges');
+    b.innerHTML='';
+    if(p.rating) b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}</span>`;
+    b.innerHTML+=`<span class="ir-badge">📍 GPS</span>`;
+    if(p.formatted_phone_number) b.innerHTML+=`<span class="ir-badge">📞</span>`;
+    if(p.website) b.innerHTML+=`<span class="ir-badge">🌐</span>`;
     updatePreview();
     return true;
   }catch(e){
-    console.error('Places API error:',e);
+    console.warn('Places proxy error:',e.message);
     return false;
   }
 }
