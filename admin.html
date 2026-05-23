@@ -204,6 +204,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
     <a href="fiches.html" class="hn">🗂️ Mes Fiches</a>
     <a href="voyage.html" class="hn">🧭 Mon Voyage</a>
     <a href="admin.html" class="hn active">➕ Créer</a>
+    <a href="config.html" class="hn">⚙️ Config</a>
   </nav>
   <button onclick="logout()" class="hbtn">⏏ Déco</button>
 </header>
@@ -464,9 +465,11 @@ async function checkAuth(){
   currentUser=session.user;
   document.getElementById('auth-check').style.display='none';
   document.getElementById('main').style.display='block';
-  // Restaurer clé API
-  const k=localStorage.getItem('rnr_gapi');
-  if(k) document.getElementById('googleApiKey').value=k;
+  // Restaurer clé API (hardcodée par défaut)
+  const savedKey=localStorage.getItem('rnr_gapi');
+  const defaultKey='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
+  document.getElementById('googleApiKey').value=savedKey||defaultKey;
+  if(!savedKey) localStorage.setItem('rnr_gapi',defaultKey);
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
