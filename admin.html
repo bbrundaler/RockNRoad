@@ -579,15 +579,13 @@ function extractPlaceNameFromUrl(url){
   if(m)return decodeURIComponent(m[1].replace(/\+/g,' ').replace(/-/g,' '));
   return null;
 }
-// Extrait le place_id directement depuis l'URL (format data=!1s0x...)
+// Le format 0x...:0x... dans les URLs Google Maps n'est PAS le place_id API
+// Le vrai place_id commence par ChIJ... — on passe toujours par Find Place
 function extractPlaceIdFromUrl(url){
-  // Format long: data=...!1s0x<hex>:0x<hex>
-  const m=url.match(/[!&]1s(0x[0-9a-f]+:[0-9a-fx]+)/i);
+  // Cherche un place_id au format ChIJ (base64) — rare dans les URLs mais possible
+  const m=url.match(/place_id=([A-Za-z0-9_-]{20,})/);
   if(m) return m[1];
-  // Format CID dans data
-  const cid=url.match(/[!&]2m[0-9]+[!&]1i(\d+)/);
-  if(cid) return null; // CID pas directement utilisable
-  return null;
+  return null; // On laisse Find Place faire le travail
 }
 
 // Appel Places API direct (sans proxy) — fonctionne car l'API autorise les requêtes cross-origin côté client
