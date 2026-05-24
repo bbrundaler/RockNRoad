@@ -497,7 +497,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
-const DEFAULT_KEY='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
+const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
@@ -525,8 +525,12 @@ async function logout(){await sb.auth.signOut();window.location.href='index.html
 checkAuth();
 
 function loadApiKey(){
+  // Si l'ancienne clé est stockée, la remplacer par la nouvelle
+  const stored=localStorage.getItem('rnr_gapi');
+  if(!stored||stored==='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo'){
+    localStorage.setItem('rnr_gapi',DEFAULT_KEY);
+  }
   const k=localStorage.getItem('rnr_gapi')||DEFAULT_KEY;
-  if(!localStorage.getItem('rnr_gapi')) localStorage.setItem('rnr_gapi',DEFAULT_KEY);
   const st=document.getElementById('apiKeyStatus');
   const info=document.getElementById('apiKeyInfo');
   if(k&&k.startsWith('AIzaSy')){
@@ -592,12 +596,12 @@ function extractPlaceIdFromUrl(url){
 async function callPlacesApi(endpoint, params, apiKey){
   const base='https://maps.googleapis.com/maps/api/place/'+endpoint+'/json?';
   const qs=new URLSearchParams({...params, key:apiKey, language:'fr'}).toString();
-  const url=base+qs;
+  const targetUrl=base+qs;
+  // corsproxy.io doit recevoir une URL encodée sans caractères spéciaux
   const proxies=[
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://thingproxy.freeboard.io/fetch/${url}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
   ];
   for(const proxy of proxies){
     try{
@@ -606,16 +610,12 @@ async function callPlacesApi(endpoint, params, apiKey){
       const raw=await r.text();
       if(!raw||raw.length<10) continue;
       let d;
-      try{
-        d=JSON.parse(raw);
-        // allorigins wrappe dans .contents
-        if(d.contents) d=JSON.parse(d.contents);
-      }catch{continue;}
-      // Vérifier que c'est pas une erreur Google
-      if(d.error_message){console.warn('Google API error:',d.error_message,d.status);continue;}
-      if(d.status==='REQUEST_DENIED'){console.warn('API key refusée');continue;}
+      try{d=JSON.parse(raw);}catch{continue;}
+      if(d.contents){try{d=JSON.parse(d.contents);}catch{continue;}}
+      if(d.error_message){console.warn('Google API error:',d.error_message,d.status);break;}
+      if(d.status==='REQUEST_DENIED'){console.warn('Clé API refusée');break;}
       if(d && (d.result||d.candidates||d.results)) return d;
-    }catch(e){console.warn('Proxy failed:',proxy.split('?')[0],e.message);continue;}
+    }catch(e){console.warn('Proxy failed:',e.message);continue;}
   }
   return null;
 }
