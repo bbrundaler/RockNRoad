@@ -777,6 +777,63 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl){
       fillField('description', p.editorial_summary.overview);
     }
 
+    // ── Dog-friendly auto depuis description Google ──────────────────────────
+    const descText = (
+      (p.editorial_summary?.overview||'') + ' ' +
+      (p.name||'')
+    ).toLowerCase();
+    
+    const NON_DOG_KEYWORDS = [
+      'no dogs','no pets','no animals','dogs not allowed','pets not allowed',
+      'animaux interdits','chiens interdits','interdit aux animaux','sans animaux',
+      'chiens non admis','animaux non admis','no dog allowed',
+      'chien interdit','animaux non autorisés'
+    ];
+    const DOG_OK_KEYWORDS = [
+      'dog-friendly','dog friendly','dogs welcome','pets welcome',
+      'dogs allowed','pets allowed','chien bienvenu','chiens bienvenus',
+      'accepte les chiens','chiens acceptés','chiens admis','animaux acceptés',
+      'pet friendly','dog ok','chien ok','welcome dog','avec votre chien',
+      'canine','dog park','bark','paw','laisse','avec chien'
+    ];
+    
+    let autoDog = null; // null = pas de détection
+    let autoDogInfo = '';
+    
+    for(const kw of NON_DOG_KEYWORDS){
+      if(descText.includes(kw)){
+        autoDog='no';
+        autoDogInfo='⚠️ Détecté depuis Google : "'+kw+'" — à vérifier sur place';
+        break;
+      }
+    }
+    if(!autoDog){
+      for(const kw of DOG_OK_KEYWORDS){
+        if(descText.includes(kw)){
+          autoDog='yes';
+          autoDogInfo='🐕 Détecté depuis Google : "'+kw+'" — confirmé dog-friendly';
+          break;
+        }
+      }
+    }
+    if(!autoDog){
+      autoDog='yes'; // optimiste par défaut — road trip avec chien !
+      autoDogInfo='';
+    }
+    
+    setDog(autoDog);
+    if(autoDogInfo && !document.getElementById('dogInfo').value){
+      fillField('dogInfo', autoDogInfo);
+    }
+    // Badge dans le résumé import
+    if(autoDog==='yes' && autoDogInfo){
+      const b=document.getElementById('ir-badges');
+      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog-friendly détecté</span>`;
+    } else if(autoDog==='no'){
+      const b=document.getElementById('ir-badges');
+      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non dog-friendly détecté</span>`;
+    }
+
     // ── Horaires ─────────────────────────────────────────────────────────────
     const horaireEl=document.getElementById('ir-horaires');
     if(p.opening_hours?.weekday_text?.length){
