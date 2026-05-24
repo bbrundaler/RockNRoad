@@ -525,12 +525,12 @@ async function logout(){await sb.auth.signOut();window.location.href='index.html
 checkAuth();
 
 function loadApiKey(){
-  // Si l'ancienne clé est stockée, la remplacer par la nouvelle
   const stored=localStorage.getItem('rnr_gapi');
+  // Remplace uniquement si rien de stocké ou si c'est l'ancienne clé par défaut
   if(!stored||stored==='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo'){
     localStorage.setItem('rnr_gapi',DEFAULT_KEY);
   }
-  const k=localStorage.getItem('rnr_gapi')||DEFAULT_KEY;
+  const k=localStorage.getItem('rnr_gapi');
   const st=document.getElementById('apiKeyStatus');
   const info=document.getElementById('apiKeyInfo');
   if(k&&k.startsWith('AIzaSy')){
