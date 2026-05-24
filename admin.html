@@ -558,23 +558,67 @@ function extractPlaceNameFromUrl(url){
 
 async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
   try{
-    // Nearby search
-    const nearbyUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=100&key=${apiKey}`;
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`,{signal:AbortSignal.timeout(10000)});
-    const w=await r.json();
-    if(!w.contents)return false;
-    const nearby=JSON.parse(w.contents);
-    if(!nearby.results?.length)return false;
-    const placeId=nearby.results[0].place_id;
+    // ── Stratégie 1 : Places API directe (sans proxy, avec CORS mode no-cors fallback)
+    // On utilise le service Places JS directement via une iframe cachée ou fetch avec mode cors
+    // Stratégie principale : find place from text via proxy corsproxy.io (plus fiable qu'allorigins)
+    
+    const nameFromUrl = extractPlaceNameFromUrl(originalUrl);
+    let placeId = null;
+    
+    // Essai 1 : Find Place by text (plus précis que nearby)
+    if(nameFromUrl){
+      const findUrl=`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(nameFromUrl)}&inputtype=textquery&fields=place_id&locationbias=point:${coords.lat},${coords.lng}&key=${apiKey}`;
+      try{
+        const proxies = [
+          `https://corsproxy.io/?${encodeURIComponent(findUrl)}`,
+          `https://api.allorigins.win/get?url=${encodeURIComponent(findUrl)}`,
+        ];
+        for(const proxyUrl of proxies){
+          try{
+            const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
+            const raw=await r.text();
+            const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
+            if(d.candidates?.[0]?.place_id){placeId=d.candidates[0].place_id;break;}
+          }catch(e2){continue;}
+        }
+      }catch(e){}
+    }
+    
+    // Essai 2 : Nearby si pas de placeId
+    if(!placeId){
+      const nearbyUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=80&key=${apiKey}`;
+      const proxies=[
+        `https://corsproxy.io/?${encodeURIComponent(nearbyUrl)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`,
+      ];
+      for(const proxyUrl of proxies){
+        try{
+          const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(8000)});
+          const raw=await r.text();
+          const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
+          if(d.results?.[0]?.place_id){placeId=d.results[0].place_id;break;}
+        }catch(e2){continue;}
+      }
+    }
+    
+    if(!placeId) return false;
 
-    // Details
-    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,types,photos,opening_hours,price_level';
+    // Details avec les deux proxies
+    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary';
     const detailUrl=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=fr&key=${apiKey}`;
-    const r2=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`,{signal:AbortSignal.timeout(10000)});
-    const w2=await r2.json();
-    if(!w2.contents)return false;
-    const detail=JSON.parse(w2.contents);
-    const p=detail.result;
+    let p=null;
+    const detailProxies=[
+      `https://corsproxy.io/?${encodeURIComponent(detailUrl)}`,
+      `https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`,
+    ];
+    for(const proxyUrl of detailProxies){
+      try{
+        const r=await fetch(proxyUrl,{signal:AbortSignal.timeout(12000)});
+        const raw=await r.text();
+        const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
+        if(d.result){p=d.result;break;}
+      }catch(e2){continue;}
+    }
     if(!p)return false;
 
     fillField('nom',p.name||'');
@@ -590,13 +634,99 @@ async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
       const rounded=String(Math.round(p.rating*2)/2);
       document.getElementById('noteGoogle').value=rounded+'.0'===rounded?rounded+'.0':rounded;
     }
-    // Auto-type
-    const typeMap={'campground':'Camping','campsite':'Camping','rv_park':'Camping','lodging':'Halte',
-      'restaurant':'Restaurant','food':'Restaurant','park':'Randonnee','natural_feature':'Site',
-      'tourist_attraction':'Site','museum':'Site','church':'Site','historical_landmark':'Site',
-      'amusement_park':'Site','beach':'Plage','lake':'Plage'};
-    if(p.types)for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}
+    // ── Auto-type enrichi
+    const typeMap={
+      'campground':'Camping','campsite':'Camping','rv_park':'Camping',
+      'lodging':'Halte','hotel':'Halte',
+      'restaurant':'Restaurant','food':'Restaurant','cafe':'Restaurant','bar':'Restaurant','bakery':'Restaurant',
+      'park':'Randonnee','natural_feature':'Randonnee','hiking_area':'Randonnee',
+      'tourist_attraction':'Site','museum':'Site','church':'Site','place_of_worship':'Site',
+      'historical_landmark':'Site','amusement_park':'Site','art_gallery':'Site','zoo':'Site',
+      'beach':'Plage','lake':'Plage',
+      'point_of_interest':'Site',
+    };
+    if(p.types){
+      for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}
+    }
+    
+    // ── Auto-tags intelligents selon les types Google
+    const autoTags=[];
+    const types=p.types||[];
+    if(types.some(t=>['natural_feature','park','hiking_area'].includes(t))) autoTags.push('nature','randonnee');
+    if(types.some(t=>['beach','lake'].includes(t))) autoTags.push('baignade','nature');
+    if(types.some(t=>['museum','historical_landmark','church'].includes(t))) autoTags.push('historique');
+    if(types.some(t=>['campground','campsite','rv_park'].includes(t))) autoTags.push('teardrop');
+    if(types.some(t=>['tourist_attraction','amusement_park'].includes(t))) autoTags.push('enfants');
+    // Si nom contient certains mots
+    const nomLower=(p.name||'').toLowerCase();
+    if(nomLower.includes('vélo')||nomLower.includes('velo')||nomLower.includes('cyclable')||nomLower.includes('canal')) autoTags.push('velo');
+    if(nomLower.includes('cascade')||nomLower.includes('lac ')||nomLower.includes('etang')) autoTags.push('baignade','nature');
+    if(nomLower.includes('château')||nomLower.includes('chateau')||nomLower.includes('fort')||nomLower.includes('citadelle')) autoTags.push('historique','vue');
+    if(nomLower.includes('forêt')||nomLower.includes('foret')||nomLower.includes('bois ')) autoTags.push('nature','ombre');
+    if(nomLower.includes('colorado')||nomLower.includes('rocher')||nomLower.includes('falaise')) autoTags.push('randonnee','nature','vue');
+    // Appliquer les tags auto
+    if(autoTags.length){
+      const uniqueTags=[...new Set(autoTags)];
+      uniqueTags.forEach(tag=>{
+        const el=document.querySelector(`#tagsGrid [data-tag="${tag}"]`);
+        if(el&&!el.classList.contains('on')){el.classList.add('on');if(!selectedTags.includes(tag))selectedTags.push(tag);}
+      });
+    }
+    
+    // ── Auto sous-région depuis adresse
+    if(p.formatted_address){
+      const parts=p.formatted_address.split(',');
+      // Chercher code postal + ville
+      const cpMatch=p.formatted_address.match(/(\d{5})/);
+      if(cpMatch){
+        const cp=cpMatch[1];
+        const dept=cp.substring(0,2);
+        const deptNames={'57':'Moselle (57)','67':'Bas-Rhin (67)','68':'Haut-Rhin (68)','13':'Bouches-du-Rhône (13)',
+          '06':'Alpes-Maritimes (06)','69':'Rhône (69)','33':'Gironde (33)','40':'Landes (40)',
+          '64':'Pyrénées-Atlantiques (64)','65':'Hautes-Pyrénées (65)','21':'Côte-d'Or (21)',
+          '89':'Yonne (89)','71':'Saône-et-Loire (71)','75':'Paris (75)'};
+        if(deptNames[dept]&&!document.getElementById('sousRegion').value){
+          fillField('sousRegion',deptNames[dept]);
+        }
+      }
+    }
+    
+    // ── Auto-région depuis GPS (si pas encore sélectionnée)
+    if(!document.getElementById('region').value&&p.geometry?.location){
+      const lat=p.geometry.location.lat, lng=p.geometry.location.lng;
+      // Détection géographique simple par bounding box
+      let autoRegion='';
+      if(lng>6.8&&lng<8.2&&lat>47.5&&lat<49.1) autoRegion='Alsace';
+      else if(lat<44&&lng>-2&&lng<4) autoRegion='Pyrenees';
+      else if(lng<1&&lat<45) autoRegion='Atlantique';
+      else if(lng>4&&lat>46.5&&lat<48&&lng<6) autoRegion='Bourgogne';
+      else if(lat>48.5&&lng<3) autoRegion='Nord';
+      else if(lng>6&&lat>45.5) autoRegion='Alpes';
+      if(autoRegion){
+        const regionEl=document.getElementById('region');
+        // Find matching option
+        for(const opt of regionEl.options){
+          if(opt.text.includes(autoRegion)||opt.value===autoRegion){regionEl.value=opt.value;updatePreview();break;}
+        }
+      }
+    }
 
+    // ── Auto description depuis editorial_summary
+    if(p.editorial_summary?.overview&&!document.getElementById('description').value){
+      fillField('description',p.editorial_summary.overview);
+    }
+    
+    // ── Auto note arrondie au .5
+    if(p.rating){
+      const rounded=(Math.round(p.rating*2)/2).toFixed(1);
+      const noteEl=document.getElementById('noteGoogle');
+      for(const opt of noteEl.options){if(opt.value===rounded){noteEl.value=rounded;break;}}
+      if(p.user_ratings_total){
+        const ratingBadge=document.getElementById('ir-badges');
+        // Will be set below
+      }
+    }
+    
     // Horaires
     if(p.opening_hours?.weekday_text){
       const h=p.opening_hours.weekday_text.slice(0,4).join(' · ');
@@ -644,20 +774,27 @@ async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
       selectedGooglePhotoUrl=firstProxy;
     }
 
-    // Résumé
+    // ── Résumé enrichi
     document.getElementById('ir-name').textContent=p.name||'';
-    document.getElementById('ir-meta').textContent=(p.formatted_address||'').split(',').slice(0,2).join(',');
+    const addrParts=(p.formatted_address||'').split(',');
+    document.getElementById('ir-meta').textContent=addrParts.slice(0,3).join(',').trim();
     const b=document.getElementById('ir-badges');b.innerHTML='';
-    if(p.rating)b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}</span>`;
+    if(p.rating){
+      const avis=p.user_ratings_total?` (${p.user_ratings_total} avis)`:'';
+      b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}${avis}</span>`;
+    }
     if(photos.length)b.innerHTML+=`<span class="ir-badge">📷 ${photos.length} photos</span>`;
-    b.innerHTML+=`<span class="ir-badge">📍 GPS</span>`;
-    if(p.formatted_phone_number)b.innerHTML+=`<span class="ir-badge">📞</span>`;
-    if(p.website)b.innerHTML+=`<span class="ir-badge">🌐</span>`;
-    if(p.opening_hours)b.innerHTML+=`<span class="ir-badge">🕐 Horaires</span>`;
+    b.innerHTML+=`<span class="ir-badge">📍 GPS ✓</span>`;
+    if(p.formatted_phone_number)b.innerHTML+=`<span class="ir-badge">📞 ${p.formatted_phone_number}</span>`;
+    if(p.website)b.innerHTML+=`<span class="ir-badge">🌐 Site web</span>`;
+    if(p.opening_hours?.open_now!==undefined)b.innerHTML+=`<span class="ir-badge" style="background:${p.opening_hours.open_now?'rgba(44,80,22,.15)':'rgba(204,68,0,.12)'};">${p.opening_hours.open_now?'✅ Ouvert':'🔴 Fermé'}</span>`;
+    if(autoTags.length)b.innerHTML+=`<span class="ir-badge">🏷️ ${autoTags.length} tags auto</span>`;
     // Tag badge auto
-    if(!document.getElementById('badge').value&&p.types){
-      const sous=document.getElementById('sousRegion').value;
-      document.getElementById('badge').value=(p.types[0]||'')+(sous?' · '+sous:'');
+    const sous=document.getElementById('sousRegion').value;
+    if(!document.getElementById('badge').value){
+      const typeLabel={'Site':'Site','Camping':'Camping','Plage':'Plage','Randonnee':'Randonnée','Restaurant':'Restaurant','Halte':'Halte'};
+      const t=document.getElementById('type').value;
+      document.getElementById('badge').value=(typeLabel[t]||t)+(sous?' · '+sous:'');
     }
     updatePreview();return true;
   }catch(e){console.warn('Places proxy:',e.message);return false;}
