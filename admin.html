@@ -327,10 +327,23 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
         <select id="noteGoogle" onchange="updatePreview()">
           <option value="">—</option>
           <option value="5.0">⭐⭐⭐⭐⭐ 5.0</option>
+          <option value="4.9">⭐⭐⭐⭐⭐ 4.9</option>
+          <option value="4.8">⭐⭐⭐⭐⭐ 4.8</option>
+          <option value="4.7">⭐⭐⭐⭐★ 4.7</option>
+          <option value="4.6">⭐⭐⭐⭐★ 4.6</option>
           <option value="4.5">⭐⭐⭐⭐½ 4.5</option>
+          <option value="4.4">⭐⭐⭐⭐ 4.4</option>
+          <option value="4.3">⭐⭐⭐⭐ 4.3</option>
+          <option value="4.2">⭐⭐⭐⭐ 4.2</option>
+          <option value="4.1">⭐⭐⭐⭐ 4.1</option>
           <option value="4.0">⭐⭐⭐⭐ 4.0</option>
+          <option value="3.9">⭐⭐⭐★ 3.9</option>
+          <option value="3.8">⭐⭐⭐★ 3.8</option>
+          <option value="3.7">⭐⭐⭐★ 3.7</option>
           <option value="3.5">⭐⭐⭐½ 3.5</option>
           <option value="3.0">⭐⭐⭐ 3.0</option>
+          <option value="2.5">⭐⭐½ 2.5</option>
+          <option value="2.0">⭐⭐ 2.0</option>
         </select>
       </div>
       <div class="note-block">
@@ -379,7 +392,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
       <div class="tog no" id="dogNo" onclick="setDog('no')">❌ Non</div>
     </div>
     <input type="hidden" id="dogFriendly" value="true">
-    <div class="fg full" style="margin-top:10px;"><label>Info chien</label><input type="text" id="dogInfo" placeholder="Chiens acceptés en laisse partout..."></div>
+    <div class="fg full" style="margin-top:10px;"><label>Info chien</label><input type="text" id="dogInfo" placeholder="Chiens acceptés en laisse partout..." autocomplete="off" value=""></div>
   </div>
 
   <!-- CONTACT -->
@@ -405,15 +418,24 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 
   <!-- PHOTO -->
   <div class="form-card">
-    <div class="fc-title">📸 Photo</div>
+    <div class="fc-title">📸 Photo <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:4px;">GOOGLE AUTO + UPLOAD PERSO</span></div>
+    <!-- Photos Google importées -->
+    <div id="googlePhotosSection" style="display:none;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:8px;">📷 Photos Google Maps — clique pour choisir</div>
+      <div class="ir-photos" id="googlePhotosSelect" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div style="font-size:10px;color:#aaa;margin-top:6px;">✅ = photo principale de la fiche</div>
+      <div style="height:1px;background:#e8e0d0;margin:12px 0;"></div>
+    </div>
+    <!-- Upload perso -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin-bottom:6px;" id="uploadLabel">📁 Ou ajoute ta propre photo</div>
     <div class="photo-zone" id="photoZone">
       <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)">
       <img class="photo-preview" id="photoPreview">
-      <div class="photo-ph" id="photoPh"><div style="font-size:26px;margin-bottom:5px;">📷</div><div>Cliquer pour choisir une photo</div><div style="font-size:10px;color:var(--gold);font-weight:700;margin-top:3px;">JPG, PNG — max 5 MB</div></div>
+      <div class="photo-ph" id="photoPh"><div style="font-size:26px;margin-bottom:5px;">📷</div><div>Cliquer pour choisir une photo</div><div style="font-size:10px;color:var(--gold);font-weight:700;margin-top:3px;">JPG, PNG — max 5 MB · Remplace la photo Google</div></div>
     </div>
-    <div id="googlePhotosChoice" style="display:none;margin-top:10px;">
-      <div style="font-size:10px;color:#888;margin-bottom:6px;">Ou utilise une photo Google Maps importée :</div>
-      <div class="ir-photos" id="googlePhotosSelect"></div>
+    <!-- Zone cachée conservée pour compatibilité -->
+    <div id="googlePhotosChoice" style="display:none;">
+      <div class="ir-photos" id="googlePhotosSelectLegacy" style="display:none;"></div>
     </div>
   </div>
 
@@ -478,7 +500,7 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const DEFAULT_KEY='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null;
+let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
 
 const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288','Bretagne':'#1a6a5a',
   'Normandie':'#3a5a8a','Loire':'#6B6B14','Provence':'#8B4513','Occitanie':'#c87a00',
@@ -525,22 +547,23 @@ async function importFromMaps(){
   const btn=document.getElementById('importBtn');
   const icon=document.getElementById('importBtnIcon');
   btn.disabled=true;icon.textContent='⏳';
-  showToast('Analyse en cours...','info');
+  showToast('🔍 Analyse de l\'URL...','info');
   try{
     const coords=extractCoordsFromUrl(url);
     const nameFromUrl=extractPlaceNameFromUrl(url);
     if(nameFromUrl) fillField('nom',nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
     if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
     const apiKey=getApiKey();
-    if(apiKey&&coords){
+    if(apiKey&&(coords||nameFromUrl)){
+      showToast('📡 Connexion Google Places...','info');
       const ok=await fetchFromPlacesApiProxy(coords,apiKey,url);
-      if(ok){showImportResult();icon.textContent='✅';showToast('✅ Import complet !','success');
+      if(ok){showImportResult();icon.textContent='✅';showToast('✅ Import complet — note, photos, horaires !','success');
         btn.disabled=false;return;}
     }
     if(coords) await reverseGeocode(coords.lat,coords.lng);
     else await tryResolveShortUrl(url);
     showImportResult();
-    showToast(coords?'GPS ✅ — Complète les infos':'Analysé — complète les infos','info');
+    showToast(coords?'📍 GPS récupéré — complète les infos manuellement':'Analysé — complète les infos','info');
   }catch(e){showToast('Erreur: '+e.message,'error');}
   finally{btn.disabled=false;icon.textContent='✨';}
 }
@@ -551,198 +574,283 @@ function extractCoordsFromUrl(url){
   return null;
 }
 function extractPlaceNameFromUrl(url){
-  const m=url.match(/\/place\/([^/@]+)/);
-  if(m)return decodeURIComponent(m[1].replace(/\+/g,' '));
+  const m=url.match(/\/place\/([^/@?]+)/);
+  if(m)return decodeURIComponent(m[1].replace(/\+/g,' ').replace(/-/g,' '));
+  return null;
+}
+// Extrait le place_id directement depuis l'URL (format data=!1s0x...)
+function extractPlaceIdFromUrl(url){
+  // Format long: data=...!1s0x<hex>:0x<hex>
+  const m=url.match(/[!&]1s(0x[0-9a-f]+:[0-9a-fx]+)/i);
+  if(m) return m[1];
+  // Format CID dans data
+  const cid=url.match(/[!&]2m[0-9]+[!&]1i(\d+)/);
+  if(cid) return null; // CID pas directement utilisable
   return null;
 }
 
-async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
+// Appel Places API direct (sans proxy) — fonctionne car l'API autorise les requêtes cross-origin côté client
+async function callPlacesApi(endpoint, params, apiKey){
+  const base='https://maps.googleapis.com/maps/api/place/'+endpoint+'/json?';
+  const qs=new URLSearchParams({...params, key:apiKey, language:'fr'}).toString();
+  const url=base+qs;
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+  ];
+  for(const proxy of proxies){
+    try{
+      const r=await fetch(proxy,{signal:AbortSignal.timeout(10000)});
+      const raw=await r.text();
+      let d;
+      try{d=JSON.parse(raw);}catch{d=JSON.parse(JSON.parse(raw).contents);}
+      if(d && (d.result||d.candidates||d.results)) return d;
+    }catch(e){continue;}
+  }
+  return null;
+}
+
+// Photo Google directe — URL directe via redirect Places API (pas besoin de proxy pour affichage)
+function googlePhotoUrl(ref, apiKey, maxwidth=800){
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxwidth}&photo_reference=${ref}&key=${apiKey}`;
+}
+// Pour affichage img (contourne CORS image en passant par allorigins)
+function googlePhotoProxy(ref, apiKey, maxwidth=400){
+  const direct=googlePhotoUrl(ref,apiKey,maxwidth);
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(direct)}`;
+}
+
+async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl){
   try{
     const nameFromUrl=extractPlaceNameFromUrl(originalUrl);
-    let placeId=null;
+    let placeId=extractPlaceIdFromUrl(originalUrl);
 
-    // Essai 1: Find Place by text
-    if(nameFromUrl){
-      const findUrl=`https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(nameFromUrl)}&inputtype=textquery&fields=place_id&locationbias=point:${coords.lat},${coords.lng}&key=${apiKey}`;
-      for(const proxy of [`https://corsproxy.io/?${encodeURIComponent(findUrl)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(findUrl)}`]){
-        try{
-          const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-          const raw=await r.text();
-          const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
-          if(d.candidates?.[0]?.place_id){placeId=d.candidates[0].place_id;break;}
-        }catch(e2){continue;}
-      }
+    // Étape 1 — trouver le place_id
+    if(!placeId && nameFromUrl && coords){
+      // Find Place by text + location bias : le plus précis
+      const d=await callPlacesApi('findplacefromtext',{
+        input:nameFromUrl, inputtype:'textquery', fields:'place_id',
+        locationbias:`point:${coords.lat},${coords.lng}`
+      }, apiKey);
+      if(d?.candidates?.[0]?.place_id) placeId=d.candidates[0].place_id;
     }
-
-    // Essai 2: Nearby si pas de placeId
-    if(!placeId){
-      const nearbyUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coords.lat},${coords.lng}&radius=80&key=${apiKey}`;
-      for(const proxy of [`https://corsproxy.io/?${encodeURIComponent(nearbyUrl)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(nearbyUrl)}`]){
-        try{
-          const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-          const raw=await r.text();
-          const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
-          if(d.results?.[0]?.place_id){placeId=d.results[0].place_id;break;}
-        }catch(e2){continue;}
-      }
+    if(!placeId && coords){
+      // Nearby fallback
+      const d=await callPlacesApi('nearbysearch',{
+        location:`${coords.lat},${coords.lng}`, radius:100
+      }, apiKey);
+      if(d?.results?.[0]?.place_id) placeId=d.results[0].place_id;
     }
+    if(!placeId){console.warn('place_id introuvable');return false;}
 
-    if(!placeId) return false;
+    // Étape 2 — Place Details complet
+    const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level';
+    const det=await callPlacesApi('details',{place_id:placeId, fields}, apiKey);
+    if(!det?.result) return false;
+    const p=det.result;
 
-    // Details
-    const fields='name,formatted_address,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary';
-    const detailUrl=`https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=fr&key=${apiKey}`;
-    let p=null;
-    for(const proxy of [`https://corsproxy.io/?${encodeURIComponent(detailUrl)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(detailUrl)}`]){
-      try{
-        const r=await fetch(proxy,{signal:AbortSignal.timeout(12000)});
-        const raw=await r.text();
-        const d=JSON.parse(raw.startsWith('{')? raw : JSON.parse(raw).contents);
-        if(d.result){p=d.result;break;}
-      }catch(e2){continue;}
-    }
-    if(!p) return false;
-
-    // Remplir les champs
-    fillField('nom',p.name||'');
-    fillField('adresse',p.formatted_address||'');
-    fillField('tel',p.formatted_phone_number||'');
-    fillField('siteWeb',p.website||'');
+    // ── Remplir les champs ────────────────────────────────────────────────────
+    fillField('nom', p.name||'');
+    fillField('adresse', p.formatted_address||'');
+    fillField('tel', p.formatted_phone_number||'');
+    fillField('siteWeb', p.website||'');
     if(p.geometry?.location){
-      fillField('lat',p.geometry.location.lat.toFixed(6));
-      fillField('lng',p.geometry.location.lng.toFixed(6));
+      fillField('lat', p.geometry.location.lat.toFixed(6));
+      fillField('lng', p.geometry.location.lng.toFixed(6));
       refreshMap();
     }
 
-    // Note Google
+    // ── Note Google — valeur exacte (ex: 4.7) ────────────────────────────────
     if(p.rating){
-      const rounded=(Math.round(p.rating*2)/2).toFixed(1);
       const noteEl=document.getElementById('noteGoogle');
-      for(const opt of noteEl.options){if(opt.value===rounded){noteEl.value=rounded;break;}}
+      const rVal=p.rating.toFixed(1);
+      // Cherche option exacte d'abord
+      let found=false;
+      for(const opt of noteEl.options){if(opt.value===rVal){noteEl.value=rVal;found=true;break;}}
+      // Si pas trouvée, ajoute-la dynamiquement
+      if(!found){
+        const opt=document.createElement('option');
+        opt.value=rVal; opt.textContent=`⭐ ${rVal}`;
+        noteEl.insertBefore(opt, noteEl.options[1]);
+        noteEl.value=rVal;
+      }
+      updatePreview();
     }
 
-    // Auto-type
+    // ── Auto-type ─────────────────────────────────────────────────────────────
     const typeMap={campground:'Camping',campsite:'Camping',rv_park:'Camping',lodging:'Halte',
-      restaurant:'Restaurant',food:'Restaurant',cafe:'Restaurant',
+      restaurant:'Restaurant',food:'Restaurant',cafe:'Restaurant',bar:'Restaurant',
       park:'Randonnee',natural_feature:'Randonnee',hiking_area:'Randonnee',
       tourist_attraction:'Site',museum:'Site',church:'Site',place_of_worship:'Site',
-      historical_landmark:'Site',amusement_park:'Site',beach:'Plage',lake:'Plage',point_of_interest:'Site'};
+      historical_landmark:'Site',amusement_park:'Site',beach:'Plage',lake:'Plage',
+      point_of_interest:'Site',premise:'Site'};
     if(p.types){for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}}
 
-    // Auto-tags intelligents
+    // ── Auto-tags ─────────────────────────────────────────────────────────────
     const autoTags=[];
     const types=p.types||[];
     const nomLower=(p.name||'').toLowerCase();
-    if(types.some(t=>['natural_feature','park','hiking_area'].includes(t))) autoTags.push('nature','randonnee');
+    const descLower=(p.editorial_summary?.overview||'').toLowerCase();
+    if(types.some(t=>['natural_feature','park','hiking_area','route'].includes(t))) autoTags.push('nature','randonnee');
     if(types.some(t=>['beach','lake'].includes(t))) autoTags.push('baignade','nature');
-    if(types.some(t=>['museum','historical_landmark','church'].includes(t))) autoTags.push('historique');
+    if(types.some(t=>['museum','historical_landmark','church','place_of_worship'].includes(t))) autoTags.push('historique');
     if(types.some(t=>['campground','campsite','rv_park'].includes(t))) autoTags.push('teardrop');
     if(types.some(t=>['tourist_attraction','amusement_park'].includes(t))) autoTags.push('enfants');
-    if(nomLower.includes('velo')||nomLower.includes('vélo')||nomLower.includes('canal')) autoTags.push('velo');
-    if(nomLower.includes('cascade')||nomLower.includes('lac ')) autoTags.push('baignade','nature');
-    if(nomLower.includes('chateau')||nomLower.includes('château')||nomLower.includes('fort')) autoTags.push('historique','vue');
-    if(nomLower.includes('foret')||nomLower.includes('forêt')) autoTags.push('nature','ombre');
-    if(nomLower.includes('colorado')||nomLower.includes('rocher')||nomLower.includes('falaise')) autoTags.push('randonnee','nature','vue');
+    const searchIn=nomLower+' '+descLower;
+    if(searchIn.includes('velo')||searchIn.includes('vélo')||searchIn.includes('canal')) autoTags.push('velo');
+    if(searchIn.includes('cascade')||searchIn.includes('lac ')) autoTags.push('baignade','nature');
+    if(searchIn.includes('chateau')||searchIn.includes('château')||searchIn.includes('fort')) autoTags.push('historique','vue');
+    if(searchIn.includes('foret')||searchIn.includes('forêt')) autoTags.push('nature','ombre');
+    if(searchIn.includes('colorado')||searchIn.includes('rocher')||searchIn.includes('falaise')||searchIn.includes('grotte')) autoTags.push('randonnee','nature','vue');
+    if(searchIn.includes('gratuit')||searchIn.includes('libre')) autoTags.push('gratuit');
+    if(p.price_level===0) autoTags.push('gratuit');
     [...new Set(autoTags)].forEach(tag=>{
       const el=document.querySelector(`#tagsGrid [data-tag="${tag}"]`);
       if(el&&!el.classList.contains('on')){el.classList.add('on');if(!selectedTags.includes(tag))selectedTags.push(tag);}
     });
 
-    // Auto sous-région depuis code postal
-    if(p.formatted_address){
-      const cpMatch=p.formatted_address.match(/([0-9]{5})/);
-      if(cpMatch){
-        const dept=cpMatch[1].substring(0,2);
-        const depts={57:'Moselle (57)',67:'Bas-Rhin (67)',68:'Haut-Rhin (68)',
-          13:'Bouches-du-Rhône (13)',06:'Alpes-Maritimes (06)',69:'Rhône (69)',
-          33:'Gironde (33)',40:'Landes (40)',64:'Pyr-Atlantiques (64)',
-          65:'Htes-Pyrénées (65)',21:'Côte-d.Or (21)',89:'Yonne (89)',
-          71:'Saône-et-Loire (71)',75:'Paris (75)',54:'Meurthe-M. (54)'};
-        if(depts[+dept]&&!document.getElementById('sousRegion').value){
-          fillField('sousRegion',depts[+dept]);
-        }
-      }
+    // ── Sous-région depuis address_components (plus fiable que regex CP) ──────
+    if(p.address_components&&!document.getElementById('sousRegion').value){
+      const comps=p.address_components;
+      const getComp=(type)=>comps.find(c=>c.types.includes(type))?.long_name||'';
+      const dept=getComp('administrative_area_level_2');
+      const cp=getComp('postal_code');
+      const deptCode=cp?cp.substring(0,2):'';
+      const depts={57:'Moselle (57)',67:'Bas-Rhin (67)',68:'Haut-Rhin (68)',
+        13:'Bouches-du-Rhône (13)',6:'Alpes-Maritimes (06)',69:'Rhône (69)',
+        33:'Gironde (33)',40:'Landes (40)',64:'Pyr-Atl. (64)',
+        65:'Htes-Pyr. (65)',21:'Côte-d\'Or (21)',89:'Yonne (89)',
+        71:'Saône-et-Loire (71)',75:'Paris (75)',54:'M-et-Moselle (54)',
+        55:'Meuse (55)',88:'Vosges (88)',10:'Aube (10)',51:'Marne (51)',
+        8:'Ardennes (08)',62:'Pas-de-Calais (62)',59:'Nord (59)',
+        4:'Alpes-HteProv. (04)',5:'Htes-Alpes (05)',83:'Var (83)',84:'Vaucluse (84)',
+        34:'Hérault (34)',11:'Aude (11)',66:'Pyr-Or. (66)',31:'Hte-Garonne (31)',
+        32:'Gers (32)',82:'T-et-Garonne (82)',47:'Lot-et-Garonne (47)',24:'Dordogne (24)',
+        19:'Corrèze (19)',23:'Creuse (23)',87:'Hte-Vienne (87)',
+        73:'Savoie (73)',74:'Hte-Savoie (74)',38:'Isère (38)',26:'Drôme (26)',
+        7:'Ardèche (07)',42:'Loire (42)',43:'Hte-Loire (43)',63:'Puy-de-Dôme (63)',
+        15:'Cantal (15)',3:'Allier (03)',58:'Nièvre (58)',
+        29:'Finistère (29)',22:'Côtes-d\'Armor (22)',56:'Morbihan (56)',35:'I-et-Vilaine (35)',
+      };
+      if(deptCode&&depts[+deptCode]) fillField('sousRegion',depts[+deptCode]);
+      else if(dept&&dept.length<30) fillField('sousRegion',dept);
     }
 
-    // Auto-région depuis GPS
-    if(!document.getElementById('region').value&&p.geometry?.location){
+    // ── Auto-région depuis GPS ────────────────────────────────────────────────
+    if(p.geometry?.location){
       const lat=p.geometry.location.lat, lng=p.geometry.location.lng;
-      let autoRegion='';
-      if(lng>6.8&&lng<8.2&&lat>47.5&&lat<49.1) autoRegion='Alsace';
-      else if(lat<44&&lng>-2&&lng<4) autoRegion='Pyrenees';
-      else if(lng<1&&lat<45) autoRegion='Atlantique';
-      else if(lng>4&&lat>46.5&&lat<48&&lng<6) autoRegion='Bourgogne';
-      else if(lat>48.5&&lng<3) autoRegion='Nord';
-      else if(lng>6&&lat>45.5) autoRegion='Alpes';
-      if(autoRegion){
-        const regionEl=document.getElementById('region');
-        for(const opt of regionEl.options){
-          if(opt.text.includes(autoRegion)||opt.value===autoRegion){regionEl.value=opt.value;updatePreview();break;}
+      const regionEl=document.getElementById('region');
+      if(!regionEl.value){
+        let autoRegion='';
+        if(lng>6.5&&lng<8.3&&lat>47.3&&lat<49.2) autoRegion='Alsace';
+        else if(lat<43.8&&lng>-2&&lng<4.5) autoRegion='Pyrenees';
+        else if(lng<1.5&&lat>43&&lat<46) autoRegion='Atlantique';
+        else if(lng>3.5&&lat>46.5&&lat<48.5&&lng<6) autoRegion='Bourgogne';
+        else if(lat>48.5&&lng<3.5) autoRegion='Nord';
+        else if(lng>5.5&&lat>44&&lat<46.5) autoRegion='Alpes';
+        else if(lng>2&&lat>43.2&&lat<46&&lng<5.5) autoRegion='Occitanie';
+        else if(lng>4&&lat>43&&lat<45) autoRegion='Provence';
+        else if(lat>47&&lng>-2&&lng<3) autoRegion='Bretagne';
+        else if(lat>48&&lng>-2&&lng<3) autoRegion='Normandie';
+        else if(lng>0&&lat>47&&lat<48.5&&lng<3) autoRegion='Loire';
+        if(autoRegion){
+          for(const opt of regionEl.options){
+            if(opt.value===autoRegion||opt.text.includes(autoRegion)){regionEl.value=opt.value;break;}
+          }
         }
       }
     }
 
-    // Auto-description
+    // ── Description auto ─────────────────────────────────────────────────────
     if(p.editorial_summary?.overview&&!document.getElementById('description').value){
-      fillField('description',p.editorial_summary.overview);
+      fillField('description', p.editorial_summary.overview);
     }
 
-    // Horaires
-    if(p.opening_hours?.weekday_text){
-      document.getElementById('ir-horaires').innerHTML='🕐 '+p.opening_hours.weekday_text.slice(0,3).join(' · ');
-    }
+    // ── Horaires ─────────────────────────────────────────────────────────────
+    const horaireEl=document.getElementById('ir-horaires');
+    if(p.opening_hours?.weekday_text?.length){
+      const jours=p.opening_hours.weekday_text.slice(0,4).join(' · ');
+      horaireEl.innerHTML='🕐 '+jours;
+      horaireEl.style.display='block';
+    } else {horaireEl.innerHTML='';horaireEl.style.display='none';}
 
-    // Photos Google
+    // ── Photos Google ─────────────────────────────────────────────────────────
     const photos=p.photos||[];
     const photoContainer=document.getElementById('ir-photos');
     const googleSelectContainer=document.getElementById('googlePhotosSelect');
+    const googlePhotosSection=document.getElementById('googlePhotosSection');
     const googlePhotosChoice=document.getElementById('googlePhotosChoice');
-    photoContainer.innerHTML='';googleSelectContainer.innerHTML='';
+    if(photoContainer) photoContainer.innerHTML='';
+    googleSelectContainer.innerHTML='';
+
+    // Stocke les photo_references pour sauvegarde (URL directe Google stable)
+    googlePhotoRefs=photos.slice(0,5).map(ph=>ph.photo_reference);
+
     if(photos.length){
-      googlePhotosChoice.style.display='block';
+      googlePhotosSection.style.display='block';
+      googlePhotosChoice.style.display='none'; // section legacy cachée
       photos.slice(0,5).forEach((ph,i)=>{
         const ref=ph.photo_reference;
-        const thumbUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=200&photo_reference=${ref}&key=${apiKey}`;
-        const fullUrl=`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${apiKey}`;
-        const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(thumbUrl)}`;
-        const img=document.createElement('img');
-        img.src=proxy;img.title='Photo '+(i+1);
-        photoContainer.appendChild(img);
-        const img2=document.createElement('img');
-        img2.src=proxy;img2.title='Utiliser cette photo';img2.style.cursor='pointer';
-        img2.onclick=()=>{
-          document.querySelectorAll('#googlePhotosSelect img').forEach(x=>x.classList.remove('selected'));
-          img2.classList.add('selected');
-          selectedGooglePhotoUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`;
-          document.getElementById('pcImg').src=selectedGooglePhotoUrl;
+        // Thumb dans le résumé import (petit)
+        const thumbProxy=googlePhotoProxy(ref,apiKey,300);
+        if(photoContainer){
+          const imgThumb=document.createElement('img');
+          imgThumb.src=thumbProxy; imgThumb.title='Photo '+(i+1);
+          imgThumb.style.cssText='width:60px;height:45px;object-fit:cover;border-radius:5px;';
+          photoContainer.appendChild(imgThumb);
+        }
+
+        // Sélection photo principale (grande dans section photo)
+        const imgSel=document.createElement('img');
+        imgSel.src=thumbProxy; imgSel.title='Utiliser cette photo'; imgSel.style.cursor='pointer';
+        imgSel.style.cssText='width:80px;height:60px;object-fit:cover;border-radius:6px;border:2px solid transparent;transition:border-color .2s;';
+        imgSel.dataset.ref=ref;
+        imgSel.onclick=()=>{
+          document.querySelectorAll('#googlePhotosSelect img').forEach(x=>{x.style.borderColor='transparent';x.style.transform='scale(1)';});
+          imgSel.style.borderColor='var(--gold)'; imgSel.style.transform='scale(1.05)';
+          // URL directe Google stable pour stockage
+          selectedGooglePhotoUrl=googlePhotoUrl(ref,apiKey,800);
+          photoFile=null; // annule upload perso si on re-choisit Google
+          const proxyDisplay=googlePhotoProxy(ref,apiKey,800);
+          document.getElementById('pcImg').src=proxyDisplay;
           document.getElementById('pcImg').style.display='block';
+          // Reset upload zone
+          document.getElementById('photoPreview').style.display='none';
+          document.getElementById('photoPh').style.display='block';
+          document.getElementById('photoZone').classList.remove('has-photo');
         };
-        googleSelectContainer.appendChild(img2);
+        if(i===0){imgSel.style.borderColor='var(--gold)';}
+        googleSelectContainer.appendChild(imgSel);
       });
-      const firstProxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photos[0].photo_reference}&key=${apiKey}`)}`;
-      document.getElementById('ir-photo').src=firstProxy;
-      document.getElementById('ir-photo').style.display='block';
+
+      // Photo principale = première photo
+      const firstRef=photos[0].photo_reference;
+      selectedGooglePhotoUrl=googlePhotoUrl(firstRef,apiKey,800);
+      const firstProxy=googlePhotoProxy(firstRef,apiKey,800);
+      const irPhoto=document.getElementById('ir-photo');
+      if(irPhoto){irPhoto.src=firstProxy; irPhoto.style.display='block';}
       document.getElementById('pcImg').src=firstProxy;
       document.getElementById('pcImg').style.display='block';
-      selectedGooglePhotoUrl=firstProxy;
     }
 
-    // Résumé import
+    // ── Résumé import ─────────────────────────────────────────────────────────
     document.getElementById('ir-name').textContent=p.name||'';
-    document.getElementById('ir-meta').textContent=(p.formatted_address||'').split(',').slice(0,2).join(',');
-    const b=document.getElementById('ir-badges');b.innerHTML='';
+    const addrShort=(p.formatted_address||'').split(',').slice(-3,-1).join(',').trim();
+    document.getElementById('ir-meta').textContent=addrShort||'';
+    const b=document.getElementById('ir-badges'); b.innerHTML='';
     if(p.rating){
       const avis=p.user_ratings_total?` (${p.user_ratings_total} avis)`:'';
       b.innerHTML+=`<span class="ir-badge gold">★ ${p.rating}${avis}</span>`;
     }
-    if(photos.length) b.innerHTML+=`<span class="ir-badge">📷 ${photos.length} photos</span>`;
+    if(photos.length) b.innerHTML+=`<span class="ir-badge">📷 ${photos.length} photo${photos.length>1?'s':''}</span>`;
     b.innerHTML+=`<span class="ir-badge">📍 GPS</span>`;
     if(p.formatted_phone_number) b.innerHTML+=`<span class="ir-badge">📞 ${p.formatted_phone_number}</span>`;
     if(p.website) b.innerHTML+=`<span class="ir-badge">🌐 Site</span>`;
     if(p.opening_hours?.open_now!==undefined) b.innerHTML+=`<span class="ir-badge">${p.opening_hours.open_now?'✅ Ouvert':'🔴 Fermé'}</span>`;
     if(autoTags.length) b.innerHTML+=`<span class="ir-badge">🏷️ ${[...new Set(autoTags)].length} tags auto</span>`;
+    if(p.editorial_summary?.overview) b.innerHTML+=`<span class="ir-badge">📝 Description</span>`;
 
-    // Badge auto
+    // ── Badge auto ────────────────────────────────────────────────────────────
     if(!document.getElementById('badge').value){
       const sous=document.getElementById('sousRegion').value;
       const t=document.getElementById('type').value;
@@ -752,7 +860,7 @@ async function fetchFromPlacesApiProxy(coords,apiKey,originalUrl){
 
     updatePreview();
     return true;
-  }catch(e){console.warn('Places proxy:',e.message);return false;}
+  }catch(e){console.warn('Places API error:',e.message);return false;}
 }
 
 async function reverseGeocode(lat,lng){
