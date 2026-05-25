@@ -560,34 +560,40 @@ async function importFromMaps(){
       const apiKey=getApiKey();
       if(apiKey){
         const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
-        // Stratégie 1 : findplacefromtext — plus précis sur le nom exact
-        const d1=await callPlacesApi('findplacefromtext',{
-          input:url, inputtype:'textquery',
-          fields:'place_id,name,types'
-        }, apiKey);
-        // Filtrer : éviter les résultats purement géographiques
-        const geoTypes=['locality','administrative_area_level_1','administrative_area_level_2','administrative_area_level_3','political','country','postal_code'];
-        const candidates=d1?.candidates||[];
-        // Chercher d'abord un résultat qui a un type POI
-        const poiTypes=['tourist_attraction','natural_feature','park','museum','campground','lodging','restaurant','cave','amusement_park','aquarium','zoo','place_of_worship','establishment'];
-        let best=candidates.find(r=>r.types?.some(t=>poiTypes.includes(t)));
-        // Sinon prendre le premier qui n'est pas une ville pure
-        if(!best) best=candidates.find(r=>!r.types?.every(t=>geoTypes.includes(t)));
-        // Sinon le premier résultat
-        if(!best) best=candidates[0];
-        
+        // Normaliser le nom tapé pour comparaison (sans accents, minuscules)
+        const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
+        const inputNorm=normalize(url);
+        // Score de similarité : nb de mots du nom tapé présents dans le résultat
+        const similarity=(resultName)=>{
+          const rNorm=normalize(resultName||'');
+          const words=inputNorm.split(/\s+/).filter(w=>w.length>2);
+          if(!words.length) return 0;
+          return words.filter(w=>rNorm.includes(w)).length/words.length;
+        };
+        // Stratégie 1 : findplacefromtext (retourne 1 candidat)
+        const d1=await callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id,name,types'},apiKey);
+        const c1=d1?.candidates?.[0];
+        // Stratégie 2 : textsearch (retourne plusieurs résultats)
+        const d2=await callPlacesApi('textsearch',{query:url},apiKey);
+        const results2=d2?.results||[];
+        // Combiner et scorer tous les candidats
+        const allCandidates=[
+          ...(c1?[{place_id:c1.place_id,name:c1.name,types:c1.types,score:similarity(c1.name)}]:[]),
+          ...results2.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)}))
+        ];
+        // Trier : d'abord score similarité desc, puis POI avant ville
+        const geoTypes=['locality','administrative_area_level_1','administrative_area_level_2','administrative_area_level_3','political','country','postal_code','route'];
+        const poiTypes=['tourist_attraction','natural_feature','park','museum','campground','lodging','restaurant','cave','amusement_park','place_of_worship','establishment','point_of_interest'];
+        allCandidates.sort((a,b)=>{
+          if(b.score!==a.score) return b.score-a.score; // meilleur score d'abord
+          const aIsPoi=a.types?.some(t=>poiTypes.includes(t))?1:0;
+          const bIsPoi=b.types?.some(t=>poiTypes.includes(t))?1:0;
+          return bIsPoi-aIsPoi; // POI avant ville si score égal
+        });
+        // Prendre le meilleur
+        const best=allCandidates[0];
         if(best?.place_id){
           const det=await callPlacesApi('details',{place_id:best.place_id,fields},apiKey);
-          if(det?.result){
-            const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
-            if(ok){showImportResult();icon.textContent='✅';showToast('✅ '+det.result.name+' importé !','success');btn.disabled=false;return;}
-          }
-        }
-        // Stratégie 2 : textsearch en fallback
-        const d2=await callPlacesApi('textsearch',{query:url},apiKey);
-        const best2=d2?.results?.find(r=>r.types?.some(t=>poiTypes.includes(t)))||d2?.results?.[0];
-        if(best2?.place_id){
-          const det=await callPlacesApi('details',{place_id:best2.place_id,fields},apiKey);
           if(det?.result){
             const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
             if(ok){showImportResult();icon.textContent='✅';showToast('✅ '+det.result.name+' importé !','success');btn.disabled=false;return;}
