@@ -561,63 +561,42 @@ async function importFromMaps(){
       const apiKey=getApiKey();
       if(apiKey){
         const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
-        // Normaliser le nom tapé pour comparaison (sans accents, minuscules)
-        const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
-        const inputNorm=normalize(url);
-        // Score de similarité : nb de mots du nom tapé présents dans le résultat
-        const similarity=(resultName)=>{
-          const rNorm=normalize(resultName||'');
-          const words=inputNorm.split(/\s+/).filter(w=>w.length>2);
-          if(!words.length) return 0;
-          return words.filter(w=>rNorm.includes(w)).length/words.length;
+        // Normaliser pour scoring
+        const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
+        const inputNorm=norm(url);
+        const words=inputNorm.split(/\s+/).filter(w=>w.length>2);
+        const score=name=>{
+          const n=norm(name||'');
+          return words.length?words.filter(w=>n.includes(w)).length/words.length:0;
         };
-        // Lancer les 3 recherches en parallèle pour aller plus vite
-        const [d1,d2,d3]=await Promise.all([
-          callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id,name,types'},apiKey),
-          callPlacesApi('textsearch',{query:url},apiKey),
-          callPlacesApi('textsearch',{query:url+' site touristique'},apiKey)
-        ]);
-        const c1=d1?.candidates?.[0];
-        const results2=d2?.results||[];
-        const results3=d3?.results||[];
-        // Combiner et scorer tous les candidats
-        const allCandidates=[
-          ...(c1?[{place_id:c1.place_id,name:c1.name,types:c1.types,score:similarity(c1.name)}]:[]),
-          ...results2.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)})),
-          ...results3.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)+0.1}))
-        ];
-        // Trier : d'abord score similarité desc, puis POI avant ville
         const geoTypes=['locality','administrative_area_level_1','administrative_area_level_2','administrative_area_level_3','political','country','postal_code','route'];
         const poiTypes=['tourist_attraction','natural_feature','park','museum','campground','lodging','restaurant','cave','amusement_park','place_of_worship','establishment','point_of_interest'];
-        // Dédupliquer par place_id
+        // 3 recherches en parallèle — on récupère SEULEMENT les IDs et noms
+        const [r1,r2,r3]=await Promise.all([
+          callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id,name,types'},apiKey).catch(()=>null),
+          callPlacesApi('textsearch',{query:url,fields:'place_id,name,types'},apiKey).catch(()=>null),
+          callPlacesApi('textsearch',{query:url+' attraction touristique',fields:'place_id,name,types'},apiKey).catch(()=>null)
+        ]);
+        // Collecter tous les candidats sans dupliquer
         const seen=new Set();
-        const unique=allCandidates.filter(c=>{if(!c.place_id||seen.has(c.place_id))return false;seen.add(c.place_id);return true;});
-        unique.sort((a,b)=>{
-          if(b.score!==a.score) return b.score-a.score; // meilleur score d'abord
-          const aIsPoi=a.types?.some(t=>poiTypes.includes(t))?1:0;
-          const bIsPoi=b.types?.some(t=>poiTypes.includes(t))?1:0;
-          return bIsPoi-aIsPoi; // POI avant ville si score égal
-        });
-        // Prendre le meilleur
-        const best=unique[0];
-        if(best?.place_id){
-          showToast('📡 Chargement de "'+best.name+'"...','info');
-          // Reset COMPLET du formulaire avant de remplir avec le bon résultat
-          ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
-            const el=document.getElementById(id);
-            if(el){el.value='';el.classList.remove('auto-filled');}
-          });
-          selectedTags=[];
-          document.querySelectorAll('#tagsGrid .tag-opt.on').forEach(t=>t.classList.remove('on'));
-          // Reset dog
-          setDog('yes');
-          // Reset famille stars  
-          familyStarVal=0;
-          document.querySelectorAll('#familyStars .star').forEach(s=>s.classList.remove('on'));
-          // Reset photo
-          selectedGooglePhotoUrl=null;
-          document.getElementById('pcImg').style.display='none';
-          if(document.getElementById('googlePhotosSection')) document.getElementById('googlePhotosSection').style.display='none';
+        const candidates=[];
+        const add=(r,bonus=0)=>{
+          if(!r?.place_id||seen.has(r.place_id))return;
+          seen.add(r.place_id);
+          const s=score(r.name);
+          const isPoi=r.types?.some(t=>poiTypes.includes(t))?0.2:0;
+          const isGeo=r.types?.every(t=>geoTypes.includes(t))?-0.5:0;
+          candidates.push({place_id:r.place_id,name:r.name,total:s+isPoi+isGeo+bonus});
+        };
+        if(r1?.candidates) r1.candidates.forEach(c=>add(c,0));
+        if(r2?.results) r2.results.forEach(c=>add(c,0));
+        if(r3?.results) r3.results.forEach(c=>add(c,0.15));
+        // Trier par score total
+        candidates.sort((a,b)=>b.total-a.total);
+        console.log('Candidates scored:',candidates.slice(0,5).map(c=>c.name+' ('+c.total.toFixed(2)+')'));
+        const best=candidates[0];
+        if(best?.place_id&&best.total>0){
+          showToast('📡 Import de "'+best.name+'"...','info');
           const det=await callPlacesApi('details',{place_id:best.place_id,fields},apiKey);
           if(det?.result){
             const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
