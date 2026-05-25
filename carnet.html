@@ -119,6 +119,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .site-name{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.25;}
 .site-desc{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .dog-tag{display:inline-flex;align-items:center;gap:3px;background:#edf7ed;color:#2C5016;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
+.dog-photo-badge.yes{background:rgba(44,80,22,.82);color:#b8f0b0;}
+.dog-photo-badge.no{background:rgba(180,40,0,.82);color:#ffd0c0;}
+.dog-photo-badge.na{background:rgba(60,50,20,.75);color:#f5d98a;}
+.dog-info-box{font-size:10px;color:#2C5016;background:#f0faf0;border-left:2px solid #2C5016;padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
+.dog-info-box.no{color:#cc4400;background:#fff3ee;border-left-color:#cc4400;}
+.dog-info-box.na{color:#8B6914;background:#fffbe8;border-left-color:#C8A84B;}
 .conseil-box{background:rgba(200,168,75,.06);border-left:2px solid rgba(200,168,75,.35);padding:5px 8px;font-size:10.5px;color:var(--muted);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
 .maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--text);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
@@ -1192,22 +1199,25 @@ function createDynamicTab(tabId, regionName, lieux, appMain){
 
 function makeDynCard(l, cardType){
   const ph=l.photo_url?`url('${l.photo_url}')`:'linear-gradient(135deg,#88888844,#88888822)';
-  const dog=l.dog_friendly===true?'✅ Chien OK':l.dog_friendly===false?'❌ Interdit':'❓ À vérifier';
+  const dogStatus=l.dog_friendly===true?'yes':l.dog_friendly===false?'no':l.dog_friendly===null?null:'na';
+  const dogLabel=dogStatus==='yes'?'🐕 Dog Friendly':dogStatus==='no'?'🚫 Non admis':dogStatus==='na'?'❓ À vérifier':null;
+  const dogPhotoBadge=dogLabel?`<div class="dog-photo-badge ${dogStatus}">${dogLabel}</div>`:'';
+  const dogInfoHtml=l.dog_info?`<div class="dog-info-box ${dogStatus||'na'}">🐾 ${l.dog_info.slice(0,120)}</div>`:'';
   const noteG=l.note?`<span style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;">★ ${l.note}</span>`:'';
   const noteF=l.note_famille?`<span style="background:rgba(200,168,75,.15);color:#8B6914;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;">${'★'.repeat(l.note_famille)} 🐾</span>`:'';
   const tags=l.tags?.length?l.tags.slice(0,3).map(t=>`<span style="font-size:9px;background:rgba(200,168,75,.1);color:#8B6914;padding:1px 6px;border-radius:10px;">${t}</span>`).join(''):'';
   const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
-  
   return `<div class="site-card" id="dyncard-${l.id}">
     <div class="site-photo" style="background-image:${ph};background-size:cover;background-position:center;">
       <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
+      ${dogPhotoBadge}
     </div>
     <div class="site-body">
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${noteG}${noteF}</div>
       <h3 class="site-name">${l.nom||'—'}</h3>
       ${l.commentaire?`<div style="font-size:10px;color:#888;font-style:italic;border-left:2px solid rgba(200,168,75,.3);padding-left:6px;margin-bottom:5px;line-height:1.4;">${l.commentaire.slice(0,80)}${l.commentaire.length>80?'...':''}</div>`:''}
       ${l.description?`<p class="site-desc">${l.description}</p>`:''}
-      ${l.dog_friendly!==null&&l.dog_friendly!==undefined?`<div class="dog-badge dog-${l.dog_friendly===true?'yes':l.dog_friendly===false?'no':'na'}">${dog}</div>`:''}
+      ${dogInfoHtml}
       ${l.conseil?`<div class="conseil-box">💡 ${l.conseil}</div>`:''}
       ${tags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;">${tags}</div>`:''}
       <div class="site-actions">

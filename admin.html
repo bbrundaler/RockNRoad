@@ -256,7 +256,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
       <input class="import-input" type="url" id="gmapsUrl" placeholder="https://maps.google.com/... ou https://goo.gl/maps/...">
       <button class="import-btn" id="importBtn" onclick="importFromMaps()"><span id="importBtnIcon">✨</span> Analyser</button>
     </div>
-    <div class="import-hint">📱 Google Maps → fiche du lieu → <strong>Partager</strong> → <strong>Copier le lien</strong> → colle ici</div>
+    <div class="import-hint">📱 <strong>URL ou nom :</strong> Colle un lien Google Maps <em>ou</em> tape directement le nom du lieu (ex: "Grottes de Bétharram")</div>
     <div class="import-result" id="importResult">
       <div class="ir-header">
         <img id="ir-photo" class="ir-photo" src="" alt="" style="display:none;">
@@ -547,7 +547,32 @@ function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
 // ── IMPORT ────────────────────────────────────────────────────────────────────
 async function importFromMaps(){
   const url=document.getElementById('gmapsUrl').value.trim();
-  if(!url){showToast('Colle une URL Google Maps','error');return;}
+  if(!url){showToast('Colle une URL ou tape un nom de lieu','error');return;}
+  // Si ce n'est pas une URL, traiter comme recherche par nom direct
+  const isUrl=url.startsWith('http')||url.startsWith('maps.');
+  if(!isUrl){
+    // Recherche directe par nom
+    btn.disabled=true;icon.textContent='⏳';
+    showToast('🔍 Recherche "'+url+'"...','info');
+    try{
+      const apiKey=getApiKey();
+      if(apiKey){
+        const d=await callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id'},apiKey);
+        if(d?.candidates?.[0]?.place_id){
+          const placeId=d.candidates[0].place_id;
+          const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+          const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
+          if(det?.result){
+            const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
+            if(ok){showImportResult();icon.textContent='✅';showToast('✅ Lieu trouvé et importé !','success');btn.disabled=false;return;}
+          }
+        }
+      }
+      showToast('Lieu non trouvé — essaie avec une URL Maps','error');
+    }catch(e){showToast('Erreur: '+e.message,'error');}
+    btn.disabled=false;icon.textContent='✨';
+    return;
+  }
   const btn=document.getElementById('importBtn');
   const icon=document.getElementById('importBtnIcon');
   btn.disabled=true;icon.textContent='⏳';
@@ -631,7 +656,7 @@ function googlePhotoProxy(ref, apiKey, maxwidth=400){
   return `https://corsproxy.io/?${encodeURIComponent(direct)}`;
 }
 
-async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl){
+async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedResult=null){
   try{
     const nameFromUrl=extractPlaceNameFromUrl(originalUrl);
     let placeId=extractPlaceIdFromUrl(originalUrl);
@@ -655,7 +680,7 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl){
     if(!placeId){console.warn('place_id introuvable');return false;}
 
     // Étape 2 — Place Details complet
-    const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level';
+    const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
     const det=await callPlacesApi('details',{place_id:placeId, fields}, apiKey);
     if(!det?.result) return false;
     const p=det.result;
@@ -821,17 +846,43 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl){
       autoDogInfo='';
     }
     
+    // ── Enrichir dog_info avec reviews Google qui mentionnent le chien ──────
+    const dogKeywordsReview=['chien','dog','animal','pet','laisse','leash','paw','canin'];
+    const reviewsText = (p.reviews||[])
+      .map(r=>r.text||'').join(' ').toLowerCase();
+    let dogReviewExtract = '';
+    if(reviewsText){
+      // Cherche des phrases contenant des mots-clés chien dans les reviews
+      const sentences = reviewsText.split(/[.!?]/);
+      const dogSentences = sentences.filter(s=>dogKeywordsReview.some(kw=>s.includes(kw)));
+      if(dogSentences.length>0){
+        dogReviewExtract = dogSentences[0].trim().slice(0,120);
+        // Capitalise
+        dogReviewExtract = dogReviewExtract.charAt(0).toUpperCase()+dogReviewExtract.slice(1);
+      }
+    }
+    // Composer dog_info final
+    let finalDogInfo = '';
+    if(autoDog==='yes'){
+      finalDogInfo = autoDogInfo ? autoDogInfo : '🐕 Dog Friendly — confirmé';
+      if(dogReviewExtract && !finalDogInfo.includes(dogReviewExtract.slice(0,20))){
+        finalDogInfo += ' · ' + dogReviewExtract;
+      }
+    } else if(autoDog==='no'){
+      finalDogInfo = autoDogInfo ? autoDogInfo : '🚫 Animaux non admis';
+      if(dogReviewExtract) finalDogInfo += ' · ' + dogReviewExtract;
+    }
+    
     setDog(autoDog);
-    if(autoDogInfo && !document.getElementById('dogInfo').value){
-      fillField('dogInfo', autoDogInfo);
+    if(finalDogInfo && !document.getElementById('dogInfo').value){
+      fillField('dogInfo', finalDogInfo);
     }
     // Badge dans le résumé import
-    if(autoDog==='yes' && autoDogInfo){
-      const b=document.getElementById('ir-badges');
-      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog-friendly détecté</span>`;
+    const b=document.getElementById('ir-badges');
+    if(autoDog==='yes'){
+      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog Friendly détecté</span>`;
     } else if(autoDog==='no'){
-      const b=document.getElementById('ir-badges');
-      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non dog-friendly détecté</span>`;
+      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non admis détecté</span>`;
     }
 
     // ── Horaires ─────────────────────────────────────────────────────────────
@@ -946,19 +997,52 @@ async function reverseGeocode(lat,lng){
 }
 
 async function tryResolveShortUrl(url){
-  try{
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
-    const d=await r.json();
-    if(d.contents){
-      const titleMatch=d.contents.match(/<title[^>]*>([^<]+)<\/title>/i);
+  // Essai 1 : corsproxy.io (plus rapide)
+  const proxies=[
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+  ];
+  let placeName='';
+  for(const proxy of proxies){
+    try{
+      const r=await fetch(proxy,{signal:AbortSignal.timeout(7000)});
+      if(!r.ok) continue;
+      const raw=await r.text();
+      // allorigins wraps in JSON
+      let content=raw;
+      try{const j=JSON.parse(raw);if(j.contents) content=j.contents;}catch{}
+      // Extraire nom depuis title
+      const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
       if(titleMatch){
-        let title=titleMatch[1].replace(/ - Google Maps.*/,'').trim();
-        if(title&&title!=='Google Maps')fillField('nom',title);
+        let title=titleMatch[1].replace(/ - Google Maps.*/,'').replace(/Google Maps/,'').trim();
+        if(title&&title.length>2){placeName=title;fillField('nom',title);}
       }
-      const coords=extractCoordsFromUrl(d.contents);
+      // Extraire coords
+      const coords=extractCoordsFromUrl(content);
       if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
+      if(placeName) break;
+    }catch(e){continue;}
+  }
+  // Si on a un nom : lancer Find Place directement
+  if(placeName){
+    showToast('🔍 Nom trouvé — recherche Google Places...','info');
+    const apiKey=getApiKey();
+    if(apiKey){
+      const d=await callPlacesApi('findplacefromtext',{
+        input:placeName, inputtype:'textquery',
+        fields:'place_id'
+      }, apiKey);
+      if(d?.candidates?.[0]?.place_id){
+        const placeId=d.candidates[0].place_id;
+        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+        const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
+        if(det?.result){
+          await fetchFromPlacesApiProxy(null,apiKey,url,det.result);
+          return;
+        }
+      }
     }
-  }catch(e){}
+  }
 }
 
 function showImportResult(){
