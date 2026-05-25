@@ -3,245 +3,340 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RockNRoad Aventures · Mon Voyage</title>
+<title>RockNRoad · Mon Voyage</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#1A1208;--creme:#F5EFE0;}
-body{font-family:'Inter',sans-serif;background:var(--creme);color:var(--dark);}
-#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
+:root{--sb:215px;--gold:#C8A84B;--dark:#161410;--creme:#F5EFE0;--green:#2C5016;}
+body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;display:flex;overflow:hidden;}
+
+/* ── AUTH ── */
+#auth-check{position:fixed;inset:0;z-index:9999;background:var(--dark);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
-#auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
-.spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;
-  border-radius:50%;animation:spin 1s linear infinite;margin-top:18px;}
+#auth-check h2{font-family:'Playfair Display',serif;font-size:24px;margin:14px 0 4px;}
+.spinner{width:32px;height:32px;border:3px solid rgba(200,168,75,.3);border-top-color:var(--gold);
+  border-radius:50%;animation:spin 1s linear infinite;margin:16px auto 0;}
 @keyframes spin{to{transform:rotate(360deg)}}
-#main{display:none;}
 
-.header{background:var(--dark);padding:16px 24px;display:flex;align-items:center;
-  justify-content:space-between;border-bottom:2px solid var(--gold);}
-.header-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:18px;text-decoration:none;}
-.header-nav{display:flex;gap:8px;}
-.nav-link{color:rgba(245,239,224,.6);font-size:11px;letter-spacing:1px;text-transform:uppercase;
-  text-decoration:none;padding:7px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);transition:all .2s;}
-.nav-link:hover,.nav-link.active{color:var(--gold);border-color:var(--gold);}
-.logout-btn{background:none;border:1px solid rgba(200,168,75,.3);color:var(--gold);
-  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 12px;border-radius:6px;cursor:pointer;}
-
-.layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 58px);}
-
-/* LISTE GAUCHE */
-.sidebar{background:white;border-right:1px solid #e8dece;overflow-y:auto;display:flex;flex-direction:column;}
-.sidebar-header{padding:20px;border-bottom:1px solid #f0ece4;flex-shrink:0;}
-.sidebar-title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px;}
-.sidebar-title em{color:var(--gold);font-style:italic;}
-.sidebar-sub{font-size:12px;color:#888;}
-.sidebar-actions{display:flex;gap:8px;margin-top:12px;}
-.clear-btn{padding:8px 14px;background:#fff0ee;border:1px solid #ffccc7;color:#cc4400;
-  font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;transition:all .2s;}
-.clear-btn:hover{background:#ffe0dc;}
-.add-more-btn{flex:1;padding:8px 14px;background:var(--gold);color:var(--dark);
-  font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;text-decoration:none;
-  text-align:center;transition:all .2s;}
-.add-more-btn:hover{background:#dbb948;}
-
-.stops-list{flex:1;padding:12px;}
-.stop-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;
-  background:#fafaf8;border:1px solid #f0ece4;margin-bottom:8px;cursor:grab;
-  transition:all .2s;position:relative;}
-.stop-item:hover{background:#fffdf0;border-color:var(--gold);}
-.stop-item.dragging{opacity:.5;box-shadow:0 8px 24px rgba(0,0,0,.2);}
-.stop-num{width:28px;height:28px;border-radius:50%;background:var(--dark);color:var(--gold);
+/* ── SIDEBAR GAUCHE (navigation) ── */
+#sidebar{width:var(--sb);min-height:100vh;background:var(--dark);border-right:1px solid rgba(200,168,75,.1);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
+#sidebar::-webkit-scrollbar{display:none;}
+.sb-logo{padding:20px 16px 14px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;cursor:pointer;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
+.sb-logo-title span{color:var(--gold);}
+.sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
+.sb-group{padding:10px 8px 3px;flex-shrink:0;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
+.sb-sep{height:1px;background:rgba(200,168,75,.07);margin:6px 12px;}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;
+  color:rgba(255,255,255,.82);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+  border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;}
+.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(255,255,255,.97);}
+.sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-dot-gold{background:var(--gold);}
+.sb-dot-grey{background:rgba(255,255,255,.2);}
+.sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;
+  background:rgba(255,255,255,.03);margin-bottom:5px;}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);
   display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.sb-user-info{flex:1;min-width:0;}
+.sb-user-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-user-role{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);
+  color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;
+  border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
+
+/* ── MAIN LAYOUT ── */
+#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOP BAR ── */
+#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);
+  padding:0 20px;height:46px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;z-index:100;}
+.top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
+.top-bar-actions{display:flex;gap:8px;}
+.tb-btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;border:none;}
+.tb-btn-clear{background:rgba(200,50,0,.15);color:#ff8060;border:1px solid rgba(200,50,0,.2);}
+.tb-btn-clear:hover{background:rgba(200,50,0,.25);}
+.tb-btn-add{background:var(--gold);color:var(--dark);}
+.tb-btn-add:hover{background:#e0c060;}
+.tb-btn-print{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);}
+.tb-btn-print:hover{background:rgba(255,255,255,.14);}
+
+/* ── CONTENU : panneau gauche + carte ── */
+#voyage-content{display:flex;flex:1;overflow:hidden;}
+
+/* Panneau voyage */
+#voyage-panel{width:300px;flex-shrink:0;background:#1E1A16;border-right:1px solid rgba(200,168,75,.1);
+  display:flex;flex-direction:column;overflow:hidden;}
+#panel-header{padding:16px 16px 12px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;}
+#panel-header h2{font-family:'Playfair Display',serif;font-size:18px;color:white;margin-bottom:2px;}
+#panel-header p{font-size:11px;color:rgba(255,255,255,.35);}
+#stops-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:rgba(200,168,75,.2) transparent;}
+#panel-footer{padding:12px 16px;border-top:1px solid rgba(200,168,75,.08);flex-shrink:0;background:#1a1610;}
+.pf-row{display:flex;justify-content:space-between;align-items:center;}
+.pf-label{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);}
+.pf-val{font-size:18px;font-weight:800;color:var(--gold);}
+.pf-val.small{font-size:13px;}
+
+/* Stop items */
+.stop-item{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:8px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  margin-bottom:6px;cursor:grab;transition:all .15s;}
+.stop-item:hover{background:rgba(255,255,255,.07);border-color:rgba(200,168,75,.2);}
+.stop-item.dragging{opacity:.4;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.drag-handle{color:rgba(255,255,255,.2);font-size:14px;cursor:grab;flex-shrink:0;}
+.stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--dark);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
 .stop-info{flex:1;min-width:0;}
-.stop-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-region{font-size:10px;color:#888;}
-.stop-dist{font-size:10px;color:var(--gold);font-weight:600;margin-top:1px;}
-.stop-remove{width:24px;height:24px;border-radius:50%;background:#f0ece4;border:none;
-  color:#888;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:all .2s;flex-shrink:0;}
-.stop-remove:hover{background:#ffe0dc;color:#cc4400;}
-.drag-handle{color:#ccc;font-size:14px;cursor:grab;flex-shrink:0;}
+.stop-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-region{font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;}
+.stop-dist{font-size:9px;color:rgba(200,168,75,.6);margin-top:2px;}
+.stop-remove{background:none;border:none;color:rgba(255,255,255,.2);font-size:14px;
+  cursor:pointer;padding:2px 4px;border-radius:4px;transition:all .15s;flex-shrink:0;}
+.stop-remove:hover{background:rgba(200,50,0,.2);color:#ff8060;}
 
-/* TOTAL DISTANCE */
-.total-bar{padding:14px 20px;background:var(--dark);flex-shrink:0;}
-.total-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-.total-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);}
-.total-label{font-size:11px;color:rgba(245,239,224,.55);margin-top:1px;}
-
-/* CARTE */
-.map-area{position:relative;flex:1;}
-#map{width:100%;height:100%;}
-.map-controls{position:absolute;top:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
-.map-ctrl-btn{background:white;border:1px solid #e8dece;border-radius:8px;padding:8px 14px;
-  font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1);
-  transition:all .2s;color:var(--dark);}
-.map-ctrl-btn:hover{background:var(--gold);color:var(--dark);}
-
-/* EMPTY STATE */
+/* Vide */
 .empty-voyage{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;text-align:center;padding:40px;color:#888;}
-.empty-voyage .icon{font-size:56px;margin-bottom:16px;}
-.empty-voyage h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--dark);margin-bottom:8px;}
-.empty-voyage p{font-size:14px;line-height:1.6;max-width:300px;margin-bottom:20px;}
+  padding:40px 20px;text-align:center;height:100%;}
+.empty-voyage .icon{font-size:44px;margin-bottom:12px;opacity:.4;}
+.empty-voyage h3{font-family:'Playfair Display',serif;font-size:18px;color:rgba(255,255,255,.6);margin-bottom:6px;}
+.empty-voyage p{font-size:12px;color:rgba(255,255,255,.3);line-height:1.6;max-width:220px;}
 
+/* Carte */
+#map{flex:1;height:100%;}
+
+/* Print */
+@media print{
+  #sidebar,#top-bar,#voyage-panel{display:none!important;}
+  #app-main{margin-left:0!important;width:100%!important;}
+  #map{height:100vh!important;width:100vw!important;}
+}
 @media(max-width:768px){
-  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;}
-  .sidebar{max-height:45vh;}
-  .header-nav{display:none;}
+  #sidebar{transform:translateX(-100%);transition:transform .25s;}
+  #sidebar.open{transform:translateX(0);}
+  #app-main{margin-left:0;width:100%;}
+  #voyage-panel{width:260px;}
 }
 </style>
-<!-- Leaflet pour la carte -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
 <div id="auth-check">
-  <div style="font-size:48px;">🐾</div>
+  <div style="font-size:44px;">🐾</div>
   <h2>RockNRoad</h2>
-  <p style="font-size:12px;opacity:.6;letter-spacing:2px;">Chargement...</p>
+  <p style="font-size:11px;opacity:.5;letter-spacing:2px;">Chargement...</p>
   <div class="spinner"></div>
 </div>
 
-<div id="main" style="display:none;">
-  <header style="background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,168,75,.15);flex-shrink:0;">
-    <a href="carnet.html" style="font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;">
-      🐾 <span>Rock<span style="color:#C8A84B;">N</span>Road</span>
-      <span style="font-size:10px;color:rgba(200,168,75,.5);letter-spacing:4px;text-transform:uppercase;font-family:Inter,sans-serif;">Aventures</span>
+<!-- ── SIDEBAR ── -->
+<div id="sidebar">
+  <div class="sb-logo" onclick="window.location.href='carnet.html'">
+    <div class="sb-logo-title">Rock<span>N</span>Road</div>
+    <div class="sb-logo-sub">Aventures</div>
+  </div>
+
+  <div class="sb-group" style="padding-bottom:2px;">
+    <a class="sb-btn" href="carnet.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Accueil</span>
     </a>
-    <nav style="display:flex;gap:8px;flex-wrap:wrap;">
-      <a href="carnet.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🗺 Carnet</a>
-      <a href="fiches.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🗂️ Mes Fiches</a>
-      <a href="voyage.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;" style="color:#C8A84B;border-color:rgba(200,168,75,.4);">🧭 Mon Voyage</a>
-      <a href="admin.html" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">➕ Créer</a>
-      
-      <a href="https://www.google.com/maps/d/viewer?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:rgba(245,239,224,.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;padding:8px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.08);transition:all .2s;font-family:Inter,sans-serif;">🗺️ Maps ↗</a>
-    </nav>
-    <button onclick="logout()" style="background:none;border:1px solid rgba(200,168,75,.3);color:rgba(200,168,75,.7);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Inter,sans-serif;">⏏ Déco</button>
-  </header>
+  </div>
 
-  <div class="layout">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-title">🧭 Mon <em>Voyage</em></div>
-        <div class="sidebar-sub">Glissez pour réordonner · Cliquez ✕ pour retirer</div>
-        <div class="sidebar-actions">
-          <button class="clear-btn" onclick="clearAll()">🗑 Tout effacer</button>
-          <a href="fiches.html" class="add-more-btn">➕ Ajouter des lieux</a>
+  <div class="sb-sep"></div>
+
+  <div class="sb-group">
+    <div class="sb-group-label">Voyage</div>
+    <a class="sb-btn" href="carnet.html#alsace">
+      <span style="font-size:13px;">🇫🇷</span>
+      <span>Région France</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#allemagne">
+      <span style="font-size:13px;">🌍</span>
+      <span>Région Europe</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#nepal">
+      <span style="font-size:13px;">✈️</span>
+      <span>Monde</span>
+    </a>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <div class="sb-group">
+    <div class="sb-group-label">Outils</div>
+    <a class="sb-btn" href="carnet.html#carte">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span>Carte interactive</span>
+    </a>
+    <a class="sb-btn active" href="voyage.html">
+      <span class="sb-dot sb-dot-gold"></span>
+      <span>Mon Voyage</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#fiche">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Fiche récap</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#tips">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Conseils</span>
+    </a>
+  </div>
+
+  <div class="sb-sep"></div>
+
+  <div class="sb-group">
+    <div class="sb-group-label">Back-Office</div>
+    <a class="sb-btn" href="admin.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Créer une fiche</span>
+    </a>
+    <a class="sb-btn" href="onboarding.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Mon profil groupe</span>
+    </a>
+    <a class="sb-btn" href="config.html">
+      <span style="font-size:11px;">⚙️</span>
+      <span>Config</span>
+    </a>
+  </div>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">B</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sb-username">Chargement...</div>
+        <div class="sb-user-role">Famille RockNRoad</div>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
+  </div>
+</div>
+
+<!-- ── APP MAIN ── -->
+<div id="app-main">
+
+  <!-- Top bar -->
+  <div id="top-bar">
+    <div class="top-bar-title">🧭 Mon <em>Voyage</em></div>
+    <div class="top-bar-actions">
+      <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
+      <button class="tb-btn tb-btn-add" onclick="window.location.href='carnet.html'">+ Ajouter des lieux</button>
+      <button class="tb-btn tb-btn-print" onclick="printMap()">🖨️ Imprimer</button>
+    </div>
+  </div>
+
+  <!-- Contenu -->
+  <div id="voyage-content">
+
+    <!-- Panneau liste étapes -->
+    <div id="voyage-panel">
+      <div id="panel-header">
+        <h2>Itinéraire</h2>
+        <p>Glissez pour réordonner · × pour retirer</p>
+      </div>
+      <div id="stops-list">
+        <div class="empty-voyage" id="emptyVoyage">
+          <div class="icon">🗺️</div>
+          <h3>Voyage vide</h3>
+          <p>Ajoutez des lieux depuis le Carnet en cliquant sur "🧭 Mon Voyage"</p>
         </div>
       </div>
-      <div class="stops-list" id="stopsList"></div>
-      <div class="total-bar" id="totalBar">
-        <div class="total-row">
-          <div>
-            <div class="total-label">Distance totale estimée</div>
-            <div class="total-val" id="totalDist">— km</div>
-          </div>
-          <div>
-            <div class="total-label">Nombre d'étapes</div>
-            <div class="total-val" id="totalStops">0</div>
-          </div>
+      <div id="panel-footer">
+        <div class="pf-row" style="margin-bottom:6px;">
+          <span class="pf-label">Distance totale</span>
+          <span class="pf-val" id="totalDist">— km</span>
+        </div>
+        <div class="pf-row">
+          <span class="pf-label">Étapes</span>
+          <span class="pf-val small" id="totalStops">0</span>
         </div>
       </div>
     </div>
 
-    <!-- CARTE -->
-    <div class="map-area">
-      <div id="map"></div>
-      <div class="map-controls">
-        <button class="map-ctrl-btn" onclick="fitAll()">🎯 Vue globale</button>
-        <button class="map-ctrl-btn" onclick="printMap()">🖨️ Imprimer</button>
-      </div>
-      <div class="empty-voyage" id="emptyVoyage" style="position:absolute;inset:0;background:rgba(245,239,224,.95);display:none;">
-        <div class="icon">🧭</div>
-        <h3>Votre voyage est vide</h3>
-        <p>Rendez-vous sur "Mes Fiches" et cliquez sur "Ajouter au Voyage" pour chaque lieu que vous souhaitez visiter.</p>
-        <a href="fiches.html" style="background:var(--gold);color:var(--dark);font-weight:700;
-          padding:12px 24px;border-radius:8px;text-decoration:none;font-size:13px;">
-          📍 Voir mes fiches →
-        </a>
-      </div>
-    </div>
+    <!-- Carte Leaflet -->
+    <div id="map"></div>
+
   </div>
 </div>
 
 <script>
-const SURL = 'https://cazqllstxhuecoqpktwm.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
-const { createClient } = supabase;
-const sb = createClient(SURL, SKEY);
+const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+const {createClient}=supabase;
+const sb=createClient(SURL,SKEY);
 
-let map, routeLayer, markers = [];
-let voyageIds = JSON.parse(localStorage.getItem('rr_voyage') || '[]');
-// Aussi charger depuis rr_voyage_full si dispo
-const _fullData = JSON.parse(localStorage.getItem('rr_voyage_full') || '[]');
-if (_fullData.length > 0 && voyageIds.length === 0) {
-  voyageIds = _fullData.map(v => v.id);
-}
-let voyageLieux = [];
+let map,routeLayer,markers=[];
+let voyageLieux=[];
+let draggedId=null;
 
-async function checkAuth() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  document.getElementById('auth-check').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
+async function checkAuth(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  document.getElementById('auth-check').style.display='none';
+  const e=session.user.email;
+  const av=document.getElementById('sb-avatar');if(av)av.textContent=e.charAt(0).toUpperCase();
+  const un=document.getElementById('sb-username');if(un)un.textContent=e.split('@')[0];
   initMap();
   loadVoyage();
 }
-async function logout() { await sb.auth.signOut(); window.location.href = 'index.html'; }
+async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 
-// ── Init carte Leaflet ────────────────────────────────────────────────────────
-function initMap() {
-  map = L.map('map').setView([46.5, 2.5], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 18
+// ── Carte Leaflet ─────────────────────────────────────────────────────────────
+function initMap(){
+  map=L.map('map').setView([46.5,2.5],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© OpenStreetMap',maxZoom:18
   }).addTo(map);
-  routeLayer = L.layerGroup().addTo(map);
+  routeLayer=L.layerGroup().addTo(map);
+  setTimeout(()=>map.invalidateSize(),100);
 }
 
-// ── Charger les lieux sélectionnés ────────────────────────────────────────────
-async function loadVoyage() {
-  // Lire depuis rr_voyage_full (stocké par carnet.html avec coords directes)
-  const full = JSON.parse(localStorage.getItem('rr_voyage_full') || '[]');
-
-  if (full.length > 0) {
-    voyageLieux = full.filter(v => v.lat && v.lng);
-    voyageIds = voyageLieux.map(v => v.id);
-    if (voyageLieux.length === 0) { showEmpty(true); renderSidebar(); return; }
-  } else if (voyageIds.length > 0) {
-    // Fallback Supabase pour les lieux de fiches.html
-    const { data } = await sb.from('lieux').select('*').in('id', voyageIds);
-    voyageLieux = voyageIds.map(id => (data||[]).find(l => l.id === id)).filter(Boolean);
-    if (!voyageLieux.length) { showEmpty(true); renderSidebar(); return; }
+// ── Charger les lieux ─────────────────────────────────────────────────────────
+async function loadVoyage(){
+  const full=JSON.parse(localStorage.getItem('rr_voyage_full')||'[]');
+  if(full.length>0){
+    voyageLieux=full.filter(v=>v.lat&&v.lng);
+    if(!voyageLieux.length){showEmpty(true);renderPanel();return;}
   } else {
-    showEmpty(true); renderSidebar(); return;
+    const ids=JSON.parse(localStorage.getItem('rr_voyage')||'[]');
+    if(!ids.length){showEmpty(true);renderPanel();return;}
+    const{data}=await sb.from('lieux').select('*').in('id',ids);
+    voyageLieux=ids.map(id=>(data||[]).find(l=>l.id===id)).filter(Boolean);
+    if(!voyageLieux.length){showEmpty(true);renderPanel();return;}
   }
-
   showEmpty(false);
-  renderSidebar();
+  renderPanel();
   renderMap();
-  fixMapSize();
+  setTimeout(()=>{map.invalidateSize();fitAll();},150);
 }
 
-function showEmpty(show) {
-  document.getElementById('emptyVoyage').style.display = show ? 'flex' : 'none';
+function showEmpty(show){
+  document.getElementById('emptyVoyage').style.display=show?'flex':'none';
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-function renderSidebar() {
-  const list = document.getElementById('stopsList');
-  if (!voyageLieux.length) {
-    list.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font-size:13px;">Aucun lieu sélectionné</div>';
-    document.getElementById('totalDist').textContent = '— km';
-    document.getElementById('totalStops').textContent = '0';
+// ── Panneau liste ─────────────────────────────────────────────────────────────
+function renderPanel(){
+  const list=document.getElementById('stops-list');
+  if(!voyageLieux.length){
+    showEmpty(true);
+    document.getElementById('totalDist').textContent='— km';
+    document.getElementById('totalStops').textContent='0';
     return;
   }
-
-  list.innerHTML = voyageLieux.map((l, i) => `
+  showEmpty(false);
+  list.innerHTML=voyageLieux.map((l,i)=>`
     <div class="stop-item" draggable="true" data-id="${l.id}"
          ondragstart="dragStart(event,'${l.id}')"
          ondragover="dragOver(event)"
@@ -249,158 +344,112 @@ function renderSidebar() {
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
-        <div class="stop-name">${l.nom}</div>
-        <div class="stop-region">${l.region || l.sous_region || ''} ${l.type ? '· '+l.type : ''}</div>
-        ${i > 0 && voyageLieux[i-1].lat && l.lat ?
-          `<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat, voyageLieux[i-1].lng, l.lat, l.lng)} km depuis étape préc.</div>` : ''}
+        <div class="stop-name">${l.nom||'—'}</div>
+        <div class="stop-region">${l.region||l.sous_region||''} ${l.type?'· '+l.type:''}</div>
+        ${i>0&&voyageLieux[i-1].lat&&l.lat?
+          `<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat,voyageLieux[i-1].lng,l.lat,l.lng)} km</div>`:''}
       </div>
       <button class="stop-remove" onclick="removeStop('${l.id}')">✕</button>
     </div>
   `).join('');
 
-  // Total distance
-  let total = 0;
-  for (let i = 1; i < voyageLieux.length; i++) {
-    const a = voyageLieux[i-1], b = voyageLieux[i];
-    if (a.lat && b.lat) total += calcDist(a.lat, a.lng, b.lat, b.lng);
+  let total=0;
+  for(let i=1;i<voyageLieux.length;i++){
+    const a=voyageLieux[i-1],b=voyageLieux[i];
+    if(a.lat&&b.lat) total+=calcDist(a.lat,a.lng,b.lat,b.lng);
   }
-  document.getElementById('totalDist').textContent = total > 0 ? Math.round(total) + ' km' : '— km';
-  document.getElementById('totalStops').textContent = voyageLieux.length;
+  document.getElementById('totalDist').textContent=total>0?Math.round(total)+' km':'— km';
+  document.getElementById('totalStops').textContent=voyageLieux.length;
 }
 
-// ── Carte Leaflet ─────────────────────────────────────────────────────────────
-function renderMap() {
-  routeLayer.clearLayers();
-  markers = [];
+// ── Carte ─────────────────────────────────────────────────────────────────────
+function renderMap(){
+  routeLayer.clearLayers(); markers=[];
+  const valid=voyageLieux.filter(l=>l.lat&&l.lng);
+  if(!valid.length) return;
 
-  const validLieux = voyageLieux.filter(l => l.lat && l.lng);
-  if (!validLieux.length) return;
-
-  validLieux.forEach((l, i) => {
-    const icon = L.divIcon({
-      html: `<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;
-               display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;
-               border:3px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.3);">${i+1}</div>`,
-      className: '',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
+  valid.forEach((l,i)=>{
+    const icon=L.divIcon({
+      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;
+        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;
+        border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
+      className:'',iconSize:[30,30],iconAnchor:[15,15]
     });
-
-    const marker = L.marker([l.lat, l.lng], { icon })
-      .addTo(routeLayer)
-      .bindPopup(`
-        <div style="font-family:Inter,sans-serif;min-width:180px;">
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${l.nom}</div>
-          <div style="font-size:11px;color:#888;margin-bottom:6px;">${l.region || ''} ${l.type ? '· '+l.type : ''}</div>
-          ${l.description ? `<div style="font-size:12px;color:#555;margin-bottom:6px;">${l.description.substring(0,100)}...</div>` : ''}
-          ${l.dog_friendly ? '<span style="background:#e8f4e8;color:#2C5016;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">🐕 Dog-Friendly</span>' : ''}
-        </div>
-      `);
+    const marker=L.marker([l.lat,l.lng],{icon}).addTo(routeLayer).bindPopup(`
+      <div style="font-family:Inter,sans-serif;min-width:180px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${l.nom||'—'}</div>
+        <div style="font-size:11px;color:#888;margin-bottom:6px;">${l.region||''} ${l.type?'· '+l.type:''}</div>
+        ${l.description?`<div style="font-size:12px;color:#555;margin-bottom:6px;">${l.description.substring(0,100)}…</div>`:''}
+        ${l.dog_friendly?'<span style="background:#e8f4e8;color:#2C5016;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">🐕 Dog-Friendly</span>':''}
+      </div>
+    `);
     markers.push(marker);
   });
 
-  // Tracer l'itinéraire
-  if (validLieux.length > 1) {
-    const coords = validLieux.map(l => [l.lat, l.lng]);
-    // Ligne principale
-    L.polyline(coords, {
-      color: '#C8A84B',
-      weight: 4,
-      opacity: 0.9,
-      dashArray: '12, 6'
-    }).addTo(routeLayer);
-    // Halo
-    L.polyline(coords, {
-      color: 'rgba(200,168,75,0.2)',
-      weight: 10,
-      opacity: 1
-    }).addTo(routeLayer);
-
-    // Flèches de direction
-    coords.forEach((coord, i) => {
-      if (i < coords.length - 1) {
-        const mid = [(coord[0]+coords[i+1][0])/2, (coord[1]+coords[i+1][1])/2];
-        const angle = Math.atan2(coords[i+1][1]-coord[1], coords[i+1][0]-coord[0]) * 180/Math.PI;
-        const arrowIcon = L.divIcon({
-          html: `<div style="transform:rotate(${angle}deg);color:#C8A84B;font-size:16px;line-height:1;">▶</div>`,
-          className: '', iconSize: [20,20], iconAnchor: [10,10]
-        });
-        L.marker(mid, { icon: arrowIcon }).addTo(routeLayer);
+  if(valid.length>1){
+    const coords=valid.map(l=>[l.lat,l.lng]);
+    L.polyline(coords,{color:'rgba(200,168,75,.25)',weight:10,opacity:1}).addTo(routeLayer);
+    L.polyline(coords,{color:'#C8A84B',weight:3.5,opacity:.9,dashArray:'12,6'}).addTo(routeLayer);
+    coords.forEach((c,i)=>{
+      if(i<coords.length-1){
+        const mid=[(c[0]+coords[i+1][0])/2,(c[1]+coords[i+1][1])/2];
+        const angle=Math.atan2(coords[i+1][1]-c[1],coords[i+1][0]-c[0])*180/Math.PI;
+        L.marker(mid,{icon:L.divIcon({html:`<div style="transform:rotate(${angle}deg);color:#C8A84B;font-size:14px;line-height:1;">▶</div>`,className:'',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
       }
     });
   }
-
   fitAll();
 }
 
-function fixMapSize() {
-  setTimeout(() => {
-    if (map) {
-      map.invalidateSize(true);
-      fitAll();
-    }
-  }, 300);
-}
-
-// Appeler fixMapSize quand la fenêtre change de taille
-window.addEventListener('resize', () => { if(map) map.invalidateSize(); });
-
-function fitAll() {
-  const validLieux = voyageLieux.filter(l => l.lat && l.lng);
-  if (!validLieux.length) return;
-  if (validLieux.length === 1) {
-    map.setView([validLieux[0].lat, validLieux[0].lng], 12);
-  } else {
-    map.fitBounds(validLieux.map(l => [l.lat, l.lng]), { padding: [40, 40] });
-  }
+function fitAll(){
+  const valid=voyageLieux.filter(l=>l.lat&&l.lng);
+  if(!valid.length) return;
+  if(valid.length===1) map.setView([valid[0].lat,valid[0].lng],12);
+  else map.fitBounds(valid.map(l=>[l.lat,l.lng]),{padding:[40,40]});
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
-function removeStop(id) {
-  voyageIds = voyageIds.filter(v => v !== id);
-  voyageLieux = voyageLieux.filter(l => l.id !== id);
-  localStorage.setItem('rr_voyage', JSON.stringify(voyageIds));
-  renderSidebar();
-  renderMap();
-  if (!voyageLieux.length) showEmpty(true);
+function removeStop(id){
+  voyageLieux=voyageLieux.filter(l=>l.id!==id);
+  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
+  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
+  renderPanel(); renderMap();
+  if(!voyageLieux.length) showEmpty(true);
 }
 
-function clearAll() {
-  if (!confirm('Effacer tout le voyage ?')) return;
-  voyageIds = []; voyageLieux = [];
-  localStorage.setItem('rr_voyage', JSON.stringify([]));
-  renderSidebar(); routeLayer.clearLayers(); showEmpty(true);
+function clearAll(){
+  if(!confirm('Effacer tout le voyage ?')) return;
+  voyageLieux=[];
+  localStorage.setItem('rr_voyage_full','[]');
+  localStorage.setItem('rr_voyage','[]');
+  renderPanel(); routeLayer.clearLayers(); showEmpty(true);
 }
 
-// ── Drag & Drop pour réordonner ───────────────────────────────────────────────
-let draggedId = null;
-function dragStart(e, id) { draggedId = id; e.target.classList.add('dragging'); }
-function dragOver(e) { e.preventDefault(); }
-function dragDrop(e, targetId) {
+// ── Drag & Drop ───────────────────────────────────────────────────────────────
+function dragStart(e,id){draggedId=id;e.target.classList.add('dragging');}
+function dragOver(e){e.preventDefault();}
+function dragDrop(e,targetId){
   e.preventDefault();
-  document.querySelectorAll('.stop-item').forEach(el => el.classList.remove('dragging'));
-  if (draggedId === targetId) return;
-  const fromIdx = voyageLieux.findIndex(l => l.id === draggedId);
-  const toIdx   = voyageLieux.findIndex(l => l.id === targetId);
-  const item = voyageLieux.splice(fromIdx, 1)[0];
-  voyageLieux.splice(toIdx, 0, item);
-  voyageIds = voyageLieux.map(l => l.id);
-  localStorage.setItem('rr_voyage', JSON.stringify(voyageIds));
-  renderSidebar();
-  renderMap();
+  document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
+  if(draggedId===targetId) return;
+  const fi=voyageLieux.findIndex(l=>l.id===draggedId);
+  const ti=voyageLieux.findIndex(l=>l.id===targetId);
+  const item=voyageLieux.splice(fi,1)[0];
+  voyageLieux.splice(ti,0,item);
+  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
+  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
+  renderPanel(); renderMap();
 }
 
-// ── Distance Haversine ────────────────────────────────────────────────────────
-function calcDist(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = (lat2-lat1) * Math.PI/180;
-  const dLng = (lng2-lng1) * Math.PI/180;
-  const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
-    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+// ── Haversine ─────────────────────────────────────────────────────────────────
+function calcDist(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 
-function printMap() { window.print(); }
+function printMap(){window.print();}
+window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 
 checkAuth();
 </script>
