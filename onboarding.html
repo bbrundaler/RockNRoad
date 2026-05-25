@@ -204,6 +204,7 @@ const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
 let currentUser=null;
+let existingGroupeId=null; // null = création, uuid = édition
 let geoResult={lat:null,lng:null,adresse:null};
 let geoTimer=null;
 let avatarFile=null;
@@ -213,9 +214,31 @@ let avatarFile=null;
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
-  // Si l'utilisateur a déjà un groupe → directement carnet
-  const {data}=await sb.from('membres').select('groupe_id').eq('user_id',currentUser.id).single();
-  if(data?.groupe_id){window.location.href='carnet.html';return;}
+  // Si l'utilisateur a déjà un groupe → mode édition (pas de redirect)
+  const {data:membre}=await sb.from('membres').select('groupe_id, groupes(*)').eq('user_id',currentUser.id).single();
+  if(membre?.groupe_id && membre?.groupes){
+    const g = membre.groupes;
+    // Pré-remplir les champs avec les valeurs existantes
+    document.getElementById('g-nom').value = g.nom || '';
+    document.getElementById('g-adresse').value = g.adresse_depart || '';
+    document.getElementById('g-description').value = g.description || '';
+    if(g.lat_depart && g.lng_depart){
+      geoResult = {lat: g.lat_depart, lng: g.lng_depart, adresse: g.adresse_depart};
+      const gs = document.getElementById('geo-status');
+      gs.className='geo-status ok';
+      gs.textContent='✅ '+g.adresse_depart;
+    }
+    // Pré-cocher les types de voyages
+    if(g.type_voyages?.length){
+      document.querySelectorAll('.vtype').forEach(el=>{
+        el.classList.toggle('on', g.type_voyages.includes(el.dataset.v));
+      });
+    }
+    // Passer en mode édition
+    existingGroupeId = g.id;
+    document.querySelector('.card-title').innerHTML = 'Modifier mon <em>profil</em>';
+    document.getElementById('create-btn').textContent = '💾 Enregistrer les modifications';
+  }
 })();
 
 // ── Types de voyages toggle ───────────────────────────────────────────────────
@@ -342,28 +365,44 @@ async function createGroupe(){
       if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);avatar_url=publicUrl;}
     }
 
-    // Créer le groupe
-    const {data:groupe,error:ge}=await sb.from('groupes').insert({
-      nom,
-      adresse_depart:adresse,
-      lat_depart:geoResult.lat||null,
-      lng_depart:geoResult.lng||null,
-      type_voyages:types.length?types:null,
-      description:desc||null,
-      avatar_url,
-      partage_public:false,
-    }).select().single();
-    if(ge)throw ge;
+    let groupe;
+    if(existingGroupeId){
+      // ── Mode édition : UPDATE
+      const {data:updated,error:ge}=await sb.from('groupes').update({
+        nom,
+        adresse_depart:adresse,
+        lat_depart:geoResult.lat||null,
+        lng_depart:geoResult.lng||null,
+        type_voyages:types.length?types:null,
+        description:desc||null,
+        ...(avatar_url?{avatar_url}:{}),
+      }).eq('id',existingGroupeId).select().single();
+      if(ge)throw ge;
+      groupe=updated;
+    } else {
+      // ── Mode création : INSERT
+      const {data:created,error:ge}=await sb.from('groupes').insert({
+        nom,
+        adresse_depart:adresse,
+        lat_depart:geoResult.lat||null,
+        lng_depart:geoResult.lng||null,
+        type_voyages:types.length?types:null,
+        description:desc||null,
+        avatar_url,
+        partage_public:false,
+      }).select().single();
+      if(ge)throw ge;
+      groupe=created;
+      // Lier l'utilisateur au groupe
+      const {error:me}=await sb.from('membres').insert({
+        user_id:currentUser.id,
+        groupe_id:groupe.id,
+        role:'admin',
+      });
+      if(me)throw me;
+    }
 
-    // Lier l'utilisateur au groupe
-    const {error:me}=await sb.from('membres').insert({
-      user_id:currentUser.id,
-      groupe_id:groupe.id,
-      role:'admin',
-    });
-    if(me)throw me;
-
-    // Stocker en sessionStorage pour accès immédiat
+    // Mettre à jour le sessionStorage
     sessionStorage.setItem('rnr_groupe',JSON.stringify(groupe));
 
     // Go !
