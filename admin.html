@@ -602,11 +602,22 @@ async function importFromMaps(){
         const best=unique[0];
         if(best?.place_id){
           showToast('📡 Chargement de "'+best.name+'"...','info');
-          // Reset le formulaire avant de remplir avec le bon résultat
-          document.getElementById('nom').value='';
-          document.getElementById('description').value='';
+          // Reset COMPLET du formulaire avant de remplir avec le bon résultat
+          ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
+            const el=document.getElementById(id);
+            if(el){el.value='';el.classList.remove('auto-filled');}
+          });
           selectedTags=[];
           document.querySelectorAll('#tagsGrid .tag-opt.on').forEach(t=>t.classList.remove('on'));
+          // Reset dog
+          setDog('yes');
+          // Reset famille stars  
+          familyStarVal=0;
+          document.querySelectorAll('#familyStars .star').forEach(s=>s.classList.remove('on'));
+          // Reset photo
+          selectedGooglePhotoUrl=null;
+          document.getElementById('pcImg').style.display='none';
+          if(document.getElementById('googlePhotosSection')) document.getElementById('googlePhotosSection').style.display='none';
           const det=await callPlacesApi('details',{place_id:best.place_id,fields},apiKey);
           if(det?.result){
             const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
