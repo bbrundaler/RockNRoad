@@ -570,28 +570,35 @@ async function importFromMaps(){
           if(!words.length) return 0;
           return words.filter(w=>rNorm.includes(w)).length/words.length;
         };
-        // Stratégie 1 : findplacefromtext (retourne 1 candidat)
+        // Stratégie 1 : findplacefromtext exact
         const d1=await callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id,name,types'},apiKey);
         const c1=d1?.candidates?.[0];
-        // Stratégie 2 : textsearch (retourne plusieurs résultats)
+        // Stratégie 2 : textsearch avec le nom tel quel
         const d2=await callPlacesApi('textsearch',{query:url},apiKey);
         const results2=d2?.results||[];
+        // Stratégie 3 : textsearch avec "site touristique" ajouté — force Google vers les POI
+        const d3=await callPlacesApi('textsearch',{query:url+' site touristique'},apiKey);
+        const results3=d3?.results||[];
         // Combiner et scorer tous les candidats
         const allCandidates=[
           ...(c1?[{place_id:c1.place_id,name:c1.name,types:c1.types,score:similarity(c1.name)}]:[]),
-          ...results2.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)}))
+          ...results2.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)})),
+          ...results3.map(r=>({place_id:r.place_id,name:r.name,types:r.types,score:similarity(r.name)+0.1}))
         ];
         // Trier : d'abord score similarité desc, puis POI avant ville
         const geoTypes=['locality','administrative_area_level_1','administrative_area_level_2','administrative_area_level_3','political','country','postal_code','route'];
         const poiTypes=['tourist_attraction','natural_feature','park','museum','campground','lodging','restaurant','cave','amusement_park','place_of_worship','establishment','point_of_interest'];
-        allCandidates.sort((a,b)=>{
+        // Dédupliquer par place_id
+        const seen=new Set();
+        const unique=allCandidates.filter(c=>{if(!c.place_id||seen.has(c.place_id))return false;seen.add(c.place_id);return true;});
+        unique.sort((a,b)=>{
           if(b.score!==a.score) return b.score-a.score; // meilleur score d'abord
           const aIsPoi=a.types?.some(t=>poiTypes.includes(t))?1:0;
           const bIsPoi=b.types?.some(t=>poiTypes.includes(t))?1:0;
           return bIsPoi-aIsPoi; // POI avant ville si score égal
         });
         // Prendre le meilleur
-        const best=allCandidates[0];
+        const best=unique[0];
         if(best?.place_id){
           const det=await callPlacesApi('details',{place_id:best.place_id,fields},apiKey);
           if(det?.result){
