@@ -502,6 +502,7 @@ const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let importLock=false; // prevent multiple simultaneous imports
 
 const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288','Bretagne':'#1a6a5a',
   'Normandie':'#3a5a8a','Loire':'#6B6B14','Provence':'#8B4513','Occitanie':'#c87a00',
@@ -601,6 +602,11 @@ async function importFromMaps(){
         const best=unique[0];
         if(best?.place_id){
           showToast('📡 Chargement de "'+best.name+'"...','info');
+          // Reset le formulaire avant de remplir avec le bon résultat
+          document.getElementById('nom').value='';
+          document.getElementById('description').value='';
+          selectedTags=[];
+          document.querySelectorAll('#tagsGrid .tag-opt.on').forEach(t=>t.classList.remove('on'));
           const det=await callPlacesApi('details',{place_id:best.place_id,fields},apiKey);
           if(det?.result){
             const ok=await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
@@ -754,6 +760,10 @@ function googlePhotoProxy(ref, apiKey, maxwidth=400){
 
 async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedResult=null){
   try{
+    // Clear previous auto-fill before populating new result
+    ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion'].forEach(id=>{
+      const el=document.getElementById(id);if(el&&el.classList.contains('auto-filled')){el.value='';el.classList.remove('auto-filled');}
+    });
     const nameFromUrl=extractPlaceNameFromUrl(originalUrl);
     let placeId=extractPlaceIdFromUrl(originalUrl);
 
