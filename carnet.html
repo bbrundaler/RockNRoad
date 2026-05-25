@@ -629,7 +629,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <div class="inner">
   <h2 class="sec-title">Carte <em>Interactive</em></h2>
   <p class="sec-lead">Tous vos lieux depuis Supabase sur une carte Leaflet — filtrez par région d'un clic.</p>
-  <div class="carte-filters" id="carte-filter-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+  <div class="carte-filters" id="carte-filter-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;">
     <button class="carte-filter-btn active" data-region="all" onclick="carteFilter('all',this)">🌍 Tout</button>
     <button class="carte-filter-btn" data-region="Alsace" onclick="carteFilter('Alsace',this)">🥨 Alsace</button>
     <button class="carte-filter-btn" data-region="Aquitaine" onclick="carteFilter('Aquitaine',this)">🍷 Aquitaine</button>
@@ -1085,22 +1085,20 @@ function updateCarteInfoPanel(l){
   // Photo
   const photoBg=l.photo_url?`background:url('${l.photo_url}') center/cover no-repeat`:'background:#eee';
 
-  panel.innerHTML=`<div class="cip-active">
-    <div class="cip-main">
-      <div style="display:flex;gap:12px;align-items:flex-start;">
-        ${l.photo_url?`<div style="width:100px;height:80px;border-radius:8px;flex-shrink:0;${photoBg};background-size:cover;background-position:center;"></div>`:''}
-        <div style="flex:1;">
-          <div class="cip-name">${l.nom||'—'}</div>
-          <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||''} · ${l.region||''}</div>
-        </div>
+  panel.innerHTML=`
+  <div style="display:flex;gap:0;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
+    ${l.photo_url?`<div style="width:190px;min-height:170px;flex-shrink:0;${photoBg};background-size:cover;background-position:center;border-radius:12px 0 0 12px;"></div>`:''}
+    <div style="flex:1;display:flex;flex-direction:column;">
+      <div class="cip-main" style="flex:1;">
+        <div class="cip-name">${l.nom||'—'}</div>
+        <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||''} · ${l.region||''}</div>
+        <div class="cip-row">${noteG}${noteF}${distHtml}</div>
+        ${l.dog_info?`<div style="font-size:10px;color:#2C5016;background:#f0faf0;border-left:2px solid #2C5016;padding:4px 8px;border-radius:0 5px 5px 0;margin-top:8px;font-style:italic;">${l.dog_info.slice(0,100)}</div>`:''}
+        ${tags?`<div class="cip-tags">${tags}</div>`:''}
+        ${l.description?`<p style="font-size:11px;color:#666;margin-top:8px;line-height:1.5;">${l.description.slice(0,120)}…</p>`:''}
       </div>
-      <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||l.region||''} · ${l.region||''}</div>
-      <div class="cip-row">${noteG}${noteF}${distHtml}</div>
-      ${l.dog_info?`<div style="font-size:10px;color:#2C5016;background:#f0faf0;border-left:2px solid #2C5016;padding:4px 8px;border-radius:0 5px 5px 0;margin-top:8px;font-style:italic;">${l.dog_info.slice(0,100)}</div>`:''}
-      ${tags?`<div class="cip-tags">${tags}</div>`:''}
-      ${l.description?`<p style="font-size:11px;color:#666;margin-top:8px;line-height:1.5;">${l.description.slice(0,120)}…</p>`:''}
     </div>
-    <div class="cip-side">
+    <div class="cip-side" style="border-left:1px solid #f0ece4;min-width:130px;">
       ${dogHtml}
       <a href="${mapsUrl}" target="_blank" class="cip-maps-link">📍 Google Maps</a>
       ${l.site_web?`<a href="${l.site_web}" target="_blank" class="cip-maps-link" style="background:rgba(200,168,75,.1);color:#8B6914;">🌐 Site web</a>`:''}
@@ -1392,6 +1390,7 @@ function makeDynCard(l, cardType){
           onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">🧭 Mon Voyage</button>
         <button data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)" style="background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.25);color:#8B6914;font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">✏️</button>
       </div>
+    </div>
     </div>
   </div>`;
 }
