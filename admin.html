@@ -512,6 +512,7 @@ const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
 
 const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288','Bretagne':'#1a6a5a',
@@ -524,6 +525,8 @@ async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
+  // Charger le profil groupe
+  await loadGroupeProfil(currentUser.id);
   document.getElementById('auth-check').style.display='none';
   document.getElementById('main').style.display='contents';
   const name=session.user.email.split('@')[0];
@@ -535,6 +538,16 @@ async function checkAuth(){
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
+
+// ── Chargement profil groupe ──────────────────────────────────────────────
+async function loadGroupeProfil(userId) {
+  try {
+    const cached = sessionStorage.getItem('rnr_groupe');
+    if (cached) { currentGroupeId = JSON.parse(cached).id; return; }
+    const {data:membre} = await sb.from('membres').select('groupe_id').eq('user_id',userId).single();
+    if (membre) { currentGroupeId = membre.groupe_id; }
+  } catch(e) { console.warn('Groupe non chargé', e); }
+}
 
 function loadApiKey(){
   const stored=localStorage.getItem('rnr_gapi');
@@ -1423,6 +1436,7 @@ async function saveFiche(){
       gmaps_url:document.getElementById('gmapsUrl').value||null,
       cree_par:currentUser.email,
       annee:new Date().getFullYear(),
+      groupe_id:currentGroupeId||null,
     });
     if(error)throw error;
     showConfirmation(nom, region, type);
