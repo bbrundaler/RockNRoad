@@ -256,7 +256,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
       <input class="import-input" type="url" id="gmapsUrl" placeholder="https://maps.google.com/... ou https://goo.gl/maps/...">
       <button class="import-btn" id="importBtn" onclick="importFromMaps()"><span id="importBtnIcon">✨</span> Analyser</button>
     </div>
-    <div class="import-hint">📱 <strong>URL ou nom :</strong> Colle un lien Google Maps <em>ou</em> tape directement le nom du lieu (ex: "Grottes de Bétharram")</div>
+    <div class="import-hint">📱 <strong>Mobile :</strong> L'URL courte <em>maps.app.goo.gl</em> ne fonctionne pas — colle l'URL longue <strong>ou tape directement le nom du lieu</strong> dans ce champ</div>
     <div class="import-result" id="importResult">
       <div class="ir-header">
         <img id="ir-photo" class="ir-photo" src="" alt="" style="display:none;">
@@ -584,46 +584,28 @@ async function importFromMaps(){
     if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
     const apiKey=getApiKey();
 
-    // ── Cas URL courte iOS (maps.app.goo.gl) sans nom ni coords ────────────
+    // ── Cas URL courte iOS (maps.app.goo.gl) — demander le nom directement ──
     const isShortUrl=url.includes('maps.app.goo.gl')||url.includes('goo.gl/maps');
     if(isShortUrl && !nameFromUrl && !coords){
-      showToast('🔗 URL courte détectée — résolution...','info');
-      const resolved=await resolveShortUrlToName(url);
-      if(resolved.name){
-        fillField('nom', resolved.name);
-        if(resolved.coords){
-          fillField('lat',resolved.coords.lat.toFixed(6));
-          fillField('lng',resolved.coords.lng.toFixed(6));
-          refreshMap();
-        }
-        if(apiKey){
-          showToast('📡 Lieu trouvé — import Google Places...','info');
-          const d=await callPlacesApi('findplacefromtext',{
-            input:resolved.name, inputtype:'textquery', fields:'place_id',
-            ...(resolved.coords?{locationbias:`point:${resolved.coords.lat},${resolved.coords.lng}`}:{})
-          }, apiKey);
-          if(d?.candidates?.[0]?.place_id){
-            const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
-            const det=await callPlacesApi('details',{place_id:d.candidates[0].place_id,fields},apiKey);
-            if(det?.result){
-              await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
-              showImportResult();icon.textContent='✅';
-              showToast('✅ Import complet !','success');
-              btn.disabled=false;return;
-            }
-          }
-        }
-        showImportResult();
-        showToast('📍 Nom récupéré — complète les autres infos','info');
-        btn.disabled=false;return;
-      } else {
-        // Résolution impossible — demander le nom manuellement
-        showToast('⚠️ Lien court non résolu — tape le nom du lieu directement','error');
-        document.getElementById('gmapsUrl').value='';
-        document.getElementById('gmapsUrl').placeholder='Ex: Grottes de Bétharram';
-        document.getElementById('gmapsUrl').focus();
-        btn.disabled=false;icon.textContent='✨';return;
+      // Les proxies ne peuvent pas résoudre les redirections Google Maps
+      // → Solution directe : l'utilisateur tape le nom du lieu
+      btn.disabled=false;icon.textContent='✨';
+      // Vider le champ URL et afficher un message d'aide clair
+      document.getElementById('gmapsUrl').value='';
+      document.getElementById('gmapsUrl').placeholder='Tape le nom du lieu ici (ex: Grottes de Bétharram)';
+      // Mettre en avant le champ nom
+      const nomEl=document.getElementById('nom');
+      if(nomEl){
+        nomEl.focus();
+        nomEl.style.border='2px solid var(--gold)';
+        nomEl.style.boxShadow='0 0 0 4px rgba(200,168,75,.15)';
+        setTimeout(()=>{nomEl.style.border='';nomEl.style.boxShadow='';},3000);
       }
+      // Toast explicatif
+      showToast('📱 Lien court iOS — tape le nom du lieu dans le champ ci-dessus puis clique Analyser','info');
+      // Scroll vers le champ nom
+      nomEl?.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
     }
 
     // ── URL standard avec nom ou coords ─────────────────────────────────────
