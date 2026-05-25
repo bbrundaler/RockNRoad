@@ -583,6 +583,50 @@ async function importFromMaps(){
     if(nameFromUrl) fillField('nom',nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
     if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
     const apiKey=getApiKey();
+
+    // ── Cas URL courte iOS (maps.app.goo.gl) sans nom ni coords ────────────
+    const isShortUrl=url.includes('maps.app.goo.gl')||url.includes('goo.gl/maps');
+    if(isShortUrl && !nameFromUrl && !coords){
+      showToast('🔗 URL courte détectée — résolution...','info');
+      const resolved=await resolveShortUrlToName(url);
+      if(resolved.name){
+        fillField('nom', resolved.name);
+        if(resolved.coords){
+          fillField('lat',resolved.coords.lat.toFixed(6));
+          fillField('lng',resolved.coords.lng.toFixed(6));
+          refreshMap();
+        }
+        if(apiKey){
+          showToast('📡 Lieu trouvé — import Google Places...','info');
+          const d=await callPlacesApi('findplacefromtext',{
+            input:resolved.name, inputtype:'textquery', fields:'place_id',
+            ...(resolved.coords?{locationbias:`point:${resolved.coords.lat},${resolved.coords.lng}`}:{})
+          }, apiKey);
+          if(d?.candidates?.[0]?.place_id){
+            const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+            const det=await callPlacesApi('details',{place_id:d.candidates[0].place_id,fields},apiKey);
+            if(det?.result){
+              await fetchFromPlacesApiProxy(det.result.geometry?.location,apiKey,url,det.result);
+              showImportResult();icon.textContent='✅';
+              showToast('✅ Import complet !','success');
+              btn.disabled=false;return;
+            }
+          }
+        }
+        showImportResult();
+        showToast('📍 Nom récupéré — complète les autres infos','info');
+        btn.disabled=false;return;
+      } else {
+        // Résolution impossible — demander le nom manuellement
+        showToast('⚠️ Lien court non résolu — tape le nom du lieu directement','error');
+        document.getElementById('gmapsUrl').value='';
+        document.getElementById('gmapsUrl').placeholder='Ex: Grottes de Bétharram';
+        document.getElementById('gmapsUrl').focus();
+        btn.disabled=false;icon.textContent='✨';return;
+      }
+    }
+
+    // ── URL standard avec nom ou coords ─────────────────────────────────────
     if(apiKey&&(coords||nameFromUrl)){
       showToast('📡 Connexion Google Places...','info');
       const ok=await fetchFromPlacesApiProxy(coords,apiKey,url);
@@ -596,6 +640,39 @@ async function importFromMaps(){
     showToast(coords?'📍 GPS récupéré — complète les infos manuellement':'Analysé — complète les infos','info');
   }catch(e){showToast('Erreur: '+e.message,'error');}
   finally{btn.disabled=false;icon.textContent='✨';}
+}
+
+// ── Résolution URL courte → nom + coords ──────────────────────────────────────
+async function resolveShortUrlToName(url){
+  const proxies=[
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(url)}`
+  ];
+  for(const proxy of proxies){
+    try{
+      const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
+      if(!r.ok) continue;
+      const raw=await r.text();
+      let content=raw;
+      try{const j=JSON.parse(raw);if(j.contents)content=j.contents;if(j.status&&j.status.url)content+=j.status.url;}catch{}
+      // Extract title
+      let name='';
+      const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
+      if(titleMatch){
+        name=titleMatch[1].replace(/ [-·–] Google Maps.*/i,'').replace(/Google Maps/i,'').trim();
+        if(name.length<2) name='';
+      }
+      // Try og:title as fallback
+      if(!name){
+        const ogMatch=content.match(/property="og:title"\s+content="([^"]+)"/i);
+        if(ogMatch) name=ogMatch[1].replace(/ [-·–] Google Maps.*/i,'').trim();
+      }
+      // Extract coords from redirected content
+      const coords=extractCoordsFromUrl(content);
+      if(name) return {name, coords};
+    }catch(e){continue;}
+  }
+  return {name:'', coords:null};
 }
 
 function extractCoordsFromUrl(url){
