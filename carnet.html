@@ -169,7 +169,51 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .camp-voyage-btn:hover{background:rgba(200,168,75,.18);}
 .camp-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
 
+/* CARD NUIT — Monde 2 : Où on dort */
+.nuit-section-header{display:flex;align-items:center;gap:12px;margin:32px 0 6px;padding:14px 18px;
+  background:linear-gradient(135deg,#1E1B14,#2a2318);border-radius:10px;border-left:3px solid var(--gold);}
+.nuit-section-header .nuit-icon{font-size:22px;}
+.nuit-section-header .nuit-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--gold);}
+.nuit-section-header .nuit-count{font-size:11px;color:rgba(200,168,75,.6);margin-left:auto;}
+.nuit-divider{height:1px;background:linear-gradient(90deg,rgba(200,168,75,.3),transparent);margin:8px 0 16px;}
+
+.nuit-card{background:#1E1B14;border-radius:var(--r);overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,0,0,.25);border:1px solid rgba(200,168,75,.18);
+  transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
+.nuit-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35);border-color:rgba(200,168,75,.35);}
+.nuit-photo{height:180px;background:#2a2318;background-size:cover!important;background-position:center!important;position:relative;flex-shrink:0;}
+.nuit-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent 50%);}
+.nuit-overlay{position:absolute;bottom:7px;left:9px;right:9px;z-index:2;}
+.nuit-type-badge{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,168,75,.9);}
+.nuit-body{padding:14px 16px;display:flex;flex-direction:column;flex:1;}
+.nuit-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--creme);margin-bottom:4px;line-height:1.25;}
+.nuit-sous-region{font-size:10px;color:rgba(200,168,75,.6);margin-bottom:6px;}
+.nuit-desc{font-size:11px;color:rgba(245,239,224,.55);line-height:1.5;margin-bottom:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.nuit-amenities{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.nuit-amenity{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:10px;
+  background:rgba(200,168,75,.1);color:rgba(200,168,75,.85);border:1px solid rgba(200,168,75,.15);}
+.nuit-dog{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.nuit-dog.yes{background:rgba(44,80,22,.4);color:#7dd87d;}
+.nuit-dog.no{background:rgba(180,40,0,.4);color:#f08070;}
+.nuit-dog.na{background:rgba(139,105,20,.3);color:#e5c96a;}
+.nuit-notes{font-size:10px;color:rgba(200,168,75,.6);font-style:italic;border-left:2px solid rgba(200,168,75,.2);
+  padding-left:6px;margin-bottom:8px;line-height:1.4;}
+.nuit-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px solid rgba(200,168,75,.08);}
+.nuit-maps-btn{display:inline-flex;align-items:center;gap:3px;background:rgba(200,168,75,.15);
+  color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;
+  border:1px solid rgba(200,168,75,.25);text-decoration:none;transition:all .15s;}
+.nuit-maps-btn:hover{background:rgba(200,168,75,.3);}
+.nuit-voyage-btn{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:9.5px;font-weight:700;
+  padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.nuit-voyage-btn:hover{background:rgba(255,255,255,.12);color:white;}
+.nuit-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
+.nuit-edit-btn{background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);
+  color:rgba(200,168,75,.7);font-size:10px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;}
+
 /* OVERVIEW */
+
 .ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:22px 28px 28px;}
 .ov-card{background:white;border-radius:var(--r);padding:20px;box-shadow:var(--sh);cursor:pointer;transition:all .2s;border-top:3px solid transparent;}
 .ov-card:hover{transform:translateY(-3px);box-shadow:var(--shhov);}
@@ -977,30 +1021,45 @@ function populateRegionContent(rk, regionName, lieux){
   const contentEl = document.getElementById(rk+'-content');
   if(!contentEl) return;
 
-  const types = [...new Set(lieux.map(l=>l.type||'Site'))].sort();
-  let html='';
+  // ── MONDE 1 : Activités (monde_nuit = false ou null)
+  const activites = lieux.filter(l => !l.monde_nuit);
+  // ── MONDE 2 : Nuit (monde_nuit = true)
+  const nuits = lieux.filter(l => l.monde_nuit);
 
-  // Grouper: Sites, Campings, Autres
-  const sites=lieux.filter(l=>['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation'].includes(l.type)||!l.type);
-  const campings=lieux.filter(l=>l.type==='Camping'||l.type==='Halte');
-  const restaurants=lieux.filter(l=>l.type==='Restaurant'||l.type==='Brasserie');
-  const autres=lieux.filter(l=>!['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation','Camping','Halte','Restaurant','Brasserie'].includes(l.type)&&l.type);
+  // Sous-groupes Activités
+  const sites      = activites.filter(l=>['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation'].includes(l.type)||!l.type);
+  const restaurants= activites.filter(l=>['Restaurant','Brasserie'].includes(l.type));
+  const autres     = activites.filter(l=>!['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation','Camping','Halte','Restaurant','Brasserie'].includes(l.type)&&l.type);
 
-  if(sites.length){
-    html+=`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div>
-      <div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`;
+  let html = '';
+
+  // ── BLOC ACTIVITÉS ──
+  if(activites.length){
+    if(sites.length){
+      html+=`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div>
+        <div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`;
+    }
+    if(restaurants.length){
+      html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">🍽️ ${restaurants.length} restaurant${restaurants.length>1?'s':''}</div></div>
+        <div class="sites-grid">${restaurants.map(l=>makeDynCard(l,'restaurant')).join('')}</div>`;
+    }
+    if(autres.length){
+      html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">📍 Autres lieux</div></div>
+        <div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`;
+    }
   }
-  if(campings.length){
-    html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">⛺ ${campings.length} camping${campings.length>1?'s':''} & halte${campings.length>1?'s':''}</div></div>
-      <div class="sites-grid">${campings.map(l=>makeDynCard(l,'camping')).join('')}</div>`;
-  }
-  if(restaurants.length){
-    html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">🍽️ ${restaurants.length} restaurant${restaurants.length>1?'s':''}</div></div>
-      <div class="sites-grid">${restaurants.map(l=>makeDynCard(l,'restaurant')).join('')}</div>`;
-  }
-  if(autres.length){
-    html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">📍 Autres lieux</div></div>
-      <div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`;
+
+  // ── BLOC NUIT ──
+  if(nuits.length){
+    const nuitCount = nuits.length;
+    html+=`
+      <div class="nuit-section-header">
+        <span class="nuit-icon">🌙</span>
+        <span class="nuit-title">Où dormir</span>
+        <span class="nuit-count">${nuitCount} lieu${nuitCount>1?'x':''}</span>
+      </div>
+      <div class="nuit-divider"></div>
+      <div class="sites-grid">${nuits.map(l=>makeNuitCard(l)).join('')}</div>`;
   }
 
   if(html){
@@ -1009,6 +1068,7 @@ function populateRegionContent(rk, regionName, lieux){
     contentEl.innerHTML=`<div style="text-align:center;padding:40px 20px;color:#aaa;">
       <div style="font-size:40px;margin-bottom:10px;">📍</div>
       <h3 style="font-family:'Playfair Display',serif;font-size:18px;color:#1a1208;margin-bottom:8px;">Vos fiches ${regionName} apparaîtront ici</h3>
+      <p style="font-size:12px;color:#bbb;margin-bottom:16px;">Créez votre première fiche ${regionName} — elle s'affichera automatiquement dans cette section.</p>
       <a href="admin.html" style="display:inline-block;background:var(--gold);color:var(--dark);font-weight:700;font-size:12px;padding:10px 22px;border-radius:8px;text-decoration:none;">➕ Créer une fiche ${regionName}</a>
     </div>`;
   }
@@ -1488,6 +1548,62 @@ function makeDynCard(l, cardType){
           data-region="${(l.region||'').replace(/"/g,'&quot;')}" data-type="${(l.type||'Site').replace(/"/g,'&quot;')}"
           onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">🧭 Mon Voyage</button>
         <button data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)" style="background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.25);color:#8B6914;font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">✏️</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function makeNuitCard(l){
+  const ph = l.photo_url ? `url('${l.photo_url}')` : 'linear-gradient(135deg,#2a2318,#1a1510)';
+  const dogStatus = l.dog_friendly===true?'yes':l.dog_friendly===false?'no':'na';
+  const dogLabel  = dogStatus==='yes'?'🐕 Chien OK':dogStatus==='no'?'🚫 Non admis':'❓ À vérifier';
+  const mapsUrl   = l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
+
+  // Sous-type nuit
+  const sousType = l.sous_type_nuit || l.type || 'Hébergement';
+  const sousTypeEmoji = {
+    'Camping':'⛺','Terrain particulier':'🏡','Bivouac':'🌿',
+    'Halte':'🅿️','Camping-car':'🚌','Teardrop':'🚐','Accueil privé':'🏠'
+  }[sousType] || '🌙';
+
+  // Aménités terrain particulier
+  let amenities = '';
+  if(l.douche)      amenities += `<span class="nuit-amenity">🚿 Douche ${l.douche!=='oui'?'('+l.douche+')':''}</span>`;
+  if(l.toilettes)   amenities += `<span class="nuit-amenity">🚽 WC ${l.toilettes!=='oui'?'('+l.toilettes+')':''}</span>`;
+  if(l.eau_potable) amenities += `<span class="nuit-amenity">💧 Eau potable</span>`;
+  if(l.electricite && l.electricite!=='non') amenities += `<span class="nuit-amenity">⚡ ${l.electricite}</span>`;
+  if(l.wifi)        amenities += `<span class="nuit-amenity">📶 Wifi</span>`;
+  if(l.feu_autorise)amenities += `<span class="nuit-amenity">🔥 Feu OK</span>`;
+  if(l.acces_remorque) amenities += `<span class="nuit-amenity">🚐 Remorque OK</span>`;
+  if(l.prix_indicatif) amenities += `<span class="nuit-amenity">💶 ${l.prix_indicatif}</span>`;
+
+  const noteG = l.note?`<span style="background:rgba(44,80,22,.5);color:#7dd87d;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">★ ${l.note}</span>`:'';
+  const noteF = l.note_famille?`<span style="background:rgba(200,168,75,.15);color:rgba(200,168,75,.9);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">${'★'.repeat(l.note_famille)}</span>`:'';
+
+  return `<div class="nuit-card" id="dyncard-${l.id}">
+    <div class="nuit-photo" style="background-image:${ph};background-size:cover;background-position:center;">
+      <div class="nuit-overlay">
+        <span class="nuit-type-badge">${sousTypeEmoji} ${sousType} · ${l.sous_region||l.region||''}</span>
+      </div>
+      <div class="dog-photo-badge ${dogStatus}" style="position:absolute;top:8px;right:9px;z-index:3;">${dogLabel}</div>
+    </div>
+    <div class="nuit-body">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">${noteG}${noteF}</div>
+      <h3 class="nuit-name">${l.nom||'—'}</h3>
+      <div class="nuit-sous-region">${l.adresse||l.sous_region||''}</div>
+      ${l.description?`<p class="nuit-desc">${l.description}</p>`:''}
+      ${l.commentaire?`<div class="nuit-notes">${l.commentaire.slice(0,100)}${l.commentaire.length>100?'...':''}</div>`:''}
+      ${amenities?`<div class="nuit-amenities">${amenities}</div>`:''}
+      ${l.conseil?`<div class="nuit-notes" style="color:rgba(200,168,75,.7);">💡 ${l.conseil.slice(0,80)}</div>`:''}
+      <div class="nuit-actions">
+        <a href="${mapsUrl}" target="_blank" class="nuit-maps-btn">📍 Maps</a>
+        ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
+        ${l.site_web?`<a href="${l.site_web}" target="_blank" class="nuit-maps-btn">🌐 Site</a>`:''}
+        <button class="nuit-voyage-btn" id="vcard-dyn-${l.id}"
+          data-id="dyn-${l.id}" data-nom="${(l.nom||'').replace(/"/g,'&quot;')}" data-lat="${l.lat||0}" data-lng="${l.lng||0}"
+          data-region="${(l.region||'').replace(/"/g,'&quot;')}" data-type="${(l.type||'Camping').replace(/"/g,'&quot;')}"
+          onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">🧭 Voyage</button>
+        <button class="nuit-edit-btn" data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)">✏️</button>
       </div>
     </div>
   </div>`;

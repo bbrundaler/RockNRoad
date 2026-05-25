@@ -83,6 +83,15 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 .star-row{display:flex;gap:3px;}
 .star{font-size:20px;cursor:pointer;color:#ddd;transition:color .15s;user-select:none;}
 .star.on{color:#C8A84B;}
+/* MONDE NUIT TOGGLE */
+.monde-toggle{display:flex;gap:0;border-radius:10px;overflow:hidden;border:2px solid #E8DECE;margin-bottom:4px;}
+.monde-btn{flex:1;padding:11px 8px;border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .25s;text-align:center;background:#faf7f0;color:#888;}
+.monde-btn.activite.on{background:var(--creme);color:#1a1208;box-shadow:inset 0 0 0 2px var(--gold);}
+.monde-btn.nuit.on{background:#1E1B14;color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);}
+.nuit-fields{display:none;background:#faf7f0;border-radius:10px;padding:16px;margin-top:12px;border:1px solid #e8e0d0;}
+.nuit-fields.show{display:block;}
+.nuit-fields .fc-title-small{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#aaa;margin-bottom:12px;}
 /* DOG */
 .toggle-group{display:flex;gap:7px;}
 .tog{flex:1;padding:9px;border:2px solid #E8DECE;border-radius:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;color:#aaa;}
@@ -393,6 +402,88 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
     </div>
   </div>
 
+  <!-- MONDE NUIT -->
+  <div class="form-card">
+    <div class="fc-title">🌙 Type de lieu</div>
+    <p style="font-size:11px;color:#aaa;margin-bottom:10px;">Activité de journée ou étape pour la nuit ?</p>
+    <div class="monde-toggle">
+      <button class="monde-btn activite on" id="mondeActivite" onclick="setMonde(false)">☀️ Activité / Visite</button>
+      <button class="monde-btn nuit" id="mondeNuit" onclick="setMonde(true)">🌙 Où dormir</button>
+    </div>
+    <input type="hidden" id="mondeNuitVal" value="false">
+
+    <!-- Champs spécifiques Nuit — visibles seulement si Monde Nuit actif -->
+    <div class="nuit-fields" id="nuitFields">
+      <div class="fc-title-small">🏕️ Détails hébergement</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Sous-type</label>
+          <select id="sousTypeNuit">
+            <option value="">— Choisir —</option>
+            <option value="Camping">⛺ Camping classique</option>
+            <option value="Terrain particulier">🏡 Terrain particulier</option>
+            <option value="Bivouac">🌿 Bivouac / Nature</option>
+            <option value="Halte">🅿️ Halte camping-car</option>
+            <option value="Teardrop">🚐 Spot Teardrop</option>
+            <option value="Accueil privé">🏠 Accueil privé / Farm stay</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Prix indicatif</label>
+          <input type="text" id="prixIndicatif" placeholder="Gratuit / 12€ / nuit">
+        </div>
+        <div class="fg">
+          <label>🚿 Douche</label>
+          <select id="douche">
+            <option value="">— ?</option>
+            <option value="oui">✅ Oui</option>
+            <option value="non">❌ Non</option>
+            <option value="payante">💶 Payante</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>🚽 Toilettes</label>
+          <select id="toilettes">
+            <option value="">— ?</option>
+            <option value="oui">✅ Oui</option>
+            <option value="non">❌ Non</option>
+            <option value="sèches">🌿 Sèches</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>⚡ Électricité</label>
+          <select id="electricite">
+            <option value="non">❌ Non</option>
+            <option value="oui-10A">✅ 10A</option>
+            <option value="oui-16A">✅ 16A</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Nb emplacements max</label>
+          <input type="number" id="nbEmplacements" placeholder="ex: 5" min="1">
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+          <input type="checkbox" id="eauPotable"> 💧 Eau potable
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+          <input type="checkbox" id="feuAutorise"> 🔥 Feu / BBQ autorisé
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+          <input type="checkbox" id="wifiDispo"> 📶 Wifi
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;cursor:pointer;">
+          <input type="checkbox" id="accesRemorque" checked> 🚐 Accessible remorque / Teardrop
+        </label>
+      </div>
+      <div class="fg full" style="margin-top:10px;">
+        <label>Contact propriétaire</label>
+        <input type="text" id="contactProprio" placeholder="Nom, tel, email...">
+      </div>
+    </div>
+  </div>
+
   <!-- DOG -->
   <div class="form-card">
     <div class="fc-title">🐕 Dog-Friendly</div>
@@ -512,6 +603,7 @@ const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let mondeNuitVal=false;
 let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
 
@@ -521,6 +613,14 @@ const RC={'Pyrenees':'#2C5016','Atlantique':'#1a5a7a','Bourgogne':'#6B3288','Bre
   'Nord':'#2a4a7a','Corse':'#2a7a5a'};
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
+function setMonde(isNuit){
+  mondeNuitVal=isNuit;
+  document.getElementById('mondeNuitVal').value=String(isNuit);
+  document.getElementById('mondeActivite').classList.toggle('on',!isNuit);
+  document.getElementById('mondeNuit').classList.toggle('on',isNuit);
+  document.getElementById('nuitFields').classList.toggle('show',isNuit);
+}
+
 async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
@@ -577,6 +677,16 @@ async function importFromMaps(){
   const icon=document.getElementById('importBtnIcon');
   btn.disabled=true;icon.textContent='⏳';
   // Reset COMPLET du formulaire dès le début de chaque import
+  // Reset monde nuit
+  setMonde(false);
+  ['sousTypeNuit','douche','toilettes','electricite','prixIndicatif','contactProprio','nbEmplacements'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['eauPotable','feuAutorise','wifiDispo'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  const ar=document.getElementById('accesRemorque'); if(ar) ar.checked=true;
+
   ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.value='';el.classList.remove('auto-filled');}
@@ -1437,6 +1547,18 @@ async function saveFiche(){
       cree_par:currentUser.email,
       annee:new Date().getFullYear(),
       groupe_id:currentGroupeId||null,
+      monde_nuit:mondeNuitVal||false,
+      sous_type_nuit:document.getElementById('sousTypeNuit')?.value||null,
+      douche:document.getElementById('douche')?.value||null,
+      toilettes:document.getElementById('toilettes')?.value||null,
+      eau_potable:document.getElementById('eauPotable')?.checked||false,
+      electricite:document.getElementById('electricite')?.value||null,
+      feu_autorise:document.getElementById('feuAutorise')?.checked||false,
+      wifi:document.getElementById('wifiDispo')?.checked||false,
+      acces_remorque:document.getElementById('accesRemorque')?.checked||false,
+      nb_emplacements:parseInt(document.getElementById('nbEmplacements')?.value)||null,
+      prix_indicatif:document.getElementById('prixIndicatif')?.value||null,
+      contact_proprio:document.getElementById('contactProprio')?.value||null,
     });
     if(error)throw error;
     showConfirmation(nom, region, type);
