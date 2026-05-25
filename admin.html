@@ -762,36 +762,32 @@ function googlePhotoProxy(ref, apiKey, maxwidth=400){
 
 async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedResult=null){
   try{
-    // Clear previous auto-fill before populating new result
-    ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion'].forEach(id=>{
-      const el=document.getElementById(id);if(el&&el.classList.contains('auto-filled')){el.value='';el.classList.remove('auto-filled');}
-    });
-    const nameFromUrl=extractPlaceNameFromUrl(originalUrl);
-    let placeId=extractPlaceIdFromUrl(originalUrl);
-
-    // Étape 1 — trouver le place_id
-    if(!placeId && nameFromUrl && coords){
-      // Find Place by text + location bias : le plus précis
-      const d=await callPlacesApi('findplacefromtext',{
-        input:nameFromUrl, inputtype:'textquery', fields:'place_id',
-        locationbias:`point:${coords.lat},${coords.lng}`
-      }, apiKey);
-      if(d?.candidates?.[0]?.place_id) placeId=d.candidates[0].place_id;
+    let p=null;
+    // Si preloadedResult fourni (recherche par nom) — l'utiliser DIRECTEMENT
+    if(preloadedResult){
+      p=preloadedResult;
+    } else {
+      // Sinon chercher via coords/URL (import URL longue)
+      const nameFromUrl=extractPlaceNameFromUrl(originalUrl);
+      let placeId=extractPlaceIdFromUrl(originalUrl);
+      if(!placeId && nameFromUrl && coords){
+        const d=await callPlacesApi('findplacefromtext',{
+          input:nameFromUrl, inputtype:'textquery', fields:'place_id',
+          locationbias:`point:${coords.lat},${coords.lng}`
+        }, apiKey);
+        if(d?.candidates?.[0]?.place_id) placeId=d.candidates[0].place_id;
+      }
+      if(!placeId && coords){
+        const d=await callPlacesApi('nearbysearch',{location:`${coords.lat},${coords.lng}`,radius:100},apiKey);
+        if(d?.results?.[0]?.place_id) placeId=d.results[0].place_id;
+      }
+      if(!placeId){console.warn('place_id introuvable');return false;}
+      const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+      const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
+      if(!det?.result) return false;
+      p=det.result;
     }
-    if(!placeId && coords){
-      // Nearby fallback
-      const d=await callPlacesApi('nearbysearch',{
-        location:`${coords.lat},${coords.lng}`, radius:100
-      }, apiKey);
-      if(d?.results?.[0]?.place_id) placeId=d.results[0].place_id;
-    }
-    if(!placeId){console.warn('place_id introuvable');return false;}
-
-    // Étape 2 — Place Details complet
-    const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
-    const det=await callPlacesApi('details',{place_id:placeId, fields}, apiKey);
-    if(!det?.result) return false;
-    const p=det.result;
+    if(!p) return false;
 
     // ── Remplir les champs ────────────────────────────────────────────────────
     fillFieldForce('nom', p.name||'');
