@@ -799,12 +799,31 @@ sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.
 // ── FICHES DYNAMIQUES SUPABASE v21 ───────────────────────────────────────
 // Régions désormais toutes dynamiques (Alsace + Pyrénées + Atlantique + Bourgogne)
 const ALL_SUPABASE_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
-// Alias : rk normalisé → id de section HTML
+// Alias : rk normalisé → id de section HTML existante
+// Sections HTML fixes : tab-alsace, tab-pyrenees, tab-atlantique, tab-bourgogne
 const REGION_ALIASES = {
-  'midipyrenees':'pyrenees','aquitaine':'atlantique',
-  'bourgognefranchecomte':'bourgogne','alsacelorraine':'alsace','lorraine':'alsace'
+  // Pyrénées / Sud-Ouest
+  'midipyrenees':'pyrenees',
+  'pyrenees':'pyrenees',
+  // Atlantique / Aquitaine
+  'aquitaine':'atlantique',
+  'atlantique':'atlantique',
+  'paysdelaloire':'atlantique',
+  // Bourgogne
+  'bourgogne':'bourgogne',
+  'bourgognefranchecomte':'bourgogne',
+  'franchecomte':'bourgogne',
+  // Alsace
+  'alsace':'alsace',
+  'alsacelorraine':'alsace',
+  'lorraine':'alsace',
+  'champagneardenne':'alsace',
 };
-function resolveRegionTab(rk){ return REGION_ALIASES[rk] || (ALL_SUPABASE_REGIONS.includes(rk)?rk:null); }
+function resolveRegionTab(rk){
+  if(REGION_ALIASES[rk]) return REGION_ALIASES[rk];
+  if(ALL_SUPABASE_REGIONS.includes(rk)) return rk;
+  return null; // région sans section dédiée → createDynamicTab
+}
 let allLieux = []; // cache global
 let regionLoaded = {}; // lazy load tracker
 let carteMap = null, ficheMap = null;
