@@ -1021,10 +1021,11 @@ function populateRegionContent(rk, regionName, lieux){
   const contentEl = document.getElementById(rk+'-content');
   if(!contentEl) return;
 
-  // ── MONDE 1 : Activités (monde_nuit = false ou null)
-  const activites = lieux.filter(l => !l.monde_nuit);
-  // ── MONDE 2 : Nuit (monde_nuit = true)
-  const nuits = lieux.filter(l => l.monde_nuit);
+  // ── MONDE 2 : Nuit = monde_nuit explicite OU type Camping/Halte (legacy)
+  const TYPES_NUIT = ['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
+  const nuits     = lieux.filter(l => l.monde_nuit || TYPES_NUIT.includes(l.type));
+  // ── MONDE 1 : Activités = tout le reste
+  const activites = lieux.filter(l => !l.monde_nuit && !TYPES_NUIT.includes(l.type));
 
   // Sous-groupes Activités
   const sites      = activites.filter(l=>['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation'].includes(l.type)||!l.type);
