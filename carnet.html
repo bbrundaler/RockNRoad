@@ -57,8 +57,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .sb-group{padding:12px 10px 4px;flex-shrink:0;}
 .sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
 .sb-sep{height:1px;background:rgba(200,168,75,.06);margin:5px 14px;}
-.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;color:rgba(245,239,224,.6);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
-.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(245,239,224,.82);}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;color:rgba(255,255,255,.82);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;overflow:hidden;}
+.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(255,255,255,.97);}
 .sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
 .sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.75;}
 .sb-dot-pyr{background:var(--pyr);}
@@ -70,16 +70,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
 .sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);margin-bottom:5px;}
 .sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
-.sb-user-name{font-size:11px;font-weight:600;color:rgba(245,239,224,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
-.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.1);color:rgba(200,168,75,.55);font-size:10px;font-weight:600;letter-spacing:1px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.sb-user-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+.sb-user-role{font-size:9.5px;color:rgba(255,255,255,.5);margin-top:1px;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
 #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;}
 
 /* APP MAIN */
 #app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;overflow-x:hidden;}
-#top-bar{background:rgba(247,243,236,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--beige);padding:0 28px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 28px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
-#sb-toggle{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;}
+#sb-toggle{display:none;background:none;border:none;color:rgba(255,255,255,.85);font-size:20px;cursor:pointer;}
 .top-voyage-btn{display:none;align-items:center;gap:6px;background:var(--dark);color:var(--gold);font-size:10.5px;font-weight:700;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;}
 .top-voyage-btn.visible{display:flex;}
 .top-voyage-btn:hover{background:var(--gold);color:var(--dark);}
@@ -243,25 +244,25 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 /* Panneau info dynamique carte */
 #carte-info-panel{background:white;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
-.cip-idle{padding:18px 20px;display:flex;align-items:center;gap:14px;color:#aaa;}
-.cip-idle .cip-icon{font-size:28px;opacity:.4;}
-.cip-idle p{font-size:12px;line-height:1.5;margin:0;}
+.cip-idle{padding:18px 20px;display:flex;align-items:center;gap:14px;color:#777;}
+.cip-idle .cip-icon{font-size:28px;opacity:.5;}
+.cip-idle p{font-size:12px;line-height:1.5;margin:0;color:#555;}
 .cip-active{display:grid;grid-template-columns:1fr auto;align-items:start;gap:0;}
 .cip-main{padding:16px 20px;}
 .cip-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#1a1208;margin-bottom:2px;}
-.cip-meta{font-size:11px;color:#888;margin-bottom:10px;}
+.cip-meta{font-size:11px;color:#666;margin-bottom:10px;}
 .cip-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;}
 .cip-stat{text-align:center;min-width:70px;}
 .cip-stat-val{font-size:20px;font-weight:800;color:#1a1208;line-height:1;}
-.cip-stat-lbl{font-size:9px;color:#aaa;font-weight:600;letter-spacing:1px;margin-top:2px;}
+.cip-stat-lbl{font-size:9px;color:#888;font-weight:600;letter-spacing:1px;margin-top:2px;}
 .cip-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
-.cip-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(200,168,75,.1);color:#8B6914;}
-.cip-side{padding:16px;background:#f8f5ee;border-left:1px solid #f0ece4;display:flex;flex-direction:column;gap:8px;min-width:140px;}
+.cip-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(200,168,75,.1);color:#7a5c10;}
+.cip-side{padding:16px;background:#f4f0e8;border-left:1px solid #e8e2d8;display:flex;flex-direction:column;gap:8px;min-width:140px;}
 .cip-dog-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;text-align:center;}
-.cip-dog-yes{background:#e8f4e8;color:#2C5016;}
-.cip-dog-no{background:#ffe8e0;color:#cc4400;}
+.cip-dog-yes{background:#e8f4e8;color:#1e4010;}
+.cip-dog-no{background:#ffe8e0;color:#aa3300;}
 .cip-maps-link{display:block;background:var(--dark);color:var(--gold);font-size:10px;font-weight:700;padding:7px 12px;border-radius:8px;text-decoration:none;text-align:center;}
-.cip-dist{font-size:11px;color:#5a4a32;background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.2);border-radius:8px;padding:6px 10px;text-align:center;}
+.cip-dist{font-size:11px;color:#3d2e18;background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.3);border-radius:8px;padding:6px 10px;text-align:center;}
 .cip-dist strong{display:block;font-size:16px;font-weight:800;color:#1a1208;}
 
 /* ── RÉGION MAP + RÉCAP VIEW ─────────────────────────────── */
@@ -359,11 +360,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <span class="sb-dot sb-dot-gold"></span>
       <span class="sb-label">Carte interactive</span>
     </button>
-    <a class="sb-btn" href="https://www.google.com/maps/d/viewer?mid=1hS3qfAD91MA7yxZsYT5OnXpxG5PYBno" target="_blank">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span class="sb-label">RockNRoad Maps</span>
-      <span style="font-size:9px;color:rgba(200,168,75,.5);">↗</span>
-    </a>
     <a class="sb-btn" href="voyage.html">
       <span class="sb-dot sb-dot-gold"></span>
       <span class="sb-label">Mon Voyage</span>
@@ -383,10 +379,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   <!-- Back-Office -->
   <div class="sb-group">
     <div class="sb-group-label">Back-Office</div>
-    <a class="sb-btn" href="fiches.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span class="sb-label">Mes Fiches</span>
-    </a>
     <a class="sb-btn" href="admin.html">
       <span class="sb-dot sb-dot-grey"></span>
       <span class="sb-label">Créer une fiche</span>
