@@ -559,9 +559,17 @@ async function importFromMaps(){
     try{
       const apiKey=getApiKey();
       if(apiKey){
-        const d=await callPlacesApi('findplacefromtext',{input:url,inputtype:'textquery',fields:'place_id'},apiKey);
-        if(d?.candidates?.[0]?.place_id){
-          const placeId=d.candidates[0].place_id;
+        // textsearch retourne les LIEUX par pertinence (pas les villes)
+        const d=await callPlacesApi('textsearch',{query:url,fields:'place_id,name,types'},apiKey);
+        // Prendre le 1er résultat qui n'est pas une localité/ville
+        const cityTypes=['locality','administrative_area_level_1','administrative_area_level_2','political','country'];
+        let placeId=null;
+        if(d?.results?.length){
+          // Préférer un résultat qui n'est pas une ville
+          const best=d.results.find(r=>!r.types?.every(t=>cityTypes.includes(t)))||d.results[0];
+          placeId=best.place_id;
+        }
+        if(placeId){
           const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
           const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
           if(det?.result){
@@ -1086,12 +1094,11 @@ async function tryResolveShortUrl(url){
     showToast('🔍 Nom trouvé — recherche Google Places...','info');
     const apiKey=getApiKey();
     if(apiKey){
-      const d=await callPlacesApi('findplacefromtext',{
-        input:placeName, inputtype:'textquery',
-        fields:'place_id'
-      }, apiKey);
-      if(d?.candidates?.[0]?.place_id){
-        const placeId=d.candidates[0].place_id;
+      const d=await callPlacesApi('textsearch',{query:placeName,fields:'place_id,name,types'}, apiKey);
+      const cityTypes=['locality','administrative_area_level_1','administrative_area_level_2','political','country'];
+      const best=d?.results?.find(r=>!r.types?.every(t=>cityTypes.includes(t)))||d?.results?.[0];
+      if(best?.place_id){
+        const placeId=best.place_id;
         const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
         const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
         if(det?.result){
