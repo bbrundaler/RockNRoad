@@ -627,33 +627,42 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <!-- ══ CARTE ══ -->
 <div class="section" id="tab-carte">
 <div class="inner">
-  <h2 class="sec-title">Carte <em>Interactive</em></h2>
-  <p class="sec-lead">Tous vos lieux depuis Supabase sur une carte Leaflet — filtrez par région d'un clic.</p>
-  <div class="carte-filters" id="carte-filter-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;">
-    <button class="carte-filter-btn active" data-region="all" onclick="carteFilter('all',this)">🌍 Tout</button>
-    <button class="carte-filter-btn" data-region="Alsace" onclick="carteFilter('Alsace',this)">🥨 Alsace</button>
-    <button class="carte-filter-btn" data-region="Aquitaine" onclick="carteFilter('Aquitaine',this)">🍷 Aquitaine</button>
-    <button class="carte-filter-btn" data-region="Auvergne" onclick="carteFilter('Auvergne',this)">🌋 Auvergne</button>
-    <button class="carte-filter-btn" data-region="Basse-Normandie" onclick="carteFilter('Basse-Normandie',this)">🏰 B-Normandie</button>
-    <button class="carte-filter-btn" data-region="Bourgogne" onclick="carteFilter('Bourgogne',this)">🍇 Bourgogne</button>
-    <button class="carte-filter-btn" data-region="Bretagne" onclick="carteFilter('Bretagne',this)">🦞 Bretagne</button>
-    <button class="carte-filter-btn" data-region="Centre" onclick="carteFilter('Centre',this)">🏰 Centre</button>
-    <button class="carte-filter-btn" data-region="Champagne-Ardenne" onclick="carteFilter('Champagne-Ardenne',this)">🥂 Champagne</button>
-    <button class="carte-filter-btn" data-region="Franche-Comté" onclick="carteFilter('Franche-Comté',this)">⛰️ Franche-Comté</button>
-    <button class="carte-filter-btn" data-region="Haute-Normandie" onclick="carteFilter('Haute-Normandie',this)">⛵ H-Normandie</button>
-    <button class="carte-filter-btn" data-region="Île-de-France" onclick="carteFilter('Île-de-France',this)">🗼 IDF</button>
-    <button class="carte-filter-btn" data-region="Languedoc-Roussillon" onclick="carteFilter('Languedoc-Roussillon',this)">🌻 Languedoc</button>
-    <button class="carte-filter-btn" data-region="Limousin" onclick="carteFilter('Limousin',this)">🌿 Limousin</button>
-    <button class="carte-filter-btn" data-region="Lorraine" onclick="carteFilter('Lorraine',this)">⚜️ Lorraine</button>
-    <button class="carte-filter-btn" data-region="Midi-Pyrénées" onclick="carteFilter('Midi-Pyrénées',this)">🏔️ Midi-Pyr.</button>
-    <button class="carte-filter-btn" data-region="Nord-Pas-de-Calais" onclick="carteFilter('Nord-Pas-de-Calais',this)">🌷 Nord</button>
-    <button class="carte-filter-btn" data-region="Pays de la Loire" onclick="carteFilter('Pays de la Loire',this)">🌊 Pays Loire</button>
-    <button class="carte-filter-btn" data-region="Picardie" onclick="carteFilter('Picardie',this)">🌾 Picardie</button>
-    <button class="carte-filter-btn" data-region="Poitou-Charentes" onclick="carteFilter('Poitou-Charentes',this)">🐚 Poitou</button>
-    <button class="carte-filter-btn" data-region="Provence-Alpes-Côte-d-Azur" onclick="carteFilter('Provence-Alpes-Côte-d-Azur',this)">☀️ PACA</button>
-    <button class="carte-filter-btn" data-region="Rhône-Alpes" onclick="carteFilter('Rhône-Alpes',this)">⛷️ Rhône-Alpes</button>
-    <div id="carte-filter-extra" style="display:contents;"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
+    <div>
+      <h2 class="sec-title" style="margin-bottom:2px;">Carte <em>Interactive</em></h2>
+      <p class="sec-lead" style="margin:0;">Tous vos lieux depuis Supabase — filtrez par région</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <label style="font-size:11px;font-weight:700;color:#888;white-space:nowrap;">🗺 Région :</label>
+      <select id="carte-region-select" onchange="carteFilterSelect(this.value)"
+        style="padding:8px 14px;border:1.5px solid rgba(200,168,75,.4);border-radius:8px;font-size:12px;font-weight:600;background:white;color:#1a1208;cursor:pointer;font-family:'Inter',sans-serif;min-width:180px;">
+        <option value="all">🌍 Toutes les régions</option>
+        <option value="Alsace">🥨 Alsace</option>
+        <option value="Aquitaine">🍷 Aquitaine</option>
+        <option value="Auvergne">🌋 Auvergne</option>
+        <option value="Basse-Normandie">🏰 Basse-Normandie</option>
+        <option value="Bourgogne">🍇 Bourgogne</option>
+        <option value="Bretagne">🦞 Bretagne</option>
+        <option value="Centre">🏰 Centre</option>
+        <option value="Champagne-Ardenne">🥂 Champagne-Ardenne</option>
+        <option value="Corse">🏝️ Corse</option>
+        <option value="Franche-Comté">⛰️ Franche-Comté</option>
+        <option value="Haute-Normandie">⛵ Haute-Normandie</option>
+        <option value="Île-de-France">🗼 Île-de-France</option>
+        <option value="Languedoc-Roussillon">🌻 Languedoc-Roussillon</option>
+        <option value="Limousin">🌿 Limousin</option>
+        <option value="Lorraine">⚜️ Lorraine</option>
+        <option value="Midi-Pyrénées">🏔️ Midi-Pyrénées</option>
+        <option value="Nord-Pas-de-Calais">🌷 Nord-Pas-de-Calais</option>
+        <option value="Pays de la Loire">🌊 Pays de la Loire</option>
+        <option value="Picardie">🌾 Picardie</option>
+        <option value="Poitou-Charentes">🐚 Poitou-Charentes</option>
+        <option value="Provence-Alpes-Côte-d-Azur">☀️ Provence-Alpes-Côte d'Azur</option>
+        <option value="Rhône-Alpes">⛷️ Rhône-Alpes</option>
+      </select>
+    </div>
   </div>
+  <div id="carte-filter-extra" style="display:none;"></div>
   <div id="carte-global-map"></div>
   <!-- Panneau info dynamique -->
   <div id="carte-info-panel">
@@ -1165,6 +1174,24 @@ function initCarteGlobal(){
   if(bounds.length) carteGlobalMap.fitBounds(bounds,{padding:[32,32],maxZoom:10});
 }
 
+function carteFilterSelect(region){
+  if(!carteGlobalMap) return;
+  Object.entries(carteGlobalMarkersByRegion).forEach(([rk, markers])=>{
+    const match = region==='all' || rk===normalizeRegionKey(region);
+    markers.forEach(m=>{ if(match) m.addTo(carteGlobalMap); else carteGlobalMap.removeLayer(m); });
+  });
+  // Recentrer si filtre actif
+  if(region!=='all'){
+    const rk=normalizeRegionKey(region);
+    const pts=[];
+    (carteGlobalMarkersByRegion[rk]||[]).forEach(m=>{ const ll=m.getLatLng(); pts.push([ll.lat,ll.lng]); });
+    if(pts.length) carteGlobalMap.fitBounds(pts,{padding:[32,32],maxZoom:11});
+  } else {
+    const allPts=[];
+    Object.values(carteGlobalMarkersByRegion).forEach(markers=>markers.forEach(m=>{const ll=m.getLatLng();allPts.push([ll.lat,ll.lng]);}));
+    if(allPts.length) carteGlobalMap.fitBounds(allPts,{padding:[32,32],maxZoom:10});
+  }
+}
 function carteFilter(region, btn){
   document.querySelectorAll('.carte-filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
