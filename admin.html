@@ -471,9 +471,10 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   <div class="tip-box">
     <div class="tip-title">💡 Comment importer depuis Google Maps</div>
     <ul class="tip-list">
-      <li>📱 <strong>Mobile :</strong> Cherche le lieu → <em>Partager</em> → <em>Copier le lien</em></li>
-      <li>💻 <strong>Bureau :</strong> Ouvre la fiche → copie l'URL complète</li>
-      <li>✅ URLs <strong>goo.gl/maps</strong> et URLs longues OK</li>
+      <li>📱 <strong>Mobile :</strong> Cherche le lieu → appuie sur la <strong>barre d'adresse</strong> du navigateur → copie l'URL longue</li>
+      <li>💻 <strong>Bureau :</strong> Ouvre la fiche → copie l'URL de la barre d'adresse</li>
+      <li>✍️ <strong>Ou tape le nom</strong> du lieu directement dans le champ (ex: "Grottes de Bétharram")</li>
+      <li>⚠️ Le bouton <em>Partager → Copier le lien</em> de l'app Google Maps donne une URL courte qui ne fonctionne pas</li>
     </ul>
   </div>
 
@@ -548,11 +549,12 @@ function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
 async function importFromMaps(){
   const url=document.getElementById('gmapsUrl').value.trim();
   if(!url){showToast('Colle une URL ou tape un nom de lieu','error');return;}
+  const btn=document.getElementById('importBtn');
+  const icon=document.getElementById('importBtnIcon');
+  btn.disabled=true;icon.textContent='⏳';
   // Si ce n'est pas une URL, traiter comme recherche par nom direct
   const isUrl=url.startsWith('http')||url.startsWith('maps.');
   if(!isUrl){
-    // Recherche directe par nom
-    btn.disabled=true;icon.textContent='⏳';
     showToast('🔍 Recherche "'+url+'"...','info');
     try{
       const apiKey=getApiKey();
@@ -573,9 +575,6 @@ async function importFromMaps(){
     btn.disabled=false;icon.textContent='✨';
     return;
   }
-  const btn=document.getElementById('importBtn');
-  const icon=document.getElementById('importBtnIcon');
-  btn.disabled=true;icon.textContent='⏳';
   showToast('🔍 Analyse de l\'URL...','info');
   try{
     const coords=extractCoordsFromUrl(url);
