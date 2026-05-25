@@ -553,6 +553,18 @@ async function importFromMaps(){
   const btn=document.getElementById('importBtn');
   const icon=document.getElementById('importBtnIcon');
   btn.disabled=true;icon.textContent='⏳';
+  // Reset COMPLET du formulaire dès le début de chaque import
+  ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.value='';el.classList.remove('auto-filled');}
+  });
+  selectedTags=[];
+  document.querySelectorAll('.tag-opt.on').forEach(t=>t.classList.remove('on'));
+  setDog('yes');
+  familyStarVal=0;
+  document.querySelectorAll('.star.on').forEach(s=>s.classList.remove('on'));
+  selectedGooglePhotoUrl=null;
+  googlePhotoRefs=[];
   // Si ce n'est pas une URL, traiter comme recherche par nom direct
   const isUrl=url.startsWith('http')||url.startsWith('maps.');
   if(!isUrl){
@@ -613,7 +625,7 @@ async function importFromMaps(){
   try{
     const coords=extractCoordsFromUrl(url);
     const nameFromUrl=extractPlaceNameFromUrl(url);
-    if(nameFromUrl) fillField('nom',nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
+    if(nameFromUrl) fillFieldForce('nom',nameFromUrl.replace(/\+/g,' ').replace(/%20/g,' '));
     if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
     const apiKey=getApiKey();
 
@@ -782,8 +794,8 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
     const p=det.result;
 
     // ── Remplir les champs ────────────────────────────────────────────────────
-    fillField('nom', p.name||'');
-    fillField('adresse', p.formatted_address||'');
+    fillFieldForce('nom', p.name||'');
+    fillFieldForce('adresse', p.formatted_address||'');
     fillField('tel', p.formatted_phone_number||'');
     fillField('siteWeb', p.website||'');
     if(p.geometry?.location){
@@ -895,7 +907,7 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
 
     // ── Description auto ─────────────────────────────────────────────────────
     if(p.editorial_summary?.overview&&!document.getElementById('description').value){
-      fillField('description', p.editorial_summary.overview);
+      fillFieldForce('description', p.editorial_summary.overview);
     }
 
     // ── Dog-friendly auto depuis description Google ──────────────────────────
@@ -1087,7 +1099,7 @@ async function reverseGeocode(lat,lng){
     const dept=addr.county||addr.state_district||'';
     if(city){document.getElementById('ir-meta').textContent=city+(dept?' · '+dept:'');}
     if(!document.getElementById('adresse').value&&d.display_name){
-      fillField('adresse',d.display_name.split(',').slice(0,3).join(','));
+      fillFieldForce('adresse',d.display_name.split(',').slice(0,3).join(','));
     }
   }catch(e){}
 }
@@ -1111,7 +1123,7 @@ async function tryResolveShortUrl(url){
       const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
       if(titleMatch){
         let title=titleMatch[1].replace(/ - Google Maps.*/,'').replace(/Google Maps/,'').trim();
-        if(title&&title.length>2){placeName=title;fillField('nom',title);}
+        if(title&&title.length>2){placeName=title;fillFieldForce('nom',title);}
       }
       // Extraire coords
       const coords=extractCoordsFromUrl(content);
@@ -1167,7 +1179,17 @@ function refreshMap(){
 function fillField(id,val){
   const el=document.getElementById(id);
   if(el&&val!==null&&val!==undefined&&String(val).trim()!==''){
-    el.value=val;el.classList.add('auto-filled');
+    el.value=val;
+    el.classList.add('auto-filled');
+    setTimeout(()=>el.classList.remove('auto-filled'),3000);
+  }
+}
+function fillFieldForce(id,val){
+  // Force overwrite même si déjà rempli
+  const el=document.getElementById(id);
+  if(el){
+    el.value=(val!==null&&val!==undefined)?String(val):'';
+    if(val) el.classList.add('auto-filled');
     setTimeout(()=>el.classList.remove('auto-filled'),3000);
   }
 }
