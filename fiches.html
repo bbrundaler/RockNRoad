@@ -312,13 +312,29 @@ select.minput{appearance:auto;}
         </div>
         <div class="mg"><label class="mlabel">Région</label>
           <select class="minput" id="editRegion">
-            <option value="Pyrenees">Pyrénées</option><option value="Atlantique">Atlantique</option>
-            <option value="Bourgogne">Bourgogne</option><option value="Bretagne">Bretagne</option>
-            <option value="Normandie">Normandie</option><option value="Loire">Loire</option>
-            <option value="Provence">Provence</option><option value="Occitanie">Occitanie</option>
-            <option value="Alsace">Alsace</option><option value="Alpes">Alpes</option>
-            <option value="Auvergne">Auvergne</option><option value="Ardenne">Ardenne</option>
-            <option value="Nord">Nord</option><option value="Corse">Corse</option>
+            <option value="">— Choisir —</option>
+            <option value="Alsace">🥨 Alsace</option>
+            <option value="Aquitaine">🍷 Aquitaine</option>
+            <option value="Auvergne">🌋 Auvergne</option>
+            <option value="Basse-Normandie">🏰 Basse-Normandie</option>
+            <option value="Bourgogne">🍇 Bourgogne</option>
+            <option value="Bretagne">🦞 Bretagne</option>
+            <option value="Centre">🏰 Centre</option>
+            <option value="Champagne-Ardenne">🥂 Champagne-Ardenne</option>
+            <option value="Corse">🏝️ Corse</option>
+            <option value="Franche-Comté">⛰️ Franche-Comté</option>
+            <option value="Haute-Normandie">⛵ Haute-Normandie</option>
+            <option value="Île-de-France">🗼 Île-de-France</option>
+            <option value="Languedoc-Roussillon">🌻 Languedoc-Roussillon</option>
+            <option value="Limousin">🌿 Limousin</option>
+            <option value="Lorraine">⚜️ Lorraine</option>
+            <option value="Midi-Pyrénées">🏔️ Midi-Pyrénées</option>
+            <option value="Nord-Pas-de-Calais">🌷 Nord-Pas-de-Calais</option>
+            <option value="Pays de la Loire">🌊 Pays de la Loire</option>
+            <option value="Picardie">🌾 Picardie</option>
+            <option value="Poitou-Charentes">🐚 Poitou-Charentes</option>
+            <option value="Provence-Alpes-Côte-d-Azur">☀️ Provence-Alpes-Côte d'Azur</option>
+            <option value="Rhône-Alpes">⛷️ Rhône-Alpes</option>
           </select>
         </div>
         <div class="mg"><label class="mlabel">Sous-région</label><input class="minput" type="text" id="editSousRegion"></div>
@@ -396,20 +412,31 @@ let filters={dog:false,famille:false},activeRegion='';
 let editPhotoFile=null,editDogVal='yes',editFamilyStarVal=0,editTags=[];
 
 const REGIONS=[
-  {id:'Pyrenees',label:'Pyrénées',col:'#2C5016',emoji:'🏔️'},
-  {id:'Atlantique',label:'Aquitaine',col:'#1a5a7a',emoji:'🌊'},
-  {id:'Bourgogne',label:'Bourgogne',col:'#6B3288',emoji:'🍷'},
-  {id:'Bretagne',label:'Bretagne',col:'#1a6a5a',emoji:'🦞'},
-  {id:'Normandie',label:'Normandie',col:'#3a5a8a',emoji:'🐄'},
-  {id:'Loire',label:'Val de Loire',col:'#6B6B14',emoji:'🏰'},
-  {id:'Provence',label:'Provence',col:'#8B4513',emoji:'☀️'},
-  {id:'Occitanie',label:'Languedoc',col:'#c87a00',emoji:'🌻'},
   {id:'Alsace',label:'Alsace',col:'#8B2020',emoji:'🥨'},
-  {id:'Alpes',label:'Rhône-Alpes',col:'#4a4a8a',emoji:'⛷️'},
-  {id:'Auvergne',label:'Auvergne',col:'#5a6a3a',emoji:'🌋'},
-  {id:'Ardenne',label:'Champagne',col:'#3a6a3a',emoji:'🍾'},
-  {id:'Nord',label:'Nord',col:'#2a4a7a',emoji:'🌷'},
-  {id:'Corse',label:'Corse',col:'#2a7a5a',emoji:'🏝️'},
+  {id:'Aquitaine',label:'Aquitaine',col:'#7B4B00',emoji:'🍷'},
+  {id:'Auvergne',label:'Auvergne',col:'#4a5a2a',emoji:'🌋'},
+  {id:'Basse-Normandie',label:'Basse-Normandie',col:'#2a5a7a',emoji:'🏰'},
+  {id:'Bourgogne',label:'Bourgogne',col:'#6B3288',emoji:'🍇'},
+  {id:'Bretagne',label:'Bretagne',col:'#1a6a5a',emoji:'🦞'},
+  {id:'Centre',label:'Centre',col:'#5a4a2a',emoji:'🏰'},
+  {id:'Champagne-Ardenne',label:'Champagne',col:'#8B6914',emoji:'🥂'},
+  {id:'Corse',label:'Corse',col:'#2a7a4a',emoji:'🏝️'},
+  {id:'Franche-Comté',label:'Franche-Comté',col:'#3a5a7a',emoji:'⛰️'},
+  {id:'Haute-Normandie',label:'Haute-Normandie',col:'#1a5a7a',emoji:'⛵'},
+  {id:'Île-de-France',label:'Île-de-France',col:'#4a2a7a',emoji:'🗼'},
+  {id:'Languedoc-Roussillon',label:'Languedoc',col:'#7a6a1a',emoji:'🌻'},
+  {id:'Limousin',label:'Limousin',col:'#3a6a3a',emoji:'🌿'},
+  {id:'Lorraine',label:'Lorraine',col:'#6a3a6a',emoji:'⚜️'},
+  {id:'Midi-Pyrénées',label:'Midi-Pyrénées',col:'#2C5016',emoji:'🏔️'},
+  {id:'Nord-Pas-de-Calais',label:'Nord',col:'#1a3a6a',emoji:'🌷'},
+  {id:'Pays de la Loire',label:'Pays Loire',col:'#1a6a6a',emoji:'🌊'},
+  {id:'Picardie',label:'Picardie',col:'#5a5a2a',emoji:'🌾'},
+  {id:'Poitou-Charentes',label:'Poitou',col:'#6a4a1a',emoji:'🐚'},
+  {id:'Provence-Alpes-Côte-d-Azur',label:'PACA',col:'#8B4a00',emoji:'☀️'},
+  {id:'Rhône-Alpes',label:'Rhône-Alpes',col:'#3a3a7a',emoji:'⛷️'},
+  // Anciennes valeurs legacy (fiches non migrées)
+  {id:'Pyrenees',label:'Pyrénées (legacy)',col:'#2C5016',emoji:'🏔️'},
+  {id:'Atlantique',label:'Atlantique (legacy)',col:'#1a5a7a',emoji:'🌊'},
 ];
 const RC={};REGIONS.forEach(r=>RC[r.id]=r.col);
 
@@ -463,6 +490,9 @@ async function loadLieux(){
     return;
   }
   allLieux=data;renderStats(data);renderGrouped(data);
+  // Auto-ouvrir la modale si ?edit=ID dans l'URL (depuis carnet.html)
+  const editParam=new URLSearchParams(window.location.search).get('edit');
+  if(editParam) setTimeout(()=>{openEdit(editParam);if(history.replaceState)history.replaceState(null,'',window.location.pathname);},150);
 }
 
 function renderStats(data){
