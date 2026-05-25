@@ -275,8 +275,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 /* Carte globale */
 #carte-global-map{height:560px;border-radius:12px;border:2px solid rgba(200,168,75,.3);box-shadow:0 4px 20px rgba(0,0,0,.1);}
 .carte-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
-.carte-filter-btn{padding:5px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(245,239,224,.75);font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;white-space:nowrap;}
-.carte-filter-btn.active{border-color:var(--gold);background:rgba(200,168,75,.15);color:var(--gold);}
+.carte-filter-btn{padding:5px 12px;border-radius:20px;border:1.5px solid rgba(0,0,0,.15);background:rgba(255,255,255,.9);color:#1a1208;font-size:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.carte-filter-btn.active{border-color:var(--gold);background:var(--gold);color:#1a1208;}
 /* Recap list */
 .recap-list{margin:20px 28px;display:flex;flex-direction:column;gap:0;}
 .recap-sous-region{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);padding:12px 0 6px;border-bottom:1px solid var(--beige);}
@@ -867,20 +867,30 @@ async function loadDynamicFiches(){
 
     const appMain=document.getElementById('app-main');
 
-    // ── Peupler toutes les régions connues (Alsace + 3 ex-statiques + dynamiques)
+    // ── Grouper par onglet de destination (pas par région source)
+    const byTab = {};
     Object.keys(byRegion).forEach(rk=>{
-      const lieux=byRegion[rk];
-      const regionName=lieux[0].region||'Autre';
+      const destTab = resolveRegionTab(rk);
+      if(destTab){
+        if(!byTab[destTab]) byTab[destTab]=[];
+        byTab[destTab].push(...byRegion[rk]);
+      }
+    });
 
-      const tabRk = resolveRegionTab(rk);
-      if(tabRk){
-        // Région standard : peupler le content div
+    // ── Peupler les onglets avec tous leurs lieux rassemblés
+    Object.keys(byTab).forEach(tabRk=>{
+      const lieux=byTab[tabRk];
+      const tabLabel={'alsace':'Alsace','pyrenees':'Pyrénées','atlantique':'Atlantique','bourgogne':'Bourgogne'}[tabRk]||tabRk;
+      const rk=tabRk; // alias pour le reste du code
+      const regionName=tabLabel;
+
+      if(true){
         populateRegionContent(tabRk, regionName, lieux);
-        // Construire liste récap + carte région
         buildRecapView(tabRk, regionName, lieux);
-      } else {
-        // Région dynamique inconnue : créer tab
-        let tabId='tab-dyn-'+rk;
+      } else if(!resolveRegionTab(rk)){
+        // Région dynamique sans onglet dédié : créer tab
+        const rk2=rk;
+        let tabId='tab-dyn-'+rk2;
         if(!document.getElementById(tabId)){
           createDynamicTab(tabId, regionName, lieux, appMain);
           addDynSidebarBtn(tabId, regionName, rk);
@@ -1388,7 +1398,7 @@ function makeDynCard(l, cardType){
   const tags=l.tags&&l.tags.length?l.tags.slice(0,3).map(t=>`<span style="font-size:9px;background:rgba(200,168,75,.1);color:#8B6914;padding:1px 6px;border-radius:10px;">${t}</span>`).join(''):'';
   const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
   return `<div class="site-card" id="dyncard-${l.id}">
-    <div class="site-photo" style="background-image:${ph};background-size:cover;background-position:center;">
+    <div class="site-photo" style="background-image:${ph};background-size:cover;background-position:center;${!l.photo_url?'height:80px;':''}">
       <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
       ${dogPhotoBadge}
     </div>
@@ -1433,6 +1443,7 @@ function addDynRegionTopbar(regionName, regionKey){
 
 // ── MODAL ÉDITION RAPIDE depuis carnet.html ───────────────────────────
 function openEditModal(id){
+  // Redirection vers admin.html en mode édition
   window.location.href='fiches.html?edit='+id;
 }
 
