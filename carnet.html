@@ -18,6 +18,18 @@
 
 
 <style>
+
+/* AUTH SCREEN */
+#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:20px;}
+#auth-check .aicon{font-size:48px;margin-bottom:8px;}
+#auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:8px 0 6px;}
+#auth-check p{font-size:12px;opacity:.6;letter-spacing:2px;}
+.auth-spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;
+  border-radius:50%;animation:spin 1s linear infinite;margin:18px auto 0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#main-content{display:none;}
+
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 :root{
   --sb:215px;--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;
