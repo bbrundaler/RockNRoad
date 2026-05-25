@@ -275,7 +275,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 /* Carte globale */
 #carte-global-map{height:560px;border-radius:12px;border:2px solid rgba(200,168,75,.3);box-shadow:0 4px 20px rgba(0,0,0,.1);}
 .carte-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
-.carte-filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(245,239,224,.6);font-size:10.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;}
+.carte-filter-btn{padding:5px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(245,239,224,.75);font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;white-space:nowrap;}
 .carte-filter-btn.active{border-color:var(--gold);background:rgba(200,168,75,.15);color:var(--gold);}
 /* Recap list */
 .recap-list{margin:20px 28px;display:flex;flex-direction:column;gap:0;}
@@ -629,7 +629,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <div class="inner">
   <h2 class="sec-title">Carte <em>Interactive</em></h2>
   <p class="sec-lead">Tous vos lieux depuis Supabase sur une carte Leaflet — filtrez par région d'un clic.</p>
-  <div class="carte-filters" id="carte-filter-btns">
+  <div class="carte-filters" id="carte-filter-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
     <button class="carte-filter-btn active" data-region="all" onclick="carteFilter('all',this)">🌍 Tout</button>
     <button class="carte-filter-btn" data-region="Alsace" onclick="carteFilter('Alsace',this)">🥨 Alsace</button>
     <button class="carte-filter-btn" data-region="Aquitaine" onclick="carteFilter('Aquitaine',this)">🍷 Aquitaine</button>
@@ -799,6 +799,12 @@ sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.
 // ── FICHES DYNAMIQUES SUPABASE v21 ───────────────────────────────────────
 // Régions désormais toutes dynamiques (Alsace + Pyrénées + Atlantique + Bourgogne)
 const ALL_SUPABASE_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
+// Alias : rk normalisé → id de section HTML
+const REGION_ALIASES = {
+  'midipyrenees':'pyrenees','aquitaine':'atlantique',
+  'bourgognefranchecomte':'bourgogne','alsacelorraine':'alsace','lorraine':'alsace'
+};
+function resolveRegionTab(rk){ return REGION_ALIASES[rk] || (ALL_SUPABASE_REGIONS.includes(rk)?rk:null); }
 let allLieux = []; // cache global
 let regionLoaded = {}; // lazy load tracker
 let carteMap = null, ficheMap = null;
@@ -847,11 +853,12 @@ async function loadDynamicFiches(){
       const lieux=byRegion[rk];
       const regionName=lieux[0].region||'Autre';
 
-      if(ALL_SUPABASE_REGIONS.includes(rk)){
+      const tabRk = resolveRegionTab(rk);
+      if(tabRk){
         // Région standard : peupler le content div
-        populateRegionContent(rk, regionName, lieux);
+        populateRegionContent(tabRk, regionName, lieux);
         // Construire liste récap + carte région
-        buildRecapView(rk, regionName, lieux);
+        buildRecapView(tabRk, regionName, lieux);
       } else {
         // Région dynamique inconnue : créer tab
         let tabId='tab-dyn-'+rk;
@@ -1080,8 +1087,13 @@ function updateCarteInfoPanel(l){
 
   panel.innerHTML=`<div class="cip-active">
     <div class="cip-main">
-      ${l.photo_url?`<div style="height:80px;border-radius:8px;margin-bottom:10px;${photoBg};"></div>`:''}
-      <div class="cip-name">${l.nom||'—'}</div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        ${l.photo_url?`<div style="width:100px;height:80px;border-radius:8px;flex-shrink:0;${photoBg};background-size:cover;background-position:center;"></div>`:''}
+        <div style="flex:1;">
+          <div class="cip-name">${l.nom||'—'}</div>
+          <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||''} · ${l.region||''}</div>
+        </div>
+      </div>
       <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||l.region||''} · ${l.region||''}</div>
       <div class="cip-row">${noteG}${noteF}${distHtml}</div>
       ${l.dog_info?`<div style="font-size:10px;color:#2C5016;background:#f0faf0;border-left:2px solid #2C5016;padding:4px 8px;border-radius:0 5px 5px 0;margin-top:8px;font-style:italic;">${l.dog_info.slice(0,100)}</div>`:''}
