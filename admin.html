@@ -878,11 +878,11 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
       fillField('dogInfo', finalDogInfo);
     }
     // Badge dans le résumé import
-    const b=document.getElementById('ir-badges');
+    const badgesEl=document.getElementById('ir-badges');
     if(autoDog==='yes'){
-      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog Friendly détecté</span>`;
+      if(badgesEl) badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog Friendly détecté</span>`;
     } else if(autoDog==='no'){
-      if(b) b.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non admis détecté</span>`;
+      if(badgesEl) badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non admis détecté</span>`;
     }
 
     // ── Horaires ─────────────────────────────────────────────────────────────
