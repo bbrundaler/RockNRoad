@@ -330,29 +330,60 @@ function showEmpty(show){
 function renderPanel(){
   const list=document.getElementById('stops-list');
   if(!voyageLieux.length){
+    list.innerHTML='';
     showEmpty(true);
     document.getElementById('totalDist').textContent='— km';
     document.getElementById('totalStops').textContent='0';
     return;
   }
   showEmpty(false);
-  list.innerHTML=voyageLieux.map((l,i)=>`
-    <div class="stop-item" draggable="true" data-idx="${i}"
-         ondragstart="dragStart(event,${i})"
-         ondragover="dragOver(event)"
-         ondrop="dragDrop(event,${i})">
+
+  // Vider et reconstruire avec createElement (pas d'events inline = pas de conflits)
+  list.innerHTML='';
+  voyageLieux.forEach((l,i)=>{
+    const item=document.createElement('div');
+    item.className='stop-item';
+    item.draggable=true;
+    item.dataset.idx=i;
+
+    const distHtml=i>0&&voyageLieux[i-1].lat&&l.lat
+      ?`<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat,voyageLieux[i-1].lng,l.lat,l.lng)} km</div>`:'';
+
+    item.innerHTML=`
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
         <div class="stop-name">${l.nom||'—'}</div>
         <div class="stop-region">${l.region||l.sous_region||''} ${l.type?'· '+l.type:''}</div>
-        ${i>0&&voyageLieux[i-1].lat&&l.lat?
-          `<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat,voyageLieux[i-1].lng,l.lat,l.lng)} km</div>`:''}
+        ${distHtml}
       </div>
-      <button class="stop-remove" onclick="removeStop(${i})">✕</button>
-    </div>
-  `).join('');
+      <button class="stop-remove" type="button">✕</button>
+    `;
 
+    // Events via addEventListener — isolés, pas de propagation parasite
+    const removeBtn=item.querySelector('.stop-remove');
+    removeBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      removeStop(i);
+    });
+
+    item.addEventListener('dragstart', function(e){ draggedIdx=i; item.classList.add('dragging'); });
+    item.addEventListener('dragover',  function(e){ e.preventDefault(); });
+    item.addEventListener('drop',      function(e){
+      e.preventDefault();
+      document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
+      if(draggedIdx===null||draggedIdx===i) return;
+      const moved=voyageLieux.splice(draggedIdx,1)[0];
+      voyageLieux.splice(i,0,moved);
+      save();
+      renderPanel(); renderMap();
+    });
+
+    list.appendChild(item);
+  });
+
+  // Totaux
   let total=0;
   for(let i=1;i<voyageLieux.length;i++){
     const a=voyageLieux[i-1],b=voyageLieux[i];
@@ -360,6 +391,11 @@ function renderPanel(){
   }
   document.getElementById('totalDist').textContent=total>0?Math.round(total)+' km':'— km';
   document.getElementById('totalStops').textContent=voyageLieux.length;
+}
+
+function save(){
+  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
+  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
 }
 
 // ── Carte ─────────────────────────────────────────────────────────────────────
@@ -412,48 +448,23 @@ function fitAll(){
 // ── Actions ───────────────────────────────────────────────────────────────────
 function removeStop(idx){
   voyageLieux.splice(idx, 1);
-  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
-  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
-  // Toujours nettoyer la carte d'abord
+  save();
   if(routeLayer) routeLayer.clearLayers();
-  markers = [];
-  if(!voyageLieux.length){
-    showEmpty(true);
-    document.getElementById('stops-list').innerHTML = '';
-    document.getElementById('totalDist').textContent = '— km';
-    document.getElementById('totalStops').textContent = '0';
-  } else {
-    renderPanel();
-    renderMap();
-  }
+  markers=[];
+  renderPanel();
+  if(voyageLieux.length) renderMap();
 }
 
 function clearAll(){
   if(!confirm('Effacer tout le voyage ?')) return;
   voyageLieux=[];
-  localStorage.setItem('rr_voyage_full','[]');
-  localStorage.setItem('rr_voyage','[]');
+  save();
   if(routeLayer) routeLayer.clearLayers();
   markers=[];
-  document.getElementById('stops-list').innerHTML = '';
-  document.getElementById('totalDist').textContent = '— km';
-  document.getElementById('totalStops').textContent = '0';
-  showEmpty(true);
+  renderPanel();
 }
 
-// ── Drag & Drop ───────────────────────────────────────────────────────────────
-function dragStart(e,idx){draggedIdx=idx;e.target.classList.add('dragging');}
-function dragOver(e){e.preventDefault();}
-function dragDrop(e,targetIdx){
-  e.preventDefault();
-  document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
-  if(draggedIdx===targetIdx) return;
-  const item=voyageLieux.splice(draggedIdx,1)[0];
-  voyageLieux.splice(targetIdx,0,item);
-  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
-  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
-  renderPanel(); renderMap();
-}
+// ── Drag & Drop — géré dans renderPanel via addEventListener ────────────────
 
 // ── Haversine ─────────────────────────────────────────────────────────────────
 function calcDist(lat1,lng1,lat2,lng2){
