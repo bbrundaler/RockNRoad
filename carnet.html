@@ -246,6 +246,31 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 .em-btn-del:hover{background:rgba(200,50,0,.15);}
 
+/* FILTRES VOTES RAPIDES */
+.vote-filters{display:flex;gap:6px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.vote-filter-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;
+  border:1.5px solid #e0d8cc;background:white;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;color:#888;}
+.vote-filter-btn:hover{border-color:var(--gold);color:#7a5c10;}
+.vote-filter-btn.active-love{background:rgba(220,60,100,.1);border-color:rgba(220,60,100,.4);color:#dc3c64;}
+.vote-filter-btn.active-top{background:rgba(200,168,75,.15);border-color:var(--gold);color:#7a5c10;}
+.vote-filter-btn.active-save{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);color:#2850a0;}
+.vote-filter-btn.active-all{background:var(--dark);border-color:var(--dark);color:var(--gold);}
+.vote-filter-count{font-size:9px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:8px;}
+
+/* HORAIRES */
+.card-horaires{font-size:10px;color:#888;margin-top:4px;line-height:1.5;}
+.card-horaires .ouvert{color:#2C5016;font-weight:700;}
+.card-horaires .ferme{color:#cc4400;font-weight:700;}
+
+/* MULTI-PHOTOS */
+.photo-gallery{display:flex;gap:3px;height:180px;overflow:hidden;border-radius:var(--r) var(--r) 0 0;position:relative;}
+.photo-gallery .photo-main{flex:1;background-size:cover!important;background-position:center!important;min-width:0;}
+.photo-gallery .photo-thumbs{display:flex;flex-direction:column;gap:3px;width:72px;flex-shrink:0;}
+.photo-gallery .photo-thumb{flex:1;background-size:cover!important;background-position:center!important;cursor:pointer;transition:opacity .2s;}
+.photo-gallery .photo-thumb:hover{opacity:.85;}
+.photo-gallery .photo-more{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:9px;font-weight:700;padding:3px 7px;border-radius:10px;}
+
 /* SYSTÈME DE VOTE FAMILIAL */
 .vote-bar{display:flex;gap:4px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);}
 .vote-btn{display:flex;align-items:center;gap:3px;padding:4px 9px;border-radius:20px;border:1.5px solid transparent;
@@ -1016,6 +1041,33 @@ function resolveRegionTab(rk){
 let allLieux = []; // cache global
 // Votes stockés en localStorage : {lieu_id: {love:bool, top:bool, save:bool}}
 let votesData = JSON.parse(localStorage.getItem('rnr_votes') || '{}');
+let activeVoteFilter = null; // null=tous, 'love', 'top', 'save'
+
+function getVoteCount(type) {
+  return Object.values(votesData).filter(v=>v[type]).length;
+}
+
+function setVoteFilter(type, btn) {
+  // Toggle
+  if(activeVoteFilter === type) { activeVoteFilter = null; }
+  else { activeVoteFilter = type; }
+  // Mettre à jour les boutons
+  document.querySelectorAll('.vote-filter-btn').forEach(b=>b.className='vote-filter-btn');
+  if(activeVoteFilter) {
+    const map = {love:'active-love',top:'active-top',save:'active-save'};
+    if(btn) btn.className = 'vote-filter-btn '+map[activeVoteFilter];
+  }
+  // Rafraîchir l'affichage
+  loadDynamicFiches();
+}
+
+function applyVoteFilter(lieux) {
+  if(!activeVoteFilter) return lieux;
+  return lieux.filter(l => {
+    const v = votesData[l.id];
+    return v && v[activeVoteFilter];
+  });
+}
 
 function getVotes(lieuId){
   return votesData[lieuId] || {love:false, top:false, save:false};
@@ -1200,18 +1252,57 @@ function populateRegionContent(rk, regionName, lieux){
   const contentEl = document.getElementById(rk+'-content');
   if(!contentEl) return;
 
+  // ── Appliquer le filtre vote actif
+  const lieuxFiltres = applyVoteFilter(lieux);
+
   // ── MONDE 2 : Nuit = monde_nuit explicite OU type Camping/Halte (legacy)
   const TYPES_NUIT = ['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
-  const nuits     = lieux.filter(l => l.monde_nuit || TYPES_NUIT.includes(l.type));
+  const nuits     = lieuxFiltres.filter(l => l.monde_nuit || TYPES_NUIT.includes(l.type));
   // ── MONDE 1 : Activités = tout le reste
-  const activites = lieux.filter(l => !l.monde_nuit && !TYPES_NUIT.includes(l.type));
+  const activites = lieuxFiltres.filter(l => !l.monde_nuit && !TYPES_NUIT.includes(l.type));
+
+  // Compter pour les badges filtres
+  const loveCount = lieux.filter(l=>votesData[l.id]?.love).length;
+  const topCount  = lieux.filter(l=>votesData[l.id]?.top).length;
+  const saveCount = lieux.filter(l=>votesData[l.id]?.save).length;
 
   // Sous-groupes Activités
   const sites      = activites.filter(l=>['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation'].includes(l.type)||!l.type);
   const restaurants= activites.filter(l=>['Restaurant','Brasserie'].includes(l.type));
   const autres     = activites.filter(l=>!['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation','Camping','Halte','Restaurant','Brasserie'].includes(l.type)&&l.type);
 
+  // Barre de filtres votes (si au moins 1 vote dans cette région)
+  const hasVotes = loveCount>0||topCount>0||saveCount>0;
   let html = '';
+  if(hasVotes) {
+    html += `<div class="vote-filters">
+      <span style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:1px;text-transform:uppercase;">Filtrer :</span>
+      <button class="vote-filter-btn ${activeVoteFilter==='love'?'active-love':''}"
+        onclick="setVoteFilter('love',this)">
+        ❤️ J'adore <span class="vote-filter-count">${loveCount}</span>
+      </button>
+      <button class="vote-filter-btn ${activeVoteFilter==='top'?'active-top':''}"
+        onclick="setVoteFilter('top',this)">
+        👍 À faire <span class="vote-filter-count">${topCount}</span>
+      </button>
+      <button class="vote-filter-btn ${activeVoteFilter==='save'?'active-save':''}"
+        onclick="setVoteFilter('save',this)">
+        📌 Retenu <span class="vote-filter-count">${saveCount}</span>
+      </button>
+      ${activeVoteFilter?`<button class="vote-filter-btn active-all" onclick="setVoteFilter(null,null)">✕ Tout voir</button>`:''}
+    </div>`;
+  }
+
+  // Message si filtre actif mais aucun résultat
+  if(activeVoteFilter && lieuxFiltres.length===0) {
+    const labels={love:"❤️ J'adore",top:"👍 À faire",save:"📌 Retenu"};
+    html += `<div style="text-align:center;padding:32px 20px;color:#aaa;">
+      <div style="font-size:36px;margin-bottom:10px;">${activeVoteFilter==='love'?'❤️':activeVoteFilter==='top'?'👍':'📌'}</div>
+      <p style="font-size:13px;color:#888;">Aucun lieu marqué <strong>${labels[activeVoteFilter]}</strong> dans cette région.</p>
+      <button onclick="setVoteFilter(null,null)" style="margin-top:12px;padding:8px 18px;background:var(--dark);color:var(--gold);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Voir tous les lieux</button>
+    </div>`;
+    contentEl.innerHTML=html; return;
+  }
 
   // ── BLOC ACTIVITÉS ──
   if(activites.length){
@@ -1717,6 +1808,7 @@ function makeDynCard(l, cardType){
       <h3 class="site-name">${l.nom||'—'}</h3>
       ${l.commentaire?`<div style="font-size:10px;color:#888;font-style:italic;border-left:2px solid rgba(200,168,75,.3);padding-left:6px;margin-bottom:5px;line-height:1.4;">${l.commentaire.slice(0,80)}${l.commentaire.length>80?'...':''}</div>`:''}
       ${l.description?`<p class="site-desc">${l.description}</p>`:''}
+      ${horairesHtml}
       ${dogInfoHtml}
       ${l.conseil?`<div class="conseil-box">💡 ${l.conseil}</div>`:''}
       ${tags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;">${tags}</div>`:''}
@@ -1773,6 +1865,7 @@ function makeNuitCard(l){
       <h3 class="nuit-name">${l.nom||'—'}</h3>
       <div class="nuit-sous-region">${l.adresse||l.sous_region||''}</div>
       ${l.description?`<p class="nuit-desc">${l.description}</p>`:''}
+      ${l.horaires_text?`<div class="card-horaires" style="color:rgba(200,168,75,.6);">${l.ouvert_maintenant===true?'<span style="color:#7dd87d;font-weight:700;">● Ouvert</span>':l.ouvert_maintenant===false?'<span style="color:#f08070;font-weight:700;">● Fermé</span>':''} ${l.horaires_text.split('|')[0]||''}</div>`:''}
       ${l.commentaire?`<div class="nuit-notes">${l.commentaire.slice(0,100)}${l.commentaire.length>100?'...':''}</div>`:''}
       ${amenities?`<div class="nuit-amenities">${amenities}</div>`:''}
       ${l.conseil?`<div class="nuit-notes" style="color:rgba(200,168,75,.7);">💡 ${l.conseil.slice(0,80)}</div>`:''}

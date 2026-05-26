@@ -609,6 +609,9 @@ const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
 let mondeNuitVal=false;
+  window._horairesText=null;
+  window._ouvertMaintenant=null;
+  window._photosUrls=null;
 let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
 
@@ -1342,7 +1345,14 @@ function deptToRegion(sousRegionText){
       const jours=p.opening_hours.weekday_text.slice(0,4).join(' · ');
       horaireEl.innerHTML='🕐 '+jours;
       horaireEl.style.display='block';
-    } else {horaireEl.innerHTML='';horaireEl.style.display='none';}
+      // Stocker pour l'insert Supabase
+      window._horairesText = p.opening_hours.weekday_text.join('|');
+      window._ouvertMaintenant = p.opening_hours.open_now!==undefined ? p.opening_hours.open_now : null;
+    } else {
+      horaireEl.innerHTML='';horaireEl.style.display='none';
+      window._horairesText = null;
+      window._ouvertMaintenant = null;
+    }
 
     // ── Photos Google ─────────────────────────────────────────────────────────
     const photos=p.photos||[];
@@ -1673,6 +1683,9 @@ async function saveFiche(){
       tel:document.getElementById('tel').value||null,
       site_web:document.getElementById('siteWeb').value||null,
       gmaps_url:document.getElementById('gmapsUrl').value||null,
+      horaires_text:window._horairesText||null,
+      ouvert_maintenant:window._ouvertMaintenant||null,
+      photos_urls:window._photosUrls||null,
       cree_par:currentUser.email,
       annee:new Date().getFullYear(),
       groupe_id:currentGroupeId||null,
