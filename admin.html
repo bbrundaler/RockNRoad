@@ -627,19 +627,27 @@ function setMonde(isNuit){
 }
 
 async function checkAuth(){
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session){window.location.href='index.html';return;}
-  currentUser=session.user;
-  // Charger le profil groupe
-  await loadGroupeProfil(currentUser.id);
-  document.getElementById('auth-check').style.display='none';
-  document.getElementById('main').style.display='contents';
-  const name=session.user.email.split('@')[0];
-  const uname=document.getElementById('sb-username');
-  const uav=document.getElementById('sb-avatar');
-  if(uname)uname.textContent=name;
-  if(uav)uav.textContent=name.charAt(0).toUpperCase();
-  loadApiKey();
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){window.location.href='index.html';return;}
+    currentUser=session.user;
+    // Afficher l'app IMMÉDIATEMENT — ne jamais bloquer sur des appels secondaires
+    document.getElementById('auth-check').style.display='none';
+    document.getElementById('main').style.display='contents';
+    const name=session.user.email.split('@')[0];
+    const uname=document.getElementById('sb-username');
+    const uav=document.getElementById('sb-avatar');
+    if(uname)uname.textContent=name;
+    if(uav)uav.textContent=name.charAt(0).toUpperCase();
+    loadApiKey();
+    // Charger le profil groupe en arrière-plan (non bloquant)
+    loadGroupeProfil(currentUser.id).catch(e=>console.warn('Profil groupe:',e));
+  }catch(e){
+    console.error('checkAuth error:',e);
+    // En cas d'erreur inattendue, afficher quand même l'app
+    document.getElementById('auth-check').style.display='none';
+    document.getElementById('main').style.display='contents';
+  }
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
