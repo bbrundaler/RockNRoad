@@ -403,7 +403,7 @@ select.minput{appearance:auto;}
 <div class="toast" id="toast"></div>
 
 <script>
-const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
+const SURL='https://url.de.m.mimecastprotect.com/s/RgxGC83pj3hXYEMLSnfvUyiOZI?domain=cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
@@ -432,7 +432,7 @@ const REGIONS=[
   {id:'Pays de la Loire',label:'Pays de la Loire',col:'#1a6a6a',emoji:'🌊'},
   {id:'Picardie',label:'Picardie',col:'#5a5a2a',emoji:'🌾'},
   {id:'Poitou-Charentes',label:'Poitou-Charentes',col:'#6a4a1a',emoji:'🐚'},
-  {id:'Provence-Alpes-Côte-d-Azur',label:'Provence-Alpes-Côte d'Azur',col:'#8B4a00',emoji:'☀️'},
+  {id:'Provence-Alpes-Côte-d-Azur',label:'Provence-Alpes-Côte d\'Azur',col:'#8B4a00',emoji:'☀️'},
   {id:'Rhône-Alpes',label:'Rhône-Alpes',col:'#3a3a7a',emoji:'⛷️'},
 ];
 const RC={};REGIONS.forEach(r=>RC[r.id]=r.col);
@@ -550,8 +550,8 @@ function makeCard(l){
   const photoStyle=l.photo_url?`background-image:url('${l.photo_url}')`:`background:linear-gradient(135deg,${col}55,${col}22)`;
   const dogIcon=l.dog_friendly===true?'🐕':l.dog_friendly===false?'🚫':'❓';
   const regionData=REGIONS.find(r=>r.id===l.region);
-  const googleUrl=`https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}`;
-  const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
+  const googleUrl=`https://url.de.m.mimecastprotect.com/s/cNpRCywZVwh7LpWkfrivUxidnF?domain=google.com(l.nom||'')+' '+l.region)}`;
+  const mapsUrl=l.lat&&l.lng?`https://url.de.m.mimecastprotect.com/s/ctrsCw0XQ0ivy2Q9FBfVUJQsBA?domain=google.com`:`https://url.de.m.mimecastprotect.com/s/x5PmCx6YR6tLxz0wF3hVUy5TKV?domain=maps.google.com(l.nom||'')}`;
   return `<div class="card ${typeClass}" id="card-${l.id}">
     <div class="card-photo" style="${photoStyle}">
       <div class="card-type">${l.type||'—'}</div>
