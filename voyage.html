@@ -197,6 +197,7 @@ let voyage = [];
   document.getElementById('sb-avatar').textContent=e.charAt(0).toUpperCase();
   document.getElementById('sb-username').textContent=e.split('@')[0];
   initMap();
+  initListEvents();
   loadVoyage();
 })();
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
@@ -239,12 +240,57 @@ function render(){
   if(voyage.length) renderMap();
 }
 
+// ── Délégation d'événements — UN seul listener permanent sur le container ─────
+function initListEvents(){
+  const list = document.getElementById('stops-list');
+
+  // Bouton ✕ — délégation
+  list.addEventListener('click', function(e){
+    const btn = e.target.closest('.stop-remove');
+    if(!btn) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const uid = btn.closest('.stop-item')?.dataset.uid;
+    if(uid) removeByUid(uid);
+  });
+
+  // Drag & drop — délégation
+  list.addEventListener('dragstart', e=>{
+    const item = e.target.closest('.stop-item');
+    if(!item) return;
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain', item.dataset.uid||'');
+    item.style.opacity='0.4';
+  });
+  list.addEventListener('dragend', e=>{
+    const item = e.target.closest('.stop-item');
+    if(item) item.style.opacity='';
+  });
+  list.addEventListener('dragover', e=>{ e.preventDefault(); });
+  list.addEventListener('drop', e=>{
+    e.preventDefault();
+    const target = e.target.closest('.stop-item');
+    if(!target) return;
+    const fromUid = e.dataTransfer.getData('text/plain');
+    const toUid = target.dataset.uid;
+    if(!fromUid||!toUid||fromUid===toUid) return;
+    const fi = voyage.findIndex(v=>v.uid===fromUid);
+    const ti = voyage.findIndex(v=>v.uid===toUid);
+    if(fi<0||ti<0) return;
+    const moved = voyage.splice(fi,1)[0];
+    voyage.splice(ti,0,moved);
+    saveVoyage();
+    render();
+  });
+}
+
 function renderList(){
   const list = document.getElementById('stops-list');
   const empty = document.getElementById('emptyVoyage');
 
   if(!voyage.length){
-    list.innerHTML='';
+    // Vider uniquement les stop-items, pas l'empty
+    list.querySelectorAll('.stop-item').forEach(el=>el.remove());
     list.appendChild(empty);
     empty.style.display='flex';
     document.getElementById('totalDist').textContent='— km';
@@ -252,20 +298,21 @@ function renderList(){
     return;
   }
 
-  // Vider sans supprimer le noeud emptyVoyage
-  list.innerHTML='';
+  // Vider uniquement les stop-items
+  list.querySelectorAll('.stop-item').forEach(el=>el.remove());
   empty.style.display='none';
 
   voyage.forEach((item, i)=>{
     const dist = i>0 && voyage[i-1].lat && item.lat
       ? calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng)
       : null;
+    const distHtml = dist ? `<div class="stop-dist">↑ ${dist} km</div>` : '';
 
     const row = document.createElement('div');
     row.className='stop-item';
     row.draggable=true;
+    row.dataset.uid = item.uid; // ← uid dans le DOM, pas dans un listener
 
-    const distHtml = dist ? `<div class="stop-dist">↑ ${dist} km</div>` : '';
     row.innerHTML=`
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
@@ -276,36 +323,6 @@ function renderList(){
       </div>
       <button class="stop-remove" title="Retirer">✕</button>
     `;
-
-    // ✅ Capturer uid dans une const locale — pas d'index, pas de closure sur i
-    const uid = item.uid;
-    row.querySelector('.stop-remove').addEventListener('click', function(e){
-      e.stopPropagation();
-      e.preventDefault();
-      removeByUid(uid);
-    });
-
-    // Drag & drop
-    row.addEventListener('dragstart', e=>{
-      e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain', uid);
-      row.style.opacity='0.4';
-    });
-    row.addEventListener('dragend', ()=>{ row.style.opacity=''; });
-    row.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; });
-    row.addEventListener('drop', e=>{
-      e.preventDefault();
-      const fromUid = e.dataTransfer.getData('text/plain');
-      if(fromUid===uid) return;
-      const fi = voyage.findIndex(v=>v.uid===fromUid);
-      const ti = voyage.findIndex(v=>v.uid===uid);
-      if(fi<0||ti<0) return;
-      const moved = voyage.splice(fi,1)[0];
-      voyage.splice(ti,0,moved);
-      saveVoyage();
-      render();
-    });
-
     list.appendChild(row);
   });
 
