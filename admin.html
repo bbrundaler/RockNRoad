@@ -259,6 +259,11 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   <p class="page-sub">Colle une URL Google Maps — tout se remplit automatiquement 🪄</p>
 
   <!-- IMPORT -->
+  <!-- BANNER LIMITE IMPORT -->
+  <div id="import-limit-banner" style="display:none;align-items:center;gap:10px;padding:12px 16px;
+    margin-bottom:16px;border-radius:10px;background:rgba(200,50,0,.08);border:1px solid rgba(200,50,0,.2);
+    color:#cc3300;font-size:12px;line-height:1.5;font-family:'Inter',sans-serif;"></div>
+
   <div class="import-card" id="importCard">
     <div class="import-label"><span>1</span> Import automatique Google Maps</div>
     <div class="import-input-row">
@@ -643,10 +648,80 @@ checkAuth();
 async function loadGroupeProfil(userId) {
   try {
     const cached = sessionStorage.getItem('rnr_groupe');
-    if (cached) { currentGroupeId = JSON.parse(cached).id; return; }
-    const {data:membre} = await sb.from('membres').select('groupe_id').eq('user_id',userId).single();
-    if (membre) { currentGroupeId = membre.groupe_id; }
+    if (cached) {
+      const g = JSON.parse(cached);
+      currentGroupeId = g.id;
+      await checkImportLimit();
+      return;
+    }
+    const {data:membre} = await sb.from('membres').select('groupe_id, groupes(*)').eq('user_id',userId).single();
+    if (membre) {
+      currentGroupeId = membre.groupe_id;
+      if (membre.groupes) sessionStorage.setItem('rnr_groupe', JSON.stringify(membre.groupes));
+      await checkImportLimit();
+    }
   } catch(e) { console.warn('Groupe non chargé', e); }
+}
+
+// ── Sécurité : compteur imports Google par groupe ─────────────────────────────
+const IMPORT_LIMIT_ESSAI = 30;
+let currentImportCount = 0;
+let importLimitReached = false;
+
+async function checkImportLimit() {
+  if (!currentGroupeId) return;
+  try {
+    const { count } = await sb.from('lieux')
+      .select('id', { count: 'exact', head: true })
+      .eq('groupe_id', currentGroupeId);
+    currentImportCount = count || 0;
+    importLimitReached = currentImportCount >= IMPORT_LIMIT_ESSAI;
+    updateImportLimitUI();
+  } catch(e) { console.warn('Compteur imports non chargé', e); }
+}
+
+function updateImportLimitUI() {
+  const banner = document.getElementById('import-limit-banner');
+  const importBtn = document.getElementById('importBtn');
+  if (!banner) return;
+  if (importLimitReached) {
+    banner.style.display = 'flex';
+    banner.innerHTML = `⚠️ <strong>Limite d'essai atteinte</strong> — ${currentImportCount}/${IMPORT_LIMIT_ESSAI} fiches. L'import automatique Google Places est désactivé. Vous pouvez encore créer des fiches manuellement.`;
+    if (importBtn) { importBtn.disabled = true; importBtn.style.opacity = '0.5'; }
+  } else {
+    banner.style.display = currentImportCount >= IMPORT_LIMIT_ESSAI * 0.8 ? 'flex' : 'none';
+    if (banner.style.display === 'flex') {
+      banner.innerHTML = `💡 ${currentImportCount}/${IMPORT_LIMIT_ESSAI} fiches importées — il vous reste ${IMPORT_LIMIT_ESSAI - currentImportCount} imports Google automatiques en essai gratuit.`;
+      banner.style.background = 'rgba(200,168,75,.1)';
+      banner.style.borderColor = 'rgba(200,168,75,.3)';
+      banner.style.color = '#7a5c10';
+    }
+  }
+}
+
+// ── Cache anti-doublon : vérifier si un lieu existe déjà en base ──────────────
+async function checkLieuInCache(nom, lat, lng) {
+  if (!currentGroupeId || !nom) return null;
+  try {
+    // Chercher par nom exact dans le groupe
+    const { data } = await sb.from('lieux')
+      .select('id, nom, lat, lng')
+      .eq('groupe_id', currentGroupeId)
+      .ilike('nom', nom.trim())
+      .limit(1);
+    if (data && data.length > 0) return data[0];
+    // Chercher par coordonnées proches (rayon ~50m)
+    if (lat && lng) {
+      const { data: nearby } = await sb.from('lieux')
+        .select('id, nom, lat, lng')
+        .eq('groupe_id', currentGroupeId)
+        .gte('lat', lat - 0.0005).lte('lat', lat + 0.0005)
+        .gte('lng', lng - 0.0005).lte('lng', lng + 0.0005)
+        .limit(1);
+      if (nearby && nearby.length > 0) return nearby[0];
+    }
+    return null;
+  } catch(e) { return null; }
 }
 
 function loadApiKey(){
@@ -673,6 +748,13 @@ function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
 async function importFromMaps(){
   const url=document.getElementById('gmapsUrl').value.trim();
   if(!url){showToast('Colle une URL ou tape un nom de lieu','error');return;}
+
+  // ── Sécurité 1 : vérifier la limite d'imports ─────────────────────────────
+  if(importLimitReached){
+    showToast('⚠️ Limite de '+IMPORT_LIMIT_ESSAI+' fiches atteinte — import Google désactivé en essai gratuit','error');
+    return;
+  }
+
   const btn=document.getElementById('importBtn');
   const icon=document.getElementById('importBtnIcon');
   btn.disabled=true;icon.textContent='⏳';
@@ -788,6 +870,16 @@ async function importFromMaps(){
 
     // ── URL standard avec nom ou coords ─────────────────────────────────────
     if(apiKey&&(coords||nameFromUrl)){
+      // ── Sécurité 2 : vérifier le cache avant d'appeler Google ──────────────
+      const nomChamp = document.getElementById('nom').value.trim();
+      if(nomChamp) {
+        const existing = await checkLieuInCache(nomChamp, coords?.lat, coords?.lng);
+        if(existing) {
+          showToast('⚠️ Ce lieu existe déjà dans votre carnet : "'+existing.nom+'"','error');
+          btn.disabled=false; icon.textContent='🔍';
+          return;
+        }
+      }
       showToast('📡 Connexion Google Places...','info');
       const ok=await fetchFromPlacesApiProxy(coords,apiKey,url);
       if(ok){showImportResult();icon.textContent='✅';showToast('✅ Import complet — note, photos, horaires !','success');
@@ -855,6 +947,23 @@ function extractPlaceIdFromUrl(url){
 }
 
 // Appel Places API direct (sans proxy) — fonctionne car l'API autorise les requêtes cross-origin côté client
+// ── Graceful degradation — vérifier si API disponible ───────────────────────
+let googleApiAvailable = true;
+
+function handleApiShutdown() {
+  googleApiAvailable = false;
+  const banner = document.getElementById('import-limit-banner');
+  if(banner) {
+    banner.style.display = 'flex';
+    banner.style.background = 'rgba(200,50,0,.08)';
+    banner.style.borderColor = 'rgba(200,50,0,.2)';
+    banner.style.color = '#cc3300';
+    banner.innerHTML = '🔴 <strong>Recherche automatique indisponible</strong> — Le service Google Places est temporairement hors ligne. La création manuelle de fiches reste entièrement disponible.';
+  }
+  const importBtn = document.getElementById('importBtn');
+  if(importBtn) { importBtn.disabled = true; importBtn.style.opacity = '0.5'; }
+}
+
 async function callPlacesApi(endpoint, params, apiKey){
   const base='https://maps.googleapis.com/maps/api/place/'+endpoint+'/json?';
   const qs=new URLSearchParams({...params, key:apiKey, language:'fr'}).toString();
@@ -875,7 +984,11 @@ async function callPlacesApi(endpoint, params, apiKey){
       try{d=JSON.parse(raw);}catch{continue;}
       if(d.contents){try{d=JSON.parse(d.contents);}catch{continue;}}
       if(d.error_message){console.warn('Google API error:',d.error_message,d.status);break;}
-      if(d.status==='REQUEST_DENIED'){console.warn('Clé API refusée');break;}
+      if(d.status==='REQUEST_DENIED'||d.status==='OVER_QUERY_LIMIT'){
+        handleApiShutdown();
+        console.warn('Google API indisponible:',d.status);
+        break;
+      }
       if(d && (d.result||d.candidates||d.results)) return d;
     }catch(e){console.warn('Proxy failed:',e.message);continue;}
   }
@@ -1564,6 +1677,9 @@ async function saveFiche(){
     showConfirmation(nom, region, type);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
+    // Incrémenter le compteur local
+    currentImportCount++;
+    if(currentImportCount >= IMPORT_LIMIT_ESSAI){ importLimitReached=true; updateImportLimitUI(); }
     btn.disabled=false;btn.textContent='✨ Enregistrer la fiche';
   }
 }
