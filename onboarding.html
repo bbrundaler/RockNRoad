@@ -3,150 +3,285 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RockNRoad · Bienvenue</title>
+<title>RockNRoad · Mon Profil Groupe</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#161410;--creme:#F5EFE0;--green:#2C5016;}
-body{font-family:'Inter',sans-serif;min-height:100vh;
-  background:linear-gradient(160deg,#0a1a0c 0%,#1a3a10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
-  display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow-x:hidden;}
+:root{--sb:215px;--gold:#C8A84B;--dark:#161410;--creme:#F5EFE0;--green:#2C5016;}
+body{font-family:'Inter',sans-serif;background:var(--creme);min-height:100vh;display:flex;}
 
-/* Step indicator */
-.steps{display:flex;align-items:center;gap:0;margin-bottom:32px;justify-content:center;}
-.step-dot{width:28px;height:28px;border-radius:50%;border:2px solid rgba(200,168,75,.4);
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
-  color:rgba(200,168,75,.5);transition:all .3s;flex-shrink:0;}
-.step-dot.active{border-color:var(--gold);background:var(--gold);color:#1a1208;}
-.step-dot.done{border-color:var(--gold);background:rgba(200,168,75,.2);color:var(--gold);}
-.step-line{width:40px;height:2px;background:rgba(200,168,75,.2);}
-.step-line.done{background:var(--gold);}
+/* ── AUTH ── */
+#auth-check{position:fixed;inset:0;z-index:9999;background:var(--dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
+#auth-check h2{font-family:'Playfair Display',serif;font-size:24px;margin:14px 0 4px;}
+.spinner{width:32px;height:32px;border:3px solid rgba(200,168,75,.3);border-top-color:var(--gold);
+  border-radius:50%;animation:spin 1s linear infinite;margin:16px auto 0;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.card{position:relative;z-index:10;background:rgba(245,239,224,.97);
-  border-radius:20px;padding:44px 40px;width:100%;max-width:520px;
-  box-shadow:0 24px 60px rgba(0,0,0,.35);border:1px solid rgba(200,168,75,.3);}
+/* ── SIDEBAR ── */
+#sidebar{width:var(--sb);min-height:100vh;background:var(--dark);border-right:1px solid rgba(200,168,75,.1);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
+#sidebar::-webkit-scrollbar{display:none;}
+.sb-logo{padding:20px 16px 14px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;cursor:pointer;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
+.sb-logo-title span{color:var(--gold);}
+.sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
+.sb-group{padding:10px 8px 3px;flex-shrink:0;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
+.sb-sep{height:1px;background:rgba(200,168,75,.07);margin:6px 12px;}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;
+  color:rgba(255,255,255,.82);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+  border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;}
+.sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(255,255,255,.97);}
+.sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-dot-gold{background:var(--gold);}
+.sb-dot-grey{background:rgba(255,255,255,.2);}
+.sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;
+  background:rgba(255,255,255,.03);margin-bottom:5px;}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.sb-user-info{flex:1;min-width:0;}
+.sb-user-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-user-role{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);
+  color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;
+  border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
 
-.card-header{text-align:center;margin-bottom:32px;}
-.card-icon{font-size:44px;display:block;margin-bottom:12px;}
-.card-title{font-family:'Playfair Display',serif;font-size:26px;color:#1a1208;margin-bottom:6px;}
-.card-title em{color:var(--gold);font-style:italic;}
-.card-sub{font-size:13px;color:#888;line-height:1.6;}
+/* ── MAIN ── */
+#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;display:flex;flex-direction:column;}
+#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);
+  padding:0 28px;height:46px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
+.top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
 
-.step-panel{display:none;}
-.step-panel.active{display:block;}
+.inner{max-width:760px;margin:0 auto;padding:36px 32px 80px;width:100%;}
 
-.form-group{margin-bottom:20px;}
-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;
-  text-transform:uppercase;color:#666;margin-bottom:7px;}
-input,textarea{width:100%;padding:13px 16px;border:2px solid #E8DECE;border-radius:9px;
-  font-family:'Inter',sans-serif;font-size:14px;color:#1a1208;background:white;
-  transition:border-color .25s,box-shadow .25s;outline:none;}
-input:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.15);}
-input::placeholder,textarea::placeholder{color:#bbb;}
-textarea{resize:vertical;min-height:80px;font-size:13px;}
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:36px;}
+.page-title{font-family:'Playfair Display',serif;font-size:30px;color:#1a1208;margin-bottom:6px;}
+.page-title em{color:var(--gold);font-style:italic;}
+.page-sub{font-size:13px;color:#888;line-height:1.6;}
 
-/* Type voyages multiselect */
-.voyage-grid{display:flex;flex-wrap:wrap;gap:8px;}
-.vtype{padding:8px 14px;border:2px solid #E8DECE;border-radius:20px;
-  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
-  color:#888;background:white;user-select:none;}
-.vtype.on{border-color:var(--gold);background:rgba(200,168,75,.12);color:#7a5c10;}
+/* ── CARDS ── */
+.cfg-card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,.06);
+  margin-bottom:20px;border:1px solid rgba(0,0,0,.04);}
+.cfg-card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:#aaa;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0ece4;
+  display:flex;align-items:center;gap:8px;}
+.cfg-card-title span{font-size:16px;}
 
-/* Geocode status */
-.geo-status{font-size:11px;margin-top:6px;min-height:16px;padding-left:2px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.fg{display:flex;flex-direction:column;gap:6px;}
+.fg.full{grid-column:1/-1;}
+
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:#666;margin-bottom:0;}
+input[type=text],input[type=email],textarea,select{
+  width:100%;padding:12px 14px;border:2px solid #E8DECE;border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:13px;color:#1a1208;background:white;
+  transition:border-color .2s;outline:none;}
+input[type=text]:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.1);}
+textarea{resize:vertical;min-height:80px;}
+
+/* Géo status */
+.geo-status{font-size:11px;margin-top:4px;min-height:16px;}
 .geo-status.ok{color:var(--green);}
 .geo-status.err{color:#cc4400;}
 .geo-status.loading{color:#888;}
 
-/* Boutons */
-.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#1a1208,#3a2a18);
-  color:var(--gold);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;border:none;border-radius:9px;
-  cursor:pointer;transition:all .3s;margin-top:8px;}
-.btn-primary:hover{background:var(--gold);color:#1a1208;}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
-.btn-secondary{width:100%;padding:11px;background:transparent;color:#888;
-  font-family:'Inter',sans-serif;font-size:12px;border:1px solid #e0d8cc;
-  border-radius:9px;cursor:pointer;margin-top:8px;transition:all .2s;}
-.btn-secondary:hover{border-color:#c8b898;color:#555;}
+/* Types voyages */
+.voyage-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px;}
+.vtype{padding:7px 13px;border:2px solid #E8DECE;border-radius:20px;
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
+  color:#888;background:white;user-select:none;}
+.vtype.on{border-color:var(--gold);background:rgba(200,168,75,.1);color:#7a5c10;}
 
-/* Avatar upload */
-.avatar-zone{display:flex;align-items:center;gap:16px;margin-bottom:4px;}
-.avatar-preview{width:64px;height:64px;border-radius:50%;background:rgba(200,168,75,.15);
-  border:2px solid rgba(200,168,75,.3);display:flex;align-items:center;justify-content:center;
-  font-size:24px;flex-shrink:0;overflow:hidden;}
+/* Membres */
+.membres-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.membre-row{display:flex;gap:8px;align-items:center;}
+.membre-input{flex:1;padding:10px 12px;border:2px solid #E8DECE;border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:13px;color:#1a1208;outline:none;transition:border-color .2s;}
+.membre-input:focus{border-color:var(--gold);}
+.membre-del{width:32px;height:32px;background:none;border:1.5px solid #f0ece4;border-radius:7px;
+  cursor:pointer;color:#ccc;font-size:14px;transition:all .15s;flex-shrink:0;}
+.membre-del:hover{background:#fff0ee;border-color:#ffccc7;color:#cc4400;}
+.add-membre-btn{display:flex;align-items:center;gap:6px;padding:9px 14px;background:#faf7f0;
+  border:1.5px dashed #e0d8cc;border-radius:8px;font-size:12px;color:#888;cursor:pointer;
+  transition:all .2s;font-family:'Inter',sans-serif;font-weight:500;}
+.add-membre-btn:hover{border-color:var(--gold);color:#7a5c10;background:#fffbe8;}
+.membre-limit-note{font-size:10.5px;color:#bbb;margin-top:8px;font-style:italic;
+  background:#fafafa;border-radius:6px;padding:7px 10px;border:1px solid #f0ece4;}
+
+/* Avatar */
+.avatar-zone{display:flex;align-items:center;gap:16px;}
+.avatar-preview{width:64px;height:64px;border-radius:50%;background:rgba(200,168,75,.1);
+  border:2px solid rgba(200,168,75,.2);display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;overflow:hidden;}
 .avatar-preview img{width:100%;height:100%;object-fit:cover;}
-.avatar-upload-btn{flex:1;padding:10px 14px;background:#f5f0e8;border:1.5px dashed #c8b898;
+.avatar-upload{flex:1;padding:10px 14px;background:#faf7f0;border:1.5px dashed #c8b898;
   border-radius:9px;font-size:12px;color:#888;cursor:pointer;text-align:center;transition:all .2s;}
-.avatar-upload-btn:hover{border-color:var(--gold);color:#7a5c10;}
+.avatar-upload:hover{border-color:var(--gold);color:#7a5c10;}
 
-/* Résumé étape 3 */
-.summary{background:#faf7f0;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #e8e0d0;}
-.summary-row{display:flex;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid #f0e8d8;}
-.summary-row:last-child{border-bottom:none;}
-.summary-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-  color:#aaa;min-width:100px;padding-top:1px;}
-.summary-val{font-size:13px;color:#1a1208;font-weight:500;flex:1;}
-
-/* Spinner */
-.spinner{width:18px;height:18px;border:2px solid rgba(200,168,75,.3);
-  border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Save button */
+.save-btn{width:100%;padding:14px;background:var(--dark);color:var(--gold);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;border:none;border-radius:9px;cursor:pointer;transition:all .3s;}
+.save-btn:hover{background:var(--gold);color:var(--dark);}
+.save-btn:disabled{opacity:.5;cursor:not-allowed;}
 
 .error-msg{background:#fff0ee;border:1px solid #ffccc7;border-radius:8px;
   padding:11px 14px;font-size:12px;color:#cc3300;margin-top:12px;display:none;}
 .error-msg.show{display:block;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:9px;
+  font-size:13px;font-weight:600;z-index:1000;transform:translateY(80px);transition:transform .3s;}
+.toast.show{transform:translateY(0);}
+.toast.success{background:#2C5016;color:white;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.toast.error{background:#cc4400;color:white;}
+
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s;}
+  #sidebar.open{transform:translateX(0);}
+  #app-main{margin-left:0;width:100%;}
+  .form-grid{grid-template-columns:1fr;}
+  .inner{padding:24px 16px 60px;}
+}
 </style>
 </head>
 <body>
-<div class="card">
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step-dot active" id="sd1">1</div>
-    <div class="step-line" id="sl1"></div>
-    <div class="step-dot" id="sd2">2</div>
-    <div class="step-line" id="sl2"></div>
-    <div class="step-dot" id="sd3">3</div>
+<div id="auth-check">
+  <div style="font-size:44px;">🐾</div>
+  <h2>RockNRoad</h2>
+  <p style="font-size:11px;opacity:.5;letter-spacing:2px;">Chargement...</p>
+  <div class="spinner"></div>
+</div>
+
+<!-- ── SIDEBAR ── -->
+<div id="sidebar">
+  <div class="sb-logo" onclick="window.location.href='carnet.html'">
+    <div class="sb-logo-title">Rock<span>N</span>Road</div>
+    <div class="sb-logo-sub">Aventures</div>
+  </div>
+  <div class="sb-group" style="padding-bottom:2px;">
+    <a class="sb-btn" href="carnet.html">
+      <span class="sb-dot sb-dot-grey"></span>
+      <span>Accueil</span>
+    </a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Voyage</div>
+    <a class="sb-btn" href="carnet.html#alsace">
+      <span style="font-size:13px;">🇫🇷</span><span>Région France</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#allemagne">
+      <span style="font-size:13px;">🌍</span><span>Région Europe</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#nepal">
+      <span style="font-size:13px;">✈️</span><span>Monde</span>
+    </a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Outils</div>
+    <a class="sb-btn" href="carnet.html#carte">
+      <span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span>
+    </a>
+    <a class="sb-btn" href="voyage.html">
+      <span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#fiche">
+      <span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span>
+    </a>
+    <a class="sb-btn" href="carnet.html#tips">
+      <span class="sb-dot sb-dot-grey"></span><span>Conseils</span>
+    </a>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">
+    <div class="sb-group-label">Back-Office</div>
+    <a class="sb-btn" href="admin.html">
+      <span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span>
+    </a>
+    <a class="sb-btn active" href="onboarding.html">
+      <span class="sb-dot sb-dot-grey"></span><span>Mon profil groupe</span>
+    </a>
+    <a class="sb-btn" href="config.html">
+      <span style="font-size:11px;">⚙️</span><span>Config</span>
+    </a>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">B</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sb-username">Chargement...</div>
+        <div class="sb-user-role" id="sb-groupe-nom">Famille RockNRoad</div>
+      </div>
+    </div>
+    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
+  </div>
+</div>
+
+<!-- ── APP MAIN ── -->
+<div id="app-main">
+  <div id="top-bar">
+    <div class="top-bar-title">👥 Mon <em>Profil Groupe</em></div>
   </div>
 
-  <!-- ÉTAPE 1 — Nom & Adresse -->
-  <div class="step-panel active" id="step1">
-    <div class="card-header">
-      <span class="card-icon">🏡</span>
-      <h1 class="card-title">Bienvenue sur <em>RockNRoad</em></h1>
-      <p class="card-sub">Commençons par créer votre profil de groupe.<br>Tout sera personnalisé selon votre point de départ.</p>
+  <div class="inner">
+    <div class="page-header">
+      <h1 class="page-title">👥 Mon <em>Profil Groupe</em></h1>
+      <p class="page-sub">Toutes les informations de votre groupe — modifiables à tout moment.<br>Elles personnalisent l'ensemble de votre expérience RockNRoad.</p>
     </div>
 
-    <div class="form-group">
-      <label>Nom de votre groupe *</label>
-      <input type="text" id="g-nom" placeholder="ex: Famille Brundaler, Les Nomades, Duo Aventure…" maxlength="60">
+    <!-- Identité groupe -->
+    <div class="cfg-card">
+      <div class="cfg-card-title"><span>🏕️</span> Identité du groupe</div>
+      <div class="form-grid">
+        <div class="fg">
+          <label>Nom du groupe *</label>
+          <input type="text" id="g-nom" placeholder="ex: Famille Brundaler, Les Nomades…" maxlength="60">
+        </div>
+        <div class="fg">
+          <label>Photo du groupe</label>
+          <div class="avatar-zone">
+            <div class="avatar-preview" id="avatar-preview">🏕️</div>
+            <label class="avatar-upload" for="avatar-file">📷 Choisir une photo</label>
+            <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+          </div>
+        </div>
+        <div class="fg full">
+          <label>Description <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb;">(optionnel — visible sur la homepage publique si activée)</span></label>
+          <textarea id="g-description" placeholder="Quelques mots sur votre groupe, vos voyages préférés, ce qui vous fait partir…"></textarea>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Adresse de départ *</label>
-      <input type="text" id="g-adresse" placeholder="ex: Avenheim-Schnersheim, 67370" oninput="scheduleGeocode()">
-      <div class="geo-status" id="geo-status"></div>
+    <!-- Départ -->
+    <div class="cfg-card">
+      <div class="cfg-card-title"><span>📍</span> Point de départ</div>
+      <div class="form-grid">
+        <div class="fg full">
+          <label>Adresse de départ *</label>
+          <input type="text" id="g-adresse" placeholder="ex: Avenheim-Schnersheim, 67370" oninput="scheduleGeocode()">
+          <div class="geo-status" id="geo-status"></div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#aaa;margin-top:8px;">Cette adresse sert à calculer automatiquement les distances depuis votre domicile vers tous vos lieux sauvegardés.</p>
     </div>
 
-    <div class="error-msg" id="err1"></div>
-    <button class="btn-primary" onclick="nextStep(1)">Continuer →</button>
-  </div>
-
-  <!-- ÉTAPE 2 — Préférences -->
-  <div class="step-panel" id="step2">
-    <div class="card-header">
-      <span class="card-icon">🧭</span>
-      <h1 class="card-title">Vos <em>aventures</em></h1>
-      <p class="card-sub">Quel type de voyages vous fait vibrer ?<br>Choisissez autant que vous voulez.</p>
-    </div>
-
-    <div class="form-group">
-      <label>Types de voyages</label>
+    <!-- Types de voyages -->
+    <div class="cfg-card">
+      <div class="cfg-card-title"><span>🧭</span> Types de voyages</div>
       <div class="voyage-grid" id="voyage-grid">
-        <div class="vtype on" data-v="Camping">⛺ Camping</div>
+        <div class="vtype" data-v="Camping">⛺ Camping</div>
         <div class="vtype" data-v="Teardrop">🚐 Teardrop</div>
         <div class="vtype" data-v="Camping-car">🚌 Camping-car</div>
         <div class="vtype" data-v="Randonnée">🥾 Randonnée</div>
@@ -161,41 +296,38 @@ textarea{resize:vertical;min-height:80px;font-size:13px;}
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Description courte <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb;">(optionnel)</span></label>
-      <textarea id="g-description" placeholder="Quelques mots sur votre groupe, vos voyages préférés, ce qui vous fait partir…"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Photo de groupe <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb;">(optionnel)</span></label>
-      <div class="avatar-zone">
-        <div class="avatar-preview" id="avatar-preview">🏕️</div>
-        <label class="avatar-upload-btn" for="avatar-file">📷 Choisir une photo</label>
-        <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="previewAvatar(this)">
+    <!-- Membres -->
+    <div class="cfg-card">
+      <div class="cfg-card-title"><span>👤</span> Membres du groupe</div>
+      <p style="font-size:12px;color:#888;margin-bottom:14px;">Les personnes qui voyagent avec vous et partagent ce carnet.</p>
+      <div class="membres-list" id="membres-list"></div>
+      <button class="add-membre-btn" onclick="addMembre()" id="add-membre-btn">
+        <span style="font-size:16px;">+</span> Ajouter un membre
+      </button>
+      <div class="membre-limit-note" id="membre-limit-note">
+        🔒 Version actuelle : usage personnel / familial. Une future version permettra d'inviter des membres avec leur propre accès — selon le niveau d'abonnement choisi.
       </div>
     </div>
 
-    <div class="error-msg" id="err2"></div>
-    <button class="btn-primary" onclick="nextStep(2)">Continuer →</button>
-    <button class="btn-secondary" onclick="goStep(1)">← Retour</button>
-  </div>
-
-  <!-- ÉTAPE 3 — Confirmation -->
-  <div class="step-panel" id="step3">
-    <div class="card-header">
-      <span class="card-icon">🎉</span>
-      <h1 class="card-title">Tout est <em>prêt</em> !</h1>
-      <p class="card-sub">Vérifiez votre profil avant de démarrer votre aventure.</p>
+    <!-- Partage -->
+    <div class="cfg-card">
+      <div class="cfg-card-title"><span>🌍</span> Partage public</div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:#333;">
+          <input type="checkbox" id="g-partage" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer;">
+          Autoriser l'affichage de mes fiches sur la homepage publique
+        </label>
+      </div>
+      <p style="font-size:11px;color:#aaa;margin-top:8px;">Vos fiches privées restent privées — seules les fiches que vous marquez comme "partageables" apparaîtront.</p>
     </div>
 
-    <div class="summary" id="summary"></div>
+    <div class="error-msg" id="error-msg"></div>
+    <button class="save-btn" id="save-btn" onclick="saveGroupe()">💾 Enregistrer le profil</button>
 
-    <div class="error-msg" id="err3"></div>
-    <button class="btn-primary" id="create-btn" onclick="createGroupe()">🚀 Démarrer mon carnet de voyage</button>
-    <button class="btn-secondary" onclick="goStep(2)">← Modifier</button>
   </div>
-
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
@@ -203,161 +335,140 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
-let currentUser=null;
-let existingGroupeId=null; // null = création, uuid = édition
-let geoResult={lat:null,lng:null,adresse:null};
-let geoTimer=null;
-let avatarFile=null;
+let currentUser=null, existingGroupeId=null, avatarFile=null;
+let geoResult={lat:null,lng:null}, geoTimer=null;
+let membres=[]; // [{nom:'Bruno'},{nom:'Marie'}]
 
-// ── Auth check ────────────────────────────────────────────────────────────────
+// ── Auth & chargement ─────────────────────────────────────────────────────────
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
-  // Si l'utilisateur a déjà un groupe → mode édition (pas de redirect)
+  document.getElementById('auth-check').style.display='none';
+  const e=currentUser.email;
+  const av=document.getElementById('sb-avatar');if(av)av.textContent=e.charAt(0).toUpperCase();
+  const un=document.getElementById('sb-username');if(un)un.textContent=e.split('@')[0];
+
+  // Types de voyages toggle
+  document.querySelectorAll('.vtype').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('on')));
+
+  // Charger le profil existant
+  const cached=sessionStorage.getItem('rnr_groupe');
+  if(cached){ fillForm(JSON.parse(cached)); return; }
   const {data:membre}=await sb.from('membres').select('groupe_id, groupes(*)').eq('user_id',currentUser.id).single();
-  if(membre?.groupe_id && membre?.groupes){
-    const g = membre.groupes;
-    // Pré-remplir les champs avec les valeurs existantes
-    document.getElementById('g-nom').value = g.nom || '';
-    document.getElementById('g-adresse').value = g.adresse_depart || '';
-    document.getElementById('g-description').value = g.description || '';
-    if(g.lat_depart && g.lng_depart){
-      geoResult = {lat: g.lat_depart, lng: g.lng_depart, adresse: g.adresse_depart};
-      const gs = document.getElementById('geo-status');
-      gs.className='geo-status ok';
-      gs.textContent='✅ '+g.adresse_depart;
-    }
-    // Pré-cocher les types de voyages
-    if(g.type_voyages?.length){
-      document.querySelectorAll('.vtype').forEach(el=>{
-        el.classList.toggle('on', g.type_voyages.includes(el.dataset.v));
-      });
-    }
-    // Passer en mode édition
-    existingGroupeId = g.id;
-    document.querySelector('.card-title').innerHTML = 'Modifier mon <em>profil</em>';
-    document.getElementById('create-btn').textContent = '💾 Enregistrer les modifications';
-  }
+  if(membre?.groupes) fillForm(membre.groupes);
 })();
 
-// ── Types de voyages toggle ───────────────────────────────────────────────────
-document.querySelectorAll('.vtype').forEach(el=>{
-  el.addEventListener('click',()=>el.classList.toggle('on'));
-});
+function fillForm(g){
+  existingGroupeId=g.id;
+  document.getElementById('g-nom').value=g.nom||'';
+  document.getElementById('g-adresse').value=g.adresse_depart||'';
+  document.getElementById('g-description').value=g.description||'';
+  document.getElementById('g-partage').checked=g.partage_public||false;
+  const sbn=document.getElementById('sb-groupe-nom');if(sbn)sbn.textContent=g.nom||'Famille RockNRoad';
+  if(g.lat_depart&&g.lng_depart){
+    geoResult={lat:g.lat_depart,lng:g.lng_depart};
+    const gs=document.getElementById('geo-status');
+    gs.className='geo-status ok';
+    gs.textContent='✅ '+g.adresse_depart;
+  }
+  if(g.type_voyages?.length){
+    document.querySelectorAll('.vtype').forEach(el=>el.classList.toggle('on',g.type_voyages.includes(el.dataset.v)));
+  }
+  if(g.membres_noms?.length){ membres=g.membres_noms.map(n=>({nom:n})); }
+  else { membres=[]; }
+  renderMembres();
+  if(g.avatar_url){
+    const prev=document.getElementById('avatar-preview');
+    prev.innerHTML=`<img src="${g.avatar_url}" alt="avatar">`;
+  }
+}
 
-// ── Géocodage adresse ─────────────────────────────────────────────────────────
+// ── Membres ───────────────────────────────────────────────────────────────────
+function renderMembres(){
+  const list=document.getElementById('membres-list');
+  list.innerHTML=membres.map((m,i)=>`
+    <div class="membre-row">
+      <input class="membre-input" type="text" value="${m.nom||''}" placeholder="Prénom ou nom…"
+        oninput="membres[${i}].nom=this.value">
+      <button class="membre-del" onclick="removeMembre(${i})" title="Retirer">✕</button>
+    </div>
+  `).join('');
+}
+function addMembre(){
+  membres.push({nom:''});
+  renderMembres();
+  // Focus le dernier input
+  const inputs=document.querySelectorAll('.membre-input');
+  if(inputs.length) inputs[inputs.length-1].focus();
+}
+function removeMembre(i){
+  membres.splice(i,1);
+  renderMembres();
+}
+
+// ── Géocodage ─────────────────────────────────────────────────────────────────
 function scheduleGeocode(){
   clearTimeout(geoTimer);
-  geoResult={lat:null,lng:null,adresse:null};
+  geoResult={lat:null,lng:null};
   const val=document.getElementById('g-adresse').value.trim();
   if(val.length<4){document.getElementById('geo-status').textContent='';return;}
   document.getElementById('geo-status').className='geo-status loading';
-  document.getElementById('geo-status').textContent='📍 Recherche de l\'adresse…';
+  document.getElementById('geo-status').textContent='📍 Recherche…';
   geoTimer=setTimeout(()=>geocodeAddress(val),700);
 }
-
 async function geocodeAddress(addr){
   try{
-    const url=`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=fr,be,ch,de,es,it`;
-    const r=await fetch(url,{headers:{'Accept-Language':'fr'}});
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,{headers:{'Accept-Language':'fr'}});
     const d=await r.json();
     if(d&&d.length>0){
-      geoResult={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon),adresse:d[0].display_name};
+      geoResult={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
       document.getElementById('geo-status').className='geo-status ok';
       document.getElementById('geo-status').textContent='✅ '+d[0].display_name.split(',').slice(0,3).join(', ');
     } else {
-      geoResult={lat:null,lng:null,adresse:null};
+      geoResult={lat:null,lng:null};
       document.getElementById('geo-status').className='geo-status err';
-      document.getElementById('geo-status').textContent='⚠️ Adresse introuvable — vérifiez ou saisissez une ville proche';
+      document.getElementById('geo-status').textContent='⚠️ Adresse introuvable — vérifiez ou essayez une ville proche';
     }
   }catch(e){
     document.getElementById('geo-status').className='geo-status err';
-    document.getElementById('geo-status').textContent='⚠️ Erreur réseau — les coordonnées seront ajoutées manuellement';
+    document.getElementById('geo-status').textContent='⚠️ Erreur réseau';
   }
 }
 
-// ── Preview avatar ────────────────────────────────────────────────────────────
+// ── Avatar ────────────────────────────────────────────────────────────────────
 function previewAvatar(input){
   if(!input.files||!input.files[0])return;
   avatarFile=input.files[0];
   const reader=new FileReader();
   reader.onload=e=>{
-    const prev=document.getElementById('avatar-preview');
-    prev.innerHTML=`<img src="${e.target.result}" alt="avatar">`;
+    document.getElementById('avatar-preview').innerHTML=`<img src="${e.target.result}" alt="avatar">`;
   };
   reader.readAsDataURL(avatarFile);
 }
 
-// ── Navigation étapes ─────────────────────────────────────────────────────────
-function goStep(n){
-  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('step'+n).classList.add('active');
-  // Update dots
-  for(let i=1;i<=3;i++){
-    const dot=document.getElementById('sd'+i);
-    dot.classList.remove('active','done');
-    if(i<n) dot.classList.add('done');
-    else if(i===n) dot.classList.add('active');
-    if(i<3){
-      const line=document.getElementById('sl'+i);
-      line.classList.toggle('done',i<n);
-    }
-  }
-}
-
-function nextStep(from){
-  if(from===1){
-    const nom=document.getElementById('g-nom').value.trim();
-    const adresse=document.getElementById('g-adresse').value.trim();
-    if(!nom){showErr(1,'Le nom du groupe est obligatoire.');return;}
-    if(!adresse){showErr(1,'L\'adresse de départ est obligatoire.');return;}
-    hideErr(1);
-    goStep(2);
-  } else if(from===2){
-    hideErr(2);
-    buildSummary();
-    goStep(3);
-  }
-}
-
-function showErr(n,msg){
-  const el=document.getElementById('err'+n);
-  el.textContent=msg; el.classList.add('show');
-}
-function hideErr(n){document.getElementById('err'+n).classList.remove('show');}
-
-// ── Résumé ────────────────────────────────────────────────────────────────────
-function buildSummary(){
+// ── Sauvegarde ────────────────────────────────────────────────────────────────
+async function saveGroupe(){
+  const btn=document.getElementById('save-btn');
   const nom=document.getElementById('g-nom').value.trim();
   const adresse=document.getElementById('g-adresse').value.trim();
-  const types=[...document.querySelectorAll('.vtype.on')].map(el=>el.dataset.v);
-  const desc=document.getElementById('g-description').value.trim();
-  const geoOk=geoResult.lat?`✅ ${geoResult.lat.toFixed(4)}, ${geoResult.lng.toFixed(4)}`:'⚠️ Non géocodé (ajustable plus tard)';
-
-  document.getElementById('summary').innerHTML=`
-    <div class="summary-row"><span class="summary-label">Groupe</span><span class="summary-val">${nom}</span></div>
-    <div class="summary-row"><span class="summary-label">Départ</span><span class="summary-val">${adresse}<br><span style="font-size:11px;color:#aaa;">${geoOk}</span></span></div>
-    <div class="summary-row"><span class="summary-label">Voyages</span><span class="summary-val">${types.length?types.join(' · '):'Non spécifié'}</span></div>
-    ${desc?`<div class="summary-row"><span class="summary-label">Description</span><span class="summary-val">${desc}</span></div>`:''}
-  `;
-}
-
-// ── Création du groupe ────────────────────────────────────────────────────────
-async function createGroupe(){
-  const btn=document.getElementById('create-btn');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>Création en cours…';
-  hideErr(3);
+  if(!nom||!adresse){
+    showError('Le nom et l\'adresse de départ sont obligatoires.');return;
+  }
+  hideError();
+  btn.disabled=true; btn.textContent='⏳ Enregistrement…';
 
   try{
-    const nom=document.getElementById('g-nom').value.trim();
-    const adresse=document.getElementById('g-adresse').value.trim();
+    // Lire les champs depuis les inputs (les membres peuvent avoir été modifiés)
+    const membreInputs=document.querySelectorAll('.membre-input');
+    membreInputs.forEach((inp,i)=>{if(membres[i])membres[i].nom=inp.value;});
+    const membresNoms=membres.map(m=>m.nom).filter(n=>n.trim());
+
     const types=[...document.querySelectorAll('.vtype.on')].map(el=>el.dataset.v);
+    const partage=document.getElementById('g-partage').checked;
     const desc=document.getElementById('g-description').value.trim();
 
-    // Upload avatar si présent
-    let avatar_url=null;
+    let avatar_url=undefined;
     if(avatarFile){
       const ext=avatarFile.name.split('.').pop();
       const fname=`avatars/${currentUser.id}.${ext}`;
@@ -365,55 +476,47 @@ async function createGroupe(){
       if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);avatar_url=publicUrl;}
     }
 
+    const payload={
+      nom, adresse_depart:adresse,
+      lat_depart:geoResult.lat||null,
+      lng_depart:geoResult.lng||null,
+      type_voyages:types.length?types:null,
+      description:desc||null,
+      partage_public:partage,
+      membres_noms:membresNoms.length?membresNoms:null,
+      ...(avatar_url!==undefined?{avatar_url}:{})
+    };
+
     let groupe;
     if(existingGroupeId){
-      // ── Mode édition : UPDATE
-      const {data:updated,error:ge}=await sb.from('groupes').update({
-        nom,
-        adresse_depart:adresse,
-        lat_depart:geoResult.lat||null,
-        lng_depart:geoResult.lng||null,
-        type_voyages:types.length?types:null,
-        description:desc||null,
-        ...(avatar_url?{avatar_url}:{}),
-      }).eq('id',existingGroupeId).select().single();
-      if(ge)throw ge;
-      groupe=updated;
+      const {data,error}=await sb.from('groupes').update(payload).eq('id',existingGroupeId).select().single();
+      if(error)throw error;
+      groupe=data;
     } else {
-      // ── Mode création : INSERT
-      const {data:created,error:ge}=await sb.from('groupes').insert({
-        nom,
-        adresse_depart:adresse,
-        lat_depart:geoResult.lat||null,
-        lng_depart:geoResult.lng||null,
-        type_voyages:types.length?types:null,
-        description:desc||null,
-        avatar_url,
-        partage_public:false,
-      }).select().single();
-      if(ge)throw ge;
-      groupe=created;
-      // Lier l'utilisateur au groupe
-      const {error:me}=await sb.from('membres').insert({
-        user_id:currentUser.id,
-        groupe_id:groupe.id,
-        role:'admin',
-      });
-      if(me)throw me;
+      const {data,error}=await sb.from('groupes').insert(payload).select().single();
+      if(error)throw error;
+      groupe=data;
+      await sb.from('membres').insert({user_id:currentUser.id,groupe_id:groupe.id,role:'admin'});
+      existingGroupeId=groupe.id;
     }
-
-    // Mettre à jour le sessionStorage
     sessionStorage.setItem('rnr_groupe',JSON.stringify(groupe));
-
-    // Go !
-    window.location.href='carnet.html';
-
+    showToast('✅ Profil enregistré !','success');
+    const sbn=document.getElementById('sb-groupe-nom');if(sbn)sbn.textContent=groupe.nom;
   }catch(e){
-    showErr(3,'Erreur lors de la création : '+e.message);
-    btn.disabled=false;
-    btn.innerHTML='🚀 Démarrer mon carnet de voyage';
+    showError('Erreur : '+e.message);
+  }finally{
+    btn.disabled=false; btn.textContent='💾 Enregistrer le profil';
   }
 }
+
+function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.classList.add('show');}
+function hideError(){document.getElementById('error-msg').classList.remove('show');}
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 </script>
 </body>
 </html>
