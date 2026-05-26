@@ -209,6 +209,27 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .nuit-voyage-btn:hover{background:rgba(255,255,255,.12);color:white;}
 .nuit-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
+/* SYSTÈME DE VOTE FAMILIAL */
+.vote-bar{display:flex;gap:4px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);}
+.vote-btn{display:flex;align-items:center;gap:3px;padding:4px 9px;border-radius:20px;border:1.5px solid transparent;
+  font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;background:none;}
+.vote-btn:hover{transform:scale(1.08);}
+.vote-btn.love{border-color:rgba(220,60,100,.2);color:#dc3c64;}
+.vote-btn.love.active{background:rgba(220,60,100,.12);border-color:rgba(220,60,100,.4);}
+.vote-btn.top{border-color:rgba(200,168,75,.2);color:#8B6914;}
+.vote-btn.top.active{background:rgba(200,168,75,.15);border-color:rgba(200,168,75,.5);}
+.vote-btn.save{border-color:rgba(44,80,160,.2);color:#2850a0;}
+.vote-btn.save.active{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
+.vote-count{font-size:9.5px;font-weight:600;}
+/* nuit card vote — couleurs adaptées fond sombre */
+.nuit-card .vote-bar{border-top-color:rgba(200,168,75,.1);}
+.nuit-card .vote-btn.love{border-color:rgba(220,60,100,.25);color:#f07090;}
+.nuit-card .vote-btn.love.active{background:rgba(220,60,100,.18);border-color:rgba(220,60,100,.5);}
+.nuit-card .vote-btn.top{border-color:rgba(200,168,75,.25);color:#e0c060;}
+.nuit-card .vote-btn.top.active{background:rgba(200,168,75,.2);border-color:rgba(200,168,75,.6);}
+.nuit-card .vote-btn.save{border-color:rgba(100,150,255,.25);color:#80a8ff;}
+.nuit-card .vote-btn.save.active{background:rgba(100,150,255,.15);border-color:rgba(100,150,255,.5);}
+
 .nuit-edit-btn{background:rgba(200,168,75,.08);border:1px solid rgba(200,168,75,.15);
   color:rgba(200,168,75,.7);font-size:10px;font-weight:700;padding:5px 8px;border-radius:5px;cursor:pointer;}
 
@@ -876,6 +897,43 @@ function resolveRegionTab(rk){
   return null; // région sans section dédiée → createDynamicTab
 }
 let allLieux = []; // cache global
+// Votes stockés en localStorage : {lieu_id: {love:bool, top:bool, save:bool}}
+let votesData = JSON.parse(localStorage.getItem('rnr_votes') || '{}');
+
+function getVotes(lieuId){
+  return votesData[lieuId] || {love:false, top:false, save:false};
+}
+function toggleVote(lieuId, type){
+  if(!votesData[lieuId]) votesData[lieuId]={love:false,top:false,save:false};
+  votesData[lieuId][type] = !votesData[lieuId][type];
+  localStorage.setItem('rnr_votes', JSON.stringify(votesData));
+  // Mettre à jour tous les boutons de vote de ce lieu
+  refreshVoteBtns(lieuId);
+}
+function refreshVoteBtns(lieuId){
+  const v = getVotes(lieuId);
+  ['love','top','save'].forEach(type => {
+    const btn = document.getElementById('vote-'+type+'-'+lieuId);
+    if(btn) btn.classList.toggle('active', v[type]);
+  });
+}
+function makeVoteBar(l){
+  const v = getVotes(l.id);
+  return `<div class="vote-bar">
+    <button class="vote-btn love ${v.love?'active':''}" id="vote-love-${l.id}"
+      onclick="event.stopPropagation();toggleVote('${l.id}','love')" title="Coup de cœur">
+      ❤️ <span class="vote-count">J'adore</span>
+    </button>
+    <button class="vote-btn top ${v.top?'active':''}" id="vote-top-${l.id}"
+      onclick="event.stopPropagation();toggleVote('${l.id}','top')" title="À faire absolument">
+      👍 <span class="vote-count">À faire</span>
+    </button>
+    <button class="vote-btn save ${v.save?'active':''}" id="vote-save-${l.id}"
+      onclick="event.stopPropagation();toggleVote('${l.id}','save')" title="Sauvegarder pour plus tard">
+      📌 <span class="vote-count">Retenu</span>
+    </button>
+  </div>`;
+}
 let currentGroupeId = null; // groupe de l'utilisateur connecté
 
 // ── Chargement profil groupe ──────────────────────────────────────────────
@@ -1545,6 +1603,7 @@ function makeDynCard(l, cardType){
       ${dogInfoHtml}
       ${l.conseil?`<div class="conseil-box">💡 ${l.conseil}</div>`:''}
       ${tags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;">${tags}</div>`:''}
+      ${makeVoteBar(l)}
       <div class="site-actions">
         <a href="${mapsUrl}" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="google-btn">🌐 Site</a>`:`<a href="https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}" target="_blank" class="google-btn">🔍 Google</a>`}
@@ -1600,6 +1659,7 @@ function makeNuitCard(l){
       ${l.commentaire?`<div class="nuit-notes">${l.commentaire.slice(0,100)}${l.commentaire.length>100?'...':''}</div>`:''}
       ${amenities?`<div class="nuit-amenities">${amenities}</div>`:''}
       ${l.conseil?`<div class="nuit-notes" style="color:rgba(200,168,75,.7);">💡 ${l.conseil.slice(0,80)}</div>`:''}
+      ${makeVoteBar(l)}
       <div class="nuit-actions">
         <a href="${mapsUrl}" target="_blank" class="nuit-maps-btn">📍 Maps</a>
         ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
