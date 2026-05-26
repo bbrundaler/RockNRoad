@@ -226,8 +226,11 @@ function loadVoyage(){
 
 // ── Render central (UN seul endroit qui dessine tout) ─────────────────────────
 function render(){
+  // Toujours vider la carte en premier — synchrone, garanti
+  if(routeLayer) routeLayer.clearLayers();
   renderList();
-  renderMap();
+  // Redessiner la carte seulement s'il reste des lieux
+  if(voyage.length) renderMap();
 }
 
 function renderList(){
@@ -312,7 +315,7 @@ function renderList(){
 
 function renderMap(){
   if(!map||!routeLayer) return;
-  routeLayer.clearLayers();
+  // clearLayers déjà appelé dans render() avant renderMap()
   const pts = voyage.filter(v=>v.lat&&v.lng);
   if(!pts.length) return;
 
