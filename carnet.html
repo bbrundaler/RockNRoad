@@ -1990,7 +1990,7 @@ function toggleVoyageCard(id,nom,lat,lng,region,type){
     const btn=document.getElementById("vcard-"+id);if(btn){btn.classList.remove("in-voyage");btn.textContent="Voyage";}
     showToast('"'+nom+'" retiré');
   }else{
-    rnrVoyage.push({id,nom,lat,lng,region:region||"",type:type||"Site"});
+    rnrVoyage.push({id,nom,lat,lng,region:region||"",type:type||"Site",uid:(Date.now()+Math.random()).toString(36)});
     const btn=document.getElementById("vcard-"+id);if(btn){btn.classList.add("in-voyage");btn.textContent="✓ OK";}
     showToast('"'+nom+'" ajouté !');
   }

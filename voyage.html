@@ -13,122 +13,81 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--sb:215px;--gold:#C8A84B;--dark:#161410;--creme:#F5EFE0;--green:#2C5016;}
 body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;display:flex;overflow:hidden;}
-
-/* ── AUTH ── */
-#auth-check{position:fixed;inset:0;z-index:9999;background:var(--dark);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
+#auth-check{position:fixed;inset:0;z-index:9999;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
 #auth-check h2{font-family:'Playfair Display',serif;font-size:24px;margin:14px 0 4px;}
-.spinner{width:32px;height:32px;border:3px solid rgba(200,168,75,.3);border-top-color:var(--gold);
-  border-radius:50%;animation:spin 1s linear infinite;margin:16px auto 0;}
+.spinner{width:32px;height:32px;border:3px solid rgba(200,168,75,.3);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:16px auto 0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── SIDEBAR GAUCHE (navigation) ── */
-#sidebar{width:var(--sb);min-height:100vh;background:var(--dark);border-right:1px solid rgba(200,168,75,.1);
-  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
+/* SIDEBAR */
+#sidebar{width:var(--sb);min-height:100vh;background:var(--dark);border-right:1px solid rgba(200,168,75,.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto;scrollbar-width:none;}
 #sidebar::-webkit-scrollbar{display:none;}
 .sb-logo{padding:20px 16px 14px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;cursor:pointer;}
 .sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
 .sb-logo-title span{color:var(--gold);}
 .sb-logo-sub{font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
 .sb-group{padding:10px 8px 3px;flex-shrink:0;}
-.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
+.sb-group-label{font-size:8.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 8px;margin-bottom:5px;}
 .sb-sep{height:1px;background:rgba(200,168,75,.07);margin:6px 12px;}
-.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;
-  color:rgba(255,255,255,.82);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
-  border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;}
+.sb-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 11px;background:none;border:none;color:rgba(255,255,255,.82);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;white-space:nowrap;}
 .sb-btn:hover{background:rgba(200,168,75,.07);color:rgba(255,255,255,.97);}
 .sb-btn.active{background:rgba(200,168,75,.13);color:var(--gold);font-weight:600;}
 .sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sb-dot-gold{background:var(--gold);}
 .sb-dot-grey{background:rgba(255,255,255,.2);}
 .sb-footer{margin-top:auto;padding:12px 10px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;}
-.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;
-  background:rgba(255,255,255,.03);margin-bottom:5px;}
-.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
-.sb-user-info{flex:1;min-width:0;}
+.sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);margin-bottom:5px;}
+.sb-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
 .sb-user-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-user-role{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px;}
-.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);
-  color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;
-  border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
 
-/* ── MAIN LAYOUT ── */
+/* MAIN */
 #app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));height:100vh;display:flex;flex-direction:column;}
-
-/* ── TOP BAR ── */
-#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);
-  padding:0 20px;height:46px;display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;z-index:100;}
+#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 20px;height:46px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100;}
 .top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
 .top-bar-actions{display:flex;gap:8px;}
-.tb-btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;
-  font-family:'Inter',sans-serif;transition:all .2s;border:none;}
+.tb-btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none;}
 .tb-btn-clear{background:rgba(200,50,0,.15);color:#ff8060;border:1px solid rgba(200,50,0,.2);}
-.tb-btn-clear:hover{background:rgba(200,50,0,.25);}
+.tb-btn-clear:hover{background:rgba(200,50,0,.3);}
 .tb-btn-add{background:var(--gold);color:var(--dark);}
 .tb-btn-add:hover{background:#e0c060;}
 .tb-btn-print{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);}
-.tb-btn-print:hover{background:rgba(255,255,255,.14);}
 
-/* ── CONTENU : panneau gauche + carte ── */
+/* CONTENU */
 #voyage-content{display:flex;flex:1;overflow:hidden;}
-
-/* Panneau voyage */
-#voyage-panel{width:300px;flex-shrink:0;background:#1E1A16;border-right:1px solid rgba(200,168,75,.1);
-  display:flex;flex-direction:column;overflow:hidden;}
+#voyage-panel{width:300px;flex-shrink:0;background:#1E1A16;border-right:1px solid rgba(200,168,75,.1);display:flex;flex-direction:column;overflow:hidden;}
 #panel-header{padding:16px 16px 12px;border-bottom:1px solid rgba(200,168,75,.08);flex-shrink:0;}
 #panel-header h2{font-family:'Playfair Display',serif;font-size:18px;color:white;margin-bottom:2px;}
 #panel-header p{font-size:11px;color:rgba(255,255,255,.35);}
 #stops-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:rgba(200,168,75,.2) transparent;}
 #panel-footer{padding:12px 16px;border-top:1px solid rgba(200,168,75,.08);flex-shrink:0;background:#1a1610;}
-.pf-row{display:flex;justify-content:space-between;align-items:center;}
+.pf-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
 .pf-label{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3);}
-.pf-val{font-size:18px;font-weight:800;color:var(--gold);}
-.pf-val.small{font-size:13px;}
+.pf-val{font-size:20px;font-weight:800;color:var(--gold);}
+.pf-val.sm{font-size:13px;}
 
-/* Stop items */
-.stop-item{display:flex;align-items:center;gap:8px;padding:10px 10px;border-radius:8px;
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
-  margin-bottom:6px;cursor:grab;transition:all .15s;}
-.stop-item:hover{background:rgba(255,255,255,.07);border-color:rgba(200,168,75,.2);}
-.stop-item.dragging{opacity:.4;box-shadow:0 8px 24px rgba(0,0,0,.4);}
-.drag-handle{color:rgba(255,255,255,.2);font-size:14px;cursor:grab;flex-shrink:0;}
-.stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--dark);
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
+/* STOP ITEMS */
+.stop-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);margin-bottom:6px;cursor:grab;transition:background .15s;}
+.stop-item:hover{background:rgba(255,255,255,.07);}
+.drag-handle{color:rgba(255,255,255,.2);font-size:14px;cursor:grab;flex-shrink:0;user-select:none;}
+.stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--dark);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
 .stop-info{flex:1;min-width:0;}
-.stop-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-region{font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;}
+.stop-name{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-meta{font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;}
 .stop-dist{font-size:9px;color:rgba(200,168,75,.6);margin-top:2px;}
-.stop-remove{background:none;border:none;color:rgba(255,255,255,.2);font-size:14px;
-  cursor:pointer;padding:2px 4px;border-radius:4px;transition:all .15s;flex-shrink:0;}
-.stop-remove:hover{background:rgba(200,50,0,.2);color:#ff8060;}
+.stop-remove{background:none;border:none;color:rgba(255,255,255,.25);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
+.stop-remove:hover{background:rgba(200,50,0,.25);color:#ff8060;}
 
-/* Vide */
-.empty-voyage{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:40px 20px;text-align:center;height:100%;}
+/* VIDE */
+.empty-voyage{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;height:100%;}
 .empty-voyage .icon{font-size:44px;margin-bottom:12px;opacity:.4;}
 .empty-voyage h3{font-family:'Playfair Display',serif;font-size:18px;color:rgba(255,255,255,.6);margin-bottom:6px;}
 .empty-voyage p{font-size:12px;color:rgba(255,255,255,.3);line-height:1.6;max-width:220px;}
 
-/* Carte */
 #map{flex:1;height:100%;}
 
-/* Print */
-@media print{
-  #sidebar,#top-bar,#voyage-panel{display:none!important;}
-  #app-main{margin-left:0!important;width:100%!important;}
-  #map{height:100vh!important;width:100vw!important;}
-}
-@media(max-width:768px){
-  #sidebar{transform:translateX(-100%);transition:transform .25s;}
-  #sidebar.open{transform:translateX(0);}
-  #app-main{margin-left:0;width:100%;}
-  #voyage-panel{width:260px;}
-}
+@media print{#sidebar,#top-bar,#voyage-panel{display:none!important;}#app-main{margin-left:0!important;width:100%!important;}#map{height:100vh!important;width:100vw!important;}}
 </style>
 </head>
 <body>
@@ -140,83 +99,41 @@ body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;disp
   <div class="spinner"></div>
 </div>
 
-<!-- ── SIDEBAR ── -->
 <div id="sidebar">
   <div class="sb-logo" onclick="window.location.href='carnet.html'">
     <div class="sb-logo-title">Rock<span>N</span>Road</div>
     <div class="sb-logo-sub">Aventures</div>
   </div>
-
   <div class="sb-group" style="padding-bottom:2px;">
-    <a class="sb-btn" href="carnet.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span>Accueil</span>
-    </a>
+    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-grey"></span><span>Accueil</span></a>
   </div>
-
   <div class="sb-sep"></div>
-
   <div class="sb-group">
     <div class="sb-group-label">Voyage</div>
-    <a class="sb-btn" href="carnet.html#alsace">
-      <span style="font-size:13px;">🇫🇷</span>
-      <span>Région France</span>
-    </a>
-    <a class="sb-btn" href="carnet.html#allemagne">
-      <span style="font-size:13px;">🌍</span>
-      <span>Région Europe</span>
-    </a>
-    <a class="sb-btn" href="carnet.html#nepal">
-      <span style="font-size:13px;">✈️</span>
-      <span>Monde</span>
-    </a>
+    <a class="sb-btn" href="carnet.html#alsace"><span style="font-size:13px;">🇫🇷</span><span>Région France</span></a>
+    <a class="sb-btn" href="carnet.html#allemagne"><span style="font-size:13px;">🌍</span><span>Région Europe</span></a>
+    <a class="sb-btn" href="carnet.html#nepal"><span style="font-size:13px;">✈️</span><span>Monde</span></a>
   </div>
-
   <div class="sb-sep"></div>
-
   <div class="sb-group">
     <div class="sb-group-label">Outils</div>
-    <a class="sb-btn" href="carnet.html#carte">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span>Carte interactive</span>
-    </a>
-    <a class="sb-btn active" href="voyage.html">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span>Mon Voyage</span>
-    </a>
-    <a class="sb-btn" href="carnet.html#fiche">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span>Fiche récap</span>
-    </a>
-    <a class="sb-btn" href="carnet.html#tips">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span>Conseils</span>
-    </a>
+    <a class="sb-btn" href="carnet.html#carte"><span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span></a>
+    <a class="sb-btn active" href="voyage.html"><span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span></a>
+    <a class="sb-btn" href="carnet.html#fiche"><span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span></a>
+    <a class="sb-btn" href="carnet.html#tips"><span class="sb-dot sb-dot-grey"></span><span>Conseils</span></a>
   </div>
-
   <div class="sb-sep"></div>
-
   <div class="sb-group">
     <div class="sb-group-label">Back-Office</div>
-    <a class="sb-btn" href="admin.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span>Créer une fiche</span>
-    </a>
-    <a class="sb-btn" href="onboarding.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span>Mon profil groupe</span>
-    </a>
-    <a class="sb-btn" href="config.html">
-      <span style="font-size:11px;">⚙️</span>
-      <span>Config</span>
-    </a>
+    <a class="sb-btn" href="admin.html"><span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span></a>
+    <a class="sb-btn" href="onboarding.html"><span class="sb-dot sb-dot-grey"></span><span>Mon profil groupe</span></a>
+    <a class="sb-btn" href="config.html"><span style="font-size:11px;">⚙️</span><span>Config</span></a>
   </div>
-
   <div class="sb-footer">
     <div class="sb-user">
       <div class="sb-avatar" id="sb-avatar">B</div>
-      <div class="sb-user-info">
-        <div class="sb-user-name" id="sb-username">Chargement...</div>
+      <div style="flex:1;min-width:0;">
+        <div class="sb-user-name" id="sb-username">...</div>
         <div class="sb-user-role">Famille RockNRoad</div>
       </div>
     </div>
@@ -224,259 +141,226 @@ body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;disp
   </div>
 </div>
 
-<!-- ── APP MAIN ── -->
 <div id="app-main">
-
-  <!-- Top bar -->
   <div id="top-bar">
     <div class="top-bar-title">🧭 Mon <em>Voyage</em></div>
     <div class="top-bar-actions">
       <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
       <button class="tb-btn tb-btn-add" onclick="window.location.href='carnet.html'">+ Ajouter des lieux</button>
-      <button class="tb-btn tb-btn-print" onclick="printMap()">🖨️ Imprimer</button>
+      <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
     </div>
   </div>
-
-  <!-- Contenu -->
   <div id="voyage-content">
-
-    <!-- Panneau liste étapes -->
     <div id="voyage-panel">
       <div id="panel-header">
         <h2>Itinéraire</h2>
         <p>Glissez pour réordonner · × pour retirer</p>
       </div>
       <div id="stops-list">
-        <div class="empty-voyage" id="emptyVoyage">
+        <div class="empty-voyage" id="emptyVoyage" style="display:flex;">
           <div class="icon">🗺️</div>
           <h3>Voyage vide</h3>
           <p>Ajoutez des lieux depuis le Carnet en cliquant sur "🧭 Mon Voyage"</p>
         </div>
       </div>
       <div id="panel-footer">
-        <div class="pf-row" style="margin-bottom:6px;">
+        <div class="pf-row">
           <span class="pf-label">Distance totale</span>
           <span class="pf-val" id="totalDist">— km</span>
         </div>
         <div class="pf-row">
           <span class="pf-label">Étapes</span>
-          <span class="pf-val small" id="totalStops">0</span>
+          <span class="pf-val sm" id="totalStops">0</span>
         </div>
       </div>
     </div>
-
-    <!-- Carte Leaflet -->
     <div id="map"></div>
-
   </div>
 </div>
 
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
-const {createClient}=supabase;
-const sb=createClient(SURL,SKEY);
+const sb=supabase.createClient(SURL,SKEY);
 
-let map,routeLayer,markers=[];
-let voyageLieux=[];
-let draggedIdx=null;
+let map, routeLayer;
+// Source unique de vérité — tableau d'objets {uid, nom, lat, lng, region, type}
+// uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
+let voyage = [];
 
-async function checkAuth(){
-  const {data:{session}}=await sb.auth.getSession();
+// ── Auth ──────────────────────────────────────────────────────────────────────
+(async()=>{
+  const {data:{session}} = await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   document.getElementById('auth-check').style.display='none';
   const e=session.user.email;
-  const av=document.getElementById('sb-avatar');if(av)av.textContent=e.charAt(0).toUpperCase();
-  const un=document.getElementById('sb-username');if(un)un.textContent=e.split('@')[0];
+  document.getElementById('sb-avatar').textContent=e.charAt(0).toUpperCase();
+  document.getElementById('sb-username').textContent=e.split('@')[0];
   initMap();
   loadVoyage();
-}
+})();
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 
-// ── Carte Leaflet ─────────────────────────────────────────────────────────────
+// ── Carte ─────────────────────────────────────────────────────────────────────
 function initMap(){
   map=L.map('map').setView([46.5,2.5],6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap',maxZoom:18
-  }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
   routeLayer=L.layerGroup().addTo(map);
-  setTimeout(()=>map.invalidateSize(),100);
+  setTimeout(()=>map.invalidateSize(),200);
 }
 
-// ── Charger les lieux ─────────────────────────────────────────────────────────
-async function loadVoyage(){
-  const full=JSON.parse(localStorage.getItem('rr_voyage_full')||'[]');
-  if(full.length>0){
-    voyageLieux=full.filter(v=>v.lat&&v.lng);
-    if(!voyageLieux.length){showEmpty(true);renderPanel();return;}
-  } else {
-    const ids=JSON.parse(localStorage.getItem('rr_voyage')||'[]');
-    if(!ids.length){showEmpty(true);renderPanel();return;}
-    const{data}=await sb.from('lieux').select('*').in('id',ids);
-    voyageLieux=ids.map(id=>(data||[]).find(l=>l.id===id)).filter(Boolean);
-    if(!voyageLieux.length){showEmpty(true);renderPanel();return;}
-  }
-  showEmpty(false);
-  renderPanel();
+// ── Persistance ───────────────────────────────────────────────────────────────
+function saveVoyage(){
+  localStorage.setItem('rr_voyage_full', JSON.stringify(voyage));
+  localStorage.setItem('rr_voyage', JSON.stringify(voyage.map(v=>v.id)));
+}
+
+function loadVoyage(){
+  const raw = JSON.parse(localStorage.getItem('rr_voyage_full')||'[]');
+  // Migrer les anciens formats : garantir que chaque item a un uid
+  voyage = raw
+    .filter(v=>v&&v.lat&&v.lng)
+    .map(v=>({...v, uid: v.uid || v.id || (Date.now()+Math.random()).toString(36)}));
+  render();
+}
+
+// ── Render central (UN seul endroit qui dessine tout) ─────────────────────────
+function render(){
+  renderList();
   renderMap();
-  setTimeout(()=>{map.invalidateSize();fitAll();},150);
 }
 
-function showEmpty(show){
-  document.getElementById('emptyVoyage').style.display=show?'flex':'none';
-}
+function renderList(){
+  const list = document.getElementById('stops-list');
+  const empty = document.getElementById('emptyVoyage');
 
-// ── Panneau liste ─────────────────────────────────────────────────────────────
-function renderPanel(){
-  const list=document.getElementById('stops-list');
-  if(!voyageLieux.length){
+  if(!voyage.length){
     list.innerHTML='';
-    showEmpty(true);
+    list.appendChild(empty);
+    empty.style.display='flex';
     document.getElementById('totalDist').textContent='— km';
     document.getElementById('totalStops').textContent='0';
     return;
   }
-  showEmpty(false);
 
-  // Vider et reconstruire avec createElement (pas d'events inline = pas de conflits)
+  // Vider sans supprimer le noeud emptyVoyage
   list.innerHTML='';
-  voyageLieux.forEach((l,i)=>{
-    const item=document.createElement('div');
-    item.className='stop-item';
-    item.draggable=true;
-    item.dataset.idx=i;
+  empty.style.display='none';
 
-    const distHtml=i>0&&voyageLieux[i-1].lat&&l.lat
-      ?`<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat,voyageLieux[i-1].lng,l.lat,l.lng)} km</div>`:'';
+  voyage.forEach((item, i)=>{
+    const dist = i>0 && voyage[i-1].lat && item.lat
+      ? calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng)
+      : null;
 
-    item.innerHTML=`
+    const row = document.createElement('div');
+    row.className='stop-item';
+    row.draggable=true;
+
+    const distHtml = dist ? `<div class="stop-dist">↑ ${dist} km</div>` : '';
+    row.innerHTML=`
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
-        <div class="stop-name">${l.nom||'—'}</div>
-        <div class="stop-region">${l.region||l.sous_region||''} ${l.type?'· '+l.type:''}</div>
+        <div class="stop-name">${item.nom||'—'}</div>
+        <div class="stop-meta">${item.region||''} ${item.type?'· '+item.type:''}</div>
         ${distHtml}
       </div>
-      <button class="stop-remove" type="button">✕</button>
+      <button class="stop-remove" title="Retirer">✕</button>
     `;
 
-    // Events via addEventListener — isolés, pas de propagation parasite
-    const removeBtn=item.querySelector('.stop-remove');
-    removeBtn.addEventListener('click', function(e){
+    // ✅ Capturer uid dans une const locale — pas d'index, pas de closure sur i
+    const uid = item.uid;
+    row.querySelector('.stop-remove').addEventListener('click', function(e){
       e.stopPropagation();
       e.preventDefault();
-      removeStop(i);
+      removeByUid(uid);
     });
 
-    item.addEventListener('dragstart', function(e){ draggedIdx=i; item.classList.add('dragging'); });
-    item.addEventListener('dragover',  function(e){ e.preventDefault(); });
-    item.addEventListener('drop',      function(e){
+    // Drag & drop
+    row.addEventListener('dragstart', e=>{
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', uid);
+      row.style.opacity='0.4';
+    });
+    row.addEventListener('dragend', ()=>{ row.style.opacity=''; });
+    row.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; });
+    row.addEventListener('drop', e=>{
       e.preventDefault();
-      document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
-      if(draggedIdx===null||draggedIdx===i) return;
-      const moved=voyageLieux.splice(draggedIdx,1)[0];
-      voyageLieux.splice(i,0,moved);
-      save();
-      renderPanel(); renderMap();
+      const fromUid = e.dataTransfer.getData('text/plain');
+      if(fromUid===uid) return;
+      const fi = voyage.findIndex(v=>v.uid===fromUid);
+      const ti = voyage.findIndex(v=>v.uid===uid);
+      if(fi<0||ti<0) return;
+      const moved = voyage.splice(fi,1)[0];
+      voyage.splice(ti,0,moved);
+      saveVoyage();
+      render();
     });
 
-    list.appendChild(item);
+    list.appendChild(row);
   });
 
   // Totaux
   let total=0;
-  for(let i=1;i<voyageLieux.length;i++){
-    const a=voyageLieux[i-1],b=voyageLieux[i];
+  for(let i=1;i<voyage.length;i++){
+    const a=voyage[i-1], b=voyage[i];
     if(a.lat&&b.lat) total+=calcDist(a.lat,a.lng,b.lat,b.lng);
   }
   document.getElementById('totalDist').textContent=total>0?Math.round(total)+' km':'— km';
-  document.getElementById('totalStops').textContent=voyageLieux.length;
+  document.getElementById('totalStops').textContent=voyage.length;
 }
 
-function save(){
-  localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
-  localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
-}
-
-// ── Carte ─────────────────────────────────────────────────────────────────────
 function renderMap(){
-  if(!map) return;
-  routeLayer.clearLayers(); markers=[];
-  const valid=voyageLieux.filter(l=>l.lat&&l.lng);
-  if(!valid.length) return;
+  if(!map||!routeLayer) return;
+  routeLayer.clearLayers();
+  const pts = voyage.filter(v=>v.lat&&v.lng);
+  if(!pts.length) return;
 
-  valid.forEach((l,i)=>{
+  pts.forEach((v,i)=>{
     const icon=L.divIcon({
-      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;
-        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;
-        border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
+      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
       className:'',iconSize:[30,30],iconAnchor:[15,15]
     });
-    const marker=L.marker([l.lat,l.lng],{icon}).addTo(routeLayer).bindPopup(`
-      <div style="font-family:Inter,sans-serif;min-width:180px;">
-        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${l.nom||'—'}</div>
-        <div style="font-size:11px;color:#888;margin-bottom:6px;">${l.region||''} ${l.type?'· '+l.type:''}</div>
-        ${l.description?`<div style="font-size:12px;color:#555;margin-bottom:6px;">${l.description.substring(0,100)}…</div>`:''}
-        ${l.dog_friendly?'<span style="background:#e8f4e8;color:#2C5016;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">🐕 Dog-Friendly</span>':''}
+    L.marker([v.lat,v.lng],{icon}).addTo(routeLayer).bindPopup(`
+      <div style="font-family:Inter,sans-serif;min-width:160px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${v.nom||'—'}</div>
+        <div style="font-size:11px;color:#888;">${v.region||''} ${v.type?'· '+v.type:''}</div>
       </div>
     `);
-    markers.push(marker);
   });
 
-  if(valid.length>1){
-    const coords=valid.map(l=>[l.lat,l.lng]);
-    L.polyline(coords,{color:'rgba(200,168,75,.25)',weight:10,opacity:1}).addTo(routeLayer);
-    L.polyline(coords,{color:'#C8A84B',weight:3.5,opacity:.9,dashArray:'12,6'}).addTo(routeLayer);
-    coords.forEach((c,i)=>{
-      if(i<coords.length-1){
-        const mid=[(c[0]+coords[i+1][0])/2,(c[1]+coords[i+1][1])/2];
-        const angle=Math.atan2(coords[i+1][1]-c[1],coords[i+1][0]-c[0])*180/Math.PI;
-        L.marker(mid,{icon:L.divIcon({html:`<div style="transform:rotate(${angle}deg);color:#C8A84B;font-size:14px;line-height:1;">▶</div>`,className:'',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(routeLayer);
-      }
-    });
+  if(pts.length>1){
+    const coords=pts.map(v=>[v.lat,v.lng]);
+    L.polyline(coords,{color:'rgba(200,168,75,.2)',weight:10}).addTo(routeLayer);
+    L.polyline(coords,{color:'#C8A84B',weight:3,dashArray:'10,6'}).addTo(routeLayer);
   }
-  fitAll();
-}
 
-function fitAll(){
-  const valid=voyageLieux.filter(l=>l.lat&&l.lng);
-  if(!valid.length) return;
-  if(valid.length===1) map.setView([valid[0].lat,valid[0].lng],12);
-  else map.fitBounds(valid.map(l=>[l.lat,l.lng]),{padding:[40,40]});
+  if(pts.length===1) map.setView([pts[0].lat,pts[0].lng],12);
+  else map.fitBounds(pts.map(v=>[v.lat,v.lng]),{padding:[40,40]});
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
-function removeStop(idx){
-  voyageLieux.splice(idx, 1);
-  save();
-  if(routeLayer) routeLayer.clearLayers();
-  markers=[];
-  renderPanel();
-  if(voyageLieux.length) renderMap();
+function removeByUid(uid){
+  voyage = voyage.filter(v=>v.uid!==uid);
+  saveVoyage();
+  render();
 }
 
 function clearAll(){
   if(!confirm('Effacer tout le voyage ?')) return;
-  voyageLieux=[];
-  save();
-  if(routeLayer) routeLayer.clearLayers();
-  markers=[];
-  renderPanel();
+  voyage=[];
+  saveVoyage();
+  render();
 }
-
-// ── Drag & Drop — géré dans renderPanel via addEventListener ────────────────
 
 // ── Haversine ─────────────────────────────────────────────────────────────────
 function calcDist(lat1,lng1,lat2,lng2){
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 
-function printMap(){window.print();}
 window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
-
-checkAuth();
 </script>
 </body>
 </html>
