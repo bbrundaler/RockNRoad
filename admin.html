@@ -664,18 +664,26 @@ async function loadGroupeProfil(userId) {
 }
 
 // ── Sécurité : compteur imports Google par groupe ─────────────────────────────
-const IMPORT_LIMIT_ESSAI = 30;
+// Limite dynamique — chargée depuis le profil groupe (colonne import_limit)
+let IMPORT_LIMIT = 30; // valeur par défaut, écrasée au chargement
 let currentImportCount = 0;
 let importLimitReached = false;
 
 async function checkImportLimit() {
   if (!currentGroupeId) return;
   try {
+    // Charger la limite du groupe depuis Supabase
+    const { data: gdata } = await sb.from('groupes')
+      .select('import_limit')
+      .eq('id', currentGroupeId)
+      .single();
+    if (gdata?.import_limit) IMPORT_LIMIT = gdata.import_limit;
+
     const { count } = await sb.from('lieux')
       .select('id', { count: 'exact', head: true })
       .eq('groupe_id', currentGroupeId);
     currentImportCount = count || 0;
-    importLimitReached = currentImportCount >= IMPORT_LIMIT_ESSAI;
+    importLimitReached = currentImportCount >= IMPORT_LIMIT;
     updateImportLimitUI();
   } catch(e) { console.warn('Compteur imports non chargé', e); }
 }
@@ -686,12 +694,12 @@ function updateImportLimitUI() {
   if (!banner) return;
   if (importLimitReached) {
     banner.style.display = 'flex';
-    banner.innerHTML = `⚠️ <strong>Limite d'essai atteinte</strong> — ${currentImportCount}/${IMPORT_LIMIT_ESSAI} fiches. L'import automatique Google Places est désactivé. Vous pouvez encore créer des fiches manuellement.`;
+    banner.innerHTML = `⚠️ <strong>Limite d'essai atteinte</strong> — ${currentImportCount}/${IMPORT_LIMIT} fiches. L'import automatique Google Places est désactivé. Vous pouvez encore créer des fiches manuellement.`;
     if (importBtn) { importBtn.disabled = true; importBtn.style.opacity = '0.5'; }
   } else {
-    banner.style.display = currentImportCount >= IMPORT_LIMIT_ESSAI * 0.8 ? 'flex' : 'none';
+    banner.style.display = currentImportCount >= IMPORT_LIMIT * 0.8 ? 'flex' : 'none';
     if (banner.style.display === 'flex') {
-      banner.innerHTML = `💡 ${currentImportCount}/${IMPORT_LIMIT_ESSAI} fiches importées — il vous reste ${IMPORT_LIMIT_ESSAI - currentImportCount} imports Google automatiques en essai gratuit.`;
+      banner.innerHTML = `💡 ${currentImportCount}/${IMPORT_LIMIT} fiches importées — il vous reste ${IMPORT_LIMIT - currentImportCount} imports Google automatiques en essai gratuit.`;
       banner.style.background = 'rgba(200,168,75,.1)';
       banner.style.borderColor = 'rgba(200,168,75,.3)';
       banner.style.color = '#7a5c10';
@@ -751,7 +759,7 @@ async function importFromMaps(){
 
   // ── Sécurité 1 : vérifier la limite d'imports ─────────────────────────────
   if(importLimitReached){
-    showToast('⚠️ Limite de '+IMPORT_LIMIT_ESSAI+' fiches atteinte — import Google désactivé en essai gratuit','error');
+    showToast('⚠️ Limite de '+IMPORT_LIMIT+' fiches atteinte — import Google désactivé en essai gratuit','error');
     return;
   }
 
@@ -1679,7 +1687,7 @@ async function saveFiche(){
     showToast('Erreur: '+e.message,'error');
     // Incrémenter le compteur local
     currentImportCount++;
-    if(currentImportCount >= IMPORT_LIMIT_ESSAI){ importLimitReached=true; updateImportLimitUI(); }
+    if(currentImportCount >= IMPORT_LIMIT){ importLimitReached=true; updateImportLimitUI(); }
     btn.disabled=false;btn.textContent='✨ Enregistrer la fiche';
   }
 }
