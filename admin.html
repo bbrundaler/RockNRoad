@@ -607,7 +607,7 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[],selectedExtraPhotos=[];
 let mondeNuitVal=false;
   window._horairesText=null;
   window._ouvertMaintenant=null;
@@ -799,6 +799,7 @@ async function importFromMaps(){
   document.querySelectorAll('.star.on').forEach(s=>s.classList.remove('on'));
   selectedGooglePhotoUrl=null;
   googlePhotoRefs=[];
+  selectedExtraPhotos=[];
   // Si ce n'est pas une URL, traiter comme recherche par nom direct
   const isUrl=url.startsWith('http')||url.startsWith('maps.');
   if(!isUrl){
@@ -1380,29 +1381,72 @@ function deptToRegion(sousRegionText){
           photoContainer.appendChild(imgThumb);
         }
 
-        // Sélection photo principale (grande dans section photo)
-        const imgSel=document.createElement('img');
-        imgSel.src=thumbProxy; imgSel.title='Utiliser cette photo'; imgSel.style.cursor='pointer';
-        imgSel.style.cssText='width:80px;height:60px;object-fit:cover;border-radius:6px;border:2px solid transparent;transition:border-color .2s;';
-        imgSel.dataset.ref=ref;
+        // Sélection multi-photos — 1 principale + jusqu'à 4 secondaires
+        const imgSel=document.createElement('div');
+        imgSel.style.cssText='position:relative;display:inline-block;cursor:pointer;';
+        const imgEl=document.createElement('img');
+        imgEl.src=thumbProxy;
+        imgEl.style.cssText='width:80px;height:60px;object-fit:cover;border-radius:6px;border:2px solid transparent;transition:all .2s;display:block;';
+        const badge=document.createElement('div');
+        badge.style.cssText='position:absolute;top:2px;left:2px;background:rgba(200,168,75,.9);color:#1a1208;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;display:none;';
+        imgSel.appendChild(imgEl); imgSel.appendChild(badge);
+        imgSel.dataset.ref=ref; imgSel.dataset.i=i;
+
+        function updatePhotoSelectionUI(){
+          document.querySelectorAll('#googlePhotosSelect [data-ref]').forEach(el=>{
+            const r=el.dataset.ref;
+            const img=el.querySelector('img');
+            const bdg=el.querySelector('div');
+            if(r===selectedGooglePhotoUrl.split('reference=')[1]?.split('&')[0]||(el===imgSel&&i===0&&!selectedGooglePhotoUrl)){
+              // is main
+            }
+            if(r===googlePhotoUrl(selectedGooglePhotoUrl?.split('reference=')[1]?.split('&')[0]||'',apiKey,800)) return;
+            const extraIdx=selectedExtraPhotos.findIndex(u=>u.includes(r));
+            img.style.borderColor=extraIdx>=0?'rgba(200,168,75,.6)':'transparent';
+            bdg.style.display=extraIdx>=0?'block':'none';
+            bdg.textContent='+'+(extraIdx+1);
+          });
+        }
+
         imgSel.onclick=()=>{
-          document.querySelectorAll('#googlePhotosSelect img').forEach(x=>{x.style.borderColor='transparent';x.style.transform='scale(1)';});
-          imgSel.style.borderColor='var(--gold)'; imgSel.style.transform='scale(1.05)';
-          // URL directe Google stable pour stockage
-          selectedGooglePhotoUrl=googlePhotoUrl(ref,apiKey,800);
-          photoFile=null; // annule upload perso si on re-choisit Google
-          const proxyDisplay=googlePhotoProxy(ref,apiKey,800);
-          document.getElementById('pcImg').src=proxyDisplay;
-          document.getElementById('pcImg').style.display='block';
-          // Reset upload zone
-          document.getElementById('photoPreview').style.display='none';
-          document.getElementById('photoPh').style.display='block';
-          document.getElementById('photoZone').classList.remove('has-photo');
+          const url=googlePhotoUrl(ref,apiKey,800);
+          const proxyUrl=googlePhotoProxy(ref,apiKey,800);
+          // Si c'est déjà la photo principale → ne rien faire
+          if(imgEl.style.borderColor==='var(--gold)'||imgEl.style.borderColor==='rgb(200, 168, 75)') return;
+          // Si dans extras → retirer
+          const extraIdx=selectedExtraPhotos.findIndex(u=>u.includes(ref));
+          if(extraIdx>=0){
+            selectedExtraPhotos.splice(extraIdx,1);
+            imgEl.style.borderColor='transparent';
+            badge.style.display='none';
+          } else if(selectedExtraPhotos.length<4) {
+            // Ajouter en extra
+            selectedExtraPhotos.push(url);
+            imgEl.style.borderColor='rgba(200,168,75,.6)';
+            badge.style.display='block';
+            badge.textContent='+'+selectedExtraPhotos.length;
+          }
+          // Stocker toutes les URLs
+          window._photosUrls=[selectedGooglePhotoUrl,...selectedExtraPhotos].filter(Boolean);
+          // Mettre à jour compteur
+          const infoEl=document.getElementById('photo-selection-info');
+          if(infoEl) infoEl.textContent=`Photo principale + ${selectedExtraPhotos.length} photo(s) supplémentaire(s) sélectionnée(s)`;
         };
-        if(i===0){imgSel.style.borderColor='var(--gold)';}
+
+        // Photo 0 = principale par défaut
+        if(i===0){ imgEl.style.borderColor='var(--gold)'; }
         googleSelectContainer.appendChild(imgSel);
       });
 
+      // Reset extras
+      selectedExtraPhotos=[];
+      window._photosUrls=null;
+      // Info sélection
+      const infoDiv=document.createElement('div');
+      infoDiv.id='photo-selection-info';
+      infoDiv.style.cssText='font-size:10px;color:#888;margin-top:6px;';
+      infoDiv.textContent='Cliquez sur les photos pour en ajouter jusqu\'à 4 supplémentaires';
+      googleSelectContainer.parentNode.appendChild(infoDiv);
       // Photo principale = première photo
       const firstRef=photos[0].photo_reference;
       selectedGooglePhotoUrl=googlePhotoUrl(firstRef,apiKey,800);

@@ -1805,11 +1805,25 @@ function makeDynCard(l, cardType){
     const ht = l.horaires_text.split('|').slice(0,2).join(' · ');
     horairesHtml = `<div class="card-horaires">${statusHtml}${statusHtml?' · ':''}<span>${ht}</span></div>`;
   }
-  return `<div class="site-card" id="dyncard-${l.id}">
+  // Galerie multi-photos
+  const extraPhotos = (l.photos_urls||[]).filter(u=>u&&u!==l.photo_url).slice(0,2);
+  const photoSection = extraPhotos.length>0 ? `
+    <div class="photo-gallery">
+      <div class="photo-main" style="background-image:${ph};">
+        <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
+        ${dogPhotoBadge}
+      </div>
+      <div class="photo-thumbs">
+        ${extraPhotos.map(u=>`<div class="photo-thumb" style="background-image:url('${u}');"></div>`).join('')}
+        ${(l.photos_urls||[]).length>3?`<div class="photo-more">+${(l.photos_urls||[]).length-3}</div>`:''}
+      </div>
+    </div>` : `
     <div class="site-photo" style="background-image:${ph};background-size:cover;background-position:center;${!l.photo_url?'height:80px;':''}">
       <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
       ${dogPhotoBadge}
-    </div>
+    </div>`;
+  return `<div class="site-card" id="dyncard-${l.id}">
+    ${photoSection}
     <div class="site-body">
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${noteG}${noteF}</div>
       <h3 class="site-name">${l.nom||'—'}</h3>
