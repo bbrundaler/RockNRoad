@@ -1428,9 +1428,10 @@ function deptToRegion(sousRegionText){
           }
           // Stocker toutes les URLs
           window._photosUrls=[selectedGooglePhotoUrl,...selectedExtraPhotos].filter(Boolean);
-          // Mettre à jour compteur
+          // Mettre à jour info
           const infoEl=document.getElementById('photo-selection-info');
-          if(infoEl) infoEl.textContent=`Photo principale + ${selectedExtraPhotos.length} photo(s) supplémentaire(s) sélectionnée(s)`;
+          const total=1+selectedExtraPhotos.length;
+          if(infoEl) infoEl.textContent=`${total} photo${total>1?'s':''} sélectionnée${total>1?'s':''} — cliquez pour ajouter/retirer`;
         };
 
         // Photo 0 = principale par défaut
@@ -1440,16 +1441,19 @@ function deptToRegion(sousRegionText){
 
       // Reset extras
       selectedExtraPhotos=[];
-      window._photosUrls=null;
       // Info sélection
+      const existingInfo=document.getElementById('photo-selection-info');
+      if(existingInfo) existingInfo.remove();
       const infoDiv=document.createElement('div');
       infoDiv.id='photo-selection-info';
-      infoDiv.style.cssText='font-size:10px;color:#888;margin-top:6px;';
-      infoDiv.textContent='Cliquez sur les photos pour en ajouter jusqu\'à 4 supplémentaires';
-      googleSelectContainer.parentNode.appendChild(infoDiv);
+      infoDiv.style.cssText='font-size:10px;color:#aaa;margin-top:6px;font-style:italic;';
+      infoDiv.textContent='Photo 1 sélectionnée — cliquez sur les autres pour en ajouter jusqu\'à 4';
+      googleSelectContainer.parentNode.insertBefore(infoDiv, googleSelectContainer.nextSibling);
       // Photo principale = première photo
       const firstRef=photos[0].photo_reference;
       selectedGooglePhotoUrl=googlePhotoUrl(firstRef,apiKey,800);
+      // Initialiser photos_urls avec la photo principale
+      window._photosUrls=[selectedGooglePhotoUrl];
       const firstProxy=googlePhotoProxy(firstRef,apiKey,800);
       const irPhoto=document.getElementById('ir-photo');
       if(irPhoto){irPhoto.src=firstProxy; irPhoto.style.display='block';}

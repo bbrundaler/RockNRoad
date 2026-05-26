@@ -507,6 +507,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
         </div>
       </div>
     </div>
+    <div class="em-body" style="padding-top:0;border-top:1px solid #f0ece4;margin-top:4px;">
+      <div class="em-fg full" style="margin-top:14px;">
+        <label class="em-label">Photos (URLs séparées par une virgule)</label>
+        <textarea class="em-textarea" id="em-photos" placeholder="https://... , https://..." style="min-height:56px;font-size:11px;font-family:monospace;"></textarea>
+        <div style="font-size:10px;color:#aaa;margin-top:3px;">Photo principale en premier · max 5 photos</div>
+        <div id="em-photos-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"></div>
+      </div>
+    </div>
     <div class="em-footer">
       <button class="em-btn-del" onclick="deleteFromModal()">🗑 Supprimer</button>
       <button class="em-btn-save" id="em-save-btn" onclick="saveFromModal()">💾 Enregistrer</button>
@@ -1941,6 +1949,15 @@ function openEditModal(id){
   document.getElementById('em-conseil').value = l.conseil || '';
   document.getElementById('em-tel').value = l.tel || '';
   document.getElementById('em-dog-info').value = l.dog_info || '';
+  // Photos
+  const allPhotos = [l.photo_url,...(l.photos_urls||[])].filter(Boolean);
+  const uniquePhotos = [...new Set(allPhotos)].slice(0,5);
+  document.getElementById('em-photos').value = uniquePhotos.join(', ');
+  // Preview
+  const prev = document.getElementById('em-photos-preview');
+  if(prev) {
+    prev.innerHTML = uniquePhotos.map((u,i)=>`<img src="${u}" style="width:60px;height:45px;object-fit:cover;border-radius:5px;border:2px solid ${i===0?'#C8A84B':'#e8e0d0'};" title="${i===0?'Photo principale':'Photo '+(i+1)}">`).join('');
+  }
 
   // Étoiles
   emStarVal = l.note_famille || 0;
@@ -2000,6 +2017,8 @@ async function saveFromModal(){
       dog_info: document.getElementById('em-dog-info').value || null,
       note_famille: emStarVal || null,
       dog_friendly: emDogVal==='yes' ? true : emDogVal==='no' ? false : null,
+      photos_urls: document.getElementById('em-photos').value
+        .split(',').map(s=>s.trim()).filter(s=>s.startsWith('http')).slice(0,5) || null,
     };
     const {error} = await sb.from('lieux').update(payload).eq('id', editingLieuId);
     if(error) throw error;
