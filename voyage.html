@@ -279,7 +279,7 @@ const sb=createClient(SURL,SKEY);
 
 let map,routeLayer,markers=[];
 let voyageLieux=[];
-let draggedId=null;
+let draggedIdx=null;
 
 async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
@@ -337,10 +337,10 @@ function renderPanel(){
   }
   showEmpty(false);
   list.innerHTML=voyageLieux.map((l,i)=>`
-    <div class="stop-item" draggable="true" data-id="${l.id}"
-         ondragstart="dragStart(event,'${l.id}')"
+    <div class="stop-item" draggable="true" data-idx="${i}"
+         ondragstart="dragStart(event,${i})"
          ondragover="dragOver(event)"
-         ondrop="dragDrop(event,'${l.id}')">
+         ondrop="dragDrop(event,${i})">
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
@@ -349,7 +349,7 @@ function renderPanel(){
         ${i>0&&voyageLieux[i-1].lat&&l.lat?
           `<div class="stop-dist">↑ ${calcDist(voyageLieux[i-1].lat,voyageLieux[i-1].lng,l.lat,l.lng)} km</div>`:''}
       </div>
-      <button class="stop-remove" onclick="removeStop('${l.id}')">✕</button>
+      <button class="stop-remove" onclick="removeStop(${i})">✕</button>
     </div>
   `).join('');
 
@@ -410,14 +410,17 @@ function fitAll(){
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
-function removeStop(id){
-  voyageLieux=voyageLieux.filter(l=>String(l.id)!==String(id));
+function removeStop(idx){
+  voyageLieux.splice(idx, 1);
   localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
   localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
   if(!voyageLieux.length){
-    renderPanel(); routeLayer.clearLayers(); showEmpty(true);
+    routeLayer.clearLayers();
+    showEmpty(true);
+    renderPanel();
   } else {
-    renderPanel(); renderMap();
+    renderPanel();
+    renderMap();
   }
 }
 
@@ -430,16 +433,14 @@ function clearAll(){
 }
 
 // ── Drag & Drop ───────────────────────────────────────────────────────────────
-function dragStart(e,id){draggedId=id;e.target.classList.add('dragging');}
+function dragStart(e,idx){draggedIdx=idx;e.target.classList.add('dragging');}
 function dragOver(e){e.preventDefault();}
-function dragDrop(e,targetId){
+function dragDrop(e,targetIdx){
   e.preventDefault();
   document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
-  if(draggedId===targetId) return;
-  const fi=voyageLieux.findIndex(l=>String(l.id)===String(draggedId));
-  const ti=voyageLieux.findIndex(l=>String(l.id)===String(targetId));
-  const item=voyageLieux.splice(fi,1)[0];
-  voyageLieux.splice(ti,0,item);
+  if(draggedIdx===targetIdx) return;
+  const item=voyageLieux.splice(draggedIdx,1)[0];
+  voyageLieux.splice(targetIdx,0,item);
   localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
   localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
   renderPanel(); renderMap();
