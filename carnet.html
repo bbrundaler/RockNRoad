@@ -1798,6 +1798,13 @@ function makeDynCard(l, cardType){
   const noteF=l.note_famille?`<span style="background:rgba(200,168,75,.15);color:#8B6914;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;">${'★'.repeat(l.note_famille)} 🐾</span>`:'';
   const tags=l.tags&&l.tags.length?l.tags.slice(0,3).map(t=>`<span style="font-size:9px;background:rgba(200,168,75,.1);color:#8B6914;padding:1px 6px;border-radius:10px;">${t}</span>`).join(''):'';
   const mapsUrl=l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
+  // Horaires
+  let horairesHtml = '';
+  if(l.horaires_text) {
+    const statusHtml = l.ouvert_maintenant===true?'<span class="ouvert">● Ouvert</span>':l.ouvert_maintenant===false?'<span class="ferme">● Fermé</span>':'';
+    const ht = l.horaires_text.split('|').slice(0,2).join(' · ');
+    horairesHtml = `<div class="card-horaires">${statusHtml}${statusHtml?' · ':''}<span>${ht}</span></div>`;
+  }
   return `<div class="site-card" id="dyncard-${l.id}">
     <div class="site-photo" style="background-image:${ph};background-size:cover;background-position:center;${!l.photo_url?'height:80px;':''}">
       <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
