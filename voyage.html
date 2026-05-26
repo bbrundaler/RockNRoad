@@ -220,7 +220,13 @@ function loadVoyage(){
   // Migrer les anciens formats : garantir que chaque item a un uid
   voyage = raw
     .filter(v=>v&&v.lat&&v.lng)
-    .map(v=>({...v, uid: v.uid || v.id || (Date.now()+Math.random()).toString(36)}));
+    .map(v=>{
+      // Générer un uid unique pour chaque item sans uid
+      const uid = v.uid && typeof v.uid==='string' && v.uid.length>4
+        ? v.uid
+        : Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+      return {...v, uid};
+    });
   render();
 }
 
@@ -344,7 +350,17 @@ function renderMap(){
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function removeByUid(uid){
+  if(!uid || typeof uid !== 'string' || uid.length < 4){
+    console.warn('removeByUid: uid invalide', uid);
+    return;
+  }
+  const before = voyage.length;
   voyage = voyage.filter(v=>v.uid!==uid);
+  const after = voyage.length;
+  if(before===after){
+    console.warn('removeByUid: aucun item supprimé pour uid', uid);
+    return;
+  }
   saveVoyage();
   render();
 }
