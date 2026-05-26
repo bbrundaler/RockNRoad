@@ -364,6 +364,7 @@ function renderPanel(){
 
 // ── Carte ─────────────────────────────────────────────────────────────────────
 function renderMap(){
+  if(!map) return;
   routeLayer.clearLayers(); markers=[];
   const valid=voyageLieux.filter(l=>l.lat&&l.lng);
   if(!valid.length) return;
@@ -410,11 +411,14 @@ function fitAll(){
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function removeStop(id){
-  voyageLieux=voyageLieux.filter(l=>l.id!==id);
+  voyageLieux=voyageLieux.filter(l=>String(l.id)!==String(id));
   localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
   localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
-  renderPanel(); renderMap();
-  if(!voyageLieux.length) showEmpty(true);
+  if(!voyageLieux.length){
+    renderPanel(); routeLayer.clearLayers(); showEmpty(true);
+  } else {
+    renderPanel(); renderMap();
+  }
 }
 
 function clearAll(){
@@ -432,8 +436,8 @@ function dragDrop(e,targetId){
   e.preventDefault();
   document.querySelectorAll('.stop-item').forEach(el=>el.classList.remove('dragging'));
   if(draggedId===targetId) return;
-  const fi=voyageLieux.findIndex(l=>l.id===draggedId);
-  const ti=voyageLieux.findIndex(l=>l.id===targetId);
+  const fi=voyageLieux.findIndex(l=>String(l.id)===String(draggedId));
+  const ti=voyageLieux.findIndex(l=>String(l.id)===String(targetId));
   const item=voyageLieux.splice(fi,1)[0];
   voyageLieux.splice(ti,0,item);
   localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
