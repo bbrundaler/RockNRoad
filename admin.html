@@ -1702,18 +1702,37 @@ async function saveFiche(){
 
 
 function showConfirmation(nom, region, type){
+  // Calculer l'onglet carnet correspondant à la région
+  const REGION_TO_TAB = {
+    'Alsace':'tab-alsace','Lorraine':'tab-alsace','Champagne-Ardenne':'tab-alsace',
+    'Aquitaine':'tab-atlantique','Pays de la Loire':'tab-atlantique',
+    'Midi-Pyrénées':'tab-pyrenees',
+    'Bourgogne':'tab-bourgogne','Franche-Comté':'tab-bourgogne',
+  };
+  const tabId = REGION_TO_TAB[region] || null;
+  const carnetUrl = tabId ? `carnet.html#${tabId.replace('tab-','')}` : 'carnet.html';
+
   const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,13,9,.85);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,13,9,.88);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
   overlay.innerHTML=`
-    <div style="background:white;border-radius:16px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);">
-      <div style="font-size:48px;margin-bottom:12px;">🎉</div>
-      <h2 style="font-family:Playfair Display,serif;font-size:22px;color:#1a1208;margin-bottom:6px;">Fiche créée !</h2>
-      <p style="font-size:13px;color:#888;margin-bottom:6px;">${nom}</p>
-      <p style="font-size:11px;color:#aaa;margin-bottom:24px;">${region} · ${type}</p>
+    <div style="background:white;border-radius:18px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.5);">
+      <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:24px;color:#1a1208;margin-bottom:6px;">Fiche créée !</h2>
+      <p style="font-size:14px;color:#555;font-weight:600;margin-bottom:4px;">${nom}</p>
+      <p style="font-size:11px;color:#aaa;margin-bottom:28px;">${region} · ${type}</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button onclick="window.location.href='admin.html'" style="padding:12px;background:#1a1208;color:#C8A84B;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;">➕ Créer une autre fiche</button>
-        <button onclick="window.location.href='fiches.html'" style="padding:12px;background:#f5f0e8;color:#1a1208;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">🗂️ Voir mes fiches</button>
-        <button onclick="window.location.href='carnet.html'" style="padding:12px;background:transparent;color:#888;border:1px solid #e8e0d0;border-radius:9px;font-size:12px;cursor:pointer;">🗺 Retour au Carnet</button>
+        <button onclick="window.location.href='admin.html'"
+          style="padding:13px;background:#1a1208;color:#C8A84B;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;">
+          ➕ Créer une autre fiche
+        </button>
+        <button onclick="window.location.href='${carnetUrl}'"
+          style="padding:13px;background:#f5f0e8;color:#1a1208;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">
+          🗺 Voir dans le Carnet ${region ? '(' + region + ')' : ''}
+        </button>
+        <button onclick="window.location.href='carnet.html'"
+          style="padding:11px;background:transparent;color:#aaa;border:1px solid #e8e0d0;border-radius:9px;font-size:12px;cursor:pointer;">
+          🏠 Accueil
+        </button>
       </div>
     </div>
   `;
