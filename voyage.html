@@ -414,10 +414,14 @@ function removeStop(idx){
   voyageLieux.splice(idx, 1);
   localStorage.setItem('rr_voyage_full',JSON.stringify(voyageLieux));
   localStorage.setItem('rr_voyage',JSON.stringify(voyageLieux.map(l=>l.id)));
+  // Toujours nettoyer la carte d'abord
+  if(routeLayer) routeLayer.clearLayers();
+  markers = [];
   if(!voyageLieux.length){
-    routeLayer.clearLayers();
     showEmpty(true);
-    renderPanel();
+    document.getElementById('stops-list').innerHTML = '';
+    document.getElementById('totalDist').textContent = '— km';
+    document.getElementById('totalStops').textContent = '0';
   } else {
     renderPanel();
     renderMap();
@@ -429,7 +433,12 @@ function clearAll(){
   voyageLieux=[];
   localStorage.setItem('rr_voyage_full','[]');
   localStorage.setItem('rr_voyage','[]');
-  renderPanel(); routeLayer.clearLayers(); showEmpty(true);
+  if(routeLayer) routeLayer.clearLayers();
+  markers=[];
+  document.getElementById('stops-list').innerHTML = '';
+  document.getElementById('totalDist').textContent = '— km';
+  document.getElementById('totalStops').textContent = '0';
+  showEmpty(true);
 }
 
 // ── Drag & Drop ───────────────────────────────────────────────────────────────
