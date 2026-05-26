@@ -209,6 +209,43 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .nuit-voyage-btn:hover{background:rgba(255,255,255,.12);color:white;}
 .nuit-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
+/* MODALE ÉDITION INLINE */
+#edit-overlay{position:fixed;inset:0;background:rgba(15,13,9,.88);z-index:3000;
+  display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+#edit-overlay.open{display:flex;}
+#edit-modal{background:white;border-radius:16px;width:100%;max-width:560px;max-height:90vh;
+  overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);}
+.em-header{padding:20px 24px 16px;border-bottom:1px solid #f0ece4;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+.em-title{font-family:'Playfair Display',serif;font-size:18px;color:#1a1208;}
+.em-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;padding:4px;}
+.em-close:hover{color:#333;}
+.em-body{padding:20px 24px;}
+.em-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.em-fg{display:flex;flex-direction:column;gap:5px;}
+.em-fg.full{grid-column:1/-1;}
+.em-label{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;}
+.em-input,.em-select,.em-textarea{width:100%;padding:9px 11px;border:1.5px solid #e8dece;border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:13px;color:#1a1208;outline:none;transition:border-color .2s;}
+.em-input:focus,.em-select:focus,.em-textarea:focus{border-color:var(--gold);}
+.em-textarea{resize:vertical;min-height:70px;font-size:12px;}
+.em-stars{display:flex;gap:4px;margin-top:2px;}
+.em-star{font-size:20px;cursor:pointer;color:#ddd;transition:color .15s;}
+.em-star.on{color:#C8A84B;}
+.em-dog-row{display:flex;gap:6px;margin-top:2px;}
+.em-dog-btn{flex:1;padding:7px;border-radius:7px;border:1.5px solid #e8dece;background:white;
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+.em-dog-btn.active-yes{background:#e8f4e8;border-color:#2C5016;color:#2C5016;}
+.em-dog-btn.active-no{background:#ffe8e0;border-color:#cc4400;color:#cc4400;}
+.em-dog-btn.active-na{background:#fffbe8;border-color:#C8A84B;color:#8B6914;}
+.em-footer{padding:16px 24px;border-top:1px solid #f0ece4;display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:white;}
+.em-btn-save{padding:10px 24px;background:#1a1208;color:#C8A84B;border:none;border-radius:8px;
+  font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
+.em-btn-save:hover{background:var(--gold);color:#1a1208;}
+.em-btn-save:disabled{opacity:.5;cursor:not-allowed;}
+.em-btn-del{padding:10px 16px;background:rgba(200,50,0,.08);color:#cc4400;border:1px solid rgba(200,50,0,.2);
+  border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.em-btn-del:hover{background:rgba(200,50,0,.15);}
+
 /* SYSTÈME DE VOTE FAMILIAL */
 .vote-bar{display:flex;gap:4px;align-items:center;margin-top:6px;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);}
 .vote-btn{display:flex;align-items:center;gap:3px;padding:4px 9px;border-radius:20px;border:1.5px solid transparent;
@@ -372,6 +409,86 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 
 <!-- Contenu protégé -->
+<!-- MODALE ÉDITION INLINE -->
+<div id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div id="edit-modal">
+    <div class="em-header">
+      <span class="em-title">✏️ Modifier la fiche</span>
+      <button class="em-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="em-body">
+      <div class="em-grid">
+        <div class="em-fg full">
+          <label class="em-label">Nom du lieu *</label>
+          <input class="em-input" id="em-nom" type="text" placeholder="Nom du lieu">
+        </div>
+        <div class="em-fg">
+          <label class="em-label">Type</label>
+          <select class="em-select" id="em-type">
+            <option value="Site">Site / Visite</option>
+            <option value="Camping">Camping</option>
+            <option value="Restaurant">Restaurant</option>
+            <option value="Randonnee">Randonnée</option>
+            <option value="Plage">Plage</option>
+            <option value="Musee">Musée</option>
+            <option value="Culture">Culture</option>
+            <option value="Chateau">Château</option>
+            <option value="Cave">Cave / Dégustation</option>
+            <option value="Halte">Halte</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="em-fg">
+          <label class="em-label">Sous-région</label>
+          <input class="em-input" id="em-sous-region" type="text" placeholder="ex: Haut-Rhin">
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Description</label>
+          <textarea class="em-textarea" id="em-description" placeholder="Description du lieu…"></textarea>
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Commentaire personnel</label>
+          <textarea class="em-textarea" id="em-commentaire" placeholder="Vos notes personnelles…"></textarea>
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Conseil</label>
+          <input class="em-input" id="em-conseil" type="text" placeholder="Astuce ou conseil…">
+        </div>
+        <div class="em-fg">
+          <label class="em-label">Note famille</label>
+          <div class="em-stars" id="em-stars">
+            <span class="em-star" data-v="1">★</span>
+            <span class="em-star" data-v="2">★</span>
+            <span class="em-star" data-v="3">★</span>
+            <span class="em-star" data-v="4">★</span>
+            <span class="em-star" data-v="5">★</span>
+          </div>
+        </div>
+        <div class="em-fg">
+          <label class="em-label">Téléphone</label>
+          <input class="em-input" id="em-tel" type="text" placeholder="Numéro de téléphone">
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Dog Friendly</label>
+          <div class="em-dog-row">
+            <button class="em-dog-btn" id="em-dog-yes" onclick="setEmDog('yes')">🐕 Oui</button>
+            <button class="em-dog-btn" id="em-dog-no" onclick="setEmDog('no')">🚫 Non</button>
+            <button class="em-dog-btn" id="em-dog-na" onclick="setEmDog('na')">❓ À vérifier</button>
+          </div>
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Info chien</label>
+          <input class="em-input" id="em-dog-info" type="text" placeholder="Détails sur les conditions…">
+        </div>
+      </div>
+    </div>
+    <div class="em-footer">
+      <button class="em-btn-del" onclick="deleteFromModal()">🗑 Supprimer</button>
+      <button class="em-btn-save" id="em-save-btn" onclick="saveFromModal()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div id="main-content">
 
 
@@ -1692,9 +1809,113 @@ function addDynRegionTopbar(regionName, regionKey){
 }
 
 // ── MODAL ÉDITION RAPIDE depuis carnet.html ───────────────────────────
+let editingLieuId = null;
+let emDogVal = 'na';
+let emStarVal = 0;
+
 function openEditModal(id){
-  // Redirection vers admin.html en mode édition
-  window.location.href='fiches.html?edit='+id;
+  const l = allLieux.find(x => x.id === id || x.id === String(id));
+  if(!l){ showToast('Fiche introuvable','error'); return; }
+  editingLieuId = id;
+
+  // Remplir les champs
+  document.getElementById('em-nom').value = l.nom || '';
+  document.getElementById('em-type').value = l.type || 'Site';
+  document.getElementById('em-sous-region').value = l.sous_region || '';
+  document.getElementById('em-description').value = l.description || '';
+  document.getElementById('em-commentaire').value = l.commentaire || '';
+  document.getElementById('em-conseil').value = l.conseil || '';
+  document.getElementById('em-tel').value = l.tel || '';
+  document.getElementById('em-dog-info').value = l.dog_info || '';
+
+  // Étoiles
+  emStarVal = l.note_famille || 0;
+  updateEmStars();
+
+  // Dog
+  emDogVal = l.dog_friendly === true ? 'yes' : l.dog_friendly === false ? 'no' : 'na';
+  updateEmDog();
+
+  document.getElementById('edit-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal(){
+  document.getElementById('edit-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  editingLieuId = null;
+}
+
+function setEmDog(val){
+  emDogVal = val;
+  updateEmDog();
+}
+function updateEmDog(){
+  ['yes','no','na'].forEach(v => {
+    const btn = document.getElementById('em-dog-'+v);
+    if(btn) btn.className = 'em-dog-btn' + (emDogVal===v ? ' active-'+v : '');
+  });
+}
+function updateEmStars(){
+  document.querySelectorAll('.em-star').forEach(s => {
+    s.classList.toggle('on', parseInt(s.dataset.v) <= emStarVal);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.em-star').forEach(s => {
+    s.addEventListener('click', () => {
+      emStarVal = parseInt(s.dataset.v);
+      updateEmStars();
+    });
+  });
+});
+
+async function saveFromModal(){
+  if(!editingLieuId) return;
+  const btn = document.getElementById('em-save-btn');
+  btn.disabled = true; btn.textContent = '⏳';
+  try{
+    const payload = {
+      nom: document.getElementById('em-nom').value.trim(),
+      type: document.getElementById('em-type').value,
+      sous_region: document.getElementById('em-sous-region').value || null,
+      description: document.getElementById('em-description').value || null,
+      commentaire: document.getElementById('em-commentaire').value || null,
+      conseil: document.getElementById('em-conseil').value || null,
+      tel: document.getElementById('em-tel').value || null,
+      dog_info: document.getElementById('em-dog-info').value || null,
+      note_famille: emStarVal || null,
+      dog_friendly: emDogVal==='yes' ? true : emDogVal==='no' ? false : null,
+    };
+    const {error} = await sb.from('lieux').update(payload).eq('id', editingLieuId);
+    if(error) throw error;
+    // Mettre à jour le cache local
+    const idx = allLieux.findIndex(x => x.id === editingLieuId || x.id === String(editingLieuId));
+    if(idx >= 0) allLieux[idx] = {...allLieux[idx], ...payload};
+    showToast('✅ Fiche mise à jour !', 'success');
+    closeEditModal();
+    // Rafraîchir l'affichage
+    loadDynamicFiches();
+  }catch(e){
+    showToast('Erreur : '+e.message, 'error');
+  }finally{
+    btn.disabled = false; btn.textContent = '💾 Enregistrer';
+  }
+}
+
+async function deleteFromModal(){
+  if(!editingLieuId) return;
+  if(!confirm('Supprimer cette fiche définitivement ?')) return;
+  try{
+    const {error} = await sb.from('lieux').delete().eq('id', editingLieuId);
+    if(error) throw error;
+    allLieux = allLieux.filter(x => x.id !== editingLieuId && x.id !== String(editingLieuId));
+    showToast('🗑 Fiche supprimée', 'success');
+    closeEditModal();
+    loadDynamicFiches();
+  }catch(e){
+    showToast('Erreur : '+e.message, 'error');
+  }
 }
 
 const TITLES={overview:'Accueil',alsace:'Alsace',pyrenees:'Pyrénées',atlantique:'Atlantique',bourgogne:'Bourgogne',carte:'Carte interactive',fiche:'Fiche récap',tips:'Conseils',allemagne:'Allemagne',suisse:'Suisse',autriche:'Autriche',italie:'Italie',espagne:'Espagne',portugal:'Portugal',belgique:'Belgique',luxembourg:'Luxembourg','pays-bas':'Pays-Bas',croatie:'Croatie',nepal:'Népal',vietnam:'Vietnam',egypte:'Égypte',afriquesud:'Afrique du Sud',srilanka:'Sri Lanka',mexique:'Mexique'};
