@@ -246,6 +246,34 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 .em-btn-del:hover{background:rgba(200,50,0,.15);}
 
+/* LIGHTBOX PHOTOS */
+#lightbox{position:fixed;inset:0;background:rgba(15,13,9,.82);z-index:4000;
+  display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
+#lightbox.open{display:flex;}
+#lightbox-inner{background:#1a1710;border-radius:14px;overflow:hidden;
+  max-width:720px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;}
+#lightbox-main{width:100%;height:420px;background-size:cover!important;background-position:center!important;position:relative;}
+#lightbox-title{position:absolute;bottom:0;left:0;right:0;padding:12px 16px;
+  background:linear-gradient(transparent,rgba(0,0,0,.7));
+  font-family:'Playfair Display',serif;font-size:16px;color:white;font-weight:700;}
+#lightbox-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.5);
+  color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;}
+#lightbox-thumbs{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:#141210;scrollbar-width:thin;scrollbar-color:rgba(200,168,75,.3) transparent;}
+.lb-thumb{width:72px;height:52px;border-radius:6px;background-size:cover!important;background-position:center!important;
+  cursor:pointer;flex-shrink:0;border:2px solid transparent;transition:all .2s;opacity:.7;}
+.lb-thumb:hover{opacity:1;}
+.lb-thumb.active{border-color:var(--gold);opacity:1;}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);
+  color:white;border:none;width:36px;height:36px;border-radius:50%;font-size:16px;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.lb-nav:hover{background:rgba(200,168,75,.7);}
+#lb-prev{left:10px;}
+#lb-next{right:10px;}
+#lightbox-close{position:absolute;top:10px;left:12px;background:rgba(0,0,0,.5);color:white;
+  border:none;width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:1;}
+#lightbox-close:hover{background:rgba(200,50,0,.6);}
+
 /* FILTRES VOTES RAPIDES */
 .vote-filters{display:flex;gap:6px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
 .vote-filter-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;
@@ -434,6 +462,20 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 
 <!-- Contenu protégé -->
+<!-- LIGHTBOX PHOTOS -->
+<div id="lightbox" onclick="if(event.target===this)closeLightbox()">
+  <div id="lightbox-inner">
+    <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div id="lightbox-main">
+      <div id="lb-prev" class="lb-nav" onclick="lbNav(-1)">‹</div>
+      <div id="lb-next" class="lb-nav" onclick="lbNav(1)">›</div>
+      <div id="lightbox-title"></div>
+      <div id="lightbox-counter"></div>
+    </div>
+    <div id="lightbox-thumbs"></div>
+  </div>
+</div>
+
 <!-- MODALE ÉDITION INLINE -->
 <div id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
   <div id="edit-modal">
@@ -1817,7 +1859,8 @@ function makeDynCard(l, cardType){
   const extraPhotos = (l.photos_urls||[]).filter(u=>u&&u!==l.photo_url).slice(0,2);
   const photoSection = extraPhotos.length>0 ? `
     <div class="photo-gallery">
-      <div class="photo-main" style="background-image:${ph};">
+      <div class="photo-main" style="background-image:${ph};cursor:pointer;"
+        onclick="(()=>{const allP=[l.photo_url,...(l.photos_urls||[])].filter(Boolean);openLightbox([...new Set(allP)],'${(l.nom||'').replace(/'/g,'')}',0)})()">
         <div class="site-overlay"><span class="type-badge">${l.type||'Lieu'} · ${l.sous_region||l.region||''}</span></div>
         ${dogPhotoBadge}
       </div>
@@ -1843,6 +1886,7 @@ function makeDynCard(l, cardType){
       ${tags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:6px;">${tags}</div>`:''}
       ${makeVoteBar(l)}
       <div class="site-actions">
+        ${(()=>{const allP=[l.photo_url,...(l.photos_urls||[])].filter(Boolean);const uniq=[...new Set(allP)];return uniq.length>1?`<button onclick="event.stopPropagation();openLightbox(${JSON.stringify(uniq)}, '${(l.nom||'').replace(/'/g,'')}', 0)" style="background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.25);color:#8B6914;font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">📷 ${uniq.length}</button>`:'';})()}
         <a href="${mapsUrl}" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="google-btn">🌐 Site</a>`:`<a href="https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}" target="_blank" class="google-btn">🔍 Google</a>`}
         <button class="voyage-add-btn" id="vcard-dyn-${l.id}"
@@ -1900,6 +1944,7 @@ function makeNuitCard(l){
       ${l.conseil?`<div class="nuit-notes" style="color:rgba(200,168,75,.7);">💡 ${l.conseil.slice(0,80)}</div>`:''}
       ${makeVoteBar(l)}
       <div class="nuit-actions">
+        ${(()=>{const allP=[l.photo_url,...(l.photos_urls||[])].filter(Boolean);const uniq=[...new Set(allP)];return uniq.length>1?`<button onclick="event.stopPropagation();openLightbox(${JSON.stringify(uniq)}, '${(l.nom||'').replace(/'/g,'')}', 0)" class="nuit-maps-btn">📷 ${uniq.length}</button>`:'';})()}
         <a href="${mapsUrl}" target="_blank" class="nuit-maps-btn">📍 Maps</a>
         ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="nuit-maps-btn">🌐 Site</a>`:''}
@@ -1935,6 +1980,48 @@ let editingLieuId = null;
 let emDogVal = 'na';
 let emStarVal = 0;
 
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────────
+let lbPhotos=[], lbIdx=0;
+
+function openLightbox(photos, nom, startIdx=0){
+  if(!photos||!photos.length) return;
+  lbPhotos=photos; lbIdx=startIdx;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow='hidden';
+  lbRender();
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow='';
+}
+function lbNav(dir){
+  lbIdx=(lbIdx+dir+lbPhotos.length)%lbPhotos.length;
+  lbRender();
+}
+function lbRender(){
+  const main=document.getElementById('lightbox-main');
+  main.style.backgroundImage=`url('${lbPhotos[lbIdx]}')`;
+  document.getElementById('lightbox-counter').textContent=`${lbIdx+1} / ${lbPhotos.length}`;
+  // Thumbs
+  const tc=document.getElementById('lightbox-thumbs');
+  tc.innerHTML=lbPhotos.map((u,i)=>`
+    <div class="lb-thumb ${i===lbIdx?'active':''}"
+      style="background-image:url('${u}');"
+      onclick="lbIdx=${i};lbRender()"></div>
+  `).join('');
+  // Cacher nav si 1 seule photo
+  document.getElementById('lb-prev').style.display=lbPhotos.length>1?'flex':'none';
+  document.getElementById('lb-next').style.display=lbPhotos.length>1?'flex':'none';
+  document.getElementById('lightbox-thumbs').style.display=lbPhotos.length>1?'flex':'none';
+}
+// Clavier
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('lightbox').classList.contains('open')) return;
+  if(e.key==='ArrowLeft') lbNav(-1);
+  else if(e.key==='ArrowRight') lbNav(1);
+  else if(e.key==='Escape') closeLightbox();
+});
+
 function openEditModal(id){
   const l = allLieux.find(x => x.id === id || x.id === String(id));
   if(!l){ showToast('Fiche introuvable','error'); return; }
@@ -1956,7 +2043,65 @@ function openEditModal(id){
   // Preview
   const prev = document.getElementById('em-photos-preview');
   if(prev) {
-    prev.innerHTML = uniquePhotos.map((u,i)=>`<img src="${u}" style="width:60px;height:45px;object-fit:cover;border-radius:5px;border:2px solid ${i===0?'#C8A84B':'#e8e0d0'};" title="${i===0?'Photo principale':'Photo '+(i+1)}">`).join('');
+    prev.innerHTML='';
+    uniquePhotos.forEach((u,i)=>{
+      const wrapper=document.createElement('div');
+      wrapper.style.cssText='position:relative;cursor:pointer;';
+      const img=document.createElement('img');
+      img.src=u;
+      img.style.cssText=`width:64px;height:48px;object-fit:cover;border-radius:6px;border:2.5px solid ${i===0?'#C8A84B':'#e8e0d0'};transition:all .2s;`;
+      img.title=i===0?'Photo principale (cliquez pour changer)':'Cliquer pour définir comme principale';
+      if(i===0){
+        const lbl=document.createElement('div');
+        lbl.textContent='✓';
+        lbl.style.cssText='position:absolute;bottom:2px;right:3px;background:#C8A84B;color:#1a1208;font-size:9px;font-weight:800;padding:1px 4px;border-radius:3px;';
+        wrapper.appendChild(lbl);
+      }
+      wrapper.addEventListener('click',()=>{
+        // Réorganiser : la photo cliquée devient la première
+        const allUrls=document.getElementById('em-photos').value.split(',').map(s=>s.trim()).filter(s=>s.startsWith('http'));
+        const clicked=u;
+        const reordered=[clicked,...allUrls.filter(x=>x!==clicked)].slice(0,5);
+        document.getElementById('em-photos').value=reordered.join(', ');
+        // Rafraîchir le preview
+        const newPrev=document.getElementById('em-photos-preview');
+        newPrev.innerHTML='';
+        reordered.forEach((url,j)=>{
+          const w2=document.createElement('div');
+          w2.style.cssText='position:relative;cursor:pointer;';
+          const i2=document.createElement('img');
+          i2.src=url;
+          i2.style.cssText=`width:64px;height:48px;object-fit:cover;border-radius:6px;border:2.5px solid ${j===0?'#C8A84B':'#e8e0d0'};transition:all .2s;`;
+          i2.title=j===0?'Photo principale':'Photo '+(j+1);
+          if(j===0){
+            const l2=document.createElement('div');
+            l2.textContent='✓';
+            l2.style.cssText='position:absolute;bottom:2px;right:3px;background:#C8A84B;color:#1a1208;font-size:9px;font-weight:800;padding:1px 4px;border-radius:3px;';
+            w2.appendChild(l2);
+          }
+          w2.appendChild(i2);
+          w2.addEventListener('click',w2._clickFn=()=>{
+            const a=document.getElementById('em-photos').value.split(',').map(s=>s.trim()).filter(s=>s.startsWith('http'));
+            const r2=[url,...a.filter(x=>x!==url)].slice(0,5);
+            document.getElementById('em-photos').value=r2.join(', ');
+            // Simple refresh — relancer openEditModal n'est pas possible ici
+            // On rafraîchit juste les bordures
+            newPrev.querySelectorAll('img').forEach((im,k)=>{ im.style.borderColor=k===0?'#C8A84B':'#e8e0d0'; });
+          });
+          w2.appendChild(i2);
+          newPrev.appendChild(w2);
+        });
+      });
+      wrapper.appendChild(img);
+      prev.appendChild(wrapper);
+    });
+    // Hint
+    if(uniquePhotos.length>1){
+      const hint=document.createElement('div');
+      hint.style.cssText='width:100%;font-size:10px;color:#aaa;margin-top:4px;font-style:italic;';
+      hint.textContent='Cliquez une photo pour la définir comme principale';
+      prev.parentNode.insertBefore(hint, prev.nextSibling);
+    }
   }
 
   // Étoiles
