@@ -947,8 +947,9 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
   const mc=document.getElementById("main-content");if(mc)mc.style.display="block";
   // Handle hash navigation from other pages
   const hash=window.location.hash.replace('#','');
-  const validTabs=['overview','alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
-  if(hash && validTabs.includes(hash)){
+  const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
+  if(!hash || hash==='overview'){window.location.href='home.html';return;}
+  if(validTabs.includes(hash)){
     showTab(hash);
   }
   // Charger le profil groupe (point de départ dynamique + groupe_id)
