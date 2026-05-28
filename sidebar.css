@@ -6,7 +6,7 @@
 
 /* ── Conteneur ── */
 #sidebar {
-  width: 180px;
+  width: 215px;
   background: rgba(15,13,9,.97);
   border-right: 1px solid rgba(200,168,75,.1);
   display: flex;
