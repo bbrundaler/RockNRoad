@@ -4,9 +4,12 @@
    <link rel="stylesheet" href="sidebar.css">
    ═══════════════════════════════════════════════ */
 
+/* ── Variable globale : modifier ICI pour changer la largeur partout ── */
+:root { --sb: 215px; }
+
 /* ── Conteneur ── */
 #sidebar {
-  width: 215px;
+  width: var(--sb);
   background: rgba(15,13,9,.97);
   border-right: 1px solid rgba(200,168,75,.1);
   display: flex;
