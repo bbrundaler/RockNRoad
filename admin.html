@@ -201,47 +201,53 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 <!-- SIDEBAR -->
 <div id="sb-overlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open');"></div>
 <div id="sidebar">
-  <a href="home.html" class="sb-logo">
-    <div style="font-size:13px;opacity:.5;margin-bottom:5px;">🐾</div>
-    <div class="sb-logo-title">Rock<span>N</span>Road</div>
-    <div class="sb-logo-sub">Aventures</div>
-  </a>
-  <div class="sb-group">
-    <div class="sb-group-label">Navigation</div>
-    <a class="sb-btn" href="home.html"><span class="sb-dot sb-dot-grey"></span><span>Accueil</span></a>
-  </div>
-  <div class="sb-sep"></div>
-  <div class="sb-group">
-    <div class="sb-group-label">Voyage</div>
-    <a class="sb-btn" href="carnet.html#alsace"><span style="font-size:12px;">🇫🇷</span><span>Région France</span></a>
-    <a class="sb-btn" href="carnet.html#allemagne"><span style="font-size:12px;">🌍</span><span>Région Europe</span></a>
-    <a class="sb-btn" href="carnet.html#nepal"><span style="font-size:12px;">✈️</span><span>Monde</span></a>
-  </div>
-  <div class="sb-sep"></div>
-  <div class="sb-group">
-    <div class="sb-group-label">Outils</div>
-    <a class="sb-btn" href="carnet.html#carte"><span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span></a>
-    <a class="sb-btn" href="voyage.html"><span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span></a>
-    <a class="sb-btn" href="carnet.html#fiche"><span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span></a>
-    <a class="sb-btn" href="carnet.html#tips"><span class="sb-dot sb-dot-grey"></span><span>Conseils</span></a>
-  </div>
-  <div class="sb-sep"></div>
-  <div class="sb-group">
-    <div class="sb-group-label">Back-Office</div>
-    <a class="sb-btn" href="carnet.html"><span class="sb-dot sb-dot-grey"></span><span>Mes Fiches</span></a>
-    <a class="sb-btn active" href="admin.html"><span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span></a>
-    <a class="sb-btn" href="config.html"><span class="sb-dot sb-dot-grey"></span><span>⚙️ Config</span></a>
-  </div>
-  <div class="sb-footer">
-    <div class="sb-user">
-      <div class="sb-avatar" id="sb-avatar">B</div>
-      <div style="flex:1;overflow:hidden;">
-        <div class="sb-user-name" id="sb-username">Chargement...</div>
-        <div style="font-size:9px;color:rgba(200,168,75,.4);">Famille RockNRoad</div>
+  <div class="sb-logo" onclick="window.location.href='home.html'" style="cursor:pointer;">
+      <div class="sb-logo-title">Rock<span>N</span>Road</div>
+      <div class="sb-logo-sub">Aventures</div>
+    </div>
+
+    <div class="sb-nav">
+      <div class="sb-group">
+        <div class="sb-group-label">Voyage</div>
+        <a class="sb-btn" href="carnet.html#alsace"><span style="font-size:13px;">🇫🇷</span><span>Région France</span></a>
+        <a class="sb-btn" href="carnet.html#allemagne"><span style="font-size:13px;">🌍</span><span>Région Europe</span></a>
+        <a class="sb-btn" href="carnet.html#nepal"><span style="font-size:13px;">✈️</span><span>Monde</span></a>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-label">Outils</div>
+        <a class="sb-btn" href="carnet.html#carte"><span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span></a>
+        <a class="sb-btn" href="voyage.html"><span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span></a>
+        <a class="sb-btn" href="carnet.html#fiche"><span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span></a>
+        <a class="sb-btn" href="carnet.html#tips"><span class="sb-dot sb-dot-grey"></span><span>Conseils</span></a>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-label">Back-Office</div>
+        <a class="sb-btn" href="admin.html"><span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span></a>
+        <a class="sb-btn" href="onboarding.html"><span class="sb-dot sb-dot-grey"></span><span>Mon profil groupe</span></a>
+        <a class="sb-btn" href="config.html"><span style="font-size:11px;">⚙️</span><span>Config</span></a>
       </div>
     </div>
-    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
-  </div>
+
+    <div class="sb-footer">
+      <p style="font-family:'Playfair Display',serif;font-size:10px;font-style:italic;color:rgba(200,168,75,.5);text-align:center;margin-bottom:10px;line-height:1.5;">Explorer. Partager.<br>Se souvenir.</p>
+      <svg style="width:64px;height:64px;margin:0 auto;display:block;opacity:.4;" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="36" stroke="rgba(200,168,75,.3)" stroke-width="1.5"/>
+        <circle cx="40" cy="40" r="30" stroke="rgba(200,168,75,.15)" stroke-width="1"/>
+        <text x="40" y="12" text-anchor="middle" fill="rgba(200,168,75,.7)" font-size="8" font-family="serif" font-weight="bold">N</text>
+        <text x="40" y="72" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">S</text>
+        <text x="72" y="43" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">E</text>
+        <text x="8" y="43" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">O</text>
+        <polygon points="40,14 43,40 40,46 37,40" fill="rgba(200,168,75,.8)"/>
+        <polygon points="40,66 43,40 40,34 37,40" fill="rgba(200,168,75,.3)"/>
+        <circle cx="40" cy="40" r="4" fill="rgba(200,168,75,.6)" stroke="rgba(200,168,75,.9)" stroke-width="1"/>
+        <line x1="40" y1="6" x2="40" y2="12" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+        <line x1="40" y1="68" x2="40" y2="74" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+        <line x1="6" y1="40" x2="12" y2="40" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+        <line x1="68" y1="40" x2="74" y2="40" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+      </svg>
+    </div>
 </div>
 
 <!-- APP MAIN -->

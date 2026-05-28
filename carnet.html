@@ -576,80 +576,54 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 <div id="sidebar">
   <!-- Logo -->
   <div class="sb-logo" onclick="window.location.href='home.html'" style="cursor:pointer;">
-    <div class="sb-logo-title">Rock<span>N</span>Road</div>
-    <div class="sb-logo-sub">Aventures</div>
-  </div>
+      <div class="sb-logo-title">Rock<span>N</span>Road</div>
+      <div class="sb-logo-sub">Aventures</div>
+    </div>
 
-  <!-- Accueil -->
-  <div class="sb-group" style="padding-bottom:2px;">
-    <a class="sb-btn" href="home.html">
-      <span style="font-size:13px;">🏠</span>
-      <span class="sb-label">Accueil</span>
-    </a>
-  </div>
+    <div class="sb-nav">
+      <div class="sb-group">
+        <div class="sb-group-label">Voyage</div>
+        <a class="sb-btn" href="carnet.html#alsace"><span style="font-size:13px;">🇫🇷</span><span>Région France</span></a>
+        <a class="sb-btn" href="carnet.html#allemagne"><span style="font-size:13px;">🌍</span><span>Région Europe</span></a>
+        <a class="sb-btn" href="carnet.html#nepal"><span style="font-size:13px;">✈️</span><span>Monde</span></a>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-label">Outils</div>
+        <a class="sb-btn" href="carnet.html#carte"><span class="sb-dot sb-dot-gold"></span><span>Carte interactive</span></a>
+        <a class="sb-btn" href="voyage.html"><span class="sb-dot sb-dot-gold"></span><span>Mon Voyage</span></a>
+        <a class="sb-btn" href="carnet.html#fiche"><span class="sb-dot sb-dot-grey"></span><span>Fiche récap</span></a>
+        <a class="sb-btn" href="carnet.html#tips"><span class="sb-dot sb-dot-grey"></span><span>Conseils</span></a>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-label">Back-Office</div>
+        <a class="sb-btn" href="admin.html"><span class="sb-dot sb-dot-grey"></span><span>Créer une fiche</span></a>
+        <a class="sb-btn" href="onboarding.html"><span class="sb-dot sb-dot-grey"></span><span>Mon profil groupe</span></a>
+        <a class="sb-btn" href="config.html"><span style="font-size:11px;">⚙️</span><span>Config</span></a>
+      </div>
+    </div>
 
-  <div class="sb-sep"></div>
+    <div class="sb-footer">
+      <p style="font-family:'Playfair Display',serif;font-size:10px;font-style:italic;color:rgba(200,168,75,.5);text-align:center;margin-bottom:10px;line-height:1.5;">Explorer. Partager.<br>Se souvenir.</p>
+      <svg style="width:64px;height:64px;margin:0 auto;display:block;opacity:.4;" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="36" stroke="rgba(200,168,75,.3)" stroke-width="1.5"/>
+        <circle cx="40" cy="40" r="30" stroke="rgba(200,168,75,.15)" stroke-width="1"/>
+        <text x="40" y="12" text-anchor="middle" fill="rgba(200,168,75,.7)" font-size="8" font-family="serif" font-weight="bold">N</text>
+        <text x="40" y="72" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">S</text>
+        <text x="72" y="43" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">E</text>
+        <text x="8" y="43" text-anchor="middle" fill="rgba(200,168,75,.4)" font-size="7" font-family="serif">O</text>
+        <polygon points="40,14 43,40 40,46 37,40" fill="rgba(200,168,75,.8)"/>
+        <polygon points="40,66 43,40 40,34 37,40" fill="rgba(200,168,75,.3)"/>
+        <circle cx="40" cy="40" r="4" fill="rgba(200,168,75,.6)" stroke="rgba(200,168,75,.9)" stroke-width="1"/>
+        <line x1="40" y1="6" x2="40" y2="12" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+        <line x1="40" y1="68" x2="40" y2="74" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+        <line x1="6" y1="40" x2="12" y2="40" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+        <line x1="68" y1="40" x2="74" y2="40" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
+      </svg>
+    </div>
 
-  <!-- VOYAGE -->
-  <div class="sb-group">
-    <div class="sb-group-label">Voyage</div>
-    <button class="sb-btn" id="snav-france" onclick="showTab('alsace')">
-      <span style="font-size:13px;">🇫🇷</span>
-      <span class="sb-label">Région France</span>
-    </button>
-    <button class="sb-btn" id="snav-europe" onclick="showTab('allemagne')">
-      <span style="font-size:13px;">🌍</span>
-      <span class="sb-label">Région Europe</span>
-    </button>
-    <button class="sb-btn" id="snav-monde-btn" onclick="showTab('nepal')">
-      <span style="font-size:13px;">✈️</span>
-      <span class="sb-label">Monde</span>
-    </button>
-  </div>
-
-  <div class="sb-sep"></div>
-
-  <!-- Outils -->
-  <div class="sb-group">
-    <div class="sb-group-label">Outils</div>
-    <button class="sb-btn" id="snav-carte" onclick="showTab('carte')">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span class="sb-label">Carte interactive</span>
-    </button>
-    <a class="sb-btn" href="voyage.html">
-      <span class="sb-dot sb-dot-gold"></span>
-      <span class="sb-label">Mon Voyage</span>
-    </a>
-    <button class="sb-btn" id="snav-fiche" onclick="showTab('fiche')">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span class="sb-label">Fiche récap</span>
-    </button>
-    <button class="sb-btn" id="snav-tips" onclick="showTab('tips')">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span class="sb-label">Conseils</span>
-    </button>
-  </div>
-
-  <div class="sb-sep"></div>
-
-  <!-- Back-Office -->
-  <div class="sb-group">
-    <div class="sb-group-label">Back-Office</div>
-    <a class="sb-btn" href="admin.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span class="sb-label">Créer une fiche</span>
-    </a>
-    <a class="sb-btn" href="onboarding.html">
-      <span class="sb-dot sb-dot-grey"></span>
-      <span class="sb-label">Mon profil groupe</span>
-    </a>
-    <a class="sb-btn" href="config.html">
-      <span style="font-size:11px;">⚙️</span>
-      <span class="sb-label">Config</span>
-    </a>
-  </div>
-
-  <!-- Footer user -->
+  <!-- Footer user --><!-- Footer user -->
   <div class="sb-footer">
     <div class="sb-user">
       <div class="sb-avatar" id="sb-avatar">B</div>
