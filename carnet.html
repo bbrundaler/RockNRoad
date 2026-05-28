@@ -973,10 +973,20 @@ async function logout(){await sb.auth.signOut();window.location.href="index.html
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 
 // ── Hash navigation depuis la sidebar (même page) ──────────────────────────
+function updateSidebarActive(h){
+  const map={
+    alsace:'carnet.html#alsace',pyrenees:'carnet.html#alsace',atlantique:'carnet.html#alsace',bourgogne:'carnet.html#alsace',
+    allemagne:'carnet.html#allemagne',suisse:'carnet.html#allemagne',autriche:'carnet.html#allemagne',italie:'carnet.html#allemagne',espagne:'carnet.html#allemagne',portugal:'carnet.html#allemagne',belgique:'carnet.html#allemagne',luxembourg:'carnet.html#allemagne','pays-bas':'carnet.html#allemagne',croatie:'carnet.html#allemagne',
+    nepal:'carnet.html#nepal',vietnam:'carnet.html#nepal',egypte:'carnet.html#nepal',afriquesud:'carnet.html#nepal',srilanka:'carnet.html#nepal',mexique:'carnet.html#nepal',
+    carte:'carnet.html#carte',fiche:'carnet.html#fiche'
+  };
+  const target=map[h];
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.toggle('active',el.getAttribute('href')===target));
+}
 window.addEventListener('hashchange',function(){
   const h=window.location.hash.replace('#','');
   const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
-  if(h && validTabs.includes(h)) showTab(h);
+  if(h && validTabs.includes(h)){ showTab(h); updateSidebarActive(h); }
 });
 
 
