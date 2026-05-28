@@ -170,25 +170,6 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   padding:0;
   position:relative;z-index:10;
 }
-.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(200,168,75,.08);cursor:pointer;}
-.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
-.sb-logo-title span{color:var(--gold);}
-.sb-logo-sub{font-size:7px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
-.sb-nav{flex:1;padding:12px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none;}
-.sb-nav::-webkit-scrollbar{display:none;}
-.sb-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;cursor:pointer;transition:all .2s;border-radius:8px;margin:0 8px;text-decoration:none;}
-.sb-item:hover{background:rgba(200,168,75,.07);}
-.sb-item.active{background:rgba(200,168,75,.1);}
-.sb-icon{width:22px;height:22px;color:rgba(255,255,255,.4);transition:color .2s;flex-shrink:0;}
-.sb-item:hover .sb-icon,.sb-item.active .sb-icon{color:var(--gold);}
-.sb-item-label{font-size:8.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.35);transition:color .2s;text-align:center;}
-.sb-item:hover .sb-item-label,.sb-item.active .sb-item-label{color:var(--gold);}
-.sb-sep-icon{height:1px;background:rgba(200,168,75,.07);margin:6px 16px;}
-.sb-footer{padding:14px 16px 16px;border-top:1px solid rgba(200,168,75,.07);}
-.sb-quote{font-family:'Playfair Display',serif;font-size:9.5px;font-style:italic;color:rgba(200,168,75,.45);text-align:center;line-height:1.6;margin-bottom:12px;}
-.sb-compass{width:60px;height:60px;margin:0 auto;display:block;opacity:.4;}
-
-
 
 .app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;}
 .page-topbar{background:rgba(247,243,236,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--beige);padding:0 24px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -1664,7 +1645,6 @@ async function saveFiche(){
     btn.disabled=false;btn.textContent='✨ Enregistrer la fiche';
   }
 }
-
 
 function showConfirmation(nom, region, type){
   // Calculer l'onglet carnet correspondant à la région

@@ -9,16 +9,6 @@
 <link rel="stylesheet" href="sidebar.css">
 <script src="sidebar.js"></script>
 
-
-
-
-
-
-
-
-
-
-
 <style>
 
 /* AUTH SCREEN */
@@ -43,8 +33,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 /* ── SIDEBAR — overrides carnet.html ── */
 #sidebar{width:var(--sb);overflow-y:auto;z-index:200;}
-.sb-quote{font-size:9px;color:rgba(200,168,75,.4);line-height:1.6;margin-bottom:10px;}
-.sb-compass{width:54px;height:54px;opacity:.35;}
 
 /* Route SVG animation */
 .sb-user{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);margin-bottom:6px;}
@@ -53,7 +41,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .sb-user-role{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px;}
 .sb-logout{width:100%;padding:6px;background:rgba(200,168,75,.06);border:1px solid rgba(200,168,75,.2);color:rgba(200,168,75,.75);font-size:10px;font-weight:600;letter-spacing:1px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .sb-logout:hover{background:rgba(200,168,75,.14);color:var(--gold);}
-.sb-quote{font-family:'Playfair Display',serif;font-size:10px;font-style:italic;color:rgba(200,168,75,.45);text-align:center;line-height:1.5;margin-bottom:10px;}
+
 #sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;}
 .sb-sub{display:none;flex-direction:column;padding-left:8px;margin-top:2px;}
 .sb-sub.open{display:flex;}
@@ -385,7 +373,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .rtb-btn:hover{border-color:rgba(200,168,75,.4);color:rgba(245,239,224,.8);}
 .rtb-btn.active{border-color:var(--gold);background:rgba(200,168,75,.12);color:var(--gold);}
 
-
 /* Panneau info dynamique carte */
 #carte-info-panel{background:white;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
 .cip-idle{padding:18px 20px;display:flex;align-items:center;gap:14px;color:#777;}
@@ -555,9 +542,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 <div id="main-content">
 
-
 <!-- HERO -->
-
 
 <!-- ══ OVERLAY MOBILE ══ -->
 <div id="sb-overlay" onclick="closeSidebar()"></div>
@@ -580,10 +565,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       </button>
     </div>
   </div>
-
-
-
-
 
 <!-- OVERVIEW -->
 <div class="section active" id="tab-overview">
@@ -624,7 +605,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 </div>
 
-
 <!-- ══ SECTION ALSACE (France - région par défaut) ══ -->
 <div class="section" id="tab-alsace">
 <div class="region-topbar visible" id="rtb-alsace-bar">
@@ -653,7 +633,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   </div>
 </div>
 </div>
-
 
 <div class="section" id="tab-pyrenees">
 <div class="region-topbar visible" id="rtb-pyrenees">
@@ -737,7 +716,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 </div>
 </div>
 
-
 <div class="section" id="tab-bourgogne">
 <div class="region-topbar visible" id="rtb-bourgogne">
   <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
@@ -777,7 +755,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
   </div>
 </div>
 </div>
-
 
 <!-- ══ CARTE ══ -->
 <div class="section" id="tab-carte">
@@ -912,7 +889,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
     <div style="margin-top:4px;">⛺ 19 Campings &nbsp;·&nbsp; 🗺 22 Sites</div>
   </footer>
 
-
 <!-- ══ SECTIONS EUROPE ══ -->
 <div class="section" id="tab-allemagne"><div class="inner"><div id="rtb-allemagne"></div><div id="content-allemagne"><div style="text-align:center;padding:60px 20px;color:#aaa;"><div style="font-size:48px;margin-bottom:12px;">🇩🇪</div><h3 style="font-family:Playfair Display,serif;font-size:22px;color:#1a1208;margin-bottom:8px;">Allemagne</h3><p>Ajoutez vos premières fiches via <a href="admin.html" style="color:var(--gold);">Créer une fiche</a> → Région Alsace/Europe</p></div></div></div></div>
 <div class="section" id="tab-suisse"><div class="inner"><div id="content-suisse"><div style="text-align:center;padding:60px 20px;color:#aaa;"><div style="font-size:48px;margin-bottom:12px;">🇨🇭</div><h3 style="font-family:Playfair Display,serif;font-size:22px;color:#1a1208;margin-bottom:8px;">Suisse</h3><p>Ajoutez vos premières fiches via <a href="admin.html" style="color:var(--gold);">Créer une fiche</a></p></div></div></div></div>
@@ -988,8 +964,6 @@ window.addEventListener('hashchange',function(){
   const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
   if(h && validTabs.includes(h)){ showTab(h); updateSidebarActive(h); }
 });
-
-
 
 // ── FICHES DYNAMIQUES SUPABASE v21 ───────────────────────────────────────
 // Régions désormais toutes dynamiques (Alsace + Pyrénées + Atlantique + Bourgogne)
@@ -1424,7 +1398,6 @@ function highlightOnMap(rk, id){
 // ── Carte Globale Leaflet ─────────────────────────────────────────────
 let carteGlobalMap=null, carteGlobalMarkersByRegion={};
 
-
 // ── Point de départ — depuis le profil groupe (dynamique) ───────────────
 // Valeur par défaut = Avenheim (tant que le profil n'est pas chargé)
 let DEPART = {lat: 48.6297, lng: 7.6891, nom: 'Avenheim-Schnersheim'};
@@ -1733,7 +1706,6 @@ function switchRegionView(rk, view){
 
 // ── CARTE GLOBALE : lazy init when tab shown ──────────────────────────
 const _origShowTab = window.showTab;
-
 
 function createDynamicTab(tabId, regionName, lieux, appMain){
   const tab=document.createElement('div');
