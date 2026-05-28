@@ -725,30 +725,31 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 /* ── SIDEBAR ── */
 #sidebar{
-  grid-row:1/4;grid-column:1;
-  background:rgba(15,13,9,.95);
+  width:var(--sb,120px);min-height:100vh;
+  background:rgba(15,13,9,.97);
   border-right:1px solid rgba(200,168,75,.1);
   display:flex;flex-direction:column;
-  padding:0;
-  position:relative;z-index:10;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:200;overflow-y:auto;scrollbar-width:none;
 }
-.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(200,168,75,.08);cursor:pointer;}
-.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
-.sb-logo-title span{color:var(--gold);}
-.sb-logo-sub{font-size:7px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
-.sb-nav{flex:1;padding:12px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none;}
+#sidebar::-webkit-scrollbar{display:none;}
+.sb-logo{padding:16px 12px 14px;border-bottom:1px solid rgba(200,168,75,.08);cursor:pointer;flex-shrink:0;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:white;line-height:1;display:block;}
+.sb-logo-title span{color:#C8A84B;}
+.sb-logo-sub{font-size:7px;color:rgba(200,168,75,.6);letter-spacing:4px;text-transform:uppercase;margin-top:3px;display:block;}
+.sb-nav{flex:1;padding:8px 0;display:flex;flex-direction:column;gap:0;overflow-y:auto;scrollbar-width:none;}
 .sb-nav::-webkit-scrollbar{display:none;}
-.sb-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;cursor:pointer;transition:all .2s;border-radius:8px;margin:0 8px;text-decoration:none;}
+.sb-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;cursor:pointer;transition:all .2s;border-radius:8px;margin:2px 8px;text-decoration:none;color:inherit;}
 .sb-item:hover{background:rgba(200,168,75,.07);}
 .sb-item.active{background:rgba(200,168,75,.1);}
 .sb-icon{width:22px;height:22px;color:rgba(255,255,255,.4);transition:color .2s;flex-shrink:0;}
-.sb-item:hover .sb-icon,.sb-item.active .sb-icon{color:var(--gold);}
-.sb-item-label{font-size:8.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.35);transition:color .2s;text-align:center;}
-.sb-item:hover .sb-item-label,.sb-item.active .sb-item-label{color:var(--gold);}
+.sb-item:hover .sb-icon,.sb-item.active .sb-icon{color:#C8A84B;}
+.sb-item-label{font-size:8px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.3);transition:color .2s;text-align:center;}
+.sb-item:hover .sb-item-label,.sb-item.active .sb-item-label{color:#C8A84B;}
 .sb-sep-icon{height:1px;background:rgba(200,168,75,.07);margin:6px 16px;}
-.sb-footer{padding:14px 16px 16px;border-top:1px solid rgba(200,168,75,.07);}
-.sb-quote{font-family:'Playfair Display',serif;font-size:9.5px;font-style:italic;color:rgba(200,168,75,.45);text-align:center;line-height:1.6;margin-bottom:12px;}
-.sb-compass{width:60px;height:60px;margin:0 auto;display:block;opacity:.4;}
+.sb-footer{padding:12px 8px 14px;border-top:1px solid rgba(200,168,75,.07);flex-shrink:0;text-align:center;}
+.sb-quote{font-family:'Playfair Display',serif;font-size:9px;font-style:italic;color:rgba(200,168,75,.4);line-height:1.6;margin-bottom:10px;}
+.sb-compass{width:54px;height:54px;margin:0 auto;display:block;opacity:.35;}
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -877,7 +878,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 <!-- ══ SIDEBAR ══ -->
 <div id="sidebar">
-  <div class="sb-logo" onclick="window.location.href='home.html'">
+<div class="sb-logo" onclick="window.location.href='home.html'">
       <div class="sb-logo-title">Rock<span>N</span>Road</div>
       <div class="sb-logo-sub">Aventures</div>
     </div>
