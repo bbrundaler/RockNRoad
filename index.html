@@ -167,7 +167,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 // Après login : groupe existant → carnet, sinon → onboarding
 async function redirectAfterLogin(userId) {
   const { data } = await sb.from('membres').select('groupe_id').eq('user_id', userId).single();
-  window.location.href = data?.groupe_id ? 'carnet.html' : 'onboarding.html';
+  window.location.href = data?.groupe_id ? 'home.html' : 'onboarding.html';
 }
 
 // Vérifier si déjà connecté
