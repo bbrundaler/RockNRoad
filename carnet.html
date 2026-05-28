@@ -723,6 +723,32 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 .region-loader{text-align:center;padding:48px 20px;color:#aaa;}
 .region-loader .spinner2{width:28px;height:28px;border:2.5px solid rgba(200,168,75,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;}
 
+/* ── SIDEBAR ── */
+#sidebar{
+  grid-row:1/4;grid-column:1;
+  background:rgba(15,13,9,.95);
+  border-right:1px solid rgba(200,168,75,.1);
+  display:flex;flex-direction:column;
+  padding:0;
+  position:relative;z-index:10;
+}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(200,168,75,.08);cursor:pointer;}
+.sb-logo-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:white;line-height:1;}
+.sb-logo-title span{color:var(--gold);}
+.sb-logo-sub{font-size:7px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(200,168,75,.4);margin-top:3px;}
+.sb-nav{flex:1;padding:12px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none;}
+.sb-nav::-webkit-scrollbar{display:none;}
+.sb-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;cursor:pointer;transition:all .2s;border-radius:8px;margin:0 8px;text-decoration:none;}
+.sb-item:hover{background:rgba(200,168,75,.07);}
+.sb-item.active{background:rgba(200,168,75,.1);}
+.sb-icon{width:22px;height:22px;color:rgba(255,255,255,.4);transition:color .2s;flex-shrink:0;}
+.sb-item:hover .sb-icon,.sb-item.active .sb-icon{color:var(--gold);}
+.sb-item-label{font-size:8.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(255,255,255,.35);transition:color .2s;text-align:center;}
+.sb-item:hover .sb-item-label,.sb-item.active .sb-item-label{color:var(--gold);}
+.sb-sep-icon{height:1px;background:rgba(200,168,75,.07);margin:6px 16px;}
+.sb-footer{padding:14px 16px 16px;border-top:1px solid rgba(200,168,75,.07);}
+.sb-quote{font-family:'Playfair Display',serif;font-size:9.5px;font-style:italic;color:rgba(200,168,75,.45);text-align:center;line-height:1.6;margin-bottom:12px;}
+.sb-compass{width:60px;height:60px;margin:0 auto;display:block;opacity:.4;}
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -851,22 +877,22 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
 
 <!-- ══ SIDEBAR ══ -->
 <div id="sidebar">
-    <div class="sb-logo" onclick="window.location.href='home.html'">
+  <div class="sb-logo" onclick="window.location.href='home.html'">
       <div class="sb-logo-title">Rock<span>N</span>Road</div>
       <div class="sb-logo-sub">Aventures</div>
     </div>
 
     <nav class="sb-nav">
       <!-- Voyage -->
-      <a class="sb-item" href="#" onclick="showTab('alsace');return false;">
+      <a class="sb-item" href="carnet.html#alsace">
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span class="sb-item-label">France</span>
       </a>
-      <a class="sb-item" href="#" onclick="showTab('allemagne');return false;">
+      <a class="sb-item" href="carnet.html#allemagne">
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
         <span class="sb-item-label">Europe</span>
       </a>
-      <a class="sb-item" href="#" onclick="showTab('nepal');return false;">
+      <a class="sb-item" href="carnet.html#nepal">
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
         <span class="sb-item-label">Monde</span>
       </a>
@@ -874,7 +900,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
       <div class="sb-sep-icon"></div>
 
       <!-- Outils -->
-      <a class="sb-item" href="#" onclick="showTab('carte');return false;">
+      <a class="sb-item" href="carnet.html#carte">
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 4L3 7v13l6-3 6 3 6-3V4l-6 3-6-3z"/><path d="M9 4v13M15 7v13"/></svg>
         <span class="sb-item-label">Carte</span>
       </a>
@@ -882,7 +908,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
         <span class="sb-item-label">Voyage</span>
       </a>
-      <a class="sb-item" href="#" onclick="showTab('fiche');return false;">
+      <a class="sb-item" href="carnet.html#fiche">
         <svg class="sb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span class="sb-item-label">Récap</span>
       </a>
@@ -922,20 +948,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--dark);color:v
         <line x1="68" y1="40" x2="74" y2="40" stroke="rgba(200,168,75,.2)" stroke-width="1"/>
       </svg>
     </div>
-  
 
-  <!-- Footer user --><!-- Footer user -->
-  <div class="sb-footer">
-    <div class="sb-user">
-      <div class="sb-avatar" id="sb-avatar">B</div>
-      <div class="sb-user-info">
-        <div class="sb-user-name" id="sb-username">Chargement...</div>
-        <div class="sb-user-role">Famille RockNRoad</div>
-      </div>
-    </div>
-    <button class="sb-logout" onclick="logout()">⏏ Déconnexion</button>
-  </div>
-</div>
 
 <!-- ══ APP MAIN ══ -->
 <div id="app-main">
