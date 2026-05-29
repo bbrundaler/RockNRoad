@@ -6,20 +6,17 @@
 <title>RockNRoad · Nouvelle fiche</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="sidebar.css">
+<link rel="stylesheet" href="app.css">
 <script src="sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#0f0d09;--dark2:#161410;--creme:#F7F3EC;--beige:#EDE6D8;--text:#1a1208;--muted:#6B5F4A;--pyr:#2C5016;--atl:#1a5a7a;--bou:#6B3288;--r:10px;}
-body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+
 /* body défini dans :root block */
-#auth-check{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a1a0c,#2C5016 50%,#C8A84B);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
-#auth-check h2{font-family:'Playfair Display',serif;font-size:26px;margin:16px 0 6px;}
-.spinner{width:36px;height:36px;border:3px solid rgba(200,168,75,.3);border-top-color:#C8A84B;
-  border-radius:50%;animation:spin 1s linear infinite;margin:18px auto 0;}
-@keyframes spin{to{transform:rotate(360deg)}}
+
+}
 #main{display:none;}
 header{background:#0d0d0d;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(200,168,75,.15);}
 .hlogo{font-family:'Playfair Display',serif;font-size:20px;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
@@ -31,9 +28,9 @@ nav{display:flex;gap:8px;flex-wrap:wrap;}
 .layout{display:grid;grid-template-columns:1fr 380px;gap:0;min-height:calc(100vh - 46px);}
 .col-left{padding:28px 28px 80px;border-right:1px solid rgba(0,0,0,.08);background:var(--creme);}
 .col-right{background:#f5f1ea;padding:20px 18px;position:sticky;top:46px;height:calc(100vh - 46px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
-.page-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:4px;}
+
 .page-title em{color:var(--gold);font-style:italic;}
-.page-sub{color:#888;font-size:12px;margin-bottom:24px;}
+
 .import-card{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);border:2px solid transparent;transition:border-color .2s;margin-bottom:20px;}
 .import-card.active{border-color:var(--gold);}
 .import-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
@@ -154,11 +151,9 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 .submit-btn{width:100%;padding:14px;background:var(--dark);color:var(--gold);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:8px;cursor:pointer;transition:all .3s;}
 .submit-btn:hover{background:var(--gold);color:var(--dark);}
 .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
-.toast{position:fixed;bottom:22px;right:22px;padding:12px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:1000;transform:translateY(80px);transition:transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+
 .toast.show{transform:translateY(0);}
-.toast.success{background:#2C5016;color:white;}
-.toast.error{background:#cc4400;color:white;}
-.toast.info{background:var(--dark);color:var(--gold);}
+
 @media(max-width:900px){.layout{grid-template-columns:1fr;}.col-right{display:none;}nav{display:none;}}
 
 /* ── SIDEBAR ── */
@@ -171,10 +166,9 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   position:relative;z-index:10;
 }
 
-.app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;}
 .page-topbar{background:rgba(247,243,236,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--beige);padding:0 24px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .page-topbar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
-@media(max-width:768px){#sidebar{transform:translateX(-100%);transition:transform .25s;}#sidebar.open{transform:translateX(0);}#sb-overlay.open{display:block;}#sb-toggle{display:block!important;}.app-main{margin-left:0;width:100%;}.layout{grid-template-columns:1fr!important;}.col-right{display:none!important;}}
+@media(max-width:768px){#sidebar{transform:translateX(-100%);transition:transform .25s;}#sidebar.open{transform:translateX(0);}#sb-overlay.open{display:block;}#sb-toggle{display:block!important;}.layout{grid-template-columns:1fr!important;}.col-right{display:none!important;}}
 </style>
 </head>
 <body>
@@ -191,7 +185,7 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 <div id="sidebar"></div>
 
 <!-- APP MAIN -->
-<div class="app-main">
+<div id="app-main">
 <div class="page-topbar">
   <div style="display:flex;align-items:center;gap:12px;">
     <button id="sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;">☰</button>

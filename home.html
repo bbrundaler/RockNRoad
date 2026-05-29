@@ -6,26 +6,14 @@
 <title>RockNRoad · Aventures</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="sidebar.css">
+<link rel="stylesheet" href="app.css">
 <script src="sidebar.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --gold:#C8A84B;
-  --gold-light:#E8C86B;
-  --gold-dim:rgba(200,168,75,.15);
-  --dark:#0f0d09;
-  --dark-2:#161410;
-  --dark-3:#1E1A14;
-  --dark-4:#2A2318;
-  --cream:#F5EFE0;
-  --cream-dim:rgba(245,239,224,.6);
-  --cream-faint:rgba(245,239,224,.35);
-  --panel:340px;
-}
 
 html,body{height:100%;overflow:hidden;background:var(--dark);}
-body{font-family:'DM Sans',sans-serif;color:var(--cream);}
 
 /* ── LAYOUT ── */
 #app{display:grid;grid-template-columns:var(--sb) 1fr var(--panel);grid-template-rows:1fr 80px 170px;height:100vh;position:relative;}

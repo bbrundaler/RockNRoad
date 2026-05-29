@@ -1,0 +1,250 @@
+/* ═══════════════════════════════════════════════════════════════════
+   RockNRoad — app.css
+   Layout commun et composants partagés par toutes les pages.
+
+   RÈGLE : Ce fichier ne contient QUE ce qui est commun à 2+ pages.
+   CSS spécifique à une seule page → dans le <style> de cette page.
+   Chargé EN 3ème dans le <head>, après tokens.css et sidebar.css.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Reset minimal ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--dark2);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── Auth check — écran de chargement (toutes pages auth) ────────── */
+#auth-check {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(160deg, #0a1a0c, var(--green) 50%, var(--gold));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  padding: 20px;
+  transition: opacity .4s;
+}
+#auth-check h2 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  margin: 12px 0 4px;
+}
+
+/* ── Layout principal (pages auth — Template A) ──────────────────── */
+#app-main {
+  margin-left: var(--sb);
+  width: calc(100vw - var(--sb));
+  min-height: 100vh;
+  background: var(--creme);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── Barre du haut ───────────────────────────────────────────────── */
+.top-bar {
+  height: 52px;
+  background: var(--dark);
+  border-bottom: 1px solid rgba(200,168,75,.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.top-bar-title {
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--gold);
+}
+.top-bar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Zone contenu ────────────────────────────────────────────────── */
+.inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 28px 32px 80px;
+  width: 100%;
+}
+.inner-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 36px 32px 80px;
+  width: 100%;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────── */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(200,168,75,.25);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 16px auto 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast notification ──────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  z-index: 1000;
+  transform: translateY(80px);
+  transition: transform .3s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  pointer-events: none;
+}
+.toast.show      { transform: translateY(0); pointer-events: auto; }
+.toast.success   { background: var(--green); color: white; }
+.toast.error     { background: #cc4400; color: white; }
+.toast.info      { background: var(--dark); color: var(--gold); border: 1px solid rgba(200,168,75,.3); }
+
+/* ── Boutons communs ─────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--r);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-primary:hover { background: var(--gold-light); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid rgba(200,168,75,.35);
+  padding: 9px 18px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-secondary:hover { background: rgba(200,168,75,.08); }
+
+.btn-logout {
+  background: rgba(200,168,75,.08);
+  color: rgba(200,168,75,.8);
+  border: 1px solid rgba(200,168,75,.2);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .5px;
+}
+.btn-logout:hover { background: rgba(200,168,75,.16); color: var(--gold); }
+
+/* ── En-tête de page ─────────────────────────────────────────────── */
+.page-header { margin-bottom: 28px; }
+.page-title {
+  font-family: var(--font-title);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.1;
+}
+.page-title em { color: var(--gold); font-style: italic; }
+.page-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* ── Card commune ────────────────────────────────────────────────── */
+.cfg-card {
+  background: white;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--sh);
+}
+.cfg-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cfg-card-title span { font-size: 16px; }
+
+/* ── Inputs communs ──────────────────────────────────────────────── */
+label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], textarea, select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(0,0,0,.12);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: white;
+  transition: border-color .15s;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,168,75,.12);
+}
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  #app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+  .inner, .inner-narrow {
+    padding: 16px 14px 60px;
+  }
+  .top-bar {
+    padding: 0 14px;
+  }
+}

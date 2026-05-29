@@ -6,16 +6,12 @@
 <title>RockNRoad Aventures · Connexion</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Inter',sans-serif;
-  min-height:100vh;
-  background:linear-gradient(160deg,#0a1a0c 0%,#1a3a10 20%,#2C5016 45%,#5a2808 78%,#C8A84B 100%);
-  display:flex;align-items:center;justify-content:center;padding:20px;
-  position:relative;overflow:hidden;
-}
+
 body::before{
   content:'';position:absolute;inset:0;
   background:radial-gradient(ellipse at 30% 70%,rgba(200,168,75,.12),transparent 55%),
@@ -98,12 +94,8 @@ input::placeholder{color:#bbb;}
   gap:10px;margin-top:14px;font-size:12.5px;color:#888;
 }
 .loading.show{display:flex;}
-.spinner{
-  width:18px;height:18px;border:2px solid #E8DECE;
-  border-top-color:#C8A84B;border-radius:50%;
-  animation:spin 1s linear infinite;
+
 }
-@keyframes spin{to{transform:rotate(360deg)}}
 
 .footer-note{
   text-align:center;margin-top:24px;

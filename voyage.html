@@ -6,19 +6,17 @@
 <title>RockNRoad · Mon Voyage</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="sidebar.css">
+<link rel="stylesheet" href="app.css">
 <script src="sidebar.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--gold:#C8A84B;--dark:#161410;--creme:#F5EFE0;--green:#2C5016;}
-body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;display:flex;overflow:hidden;}
-#auth-check{position:fixed;inset:0;z-index:9999;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;}
-#auth-check h2{font-family:'Playfair Display',serif;font-size:24px;margin:14px 0 4px;}
-.spinner{width:32px;height:32px;border:3px solid rgba(200,168,75,.3);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:16px auto 0;}
-@keyframes spin{to{transform:rotate(360deg)}}
+
+}
 
 /* ── HERO MAP ── */
 #hero{
@@ -290,9 +288,9 @@ body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;disp
 /* Route SVG animation */
 
 /* MAIN */
-#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));height:100vh;display:flex;flex-direction:column;}
+#app-main{height:100vh;}/* override app.css */
 #top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 20px;height:46px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100;}
-.top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
+
 .top-bar-actions{display:flex;gap:8px;}
 .tb-btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none;}
 .tb-btn-clear{background:rgba(200,50,0,.15);color:#ff8060;border:1px solid rgba(200,50,0,.2);}
@@ -334,7 +332,7 @@ body{font-family:'Inter',sans-serif;background:var(--dark);min-height:100vh;disp
 
 #map{flex:1;height:100%;}
 
-@media print{#sidebar,#top-bar,#voyage-panel{display:none!important;}#app-main{margin-left:0!important;width:100%!important;}#map{height:100vh!important;width:100vw!important;}}
+@media print{#sidebar,#top-bar,#voyage-panel{display:none!important;}#app-main{height:100vh;}/* override app.css */#map{height:100vh!important;width:100vw!important;}}
 /* ── SIDEBAR ── */
 #sidebar{
   position:fixed;top:0;left:0;bottom:0;
