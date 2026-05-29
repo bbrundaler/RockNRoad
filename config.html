@@ -287,26 +287,9 @@ body{font-family:'Inter',sans-serif;background:var(--creme);min-height:100vh;dis
 /* Route SVG animation */
 
 /* ── MAIN ── */
-#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;background:var(--creme);display:flex;flex-direction:column;}
 #top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);
   padding:0 28px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
-
-.inner{max-width:720px;margin:0 auto;padding:36px 32px 80px;}
-
-/* ── PAGE HEADER ── */
-.page-header{margin-bottom:36px;}
-.page-title{font-family:'Playfair Display',serif;font-size:30px;color:var(--text);margin-bottom:6px;}
-.page-title em{color:var(--gold);font-style:italic;}
-.page-sub{font-size:13px;color:#888;line-height:1.6;}
-
-/* ── CONFIG CARDS ── */
-.cfg-card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,.06);
-  margin-bottom:20px;border:1px solid rgba(0,0,0,.04);}
-.cfg-card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:#aaa;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0ece4;
-  display:flex;align-items:center;gap:8px;}
-.cfg-card-title span{font-size:14px;}
 
 label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
   color:#666;margin-bottom:7px;}
@@ -398,7 +381,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
     </div>
   </div>
 
-  <div class="inner">
+  <div class="inner-narrow">
     <div class="page-header">
       <h1 class="page-title">Paramètres &amp; <em>Configuration</em></h1>
       <p class="page-sub">Gérez votre clé API Google Places et les paramètres de votre compte.</p>

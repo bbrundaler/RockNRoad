@@ -10,8 +10,6 @@
 <link rel="stylesheet" href="sidebar.css">
 <link rel="stylesheet" href="app.css">
 <script src="sidebar.js"></script>
-<link rel="stylesheet" href="sidebar.css">
-<script src="sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -289,29 +287,11 @@ body{font-family:'Inter',sans-serif;background:var(--creme);min-height:100vh;dis
 .fadeup-3{animation:fadeup .6s .3s ease forwards;opacity:0;}
 .fadeup-4{animation:fadeup .6s .45s ease forwards;opacity:0;}
 
-/* Route SVG animation */
 
 /* ── MAIN ── */
-#app-main{margin-left:var(--sb);width:calc(100vw - var(--sb));min-height:100vh;display:flex;flex-direction:column;}
 #top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);
   padding:0 28px;height:46px;display:flex;align-items:center;position:sticky;top:0;z-index:100;}
 .top-bar-title{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:var(--gold);}
-
-.inner{max-width:760px;margin:0 auto;padding:36px 32px 80px;width:100%;}
-
-/* ── PAGE HEADER ── */
-.page-header{margin-bottom:36px;}
-.page-title{font-family:'Playfair Display',serif;font-size:30px;color:var(--text);margin-bottom:6px;}
-.page-title em{color:var(--gold);font-style:italic;}
-.page-sub{font-size:13px;color:#888;line-height:1.6;}
-
-/* ── CARDS ── */
-.cfg-card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,.06);
-  margin-bottom:20px;border:1px solid rgba(0,0,0,.04);}
-.cfg-card-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:#aaa;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f0ece4;
-  display:flex;align-items:center;gap:8px;}
-.cfg-card-title span{font-size:16px;}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .fg{display:flex;flex-direction:column;gap:6px;}
@@ -385,7 +365,6 @@ textarea{resize:vertical;min-height:80px;}
   #sidebar.open{transform:translateX(0);}
   #app-main{margin-left:0;width:100%;}
   .form-grid{grid-template-columns:1fr;}
-  .inner{padding:24px 16px 60px;}
 }
 /* ── SIDEBAR ── */
 
@@ -417,7 +396,7 @@ textarea{resize:vertical;min-height:80px;}
     </div>
   </div>
 
-  <div class="inner">
+  <div class="inner-narrow">
     <div class="page-header">
       <h1 class="page-title">Profil <em>Groupe</em></h1>
       <p class="page-sub">Configurez votre groupe de voyage — nom, point de départ, membres et préférences.</p>

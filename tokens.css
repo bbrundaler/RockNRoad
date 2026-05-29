@@ -15,24 +15,19 @@
   /* ── Couleurs principales ────────────────────────────────────────── */
   --gold:        #C8A84B;
   --gold-light:  #E8C86B;
-  --gold-dim:    rgba(200,168,75,.15);
 
   --dark:        #0f0d09;   /* fond principal le plus sombre */
   --dark2:       #161410;   /* fond secondaire */
   --dark3:       #1E1B14;   /* fond card nuit */
-  --dark4:       #2A2318;   /* fond hover sombre */
 
   --creme:       #F5EFE0;   /* fond clair principal */
   --beige:       #EDE6D8;   /* fond beige secondaire */
-  --creme-dim:   rgba(245,239,224,.6);
-  --creme-faint: rgba(245,239,224,.35);
 
   --text:        #1a1208;   /* texte principal sur fond clair */
   --muted:       #6B5F4A;   /* texte atténué */
   --green:       #2C5016;   /* vert action / succès */
 
   /* ── Couleurs régions ────────────────────────────────────────────── */
-  --als:  #8B1A1A;   /* Alsace — bordeaux */
   --pyr:  #2C5016;   /* Pyrénées — vert */
   --atl:  #1a5a7a;   /* Atlantique — bleu */
   --bou:  #6B3288;   /* Bourgogne — violet */
@@ -47,8 +42,7 @@
   /* ── Aliases home.html (tirets) ── */
   --dark-2:    #161410;   /* = --dark2 */
   --dark-3:    #1E1B14;   /* = --dark3 */
-  --dark-4:    #2A2318;   /* = --dark4 */
-  --cream-dim: rgba(245,239,224,.6);   /* = --creme-dim */
+  --cream-dim: rgba(245,239,224,.6);   /* alias home.html */
   --panel:     340px;     /* largeur panneau droit home.html */
   --sh:    0 2px 12px rgba(0,0,0,.07);
   --shhov: 0 8px 28px rgba(0,0,0,.13);
