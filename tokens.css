@@ -43,6 +43,13 @@
 
   /* ── Effets ──────────────────────────────────────────────────────── */
   --r:     10px;
+
+  /* ── Aliases home.html (tirets) ── */
+  --dark-2:    #161410;   /* = --dark2 */
+  --dark-3:    #1E1B14;   /* = --dark3 */
+  --dark-4:    #2A2318;   /* = --dark4 */
+  --cream-dim: rgba(245,239,224,.6);   /* = --creme-dim */
+  --panel:     340px;     /* largeur panneau droit home.html */
   --sh:    0 2px 12px rgba(0,0,0,.07);
   --shhov: 0 8px 28px rgba(0,0,0,.13);
 
