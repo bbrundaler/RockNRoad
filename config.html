@@ -296,7 +296,7 @@ body{font-family:'Inter',sans-serif;background:var(--creme);min-height:100vh;dis
 
 /* ── PAGE HEADER ── */
 .page-header{margin-bottom:36px;}
-.page-title{font-family:'Playfair Display',serif;font-size:30px;color:#1a1208;margin-bottom:6px;}
+.page-title{font-family:'Playfair Display',serif;font-size:30px;color:var(--text);margin-bottom:6px;}
 .page-title em{color:var(--gold);font-style:italic;}
 .page-sub{font-size:13px;color:#888;line-height:1.6;}
 
@@ -312,10 +312,10 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
   color:#666;margin-bottom:7px;}
 .input-row{display:flex;gap:10px;align-items:stretch;}
 .key-input{flex:1;padding:12px 14px;border:2px solid #E8DECE;border-radius:9px;
-  font-family:'Inter',sans-serif;font-size:13px;color:#1a1208;outline:none;
+  font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;
   transition:border-color .2s;letter-spacing:.5px;}
 .key-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,168,75,.1);}
-.key-input.valid{border-color:#2C5016;background:#f5fff5;}
+.key-input.valid{border-color:var(--green);background:#f5fff5;}
 .key-input.invalid{border-color:#cc4400;background:#fff5f5;}
 .show-btn{padding:12px 14px;background:#f0ece4;border:2px solid #E8DECE;border-radius:9px;
   cursor:pointer;font-size:13px;transition:all .2s;flex-shrink:0;}
@@ -326,7 +326,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
   display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .current-key span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .key-tag{font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;flex-shrink:0;}
-.key-tag.code{background:rgba(44,80,22,.1);color:#2C5016;}
+.key-tag.code{background:rgba(44,80,22,.1);color:var(--green);}
 .key-tag.default{background:rgba(200,168,75,.15);color:#8B6914;}
 
 .save-btn{width:100%;padding:13px;background:var(--dark);color:var(--gold);
@@ -342,7 +342,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
 
 .status-box{border-radius:9px;padding:12px 16px;font-size:12px;line-height:1.6;margin-top:12px;display:none;}
 .status-box.show{display:block;}
-.status-box.ok{background:#edf7ed;border:1px solid #c0ddc0;color:#2C5016;}
+.status-box.ok{background:#edf7ed;border:1px solid #c0ddc0;color:var(--green);}
 .status-box.err{background:#fff0f0;border:1px solid #f0c0c0;color:#cc4400;}
 .status-box.testing{background:#fffbe8;border:1px solid rgba(200,168,75,.3);color:#8B6914;}
 
