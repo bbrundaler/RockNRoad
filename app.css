@@ -15,6 +15,7 @@ body {
   background: var(--dark2);
   color: var(--text);
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 /* ── Auth check — écran de chargement (toutes pages auth) ────────── */
