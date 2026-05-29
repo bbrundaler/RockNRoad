@@ -50,7 +50,7 @@ body {
 }
 
 /* ── Barre du haut ───────────────────────────────────────────────── */
-.top-bar {
+#top-bar, .top-bar {
   height: 52px;
   background: var(--dark);
   border-bottom: 1px solid rgba(200,168,75,.12);
@@ -63,13 +63,13 @@ body {
   top: 0;
   z-index: 50;
 }
-.top-bar-title {
+#top-bar .top-bar-title, .top-bar-title {
   font-family: var(--font-title);
   font-size: 14px;
   font-style: italic;
   color: var(--gold);
 }
-.top-bar-user {
+#top-bar .top-bar-user, .top-bar-user {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -244,7 +244,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
   .inner, .inner-narrow {
     padding: 16px 14px 60px;
   }
-  .top-bar {
+  #top-bar, .top-bar {
     padding: 0 14px;
   }
 }
