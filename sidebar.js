@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isSamePage) return;
     e.preventDefault();
     document.body.classList.add('page-out');
-    setTimeout(() => { window.location.href = href; }, 150);
+    setTimeout(() => { window.location.href = href; }, 80);
   });
 
 }); // DOMContentLoaded
