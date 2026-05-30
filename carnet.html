@@ -1175,10 +1175,17 @@ async function loadDynamicFiches(){
         const regionName = lieux[0].region || tabRk;
         const tabId = 'tab-dyn-'+tabRk;
         if(!document.getElementById(tabId)){
-          createDynamicTab(tabId, regionName, lieux, appMain);
-          addDynRegionTopbar(regionName, tabRk);
-          addCarteFilterBtn(regionName, lieux[0].region);
-          addFicheSelectOption(regionName, lieux[0].region);
+          // Chaque étape isolée : si l'une plante, les autres continuent.
+          // createDynamicTab est prioritaire (crée l'onglet lui-même).
+          try{ createDynamicTab(tabId, regionName, lieux, appMain); }
+          catch(err){ console.error('createDynamicTab '+tabRk, err); }
+          try{ addDynRegionTopbar(regionName, tabRk); }
+          catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
+          try{ addCarteFilterBtn(regionName, lieux[0].region); }
+          catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
+          try{ addFicheSelectOption(regionName, lieux[0].region); }
+          catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
+          console.log('✓ Onglet dynamique créé:', tabRk, '('+regionName+')');
         }
       }
     });
@@ -1194,7 +1201,7 @@ async function loadDynamicFiches(){
       initFicheGlobal();
     }
 
-  }catch(e){console.warn('loadDynamicFiches v21:',e);}
+  }catch(e){console.error('❌ loadDynamicFiches v21 ERREUR:',e);}
 }
 
 function normalizeRegionKey(region){
