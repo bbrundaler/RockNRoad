@@ -482,6 +482,18 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
     </div>
   </div>
 
+  <div class="form-card">
+    <div class="fc-title">🌍 Visibilité de la fiche</div>
+    <div class="fg full">
+      <label>Qui peut voir cette fiche ?</label>
+      <select id="visibilite">
+        <option value="commun">Pot commun — visible par toute la communauté</option>
+        <option value="prive">Privé — réservé à mon foyer</option>
+      </select>
+      <div style="font-size:10px;color:#aaa;margin-top:6px;">Par défaut, les fiches alimentent le pot commun pour que chacun profite des bons plans.</div>
+    </div>
+  </div>
+
   <div class="submit-zone">
     <button class="submit-btn" id="submitBtn" onclick="saveFiche()">✨ Enregistrer la fiche</button>
     <div style="font-size:10px;color:#aaa;text-align:center;margin-top:6px;">* Champs obligatoires : Nom, Type, Région</div>
@@ -1611,6 +1623,8 @@ async function saveFiche(){
       site_web:document.getElementById('siteWeb').value||null,
       gmaps_url:document.getElementById('gmapsUrl').value||null,
       cree_par:currentUser.email,
+      auteur_id:currentUser.id,
+      visibilite:(document.getElementById('visibilite')?.value)||'commun',
       annee:new Date().getFullYear(),
       groupe_id:currentGroupeId||null,
       monde_nuit:mondeNuitVal||false,
