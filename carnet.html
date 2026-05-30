@@ -1880,7 +1880,7 @@ function addDynRegionTopbar(regionName, regionKey){
   // Add to all 3 French topbars
   const regionEmojis2={'alsace':'🥨','bretagne':'🦞','normandie':'🐄','provence':'☀️','occitanie':'🌻','alpes':'⛷️','auvergne':'🌋','ardenne':'🍾','nord':'🌷','corse':'🏝️','loire':'🏰','jura':'🧀'};
   const emoji=regionEmojis2[regionKey]||'📍';
-  ['pyrenees','atlantique','bourgogne'].forEach(parentId=>{
+  ['alsace','pyrenees','atlantique','bourgogne'].forEach(parentId=>{
     const rtbDyn=document.getElementById('rtb-dyn-'+parentId);
     if(rtbDyn&&!document.getElementById('rtb-dyn-'+parentId+'-'+regionKey)){
       const btn=document.createElement('button');
