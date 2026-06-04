@@ -533,15 +533,14 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
     </ul>
   </div>
 
-  <!-- API KEY BOX -->
+  <!-- API STATUS BOX -->
   <div class="api-box">
     <div class="api-box-header">
-      <div class="api-box-label">🔑 Clé API Google Places</div>
-      <a href="config.html" class="api-edit-btn">✏️ Modifier</a>
+      <div class="api-box-label">🔒 Connexion Google sécurisée</div>
     </div>
     <div class="api-key-display">
-      <div class="api-key-status" id="apiKeyStatus"></div>
-      <span id="apiKeyInfo">Chargement...</span>
+      <div class="api-key-status ok" id="apiKeyStatus"></div>
+      <span id="apiKeyInfo">Imports via serveur sécurisé — aucune clé dans le navigateur</span>
     </div>
   </div>
 </div>
@@ -691,24 +690,11 @@ async function checkLieuInCache(nom, lat, lng) {
 }
 
 function loadApiKey(){
-  const stored=localStorage.getItem('rnr_gapi');
-  // Remplace uniquement si rien de stocké ou si c'est l'ancienne clé par défaut
-  if(!stored||stored==='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo'){
-    localStorage.setItem('rnr_gapi',DEFAULT_KEY);
-  }
-  const k=localStorage.getItem('rnr_gapi');
-  const st=document.getElementById('apiKeyStatus');
-  const info=document.getElementById('apiKeyInfo');
-  if(k&&k.startsWith('AIzaSy')){
-    st.className='api-key-status ok';
-    info.textContent=k.slice(0,8)+'•'.repeat(20)+k.slice(-4)+' — Active';
-  } else {
-    st.className='api-key-status empty';
-    info.textContent='Aucune clé — import limité';
-  }
+  // Plus de clé dans le front : on purge toute ancienne clé restée dans le navigateur.
+  try{ localStorage.removeItem('rnr_gapi'); }catch(e){}
 }
 
-function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
+function getApiKey(){return '';} // conservé pour compatibilité d'appel ; la clé vit côté serveur (Edge Function)
 
 // ── IMPORT ────────────────────────────────────────────────────────────────────
 async function importFromMaps(){

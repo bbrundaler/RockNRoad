@@ -384,41 +384,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
   <div class="inner-narrow">
     <div class="page-header">
       <h1 class="page-title">Paramètres &amp; <em>Configuration</em></h1>
-      <p class="page-sub">Gérez votre clé API Google Places et les paramètres de votre compte.</p>
-    </div>
-
-    <!-- ── Clé API actuelle ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>🔑</span> Clé API Google Places</div>
-
-      <label>Clé active</label>
-      <div class="current-key">
-        <span id="currentKeyMasked">AIzaSy••••••••••••</span>
-        <span class="key-tag default" id="currentKeyTag">Par défaut</span>
-      </div>
-
-      <label>Nouvelle clé API</label>
-      <div class="input-row">
-        <input class="key-input" type="password" id="newApiKey"
-          placeholder="AIzaSy…" autocomplete="off" spellcheck="false">
-        <button class="show-btn" id="showBtn" onclick="toggleShow()">👁</button>
-      </div>
-      <div class="status-box" id="statusBox"></div>
-
-      <button class="save-btn" id="saveKeyBtn" onclick="saveAndTest()">
-        💾 Enregistrer &amp; Tester la clé
-      </button>
-      <button class="reset-btn" onclick="resetToDefault()" style="margin-top:8px;">
-        Restaurer la clé par défaut
-      </button>
-
-      <p class="hint">
-        La clé est stockée dans votre navigateur (<code>localStorage</code>) et utilisée lors des imports
-        dans <a href="admin.html">Créer une fiche</a>.<br>
-        <strong>Obtenez votre clé</strong> sur
-        <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>
-        → Identifiants → Créer une clé API → activer l'API Places.
-      </p>
+      <p class="page-sub">Gérez les paramètres de votre compte.</p>
     </div>
 
     <!-- ── Informations technique ── -->
@@ -477,8 +443,6 @@ const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-const DEFAULT_KEY='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo';
-let showKey=false;
 
 async function checkAuth(){
   const {data:{session}}=await sb.auth.getSession();
@@ -487,79 +451,11 @@ async function checkAuth(){
   const e=session.user.email;
   const av=document.getElementById('sb-avatar');if(av)av.textContent=e.charAt(0).toUpperCase();
   const un=document.getElementById('sb-username');if(un)un.textContent=e.split('@')[0];
-  loadCurrentKey();
   // Vérifier si super-admin
   await checkSuperAdmin(session.user.id);
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
-
-function loadCurrentKey(){
-  const k=localStorage.getItem('rnr_gapi')||DEFAULT_KEY;
-  const masked=k.slice(0,8)+'•'.repeat(Math.max(0,k.length-12))+k.slice(-4);
-  document.getElementById('currentKeyMasked').textContent=masked;
-  const tag=document.getElementById('currentKeyTag');
-  if(k===DEFAULT_KEY){tag.textContent='Par défaut';tag.className='key-tag default';}
-  else{tag.textContent='Personnalisée';tag.className='key-tag code';}
-}
-
-function toggleShow(){
-  showKey=!showKey;
-  document.getElementById('newApiKey').type=showKey?'text':'password';
-  document.getElementById('showBtn').textContent=showKey?'🙈':'👁';
-}
-
-function setStatus(msg,type){
-  const box=document.getElementById('statusBox');
-  box.textContent=msg; box.className=`status-box ${type} show`;
-}
-
-async function saveAndTest(){
-  const key=document.getElementById('newApiKey').value.trim();
-  if(!key){showToast('Colle d\'abord ta clé API','error');return;}
-  if(!key.startsWith('AIzaSy')||key.length<35){
-    setStatus('❌ Clé invalide — elle doit commencer par "AIzaSy" et faire ~39 caractères','err');
-    return;
-  }
-  const btn=document.getElementById('saveKeyBtn');
-  btn.disabled=true; btn.textContent='⏳ Test en cours...';
-  setStatus('🔄 Test de la clé en cours...','testing');
-  try{
-    const testUrl=`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=42.728,-0.009&radius=100&key=${key}`;
-    const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(testUrl)}`,{signal:AbortSignal.timeout(8000)});
-    const w=await r.json();
-    const d=JSON.parse(w.contents||'{}');
-    if(d.status==='OK'||d.status==='ZERO_RESULTS'){
-      localStorage.setItem('rnr_gapi',key);
-      setStatus('✅ Clé valide et enregistrée ! Elle sera utilisée automatiquement dans "Créer une fiche".','ok');
-      showToast('✅ Clé API sauvegardée !','success');
-      document.getElementById('newApiKey').value='';
-      document.getElementById('newApiKey').className='key-input valid';
-      setTimeout(()=>document.getElementById('newApiKey').className='key-input',3000);
-      loadCurrentKey();
-    } else if(d.status==='REQUEST_DENIED'){
-      setStatus('❌ Clé refusée par Google — vérifie que l\'API Places est activée dans la console Google Cloud.','err');
-      document.getElementById('newApiKey').className='key-input invalid';
-    } else {
-      setStatus(`⚠️ Réponse inattendue (${d.status||'?'}) — clé sauvegardée quand même.`,'testing');
-      localStorage.setItem('rnr_gapi',key);
-      loadCurrentKey();
-    }
-  }catch(e){
-    localStorage.setItem('rnr_gapi',key);
-    setStatus('⚠️ Test réseau impossible — clé sauvegardée sans vérification.','testing');
-    loadCurrentKey();
-  }finally{
-    btn.disabled=false; btn.textContent='💾 Enregistrer & Tester la clé';
-  }
-}
-
-function resetToDefault(){
-  localStorage.setItem('rnr_gapi',DEFAULT_KEY);
-  loadCurrentKey();
-  setStatus('✅ Clé par défaut restaurée.','ok');
-  showToast('Clé par défaut restaurée','success');
-}
 
 function showToast(msg,type='success'){
   const t=document.getElementById('toast');
