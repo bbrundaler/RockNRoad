@@ -694,7 +694,7 @@ function loadApiKey(){
   try{ localStorage.removeItem('rnr_gapi'); }catch(e){}
 }
 
-function getApiKey(){return '';} // conservé pour compatibilité d'appel ; la clé vit côté serveur (Edge Function)
+function getApiKey(){return 'server';} // marqueur non-vide : la vraie clé vit côté serveur (Edge Function), ce paramètre n'est plus utilisé pour appeler Google mais doit rester "truthy" pour le flux d'import
 
 // ── IMPORT ────────────────────────────────────────────────────────────────────
 async function importFromMaps(){
