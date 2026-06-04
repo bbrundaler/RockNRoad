@@ -396,10 +396,10 @@ let voyage = [];
 (async()=>{
   const {data:{session}} = await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
-  document.getElementById('auth-check').style.display='none';
+  const ac=document.getElementById('auth-check'); if(ac) ac.style.display='none';
   const e=session.user.email;
-  document.getElementById('sb-avatar').textContent=e.charAt(0).toUpperCase();
-  document.getElementById('sb-username').textContent=e.split('@')[0];
+  const av=document.getElementById('sb-avatar'); if(av) av.textContent=e.charAt(0).toUpperCase();
+  const un=document.getElementById('sb-username'); if(un) un.textContent=e.split('@')[0];
   initMap();
   initListEvents();
   loadVoyage();
