@@ -5,6 +5,16 @@
      dégradés métalliques du SVG sont locaux, par nature graphiques).
    - Ergonomie : SURVOL = ouverture directe et cliquable (un seul geste).
    - Ancrée en BAS-DROITE ; la rose se déploie depuis ce coin (trajet court).
+   - Effet PEEK actuel = GÉNÉRIQUE LÉGER : le voile s'allège/se dore au survol
+     d'une entrée (la page respire, mais ne se transforme pas).
+   ───────────────────────────────────────────────────────────────────────
+   CHANTIER FUTUR NOTÉ (à faire AVEC le remaniement des pages, pas avant) :
+   « RICHE RÉEL » — au survol d'une entrée, la VRAIE page-cible se révèle /
+   se charge derrière la rose (Carte → la carte s'illumine, Roadbook → idem).
+   Demande un couplage par page (chaque page expose des zones identifiables).
+   Décision Bruno (session boussole) : ne PAS le construire maintenant, car les
+   pages vont être profondément remaniées ; on l'implémentera à ce moment-là.
+   ────────────────────────────────────────────────────────────────────────
    Pour l'ajouter à une page : <script src="boussole.js" defer></script>
    ════════════════════════════════════════════════════════════════════════ */
 (function(){
@@ -47,8 +57,8 @@
     background:radial-gradient(120% 120% at 100% 100%, rgba(200,168,75,.06), rgba(15,13,9,.30));}
 
   /* la rose est ANCRÉE en bas-droite, près de la petite boussole — taille moyenne */
-  .bsl-rose{position:fixed;right:46px;bottom:54px;width:460px;height:460px;
-    max-width:86vw;max-height:74vh;
+  .bsl-rose{position:fixed;right:42px;bottom:50px;width:400px;height:400px;
+    max-width:84vw;max-height:72vh;
     transform:scale(.6);transform-origin:bottom right;opacity:0;
     transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s;pointer-events:none;}
   .bsl-veil.show .bsl-rose{transform:scale(1);opacity:1;pointer-events:auto;}
@@ -69,10 +79,10 @@
   .bsl-u .nm{font-family:var(--font-title,'Playfair Display',serif);font-weight:600;margin-top:8px;white-space:nowrap;}
 
   .bsl-hub{--x:0px;--y:0px;}
-  .bsl-hub .ic{width:88px;height:88px;border-color:rgba(200,168,75,.4);
+  .bsl-hub .ic{width:76px;height:76px;border-color:rgba(200,168,75,.4);
     background:radial-gradient(circle at 50% 35%,rgba(200,168,75,.22),transparent 70%),var(--dark-3,#1E1B14);}
-  .bsl-hub .ic svg{width:32px;height:32px;}
-  .bsl-hub .nm{font-size:15px;color:var(--gold-light,#E8C86B);margin-top:8px;}
+  .bsl-hub .ic svg{width:28px;height:28px;}
+  .bsl-hub .nm{font-size:14px;color:var(--gold-light,#E8C86B);margin-top:7px;}
 
   .bsl-card .ic{display:none;}
   .bsl-card .nm{position:relative;font-size:15px;color:var(--gold-light,#E8C86B);margin-top:0;
@@ -98,10 +108,10 @@
     color:var(--cream-dim,rgba(245,239,224,.55));margin-top:3px;font-family:var(--font-body,'Inter',sans-serif);font-weight:600;}
 
   /* positions (cercle, centre 0,0) */
-  .bsl-rever{--x:0px;--y:-146px;} .bsl-creation{--x:135px;--y:0px;}
-  .bsl-roadbook{--x:0px;--y:146px;} .bsl-souvenir{--x:-135px;--y:0px;}
-  .bsl-fiches{--x:81px;--y:-81px;} .bsl-creer{--x:-81px;--y:-81px;}
-  .bsl-cockpit{--x:-81px;--y:81px;} .bsl-carte{--x:81px;--y:81px;}
+  .bsl-rever{--x:0px;--y:-127px;} .bsl-creation{--x:117px;--y:0px;}
+  .bsl-roadbook{--x:0px;--y:127px;} .bsl-souvenir{--x:-117px;--y:0px;}
+  .bsl-fiches{--x:70px;--y:-70px;} .bsl-creer{--x:-70px;--y:-70px;}
+  .bsl-cockpit{--x:-70px;--y:70px;} .bsl-carte{--x:70px;--y:70px;}
   @media(max-width:600px){
     .bsl-rose{right:40px;bottom:48px;width:88vw;height:88vw;}
     .bsl-hub .ic{width:84px;height:84px;}
