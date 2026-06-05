@@ -85,7 +85,7 @@
   .bsl-hub .nm{font-size:14px;color:var(--gold-light,#E8C86B);margin-top:7px;}
 
   .bsl-card .ic{display:none;}
-  .bsl-card .nm{position:relative;font-size:15px;color:var(--gold-light,#E8C86B);margin-top:0;
+  .bsl-card .nm{position:relative;font-size:13px;color:var(--gold-light,#E8C86B);margin-top:0;
     text-shadow:0 1px 6px rgba(15,13,9,.9),0 0 14px rgba(15,13,9,.7);
     max-width:160px;line-height:1.25;padding:8px 14px;border-radius:12px;
     border:1px solid transparent;background:transparent;
@@ -98,13 +98,13 @@
 
   .bsl-diag .ic{width:54px;height:54px;border-color:rgba(200,168,75,.22);background:rgba(22,20,16,.7);}
   .bsl-diag .ic svg{width:23px;height:23px;stroke:rgba(232,200,107,.78);}
-  .bsl-diag .nm{font-size:12px;color:var(--creme,#F5EFE0);font-weight:600;}
+  .bsl-diag .nm{font-size:11px;color:var(--creme,#F5EFE0);font-weight:600;}
 
   .bsl-u.soon{pointer-events:none;opacity:.34;filter:grayscale(.6);}
   .bsl-u.soon .nm::after{display:none;}
   .bsl-u.soon .ic{border-color:rgba(200,168,75,.12);}
   .bsl-u .tag{display:none;}
-  .bsl-u.soon .tag{display:block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+  .bsl-u.soon .tag{display:block;font-size:8px;letter-spacing:.06em;text-transform:uppercase;
     color:var(--cream-dim,rgba(245,239,224,.55));margin-top:3px;font-family:var(--font-body,'Inter',sans-serif);font-weight:600;}
 
   /* positions (cercle, centre 0,0) */
