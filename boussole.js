@@ -36,15 +36,19 @@
     filter:drop-shadow(0 6px 16px rgba(200,168,75,.35));}
   .bsl-btn svg{width:100%;height:100%;display:block;}
 
-  /* voile sombre : couvre la page, MAIS laisse passer le survol vers la rose */
-  .bsl-veil{position:fixed;inset:0;background:rgba(15,13,9,.74);
-    -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);
-    opacity:0;pointer-events:none;transition:opacity .28s;z-index:999;}
+  /* voile LÉGER : on garde la vraie page visible derrière (pas de flou opaque).
+     Teinte douce + assombrissement modéré, pour que la rose reste lisible. */
+  .bsl-veil{position:fixed;inset:0;
+    background:radial-gradient(120% 120% at 100% 100%, rgba(15,13,9,.30), rgba(15,13,9,.52));
+    opacity:0;pointer-events:none;transition:opacity .28s, background .3s;z-index:999;}
   .bsl-veil.show{opacity:1;pointer-events:auto;}
+  /* survol d'une entrée → la page se révèle davantage (le voile s'allège et se dore) */
+  .bsl-veil.peek{
+    background:radial-gradient(120% 120% at 100% 100%, rgba(200,168,75,.06), rgba(15,13,9,.30));}
 
-  /* la rose est ANCRÉE en bas-droite, près de la petite boussole */
-  .bsl-rose{position:fixed;right:52px;bottom:60px;width:560px;height:560px;
-    max-width:88vw;max-height:78vh;
+  /* la rose est ANCRÉE en bas-droite, près de la petite boussole — taille moyenne */
+  .bsl-rose{position:fixed;right:46px;bottom:54px;width:460px;height:460px;
+    max-width:86vw;max-height:74vh;
     transform:scale(.6);transform-origin:bottom right;opacity:0;
     transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .3s;pointer-events:none;}
   .bsl-veil.show .bsl-rose{transform:scale(1);opacity:1;pointer-events:auto;}
@@ -65,10 +69,10 @@
   .bsl-u .nm{font-family:var(--font-title,'Playfair Display',serif);font-weight:600;margin-top:8px;white-space:nowrap;}
 
   .bsl-hub{--x:0px;--y:0px;}
-  .bsl-hub .ic{width:104px;height:104px;border-color:rgba(200,168,75,.4);
+  .bsl-hub .ic{width:88px;height:88px;border-color:rgba(200,168,75,.4);
     background:radial-gradient(circle at 50% 35%,rgba(200,168,75,.22),transparent 70%),var(--dark-3,#1E1B14);}
-  .bsl-hub .ic svg{width:38px;height:38px;}
-  .bsl-hub .nm{font-size:16px;color:var(--gold-light,#E8C86B);margin-top:9px;}
+  .bsl-hub .ic svg{width:32px;height:32px;}
+  .bsl-hub .nm{font-size:15px;color:var(--gold-light,#E8C86B);margin-top:8px;}
 
   .bsl-card .ic{display:none;}
   .bsl-card .nm{position:relative;font-size:15px;color:var(--gold-light,#E8C86B);margin-top:0;
@@ -94,10 +98,10 @@
     color:var(--cream-dim,rgba(245,239,224,.55));margin-top:3px;font-family:var(--font-body,'Inter',sans-serif);font-weight:600;}
 
   /* positions (cercle, centre 0,0) */
-  .bsl-rever{--x:0px;--y:-178px;} .bsl-creation{--x:165px;--y:0px;}
-  .bsl-roadbook{--x:0px;--y:178px;} .bsl-souvenir{--x:-165px;--y:0px;}
-  .bsl-fiches{--x:99px;--y:-99px;} .bsl-creer{--x:-99px;--y:-99px;}
-  .bsl-cockpit{--x:-99px;--y:99px;} .bsl-carte{--x:99px;--y:99px;}
+  .bsl-rever{--x:0px;--y:-146px;} .bsl-creation{--x:135px;--y:0px;}
+  .bsl-roadbook{--x:0px;--y:146px;} .bsl-souvenir{--x:-135px;--y:0px;}
+  .bsl-fiches{--x:81px;--y:-81px;} .bsl-creer{--x:-81px;--y:-81px;}
+  .bsl-cockpit{--x:-81px;--y:81px;} .bsl-carte{--x:81px;--y:81px;}
   @media(max-width:600px){
     .bsl-rose{right:40px;bottom:48px;width:88vw;height:88vw;}
     .bsl-hub .ic{width:84px;height:84px;}
@@ -222,6 +226,12 @@
     rose.addEventListener('mouseleave',scheduleClose);
     veil.addEventListener('click',function(e){if(e.target===veil)setOpen(false);});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')setOpen(false);});
+
+    /* ── effet PEEK : survol d'une entrée (active) → la page se révèle derrière ── */
+    veil.querySelectorAll('.bsl-u:not(.soon)').forEach(function(u){
+      u.addEventListener('mouseenter',function(){veil.classList.add('peek');});
+      u.addEventListener('mouseleave',function(){veil.classList.remove('peek');});
+    });
   }
 
   function drawTicks(){
