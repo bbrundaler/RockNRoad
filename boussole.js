@@ -25,7 +25,7 @@
   // actif:true => cliquable ; false => "à venir" (grisé)
   var ENTRIES = {
     hub:      {href:'home.html',          active:true},
-    rever:    {href:'#',                  active:false},  // page Carte de France à construire
+    rever:    {href:'horizon.html',      active:true},   // page Horizon créée (05/06)
     creation: {href:'voyage.html',        active:true},
     roadbook: {href:'carnet.html#fiche',  active:true},
     souvenir: {href:'#',                  active:false},  // univers souvenir à construire
