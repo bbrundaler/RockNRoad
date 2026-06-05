@@ -31,7 +31,7 @@
     souvenir: {href:'souvenir.html',     active:true},   // page Souvenir créée (05/06)
     creer:    {href:'admin.html',         active:true},
     fiches:   {href:'#',                  active:false},  // onglet "toutes fiches" à créer
-    cockpit:  {href:'#',                  active:false},  // chat / échanges à construire
+    cockpit:  {href:'cockpit.html',       active:true},   // page Cockpit créée (05/06)
     carte:    {href:'carnet.html#carte',  active:true}
   };
 

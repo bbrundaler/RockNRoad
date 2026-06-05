@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Cockpit · La vie du groupe</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+:root{
+  /* variables propres à la page Cockpit (les couleurs viennent de tokens.css) */
+  --ft:var(--font-title,'Playfair Display',serif);
+  --fb:var(--font-body,'Inter',sans-serif);
+  --topbar-h:56px;
+  --blk:rgba(22,20,16,.62);
+  --blk-bd:rgba(200,168,75,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--fb);color:var(--creme);
+  background:radial-gradient(1200px 700px at 75% -15%,rgba(200,168,75,.10),transparent 60%),
+   linear-gradient(160deg,var(--dark),var(--dark2) 55%,var(--dark3));}
+
+/* ── TOPBAR (commune au site) ── */
+.topbar{height:var(--topbar-h);display:flex;align-items:center;gap:16px;
+  padding:0 20px;background:rgba(15,13,9,.85);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(200,168,75,.16);}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--ft);font-weight:600;font-size:17px;text-decoration:none;color:inherit;}
+.brand .dot{width:25px;height:25px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:14px;}
+.brand em{font-style:italic;color:var(--gold-light);}
+.modes{display:flex;gap:4px;margin-left:8px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.18);border-radius:11px;padding:4px;}
+.mode{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(245,239,224,.55);cursor:pointer;text-decoration:none;}
+.mode.on{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);}
+.tag{margin-left:auto;font-size:12px;color:rgba(245,239,224,.5);font-style:italic;font-family:var(--ft);}
+.btn-quit{margin-left:14px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.2);
+  color:var(--creme);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--fb);}
+.btn-quit:hover{border-color:var(--gold);}
+
+/* ── SCÈNE : tableau de bord en blocs, sans scroll ── */
+.stage{
+  height:calc(100vh - var(--topbar-h));
+  padding:12px;display:grid;gap:11px;
+  grid-template-columns:1fr 320px;
+  grid-template-rows:auto 1fr auto;
+  grid-template-areas:
+    "question  group"
+    "votes     share"
+    "context   share";
+  min-height:0;
+}
+
+/* ── BLOC générique ── */
+.blk{background:var(--blk);border:1px solid var(--blk-bd);border-radius:14px;
+  display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  box-shadow:0 6px 22px rgba(0,0,0,.25);}
+.bh{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(200,168,75,.12);}
+.bh .ic{font-size:14px;}
+.bh h3{font-family:var(--ft);font-size:13.5px;font-weight:600;flex:1;}
+.bh .pin{opacity:.5;font-size:12px;}
+.bh .badge{font-size:10px;font-weight:700;color:var(--dark);background:var(--gold-light);
+  border-radius:20px;padding:2px 9px;letter-spacing:.5px;}
+.bb{padding:13px 14px;flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;scrollbar-width:thin;}
+.bb::-webkit-scrollbar{width:6px;}
+.bb::-webkit-scrollbar-thumb{background:rgba(200,168,75,.3);border-radius:3px;}
+
+/* ── QUESTION À TRANCHER (mise en avant) ── */
+.b-question{grid-area:question;}
+.b-question .bb{justify-content:center;}
+.q-big{font-family:var(--ft);font-size:24px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:6px;}
+.q-sub{font-size:13px;color:rgba(245,239,224,.6);font-style:italic;margin-bottom:16px;}
+.q-opts{display:flex;gap:12px;flex-wrap:wrap;}
+.q-opt{flex:1;min-width:150px;display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:12px;
+  background:rgba(245,239,224,.05);border:1px solid rgba(200,168,75,.22);cursor:pointer;transition:all .2s;}
+.q-opt:hover{background:rgba(200,168,75,.16);border-color:var(--gold);transform:translateY(-2px);}
+.q-opt .e{font-size:26px;}
+.q-opt .t{font-family:var(--ft);font-size:16px;font-weight:600;}
+.q-opt .v{margin-left:auto;font-size:11px;color:var(--gold-light);font-weight:700;}
+
+/* ── VOTES EN COURS ── */
+.b-votes{grid-area:votes;}
+.vote-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(200,168,75,.08);}
+.vote-row:last-child{border-bottom:none;}
+.vote-info{flex:1;min-width:0;}
+.vote-q{font-size:13px;font-weight:600;color:var(--creme);}
+.vote-meta{font-size:10.5px;color:rgba(245,239,224,.45);margin-top:2px;}
+.vote-bar{height:6px;border-radius:3px;background:rgba(245,239,224,.1);width:90px;overflow:hidden;flex-shrink:0;}
+.vote-bar > span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:3px;}
+.vote-count{font-size:11px;font-weight:700;color:var(--gold-light);min-width:42px;text-align:right;flex-shrink:0;}
+
+/* ── GROUPE ── */
+.b-group{grid-area:group;}
+.avts{display:flex;margin-bottom:14px;}
+.av2{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;
+  color:var(--dark);border:2px solid var(--dark2);margin-right:-8px;}
+.waiting{font-size:11.5px;color:rgba(245,239,224,.6);line-height:1.7;}
+.waiting .w{color:var(--gold-light);font-weight:600;}
+.waiting-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--dark);
+  background:var(--gold-light);border-radius:20px;padding:2px 9px;margin-top:8px;}
+
+/* ── PARTAGER AU GROUPE (sans créer de fiche) ── */
+.b-share{grid-area:share;}
+.share-feed{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:9px;margin-bottom:10px;scrollbar-width:thin;}
+.share-item{display:flex;gap:9px;align-items:flex-start;}
+.share-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--dark);}
+.share-body{flex:1;background:rgba(245,239,224,.05);border:1px solid rgba(200,168,75,.12);border-radius:10px;padding:8px 11px;}
+.share-name{font-size:11px;font-weight:700;color:var(--gold-light);}
+.share-text{font-size:12px;color:rgba(245,239,224,.85);line-height:1.5;margin-top:2px;}
+.share-photo{margin-top:6px;height:70px;border-radius:8px;background:linear-gradient(135deg,rgba(200,168,75,.25),rgba(22,20,16,.6));display:flex;align-items:center;justify-content:center;font-size:22px;}
+.share-input{display:flex;gap:8px;flex-shrink:0;}
+.share-input input{flex:1;background:rgba(15,13,9,.5);border:1px solid rgba(200,168,75,.22);border-radius:10px;
+  padding:9px 12px;color:var(--creme);font-family:var(--fb);font-size:12.5px;}
+.share-input input::placeholder{color:rgba(245,239,224,.4);}
+.share-btn{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);border:none;
+  border-radius:10px;padding:0 13px;font-weight:700;cursor:pointer;font-size:15px;}
+.share-hint{font-size:9.5px;color:rgba(245,239,224,.4);font-style:italic;margin-top:6px;}
+
+/* ── CONTEXTE : fiche en rappel + infos voyage ── */
+.b-context{grid-area:context;}
+.ctx-grid{display:flex;gap:12px;flex:1;min-height:0;}
+.ctx-fiche{flex:1;display:flex;gap:11px;align-items:center;}
+.ctx-fiche .ph{width:58px;height:58px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(200,168,75,.3),rgba(22,20,16,.7));display:flex;align-items:center;justify-content:center;font-size:24px;}
+.ctx-fiche .in .lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,168,75,.6);font-weight:700;}
+.ctx-fiche .in .nm{font-family:var(--ft);font-size:15px;font-weight:600;color:#fff;margin-top:2px;}
+.ctx-fiche .in .mt{font-size:11px;color:rgba(245,239,224,.5);margin-top:2px;}
+.ctx-sep{width:1px;background:rgba(200,168,75,.12);}
+.ctx-regions{flex:1;display:flex;flex-direction:column;justify-content:center;}
+.ctx-regions .lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(200,168,75,.6);font-weight:700;margin-bottom:7px;}
+.ctx-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.ctx-chip{font-size:11px;font-weight:600;color:var(--gold-light);background:rgba(200,168,75,.12);
+  border:1px solid rgba(200,168,75,.25);border-radius:20px;padding:4px 11px;}
+
+@media(max-width:820px){
+  html,body{overflow:auto;}
+  .stage{grid-template-columns:1fr;grid-template-areas:"question" "group" "votes" "share" "context";height:auto;}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="home.html"><span class="dot">◆</span> Rock<em>N</em>Road</a>
+  <div class="modes">
+    <span class="mode on">Cockpit</span>
+    <a class="mode" href="horizon.html">Horizon</a>
+    <a class="mode" href="voyage.html">Voyage</a>
+  </div>
+  <span class="tag">La vie du groupe · on pilote ensemble</span>
+  <button id="cp-logout" class="btn-quit" title="Se déconnecter">Quitter</button>
+</div>
+
+<div class="stage">
+
+  <!-- ── LA QUESTION À TRANCHER (mise en avant) ── -->
+  <div class="blk b-question">
+    <div class="bh"><span class="ic">🎯</span><h3>La question à trancher</h3><span class="badge">à voter</span></div>
+    <div class="bb">
+      <div class="q-big">Mer ou Montagne pour l'été prochain ?</div>
+      <div class="q-sub">Un grand coup pour dégrossir avant d'affiner les régions.</div>
+      <div class="q-opts">
+        <div class="q-opt"><span class="e">🌊</span><span class="t">La mer</span><span class="v">3 voix</span></div>
+        <div class="q-opt"><span class="e">⛰️</span><span class="t">La montagne</span><span class="v">2 voix</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LE GROUPE (on attend quoi) ── -->
+  <div class="blk b-group">
+    <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="avts">
+        <div class="av2" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))">B</div>
+        <div class="av2" style="background:linear-gradient(135deg,#13384a,#3d8fb0)">M</div>
+        <div class="av2" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
+        <div class="av2" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
+        <div class="av2" style="background:rgba(245,239,224,.15);color:var(--creme)">+2</div>
+      </div>
+      <div class="waiting">
+        On attend le vote de <span class="w">Léa</span> et <span class="w">Paul</span> sur « Mer ou Montagne ».
+        <br><span class="waiting-pill">2 votes en attente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── VOTES EN COURS ── -->
+  <div class="blk b-votes">
+    <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge">3 ouverts</span></div>
+    <div class="bb">
+      <div class="vote-row">
+        <div class="vote-info"><div class="vote-q">Mer ou Montagne ?</div><div class="vote-meta">5 votants · ferme dans 2 jours</div></div>
+        <div class="vote-bar"><span style="width:60%"></span></div>
+        <div class="vote-count">5/7</div>
+      </div>
+      <div class="vote-row">
+        <div class="vote-info"><div class="vote-q">Garder la fiche « Haut-Kœnigsbourg » ?</div><div class="vote-meta">élimination · 4 votants</div></div>
+        <div class="vote-bar"><span style="width:85%"></span></div>
+        <div class="vote-count">6/7</div>
+      </div>
+      <div class="vote-row">
+        <div class="vote-info"><div class="vote-q">Combien de nuits en Alsace ?</div><div class="vote-meta">note /5 · 3 votants</div></div>
+        <div class="vote-bar"><span style="width:43%"></span></div>
+        <div class="vote-count">3/7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PARTAGER AU GROUPE (sans créer de fiche) ── -->
+  <div class="blk b-share">
+    <div class="bh"><span class="ic">💬</span><h3>Partager au groupe</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="share-feed">
+        <div class="share-item">
+          <div class="share-av" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
+          <div class="share-body"><div class="share-name">Paul</div><div class="share-text">Super spot repéré en Aquitaine, je vous montre 👇</div>
+            <div class="share-photo">🌊</div></div>
+        </div>
+        <div class="share-item">
+          <div class="share-av" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
+          <div class="share-body"><div class="share-name">Léa</div><div class="share-text">Bretagne à fond pour les dolmens, ça vous tente ?</div></div>
+        </div>
+        <div class="share-item">
+          <div class="share-av" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))">B</div>
+          <div class="share-body"><div class="share-name">Bruno</div><div class="share-text">Je lance le vote Mer/Montagne ce soir, votez !</div></div>
+        </div>
+      </div>
+      <div class="share-input">
+        <input type="text" placeholder="Un mot, une photo… sans créer de fiche">
+        <button class="share-btn" title="Envoyer">➤</button>
+      </div>
+      <div class="share-hint">Informel · pour nourrir débats et votes · ne crée pas de fiche</div>
+    </div>
+  </div>
+
+  <!-- ── CONTEXTE : fiche en rappel + régions retenues ── -->
+  <div class="blk b-context">
+    <div class="bh"><span class="ic">🧭</span><h3>Le voyage en bref</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="ctx-grid">
+        <div class="ctx-fiche">
+          <div class="ph">🏰</div>
+          <div class="in">
+            <div class="lbl">Fiche en débat</div>
+            <div class="nm">Haut-Kœnigsbourg</div>
+            <div class="mt">Grand-Est · en cours d'élimination</div>
+          </div>
+        </div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-regions">
+          <div class="lbl">Régions retenues</div>
+          <div class="ctx-chips">
+            <span class="ctx-chip">Alsace</span>
+            <span class="ctx-chip">Aquitaine</span>
+            <span class="ctx-chip">Bretagne</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Supabase + garde d'authentification (même socle que les autres pages) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const {createClient}=supabase;
+const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href="index.html";return;}
+})();
+async function logout(){await sb.auth.signOut();window.location.href="index.html";}
+sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
+document.addEventListener('DOMContentLoaded',()=>{
+  const lo=document.getElementById('cp-logout');
+  if(lo) lo.addEventListener('click',logout);
+});
+</script>
+<script src="boussole.js" defer></script>
+</body>
+</html>
