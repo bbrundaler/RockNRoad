@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Souvenir · L'aventure ne s'oublie pas</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+:root{
+  /* variables propres à la page Souvenir (les couleurs viennent de tokens.css) */
+  --ft:var(--font-title,'Playfair Display',serif);
+  --fb:var(--font-body,'Inter',sans-serif);
+  --topbar-h:56px;
+  --blk:rgba(22,20,16,.62);
+  --blk-bd:rgba(200,168,75,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--fb);color:var(--creme);
+  background:radial-gradient(1200px 700px at 75% -15%,rgba(200,168,75,.10),transparent 60%),
+   linear-gradient(160deg,var(--dark),var(--dark2) 55%,var(--dark3));}
+
+/* ── TOPBAR (commune au site) ── */
+.topbar{height:var(--topbar-h);display:flex;align-items:center;gap:16px;
+  padding:0 20px;background:rgba(15,13,9,.85);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(200,168,75,.16);}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--ft);font-weight:600;font-size:17px;text-decoration:none;color:inherit;}
+.brand .dot{width:25px;height:25px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:14px;}
+.brand em{font-style:italic;color:var(--gold-light);}
+.modes{display:flex;gap:4px;margin-left:8px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.18);border-radius:11px;padding:4px;}
+.mode{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(245,239,224,.55);cursor:pointer;text-decoration:none;}
+.mode.on{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);}
+.tag{margin-left:auto;font-size:12px;color:rgba(245,239,224,.5);font-style:italic;font-family:var(--ft);}
+.btn-quit{margin-left:14px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.2);
+  color:var(--creme);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--fb);}
+.btn-quit:hover{border-color:var(--gold);}
+
+/* ── SCÈNE : hauteur écran, grille en blocs, sans scroll ── */
+.stage{
+  height:calc(100vh - var(--topbar-h));
+  padding:12px;display:grid;gap:11px;
+  grid-template-columns:1fr 360px;
+  grid-template-rows:1fr auto;
+  grid-template-areas:
+    "hero    gallery"
+    "shelf   loop";
+  min-height:0;
+}
+
+/* ── BLOC générique ── */
+.blk{background:var(--blk);border:1px solid var(--blk-bd);border-radius:14px;
+  display:flex;flex-direction:column;min-height:0;overflow:hidden;
+  box-shadow:0 6px 22px rgba(0,0,0,.25);}
+.bh{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(200,168,75,.12);}
+.bh .ic{font-size:14px;}
+.bh h3{font-family:var(--ft);font-size:13.5px;font-weight:600;flex:1;}
+.bh .pin{opacity:.5;font-size:12px;}
+.bb{padding:13px 14px;flex:1;min-height:0;display:flex;flex-direction:column;}
+
+/* ── HÉRO : le dernier voyage ── */
+.b-hero{grid-area:hero;}
+.hero-img{flex:1;min-height:0;border-radius:12px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#3a2c12,var(--gold) 140%),
+    radial-gradient(circle at 70% 25%,rgba(245,239,224,.18),transparent 55%);
+  display:flex;align-items:flex-end;}
+.hero-img .veil{position:absolute;inset:0;background:linear-gradient(to top,rgba(15,13,9,.78),transparent 55%);}
+.hero-cap{position:relative;padding:18px 20px;z-index:2;}
+.hero-cap .yr{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light);}
+.hero-cap .ti{font-family:var(--ft);font-size:30px;font-weight:700;color:#fff;line-height:1.05;margin:3px 0 4px;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);}
+.hero-cap .su{font-family:var(--ft);font-size:14px;font-style:italic;color:rgba(245,239,224,.82);}
+.hero-meta{display:flex;gap:16px;margin-top:11px;}
+.hero-meta .m{display:flex;flex-direction:column;}
+.hero-meta .m .n{font-family:var(--ft);font-size:18px;font-weight:700;color:var(--gold-light);line-height:1;}
+.hero-meta .m .l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,239,224,.5);margin-top:3px;}
+
+/* ── GALERIE photos ── */
+.b-gallery{grid-area:gallery;}
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1;min-height:0;overflow:hidden;}
+.gal-cell{border-radius:9px;position:relative;overflow:hidden;min-height:60px;
+  background:linear-gradient(135deg,rgba(200,168,75,.18),rgba(22,20,16,.6));
+  display:flex;align-items:center;justify-content:center;font-size:24px;opacity:.92;
+  transition:transform .25s;}
+.gal-cell:hover{transform:scale(1.03);}
+.gal-cell.add{background:rgba(245,239,224,.05);border:1px dashed rgba(200,168,75,.35);
+  cursor:pointer;flex-direction:column;gap:4px;font-size:20px;color:var(--gold-light);}
+.gal-cell.add .t{font-size:10px;color:rgba(245,239,224,.6);}
+.gal-note{margin-top:9px;font-size:10.5px;color:rgba(245,239,224,.45);font-style:italic;line-height:1.4;}
+
+/* ── ÉTAGÈRE : nos aventures passées ── */
+.b-shelf{grid-area:shelf;}
+.shelf-track{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;flex:1;align-items:stretch;scrollbar-width:thin;}
+.shelf-track::-webkit-scrollbar{height:6px;}
+.shelf-track::-webkit-scrollbar-thumb{background:rgba(200,168,75,.3);border-radius:3px;}
+.trip{flex-shrink:0;width:150px;border-radius:11px;overflow:hidden;position:relative;cursor:pointer;
+  border:1px solid rgba(200,168,75,.18);transition:transform .25s,border-color .25s;}
+.trip:hover{transform:translateY(-3px);border-color:var(--gold);}
+.trip .ph{height:84px;background:linear-gradient(135deg,rgba(200,168,75,.25),rgba(22,20,16,.7));
+  display:flex;align-items:center;justify-content:center;font-size:26px;}
+.trip .in{padding:8px 10px;}
+.trip .in .y{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gold-light);text-transform:uppercase;}
+.trip .in .n{font-family:var(--ft);font-size:13px;font-weight:600;color:#fff;line-height:1.15;margin-top:2px;}
+.trip .in .d{font-size:10px;color:rgba(245,239,224,.5);margin-top:2px;}
+
+/* ── BOUCLE : refermer / relancer ── */
+.b-loop{grid-area:loop;align-items:center;justify-content:center;text-align:center;}
+.b-loop .bb{align-items:center;justify-content:center;text-align:center;}
+.loop-q{font-family:var(--ft);font-size:16px;font-weight:600;color:var(--creme);line-height:1.3;margin-bottom:4px;}
+.loop-s{font-size:12px;color:rgba(245,239,224,.55);font-style:italic;margin-bottom:13px;max-width:240px;}
+.loop-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:11px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);
+  font-family:var(--ft);font-weight:700;font-size:14px;text-decoration:none;
+  box-shadow:0 6px 18px rgba(200,168,75,.28);transition:transform .2s;}
+.loop-btn:hover{transform:translateY(-2px);}
+
+@media(max-width:820px){
+  html,body{overflow:auto;}
+  .stage{grid-template-columns:1fr;grid-template-areas:"hero" "gallery" "shelf" "loop";height:auto;}
+}
+</style>
+</head>
+<body>
+<a class="brand-skip"></a>
+<div class="topbar">
+  <a class="brand" href="home.html"><span class="dot">◆</span> Rock<em>N</em>Road</a>
+  <div class="modes">
+    <span class="mode on">Souvenir</span>
+    <a class="mode" href="carnet.html#fiche">Roadbook</a>
+    <a class="mode" href="horizon.html">Horizon</a>
+  </div>
+  <span class="tag">L'aventure ne s'oublie pas · l'émotion jusqu'au bout</span>
+  <button id="sv-logout" class="btn-quit" title="Se déconnecter">Quitter</button>
+</div>
+
+<div class="stage">
+
+  <!-- ── HÉRO : le dernier voyage vécu ── -->
+  <div class="blk b-hero">
+    <div class="bh"><span class="ic">🌅</span><h3>Le dernier voyage</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="hero-img">
+        <div class="veil"></div>
+        <div class="hero-cap">
+          <div class="yr">Été 2025 · 8 jours</div>
+          <div class="ti">Route des Vins<br>d'Alsace</div>
+          <div class="su">« Des villages dorés, des rires, et un Gewurztraminer qu'on n'oubliera pas. »</div>
+          <div class="hero-meta">
+            <div class="m"><span class="n">1 248</span><span class="l">km parcourus</span></div>
+            <div class="m"><span class="n">32</span><span class="l">lieux vécus</span></div>
+            <div class="m"><span class="n">6</span><span class="l">voyageurs</span></div>
+            <div class="m"><span class="n">42</span><span class="l">photos</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GALERIE photos du voyage ── -->
+  <div class="blk b-gallery">
+    <div class="bh"><span class="ic">📷</span><h3>Les images qui restent</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="gal-grid">
+        <div class="gal-cell">🍷</div>
+        <div class="gal-cell">🏰</div>
+        <div class="gal-cell">🥨</div>
+        <div class="gal-cell add"><span>＋</span><span class="t">Ajouter une photo</span></div>
+      </div>
+      <div class="gal-note">Vos photos vous appartiennent · aucune personne identifiable · stockage maîtrisé (option à venir).</div>
+    </div>
+  </div>
+
+  <!-- ── ÉTAGÈRE : nos aventures passées ── -->
+  <div class="blk b-shelf">
+    <div class="bh"><span class="ic">📚</span><h3>Nos aventures, au fil des années</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div class="shelf-track">
+        <div class="trip"><div class="ph">🍷</div><div class="in"><div class="y">2025</div><div class="n">Route des Vins</div><div class="d">Alsace · 8 j</div></div></div>
+        <div class="trip"><div class="ph">🌊</div><div class="in"><div class="y">2024</div><div class="n">Côte Atlantique</div><div class="d">Aquitaine · 12 j</div></div></div>
+        <div class="trip"><div class="ph">🏔️</div><div class="in"><div class="y">2023</div><div class="n">Tour des Pyrénées</div><div class="d">Occitanie · 10 j</div></div></div>
+        <div class="trip"><div class="ph">🍇</div><div class="in"><div class="y">2022</div><div class="n">Vignes de Bourgogne</div><div class="d">Bourgogne · 6 j</div></div></div>
+        <div class="trip"><div class="ph">🧭</div><div class="in" style="display:flex;flex-direction:column;justify-content:center;height:100%;"><div class="n" style="color:var(--gold-light);">Et le prochain ?</div><div class="d">à écrire…</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOUCLE : relancer l'envie ── -->
+  <div class="blk b-loop">
+    <div class="bb">
+      <div class="loop-q">L'envie d'un nouveau départ ?</div>
+      <div class="loop-s">Chaque souvenir est le début du prochain voyage.</div>
+      <a class="loop-btn" href="horizon.html">🧭 Alors, on repart où ?</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Supabase + garde d'authentification (même socle que les autres pages) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const {createClient}=supabase;
+const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href="index.html";return;}
+})();
+async function logout(){await sb.auth.signOut();window.location.href="index.html";}
+sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
+document.addEventListener('DOMContentLoaded',()=>{
+  const lo=document.getElementById('sv-logout');
+  if(lo) lo.addEventListener('click',logout);
+});
+</script>
+<script src="boussole.js" defer></script>
+</body>
+</html>

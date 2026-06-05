@@ -28,7 +28,7 @@
     rever:    {href:'horizon.html',      active:true},   // page Horizon créée (05/06)
     creation: {href:'voyage.html',        active:true},
     roadbook: {href:'carnet.html#fiche',  active:true},
-    souvenir: {href:'#',                  active:false},  // univers souvenir à construire
+    souvenir: {href:'souvenir.html',     active:true},   // page Souvenir créée (05/06)
     creer:    {href:'admin.html',         active:true},
     fiches:   {href:'#',                  active:false},  // onglet "toutes fiches" à créer
     cockpit:  {href:'#',                  active:false},  // chat / échanges à construire
