@@ -30,7 +30,7 @@
     roadbook: {href:'carnet.html#fiche',  active:true},
     souvenir: {href:'souvenir.html',     active:true},   // page Souvenir créée (05/06)
     creer:    {href:'admin.html',         active:true},
-    fiches:   {href:'#',                  active:false},  // onglet "toutes fiches" à créer
+    fiches:   {href:'carnet.html#alsace', active:true},   // entrée carnet par régions (barre supérieure) — 05/06
     cockpit:  {href:'cockpit.html',       active:true},   // page Cockpit créée (05/06)
     carte:    {href:'carnet.html#carte',  active:true}
   };
