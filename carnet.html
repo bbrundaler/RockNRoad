@@ -7,9 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
-<link rel="stylesheet" href="sidebar.css">
 <link rel="stylesheet" href="app.css">
-<script src="sidebar.js"></script>
 
 <style>
 
@@ -22,25 +20,17 @@
   border-radius:50%;animation:spin 1s linear infinite;margin:18px auto 0;}
 #main-content{display:none;}
 
-/* ── SIDEBAR — overrides carnet.html ── */
-#sidebar{width:var(--sb);overflow-y:auto;z-index:200;}
-
-#sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;}
-.sb-sub{display:none;flex-direction:column;padding-left:8px;margin-top:2px;}
-.sb-sub.open{display:flex;}
-.sb-sub-btn{display:flex;align-items:center;gap:7px;width:100%;padding:6px 10px;background:none;border:none;color:rgba(245,239,224,.45);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;transition:all .15s;text-align:left;text-decoration:none;}
-.sb-sub-btn:hover{background:rgba(200,168,75,.06);color:rgba(245,239,224,.75);}
-.sb-sub-btn.active{color:var(--gold);background:rgba(200,168,75,.1);}
-.sb-dot-pyr{background:var(--pyr);}
-.sb-dot-atl{background:var(--atl);}
-.sb-dot-bou{background:var(--bou);}
-.sb-arrow{margin-left:auto;font-size:9px;transition:transform .2s;color:rgba(255,255,255,.2);}
+/* ── TOPBAR harmonisée (brand + titre + actions) ── */
 
 /* APP MAIN */
 
-#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 28px;height:46px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-
-#sb-toggle{display:none;background:none;border:none;color:rgba(255,255,255,.85);font-size:20px;cursor:pointer;}
+#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:9px;font-family:'Playfair Display',serif;font-weight:600;font-size:16px;text-decoration:none;color:var(--creme);}
+.brand .dot{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:13px;}
+.brand em{font-style:italic;color:var(--gold-light);}
+.top-bar-right{display:flex;align-items:center;gap:10px;}
+.tb-quit{background:rgba(245,239,224,.06);color:var(--creme);border:1px solid rgba(200,168,75,.2);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
+.tb-quit:hover{border-color:var(--gold);}
 .top-voyage-btn{display:none;align-items:center;gap:6px;background:var(--dark);color:var(--gold);font-size:10.5px;font-weight:700;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;}
 .top-voyage-btn.visible{display:flex;}
 .top-voyage-btn:hover{background:var(--gold);color:var(--dark);}
@@ -315,17 +305,12 @@
 /* RESPONSIVE */
 @media(max-width:1200px){.sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:repeat(3,1fr)!important;}}
 @media(max-width:900px){
-  #sidebar{transform:translateX(-100%);transition:transform .25s;}
-  #sidebar.open{transform:translateX(0);}
-  #sb-overlay.open{display:block;}
-  
-  #sb-toggle{display:block;}
   #top-bar{padding:0 14px;}
   .inner{padding:14px 12px 60px;}
   .sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:1fr!important;}
   .sh-compact{margin:14px 14px 0;}
 }
-@media print{#sidebar,#top-bar{display:none;}.section{display:block!important;}}
+@media print{#top-bar{display:none;}.section{display:block!important;}}
 
 /* TIPS / CONSEILS */
 .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:4px;}
@@ -528,24 +513,20 @@
 <!-- HERO -->
 
 <!-- ══ OVERLAY MOBILE ══ -->
-<div id="sb-overlay" onclick="closeSidebar()"></div>
-
-<!-- ══ SIDEBAR ══ -->
-<div id="sidebar"></div>
-
 <!-- ══ APP MAIN ══ -->
 <div id="app-main">
 
   <!-- Top bar -->
   <div id="top-bar">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button id="sb-toggle" onclick="toggleSidebar()">☰</button>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a class="brand" href="home.html"><span class="dot">◆</span> Rock<em>N</em>Road</a>
       <div class="top-bar-title" id="top-bar-title">Vue d'<span>ensemble</span></div>
     </div>
     <div class="top-bar-right">
       <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
         🧭 <span id="top-voyage-count">0</span> lieu(x) · Voir l'itinéraire
       </button>
+      <button class="tb-quit" onclick="logout()" title="Se déconnecter">Quitter</button>
     </div>
   </div>
 
@@ -2092,10 +2073,8 @@ const TITLES={overview:'Accueil',alsace:'Alsace',pyrenees:'Pyrénées',atlantiqu
 window.showTab=function(id){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   const sec=document.getElementById("tab-"+id);if(sec)sec.classList.add("active");
-  document.querySelectorAll(".sb-btn[id^=snav-],.sb-sub-btn[id^=snav-]").forEach(b=>b.classList.remove("active"));
   const ab=document.getElementById("snav-"+id);if(ab)ab.classList.add("active");
   const tb=document.getElementById("top-bar-title");if(tb&&TITLES[id])tb.textContent=TITLES[id];
-  closeSidebar();
   const am=document.getElementById("app-main");if(am)am.scrollTo(0,0);
   if(history.replaceState) history.replaceState(null,null,'#'+id);
   // Lazy init Leaflet maps
@@ -2149,8 +2128,6 @@ function toggleSbSub(id){
   }
 }
 
-function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
-function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
 
 let rnrVoyage=JSON.parse(localStorage.getItem("rr_voyage_full")||"[]");
 function toggleVoyageCard(id,nom,lat,lng,region,type){
