@@ -122,11 +122,11 @@ body{font-family:var(--fb);color:var(--creme);
   <div class="blk b-ind">
     <div class="bh"><span class="ic">📊</span><h3>Votre voyage prend forme</h3><span class="pin">📌</span></div>
     <div class="bb"><div class="inds">
-      <div class="ind"><span class="n">28</span><span class="l">fiches rêvées</span></div>
-      <div class="ind"><span class="n">3</span><span class="l">régions</span></div>
-      <div class="ind"><span class="n">9</span><span class="l">visites</span></div>
-      <div class="ind"><span class="n">5</span><span class="l">nuits</span></div>
-      <div class="ind"><span class="n">8</span><span class="l">tables</span></div>
+      <div class="ind"><span class="n" id="hz-n-fiches">…</span><span class="l">fiches rêvées</span></div>
+      <div class="ind"><span class="n" id="hz-n-regions">…</span><span class="l">régions</span></div>
+      <div class="ind"><span class="n" id="hz-n-visites">…</span><span class="l">visites</span></div>
+      <div class="ind"><span class="n" id="hz-n-coupdecoeur">…</span><span class="l">coups de cœur</span></div>
+      <div class="ind"><span class="n" id="hz-n-notemoy">…</span><span class="l">note moy.</span></div>
     </div></div>
   </div>
   <div class="blk crew b-crew">
@@ -181,10 +181,10 @@ body{font-family:var(--fb);color:var(--creme);
   <div class="blk fiche b-fiche">
     <div class="bh"><span class="ic">📷</span><h3>Une fiche qui fait envie</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="ph" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))"><span class="fl">🏰</span><span class="ev">ALSACE</span></div>
-      <div class="nm">Haut-Kœnigsbourg</div>
-      <div class="mt">Évocation maison · Grand-Est · sans Google</div>
-      <div class="chips"><span class="chip">Vignobles</span><span class="chip">Villages</span><span class="chip">Châteaux</span></div>
+      <div class="ph" id="hz-fiche-ph" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))"><span class="fl">🏰</span><span class="ev" id="hz-fiche-region">…</span></div>
+      <div class="nm" id="hz-fiche-nom">Chargement…</div>
+      <div class="mt" id="hz-fiche-mt">La fiche la mieux notée du groupe</div>
+      <div class="chips" id="hz-fiche-chips"><span class="chip">⭐ coup de cœur</span></div>
     </div>
   </div>
   <div class="blk write b-write">
@@ -206,7 +206,54 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href="index.html";return;}
+  loadHorizonData(session.user.id);
 })();
+
+// Capitalise une chaîne (alsace -> Alsace)
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+async function loadHorizonData(userId){
+  try{
+    // 1) Trouver le groupe de l'utilisateur (même logique que carnet.html)
+    const {data:mem,error:eMem}=await sb.from('membres')
+      .select('groupe_id, groupes(*)').eq('user_id',userId).limit(1).single();
+    if(eMem||!mem){ console.warn('Horizon: pas de groupe',eMem); return; }
+    const groupeId=mem.groupe_id;
+
+    // 2) Charger les fiches du groupe (table lieux)
+    const {data:lieux,error:eLieux}=await sb.from('lieux')
+      .select('*').eq('groupe_id',groupeId).order('note_famille',{ascending:false});
+    if(eLieux){ console.warn('Horizon: lecture lieux',eLieux); return; }
+    const fiches=lieux||[];
+
+    // 3) Calculer les vrais compteurs
+    const nFiches=fiches.length;
+    const regions=[...new Set(fiches.map(f=>f.region).filter(Boolean))];
+    const notes=fiches.map(f=>Number(f.note_famille)).filter(n=>!isNaN(n)&&n>0);
+    const coupsDeCoeur=notes.filter(n=>n>=4).length;
+    const noteMoy=notes.length?(notes.reduce((a,b)=>a+b,0)/notes.length):0;
+
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    set('hz-n-fiches',nFiches);
+    set('hz-n-regions',regions.length);
+    set('hz-n-visites',nFiches);          // "visites" = fiches enregistrées (donnée réelle dispo)
+    set('hz-n-coupdecoeur',coupsDeCoeur);
+    set('hz-n-notemoy',noteMoy?noteMoy.toFixed(1):'—');
+
+    // 4) Mettre en avant la fiche la mieux notée
+    const top=fiches.find(f=>Number(f.note_famille)>0)||fiches[0];
+    if(top){
+      set('hz-fiche-nom',top.nom||'Sans nom');
+      set('hz-fiche-region',(top.region||'').toUpperCase());
+      const mt=document.getElementById('hz-fiche-mt');
+      if(mt) mt.textContent=(top.region?cap(top.region)+' · ':'')+(top.note_famille?('noté '+top.note_famille+'/5'):'fiche du groupe');
+    }else{
+      set('hz-fiche-nom','Aucune fiche pour l’instant');
+      set('hz-fiche-region','—');
+      const mt=document.getElementById('hz-fiche-mt'); if(mt) mt.textContent='Ajoutez des lieux pour commencer à rêver';
+    }
+  }catch(err){ console.warn('Horizon load error',err); }
+}
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 document.addEventListener('DOMContentLoaded',()=>{
