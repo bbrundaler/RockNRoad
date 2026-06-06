@@ -212,6 +212,86 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
 // Capitalise une chaîne (alsace -> Alsace)
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 
+// Normalise un libellé de région (même logique que carnet.html)
+function normalizeRegionKey(region){
+  return (region||'autre').toLowerCase()
+    .replace(/é/g,'e').replace(/è/g,'e').replace(/ê/g,'e')
+    .replace(/à/g,'a').replace(/â/g,'a')
+    .replace(/î/g,'i').replace(/ô/g,'o').replace(/ù/g,'u').replace(/û/g,'u')
+    .replace(/[^a-z]/g,'');
+}
+
+// Correspondance : région ADMINISTRATIVE de la carte SVG  →  mots-clés des fiches
+// (une fiche "Alsace" doit s'allumer quand on survole "grand-est", etc.)
+const CARTE_TO_FICHES = {
+  'grand-est':                ['alsace','lorraine','champagne','vosges','grandest'],
+  'nouvelle-aquitaine':       ['atlantique','aquitaine','pyrenees','bordeaux','landes','dordogne','basque','nouvelleaquitaine'],
+  'occitanie':                ['pyrenees','occitanie','languedoc','toulouse','mediterranee'],
+  'bourgogne-franche-comte':  ['bourgogne','jura','franchecomte','bourgognefranchecomte'],
+  'auvergne-rhone-alpes':     ['auvergne','rhone','alpes','lyon','savoie','auvergnerhonealpes'],
+  'provence-alpes-cote-d-azur':['provence','cotedazur','paca','nice','marseille','provencealpescotedazur'],
+  'bretagne':                 ['bretagne','finistere','morbihan'],
+  'pays-de-la-loire':         ['paysdelaloire','loire','nantes','vendee'],
+  'centre-val-de-loire':      ['centre','valdeloire','centrevaldeloire','chateaux'],
+  'normandie':                ['normandie'],
+  'hauts-de-france':          ['hautsdefrance','nord','picardie','lille'],
+  'ile-de-france':            ['iledefrance','paris'],
+  'corse':                    ['corse']
+};
+
+// Stockage des fiches chargées (rempli par loadHorizonData)
+let HZ_FICHES=[];
+
+// Renvoie les fiches correspondant à une région administrative de la carte
+function fichesPourRegionCarte(dataR){
+  const keys=CARTE_TO_FICHES[dataR]||[];
+  return HZ_FICHES.filter(f=>{
+    const rk=normalizeRegionKey(f.region);
+    // match si la clé de la fiche est listée, ou contient/est contenue dans un mot-clé
+    return keys.some(k=>rk===k || rk.includes(k) || k.includes(rk));
+  });
+}
+
+// Garde la dernière fiche affichée par survol pour pouvoir restaurer la vedette
+let HZ_FICHE_VEDETTE=null;
+
+function afficheFicheDansCadre(f, contexteRegionLabel){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  if(f){
+    set('hz-fiche-nom',f.nom||'Sans nom');
+    set('hz-fiche-region',(f.region||'').toUpperCase());
+    const mt=document.getElementById('hz-fiche-mt');
+    if(mt) mt.textContent=(f.region?cap(f.region)+' · ':'')+(f.note_famille?('noté '+f.note_famille+'/5'):'fiche du groupe');
+  }else{
+    // survol d'une région sans fiche
+    set('hz-fiche-nom','Pas encore de fiche ici');
+    set('hz-fiche-region',(contexteRegionLabel||'—').toUpperCase());
+    const mt=document.getElementById('hz-fiche-mt');
+    if(mt) mt.textContent='Cette région attend ses premières idées';
+  }
+}
+
+// Branche le survol des régions de la carte SVG
+function brancheSurvolCarte(){
+  const regions=document.querySelectorAll('.region[data-r]');
+  if(!regions.length) return;
+  regions.forEach(reg=>{
+    const dataR=reg.getAttribute('data-r');
+    reg.style.cursor='pointer';
+    reg.addEventListener('mouseenter',()=>{
+      const matches=fichesPourRegionCarte(dataR);
+      const label=dataR.replace(/-/g,' ');
+      // on prend la mieux notée de la région survolée
+      const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+      afficheFicheDansCadre(best,label);
+    });
+    reg.addEventListener('mouseleave',()=>{
+      // au départ de la souris, on restaure la fiche vedette du groupe
+      afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
+    });
+  });
+}
+
 async function loadHorizonData(userId){
   try{
     // 1) Trouver le groupe de l'utilisateur (même logique que carnet.html)
@@ -225,6 +305,7 @@ async function loadHorizonData(userId){
       .select('*').eq('groupe_id',groupeId).order('note_famille',{ascending:false});
     if(eLieux){ console.warn('Horizon: lecture lieux',eLieux); return; }
     const fiches=lieux||[];
+    HZ_FICHES=fiches;   // accessible au survol de la carte
 
     // 3) Calculer les vrais compteurs
     const nFiches=fiches.length;
@@ -242,16 +323,17 @@ async function loadHorizonData(userId){
 
     // 4) Mettre en avant la fiche la mieux notée
     const top=fiches.find(f=>Number(f.note_famille)>0)||fiches[0];
+    HZ_FICHE_VEDETTE=top||null;
     if(top){
-      set('hz-fiche-nom',top.nom||'Sans nom');
-      set('hz-fiche-region',(top.region||'').toUpperCase());
-      const mt=document.getElementById('hz-fiche-mt');
-      if(mt) mt.textContent=(top.region?cap(top.region)+' · ':'')+(top.note_famille?('noté '+top.note_famille+'/5'):'fiche du groupe');
+      afficheFicheDansCadre(top,null);
     }else{
       set('hz-fiche-nom','Aucune fiche pour l’instant');
       set('hz-fiche-region','—');
       const mt=document.getElementById('hz-fiche-mt'); if(mt) mt.textContent='Ajoutez des lieux pour commencer à rêver';
     }
+
+    // 5) Rendre la carte vivante : survol région → fiche correspondante à droite
+    brancheSurvolCarte();
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
