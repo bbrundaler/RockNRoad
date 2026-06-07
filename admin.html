@@ -1173,7 +1173,7 @@ function deptToRegion(sousRegionText){
         commune=gc('locality')||gc('postal_town')||gc('administrative_area_level_2');
         dep=gc('administrative_area_level_2');
       }
-      const cls=(window.RNR_TAGS&&RNR_TAGS.classerDepuisGoogle)?RNR_TAGS.classerDepuisGoogle(p.types||[]):null;
+      const cls=(window.RNR_TAGS&&RNR_TAGS.classerDepuisGoogle)?RNR_TAGS.classerDepuisGoogle(p.types||[], p.name||''):null;
       const phrase=(window.RNR_TAGS&&RNR_TAGS.phraseMaison)?RNR_TAGS.phraseMaison({
         famille:cls?.famille, sousDistinction:cls?.sousDistinction,
         commune, departement:dep, note:p.rating

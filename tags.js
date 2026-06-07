@@ -109,6 +109,24 @@
   };
 
   /* ───────────────────────────────────────────────────────────────────
+     2b) INDICES DU NOM  (rattrapage quand les types Google sont imprécis)
+     ═══════════════════════════════════════════════════════════════════
+     Google est souvent avare en types précis (les châteaux français
+     reviennent fréquemment en simple 'tourist_attraction'). Ces mots-clés,
+     cherchés dans le NOM du lieu, affinent le classement vers la bonne
+     sous-distinction. Centralisé ici, modifiable comme le reste.
+     Ordre = priorité (le premier qui matche gagne). Gratuit (nom déjà reçu).
+     ─────────────────────────────────────────────────────────────────── */
+  const INDICES_NOM = {
+    patrimoine: { mots:['chateau','château','fort ','fortress','citadelle','abbaye','cathédrale','cathedrale','basilique','église','eglise','chapelle','monastère','monastere','ruines','remparts','donjon'] },
+    musee:      { mots:['musée','musee','museum','galerie'] },
+    paysage:    { mots:['cascade','gorge','gorges','col ','sommet','pic ','lac ','étang','etang','grotte','belvédère','belvedere','panorama'] },
+    balade:     { mots:['jardin','jardins','parc ','sentier','arboretum'] },
+    camping:    { mots:['camping','aire de'] },
+    terroir:    { mots:['vignoble','domaine','cave ','caves','ferme','marché','marche couvert'] }
+  };
+
+  /* ───────────────────────────────────────────────────────────────────
      3) TYPES  (les 6 types CONCRETS du formulaire de création actuel)
      Ce que l'utilisateur choisit en 1 clic. CLÉS INCHANGÉES depuis v1
      pour ne pas casser le pont avec admin.html. Axe FACTUEL (filtrage fin).
@@ -246,22 +264,29 @@
       const t=TYPES[typeKey]; return t ? (t.jourNuit||(FAMILLES[t.famille]||{}).jourNuit||'jour') : 'jour';
     },
 
-    // ══ CŒUR AUTO : classe un lieu depuis ses types Google ══
-    // Range le lieu dans une famille + sous-distinction via la table de
-    // correspondance. p.types = tableau des types Google de la fiche.
-    // 'tourist_attraction' est traité en DERNIER RECOURS (fourre-tout).
+    // ══ CŒUR AUTO : classe un lieu depuis ses types Google (+ son nom) ══
+    // Range le lieu dans une famille + sous-distinction.
+    // Priorité : (1) types Google précis, (2) indices du NOM, (3) filet de
+    // sécurité tourist_attraction → Visiter. Le nom rattrape les cas où
+    // Google est avare en types (fréquent pour les châteaux français).
+    // p.types = tableau des types Google ; nom = libellé du lieu.
     // -> { famille, sousDistinction } | null si rien ne matche
-    classerDepuisGoogle(types){
-      if(!Array.isArray(types) || !types.length) return null;
-      const set = new Set(types);
-      // Passage normal : on cherche un type PRÉCIS (tourist_attraction n'est
-      // plus dans aucune sous-distinction, donc jamais déclencheur ici).
+    classerDepuisGoogle(types, nom){
+      const set = new Set(Array.isArray(types)?types:[]);
+      // (1) Type Google PRÉCIS (tourist_attraction n'est dans aucune liste)
       for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
         if((sd.googleTypes||[]).some(gt=>set.has(gt)))
           return { famille:sd.famille, sousDistinction:cle };
       }
-      // Filet de sécurité : lieu « à voir » sans type précis → Visiter,
-      // SANS forcer une sous-distinction trompeuse (laissée vide à affiner).
+      // (2) Indices du NOM (gratuit, rattrape les types Google imprécis)
+      const n=(nom||'').toLowerCase();
+      if(n){
+        for(const [cle,regle] of Object.entries(INDICES_NOM)){
+          if(regle.mots.some(m=>n.includes(m)))
+            return { famille:SOUS_DISTINCTIONS[cle].famille, sousDistinction:cle };
+        }
+      }
+      // (3) Filet de sécurité : « à voir » sans rien de précis → Visiter
       if(set.has('tourist_attraction') || set.has('point_of_interest'))
         return { famille:'visiter', sousDistinction:null };
       return null;
