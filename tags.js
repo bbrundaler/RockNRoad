@@ -69,7 +69,7 @@
     patrimoine: { famille:'visiter', libelle:'Patrimoine', emoji:'🏰',
       googleTypes:['castle','historical_landmark','historical_place','monument','cultural_landmark','church','place_of_worship'] },
     musee:      { famille:'visiter', libelle:'Musée & art', emoji:'🖼️',
-      googleTypes:['museum','art_gallery','tourist_attraction'] },
+      googleTypes:['museum','art_gallery'] },
 
     // ── Nature ──
     paysage:    { famille:'nature', libelle:'Paysage', emoji:'🏞️',
@@ -196,14 +196,22 @@
     if(!infos) return '';
     const sd   = infos.sousDistinction && SOUS_DISTINCTIONS[infos.sousDistinction];
     const fam  = infos.famille && FAMILLES[infos.famille];
-    // nom de catégorie le plus parlant disponible
-    const quoi = (sd && sd.libelle) || (fam && fam.libelle) || 'Lieu';
+    // mot-catégorie le plus parlant : sous-distinction si dispo, sinon un
+    // libellé naturel par famille (évite « Visiter à … » qui sonne mal)
+    const motFamille = {
+      visiter:'Lieu à visiter', nature:'Coin de nature', nuit:'Hébergement',
+      pause:'Pause gourmande', activite:'Activité', loisirs:'Sortie loisirs'
+    };
+    const quoi = (sd && sd.libelle)
+              || (fam && motFamille[infos.famille])
+              || (fam && fam.libelle) || 'Lieu';
     const lieu = infos.commune ? ('à '+infos.commune) : '';
-    const dep  = infos.departement ? ('dans '+infos.departement) : '';
+    // Le département n'est PAS répété dans la phrase : il est déjà affiché
+    // ailleurs sur la fiche (sous-région + badge). On évite ainsi les pièges
+    // d'articles irréguliers (le Bas-Rhin / les Landes / l'Yonne…).
     const noteTxt = (typeof infos.note==='number' && infos.note>0)
       ? (', noté '+infos.note.toFixed(1).replace('.',',')+' ★') : '';
-    // assemblage propre, sans double espace ni virgule orpheline
-    const corps = [quoi, lieu, dep].filter(Boolean).join(' ');
+    const corps = [quoi, lieu].filter(Boolean).join(' ');
     return (corps + noteTxt).replace(/\s+/g,' ').trim();
   }
 
@@ -246,16 +254,16 @@
     classerDepuisGoogle(types){
       if(!Array.isArray(types) || !types.length) return null;
       const set = new Set(types);
-      // 1er passage : on ignore le fourre-tout pour privilégier le précis
-      for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
-        if((sd.googleTypes||[]).some(gt=>gt!=='tourist_attraction' && set.has(gt)))
-          return { famille:sd.famille, sousDistinction:cle };
-      }
-      // 2e passage : dernier recours, on accepte tourist_attraction
+      // Passage normal : on cherche un type PRÉCIS (tourist_attraction n'est
+      // plus dans aucune sous-distinction, donc jamais déclencheur ici).
       for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
         if((sd.googleTypes||[]).some(gt=>set.has(gt)))
           return { famille:sd.famille, sousDistinction:cle };
       }
+      // Filet de sécurité : lieu « à voir » sans type précis → Visiter,
+      // SANS forcer une sous-distinction trompeuse (laissée vide à affiner).
+      if(set.has('tourist_attraction') || set.has('point_of_interest'))
+        return { famille:'visiter', sousDistinction:null };
       return null;
     },
 
