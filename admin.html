@@ -320,22 +320,20 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   <div class="form-card">
     <div class="fc-title">🏷️ Tags rapides</div>
     <div class="tags-grid" id="tagsGrid">
+      <div class="tag-opt" data-tag="nature" onclick="toggleTag(this)">🌿 Nature</div>
+      <div class="tag-opt" data-tag="randonnee" onclick="toggleTag(this)">🥾 Rando</div>
       <div class="tag-opt" data-tag="baignade" onclick="toggleTag(this)">🏊 Baignade</div>
-      <div class="tag-opt" data-tag="velo" onclick="toggleTag(this)">🚴 Vélo</div>
-      <div class="tag-opt" data-tag="ombre" onclick="toggleTag(this)">🌳 Ombre</div>
+      <div class="tag-opt" data-tag="historique" onclick="toggleTag(this)">🏰 Historique</div>
+      <div class="tag-opt" data-tag="vue" onclick="toggleTag(this)">🏔️ Belle vue</div>
+      <div class="tag-opt" data-tag="enfants" onclick="toggleTag(this)">👧 Enfants</div>
+      <div class="tag-opt" data-tag="teardrop" onclick="toggleTag(this)">🚐 Camping-car</div>
+      <div class="tag-opt" data-tag="terroir" onclick="toggleTag(this)">🧺 Terroir</div>
       <div class="tag-opt" data-tag="calme" onclick="toggleTag(this)">😌 Calme</div>
       <div class="tag-opt" data-tag="anime" onclick="toggleTag(this)">🎉 Animé</div>
-      <div class="tag-opt" data-tag="gratuit" onclick="toggleTag(this)">🆓 Gratuit</div>
-      <div class="tag-opt" data-tag="chien-plage" onclick="toggleTag(this)">🐕 Chien plage OK</div>
-      <div class="tag-opt" data-tag="vue" onclick="toggleTag(this)">🏔️ Belle vue</div>
-      <div class="tag-opt" data-tag="electricite" onclick="toggleTag(this)">⚡ Électricité</div>
+      <div class="tag-opt" data-tag="romantique" onclick="toggleTag(this)">💕 Romantique</div>
+      <div class="tag-opt" data-tag="chien-ok" onclick="toggleTag(this)">🐕 Chien OK</div>
       <div class="tag-opt" data-tag="piscine" onclick="toggleTag(this)">🏊 Piscine</div>
-      <div class="tag-opt" data-tag="nature" onclick="toggleTag(this)">🌿 Nature</div>
-      <div class="tag-opt" data-tag="historique" onclick="toggleTag(this)">🏰 Historique</div>
-      <div class="tag-opt" data-tag="unesco" onclick="toggleTag(this)">🌍 UNESCO</div>
-      <div class="tag-opt" data-tag="randonnee" onclick="toggleTag(this)">🥾 Rando</div>
-      <div class="tag-opt" data-tag="teardrop" onclick="toggleTag(this)">🚐 Teardrop OK</div>
-      <div class="tag-opt" data-tag="enfants" onclick="toggleTag(this)">👧 Enfants</div>
+      <div class="tag-opt" data-tag="electricite" onclick="toggleTag(this)">⚡ Électricité</div>
     </div>
   </div>
 
@@ -739,7 +737,7 @@ async function importFromMaps(){
     try{
       const apiKey=getApiKey();
       if(apiKey){
-        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
         // Normaliser pour scoring
         const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
         const inputNorm=norm(url);
@@ -977,7 +975,7 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
         if(d?.results?.[0]?.place_id) placeId=d.results[0].place_id;
       }
       if(!placeId){console.warn('place_id introuvable');return false;}
-      const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+      const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
       const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
       if(!det?.result) return false;
       p=det.result;
@@ -1021,24 +1019,10 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
       point_of_interest:'Site',premise:'Site'};
     if(p.types){for(const t of p.types){if(typeMap[t]){document.getElementById('type').value=typeMap[t];break;}}}
 
-    // ── Auto-tags ─────────────────────────────────────────────────────────────
-    const autoTags=[];
-    const types=p.types||[];
-    const nomLower=(p.name||'').toLowerCase();
-    const descLower=(p.editorial_summary?.overview||'').toLowerCase();
-    if(types.some(t=>['natural_feature','park','hiking_area','route'].includes(t))) autoTags.push('nature','randonnee');
-    if(types.some(t=>['beach','lake'].includes(t))) autoTags.push('baignade','nature');
-    if(types.some(t=>['museum','historical_landmark','church','place_of_worship'].includes(t))) autoTags.push('historique');
-    if(types.some(t=>['campground','campsite','rv_park'].includes(t))) autoTags.push('teardrop');
-    if(types.some(t=>['tourist_attraction','amusement_park'].includes(t))) autoTags.push('enfants');
-    const searchIn=nomLower+' '+descLower;
-    if(searchIn.includes('velo')||searchIn.includes('vélo')||searchIn.includes('canal')) autoTags.push('velo');
-    if(searchIn.includes('cascade')||searchIn.includes('lac ')) autoTags.push('baignade','nature');
-    if(searchIn.includes('chateau')||searchIn.includes('château')||searchIn.includes('fort')) autoTags.push('historique','vue');
-    if(searchIn.includes('foret')||searchIn.includes('forêt')) autoTags.push('nature','ombre');
-    if(searchIn.includes('colorado')||searchIn.includes('rocher')||searchIn.includes('falaise')||searchIn.includes('grotte')) autoTags.push('randonnee','nature','vue');
-    if(searchIn.includes('gratuit')||searchIn.includes('libre')) autoTags.push('gratuit');
-    if(p.price_level===0) autoTags.push('gratuit');
+    // ── Auto-tags (centralisés dans tags.js — RNR_TAGS) ───────────────────────
+    const autoTags = (window.RNR_TAGS && RNR_TAGS.autoTagsDepuisGoogle)
+      ? RNR_TAGS.autoTagsDepuisGoogle(p)
+      : [];
     [...new Set(autoTags)].forEach(tag=>{
       const el=document.querySelector(`#tagsGrid [data-tag="${tag}"]`);
       if(el&&!el.classList.contains('on')){el.classList.add('on');if(!selectedTags.includes(tag))selectedTags.push(tag);}
@@ -1181,92 +1165,45 @@ function deptToRegion(sousRegionText){
       }
     }
 
-    // ── Description auto ─────────────────────────────────────────────────────
-    if(p.editorial_summary?.overview&&!document.getElementById('description').value){
-      fillFieldForce('description', p.editorial_summary.overview);
+    // ── Description auto (phrase maison via tags.js — remplace editorial_summary) ──
+    if(!document.getElementById('description').value){
+      let commune='', dep='';
+      if(p.address_components){
+        const gc=(t)=>p.address_components.find(c=>c.types.includes(t))?.long_name||'';
+        commune=gc('locality')||gc('postal_town')||gc('administrative_area_level_2');
+        dep=gc('administrative_area_level_2');
+      }
+      const cls=(window.RNR_TAGS&&RNR_TAGS.classerDepuisGoogle)?RNR_TAGS.classerDepuisGoogle(p.types||[]):null;
+      const phrase=(window.RNR_TAGS&&RNR_TAGS.phraseMaison)?RNR_TAGS.phraseMaison({
+        famille:cls?.famille, sousDistinction:cls?.sousDistinction,
+        commune, departement:dep, note:p.rating
+      }):'';
+      if(phrase) fillFieldForce('description', phrase);
     }
 
-    // ── Dog-friendly auto depuis description Google ──────────────────────────
-    const descText = (
-      (p.editorial_summary?.overview||'') + ' ' +
-      (p.name||'')
-    ).toLowerCase();
-    
-    const NON_DOG_KEYWORDS = [
-      'no dogs','no pets','no animals','dogs not allowed','pets not allowed',
-      'animaux interdits','chiens interdits','interdit aux animaux','sans animaux',
-      'chiens non admis','animaux non admis','no dog allowed',
-      'chien interdit','animaux non autorisés'
-    ];
-    const DOG_OK_KEYWORDS = [
-      'dog-friendly','dog friendly','dogs welcome','pets welcome',
-      'dogs allowed','pets allowed','chien bienvenu','chiens bienvenus',
-      'accepte les chiens','chiens acceptés','chiens admis','animaux acceptés',
-      'pet friendly','dog ok','chien ok','welcome dog','avec votre chien',
-      'canine','dog park','bark','paw','laisse','avec chien'
-    ];
-    
-    let autoDog = null; // null = pas de détection
-    let autoDogInfo = '';
-    
-    for(const kw of NON_DOG_KEYWORDS){
-      if(descText.includes(kw)){
-        autoDog='no';
-        autoDogInfo='⚠️ Détecté depuis Google : "'+kw+'" — à vérifier sur place';
-        break;
-      }
+    // ── Dog-friendly NUANCÉ (origine : import — voir tags.js DOG_FRIENDLY) ─────
+    // À l'import : on NE déduit PAS un état ferme (Google peu fiable + champs
+    // editorial_summary/reviews bannis). Défaut 'na' = « à confirmer » ; un
+    // membre fiabilisera ensuite. La fiabilité vient de l'humain.
+    // NB : le vrai système 3 états vert/ambre/gris + UI dédiée = chantier B5
+    // (touche le HTML du formulaire + le champ BDD). Ici on reste sur l'UI
+    // actuelle (yes/na/no), en posant 'na' par défaut.
+    const nomDog=(p.name||'').toLowerCase();
+    let autoDog='na';      // défaut : « à confirmer »
+    let finalDogInfo='';
+    if(/(chien|dog|animaux)\s?(interdit|non admis|non autoris)/.test(nomDog)){
+      autoDog='no';
+      finalDogInfo='⚠️ Mention dans le nom — à vérifier sur place';
     }
-    if(!autoDog){
-      for(const kw of DOG_OK_KEYWORDS){
-        if(descText.includes(kw)){
-          autoDog='yes';
-          autoDogInfo='🐕 Détecté depuis Google : "'+kw+'" — confirmé dog-friendly';
-          break;
-        }
-      }
-    }
-    if(!autoDog){
-      autoDog='yes'; // optimiste par défaut — road trip avec chien !
-      autoDogInfo='';
-    }
-    
-    // ── Enrichir dog_info avec reviews Google qui mentionnent le chien ──────
-    const dogKeywordsReview=['chien','dog','animal','pet','laisse','leash','paw','canin'];
-    const reviewsText = (p.reviews||[])
-      .map(r=>r.text||'').join(' ').toLowerCase();
-    let dogReviewExtract = '';
-    if(reviewsText){
-      // Cherche des phrases contenant des mots-clés chien dans les reviews
-      const sentences = reviewsText.split(/[.!?]/);
-      const dogSentences = sentences.filter(s=>dogKeywordsReview.some(kw=>s.includes(kw)));
-      if(dogSentences.length>0){
-        dogReviewExtract = dogSentences[0].trim().slice(0,120);
-        // Capitalise
-        dogReviewExtract = dogReviewExtract.charAt(0).toUpperCase()+dogReviewExtract.slice(1);
-      }
-    }
-    // Composer dog_info final
-    let finalDogInfo = '';
-    if(autoDog==='yes'){
-      finalDogInfo = autoDogInfo ? autoDogInfo : '🐕 Dog Friendly — confirmé';
-      if(dogReviewExtract && !finalDogInfo.includes(dogReviewExtract.slice(0,20))){
-        finalDogInfo += ' · ' + dogReviewExtract;
-      }
-    } else if(autoDog==='no'){
-      finalDogInfo = autoDogInfo ? autoDogInfo : '🚫 Animaux non admis';
-      if(dogReviewExtract) finalDogInfo += ' · ' + dogReviewExtract;
-    }
-    
     setDog(autoDog);
     if(finalDogInfo && !document.getElementById('dogInfo').value){
       fillField('dogInfo', finalDogInfo);
     }
     // Badge dans le résumé import
     const badgesEl=document.getElementById('ir-badges');
-    if(autoDog==='yes'){
-      if(badgesEl) badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(44,80,22,.1);color:#2C5016;">🐕 Dog Friendly détecté</span>`;
-    } else if(autoDog==='no'){
-      if(badgesEl) badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Non admis détecté</span>`;
+    if(badgesEl){
+      if(autoDog==='no') badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Chien : mention restrictive</span>`;
+      else badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(120,120,120,.12);color:#5F5E5A;">⚪ Chien : à confirmer</span>`;
     }
 
     // ── Horaires ─────────────────────────────────────────────────────────────
@@ -1351,7 +1288,7 @@ function deptToRegion(sousRegionText){
     if(p.website) b.innerHTML+=`<span class="ir-badge">🌐 Site</span>`;
     if(p.opening_hours?.open_now!==undefined) b.innerHTML+=`<span class="ir-badge">${p.opening_hours.open_now?'✅ Ouvert':'🔴 Fermé'}</span>`;
     if(autoTags.length) b.innerHTML+=`<span class="ir-badge">🏷️ ${[...new Set(autoTags)].length} tags auto</span>`;
-    if(p.editorial_summary?.overview) b.innerHTML+=`<span class="ir-badge">📝 Description</span>`;
+    if(document.getElementById('description').value) b.innerHTML+=`<span class="ir-badge">📝 Description</span>`;
 
     // ── Badge auto ────────────────────────────────────────────────────────────
     if(!document.getElementById('badge').value){
@@ -1396,7 +1333,7 @@ async function tryResolveShortUrl(url){
       const best=d?.results?.find(r=>!r.types?.every(t=>cityTypes.includes(t)))||d?.results?.[0];
       if(best?.place_id){
         const placeId=best.place_id;
-        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,editorial_summary,price_level,reviews';
+        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
         const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
         if(det?.result){
           await fetchFromPlacesApiProxy(null,apiKey,url,det.result);
@@ -1666,6 +1603,7 @@ function showToast(msg,type='success'){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 </script>
+<script src="tags.js"></script>
 <script src="boussole.js" defer></script>
 </body>
 </html>
