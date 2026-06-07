@@ -470,7 +470,8 @@ async function checkAuth(){
   await checkSuperAdmin(session.user.id);
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
-checkAuth();
+// Différé au chargement complet : checkAuth appelle checkSuperAdmin, défini dans le bloc script suivant.
+window.addEventListener('load', checkAuth);
 
 function loadCurrentKey(){
   // La clé n'est plus dans le navigateur : affichage de statut uniquement.
