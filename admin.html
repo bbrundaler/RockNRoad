@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="sidebar.css">
 <link rel="stylesheet" href="app.css">
-<script src="sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -177,18 +176,14 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 </div>
 <div id="main" style="display:contents;">
 
-<!-- SIDEBAR -->
-<div id="sb-overlay" onclick="document.getElementById('sidebar').classList.remove('open');this.classList.remove('open');"></div>
-<div id="sidebar"></div>
-
 <!-- APP MAIN -->
 <div class="app-main">
 <div class="page-topbar">
   <div style="display:flex;align-items:center;gap:12px;">
-    <button id="sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('open');" style="display:none;background:none;border:none;font-size:20px;cursor:pointer;">☰</button>
     <span class="page-topbar-title">Nouvelle fiche lieu</span>
   </div>
-  <a href="fiches.html" style="font-size:11px;color:var(--muted);text-decoration:none;">← Mes Fiches</a>
+  <a href="config.html" style="font-size:11px;color:var(--muted);text-decoration:none;">⚙️ Config</a>
+  <a href="carnet.html#alsace" style="font-size:11px;color:var(--muted);text-decoration:none;">← Mes Fiches</a>
 </div>
 <div class="layout">
 <div class="col-left">
@@ -553,7 +548,8 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 <script>
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
-const DEFAULT_KEY='AIzaSyA_C3U5UY0B5fi3H9pkW8tptCH4sIcIvwI';
+// La clé Google ne vit PLUS dans le front. Tout passe par l'Edge Function serveur.
+const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
@@ -690,24 +686,15 @@ async function checkLieuInCache(nom, lat, lng) {
 }
 
 function loadApiKey(){
-  const stored=localStorage.getItem('rnr_gapi');
-  // Remplace uniquement si rien de stocké ou si c'est l'ancienne clé par défaut
-  if(!stored||stored==='AIzaSyBsH3gvaKyn00YBEMXVqnIkUT_u4eQKPfo'){
-    localStorage.setItem('rnr_gapi',DEFAULT_KEY);
-  }
-  const k=localStorage.getItem('rnr_gapi');
+  // Plus aucune clé dans le navigateur : tout passe par l'Edge Function serveur.
   const st=document.getElementById('apiKeyStatus');
   const info=document.getElementById('apiKeyInfo');
-  if(k&&k.startsWith('AIzaSy')){
-    st.className='api-key-status ok';
-    info.textContent=k.slice(0,8)+'•'.repeat(20)+k.slice(-4)+' — Active';
-  } else {
-    st.className='api-key-status empty';
-    info.textContent='Aucune clé — import limité';
-  }
+  if(st) st.className='api-key-status ok';
+  if(info) info.textContent='Service Google sécurisé (clé côté serveur)';
 }
 
-function getApiKey(){return localStorage.getItem('rnr_gapi')||DEFAULT_KEY;}
+// Marqueur non-vide : préserve les `if(apiKey)` existants sans jamais exposer de clé.
+function getApiKey(){return 'server';}
 
 // ── IMPORT ────────────────────────────────────────────────────────────────────
 async function importFromMaps(){
@@ -861,35 +848,33 @@ async function importFromMaps(){
 
 // ── Résolution URL courte → nom + coords ──────────────────────────────────────
 async function resolveShortUrlToName(url){
-  const proxies=[
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(url)}`
-  ];
-  for(const proxy of proxies){
-    try{
-      const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-      if(!r.ok) continue;
-      const raw=await r.text();
-      let content=raw;
-      try{const j=JSON.parse(raw);if(j.contents)content=j.contents;if(j.status&&j.status.url)content+=j.status.url;}catch{}
-      // Extract title
-      let name='';
-      const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if(titleMatch){
-        name=titleMatch[1].replace(/ [-·–] Google Maps.*/i,'').replace(/Google Maps/i,'').trim();
-        if(name.length<2) name='';
-      }
-      // Try og:title as fallback
-      if(!name){
-        const ogMatch=content.match(/property="og:title"\s+content="([^"]+)"/i);
-        if(ogMatch) name=ogMatch[1].replace(/ [-·–] Google Maps.*/i,'').trim();
-      }
-      // Extract coords from redirected content
-      const coords=extractCoordsFromUrl(content);
-      if(name) return {name, coords};
-    }catch(e){continue;}
+  try{
+    const r=await fetch(EDGE_FN,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({action:'resolveurl', url}),
+      signal:AbortSignal.timeout(10000)
+    });
+    if(!r.ok) return {name:'', coords:null};
+    const j=await r.json();
+    const content=(j.html||'')+' '+(j.finalUrl||'');
+    // Extract title
+    let name='';
+    const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if(titleMatch){
+      name=titleMatch[1].replace(/ [-·–] Google Maps.*/i,'').replace(/Google Maps/i,'').trim();
+      if(name.length<2) name='';
+    }
+    // Try og:title as fallback
+    if(!name){
+      const ogMatch=content.match(/property="og:title"\s+content="([^"]+)"/i);
+      if(ogMatch) name=ogMatch[1].replace(/ [-·–] Google Maps.*/i,'').trim();
+    }
+    const coords=extractCoordsFromUrl(content);
+    return {name, coords};
+  }catch(e){
+    return {name:'', coords:null};
   }
-  return {name:'', coords:null};
 }
 
 function extractCoordsFromUrl(url){
@@ -929,46 +914,45 @@ function handleApiShutdown() {
   if(importBtn) { importBtn.disabled = true; importBtn.style.opacity = '0.5'; }
 }
 
-async function callPlacesApi(endpoint, params, apiKey){
-  const base='https://maps.googleapis.com/maps/api/place/'+endpoint+'/json?';
-  const qs=new URLSearchParams({...params, key:apiKey, language:'fr'}).toString();
-  const targetUrl=base+qs;
-  // corsproxy.io doit recevoir une URL encodée sans caractères spéciaux
-  const proxies=[
-    `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-  ];
-  for(const proxy of proxies){
-    try{
-      const r=await fetch(proxy,{signal:AbortSignal.timeout(12000)});
-      if(!r.ok) continue;
-      const raw=await r.text();
-      if(!raw||raw.length<10) continue;
-      let d;
-      try{d=JSON.parse(raw);}catch{continue;}
-      if(d.contents){try{d=JSON.parse(d.contents);}catch{continue;}}
-      if(d.error_message){console.warn('Google API error:',d.error_message,d.status);break;}
-      if(d.status==='REQUEST_DENIED'||d.status==='OVER_QUERY_LIMIT'){
-        handleApiShutdown();
-        console.warn('Google API indisponible:',d.status);
-        break;
-      }
-      if(d && (d.result||d.candidates||d.results)) return d;
-    }catch(e){console.warn('Proxy failed:',e.message);continue;}
-  }
-  return null;
+// Appel Google Places via l'Edge Function serveur (la clé reste côté serveur).
+// Signature inchangée (endpoint, params, _apiKey) pour ne rien casser chez les appelants ;
+// _apiKey est ignoré (plus aucune clé dans le navigateur).
+const ENDPOINT_TO_ACTION={
+  'findplacefromtext':'findplace',
+  'textsearch':'textsearch',
+  'details':'details',
+  'nearbysearch':'nearbysearch'
+};
+async function callPlacesApi(endpoint, params, _apiKey){
+  const action=ENDPOINT_TO_ACTION[endpoint]||endpoint;
+  try{
+    const r=await fetch(EDGE_FN,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({action, ...params}),
+      signal:AbortSignal.timeout(12000)
+    });
+    if(!r.ok){console.warn('Edge Function HTTP',r.status);return null;}
+    const d=await r.json();
+    if(d.error_message){console.warn('Google API error:',d.error_message,d.status);return null;}
+    if(d.status==='REQUEST_DENIED'||d.status==='OVER_QUERY_LIMIT'){
+      handleApiShutdown();
+      console.warn('Google API indisponible:',d.status);
+      return null;
+    }
+    if(d && (d.result||d.candidates||d.results)) return d;
+    return null;
+  }catch(e){console.warn('Edge Function failed:',e.message);return null;}
 }
 
-// Photo Google directe — URL directe via redirect Places API (pas besoin de proxy pour affichage)
-function googlePhotoUrl(ref, apiKey, maxwidth=800){
-  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxwidth}&photo_reference=${ref}&key=${apiKey}`;
+// Photo via l'Edge Function (action=photo en GET, pour les balises <img>).
+// Cette URL est STABLE et sans secret → c'est elle qu'on stocke en base (plus de 403).
+function googlePhotoUrl(ref, _apiKey, maxwidth=800){
+  return `${EDGE_FN}?action=photo&photo_reference=${encodeURIComponent(ref)}&maxwidth=${maxwidth}`;
 }
-// Pour affichage img (contourne CORS image en passant par allorigins)
-function googlePhotoProxy(ref, apiKey, maxwidth=400){
-  const direct=googlePhotoUrl(ref,apiKey,maxwidth);
-  // corsproxy.io en priorité (plus fiable)
-  return `https://corsproxy.io/?${encodeURIComponent(direct)}`;
+// Affichage : même URL Edge Function (plus besoin de proxy tiers).
+function googlePhotoProxy(ref, _apiKey, maxwidth=400){
+  return googlePhotoUrl(ref, _apiKey, maxwidth);
 }
 
 async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedResult=null){
@@ -1397,32 +1381,11 @@ async function reverseGeocode(lat,lng){
 }
 
 async function tryResolveShortUrl(url){
-  // Essai 1 : corsproxy.io (plus rapide)
-  const proxies=[
-    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-  ];
+  // Résolution via l'Edge Function serveur (plus de proxy tiers).
   let placeName='';
-  for(const proxy of proxies){
-    try{
-      const r=await fetch(proxy,{signal:AbortSignal.timeout(7000)});
-      if(!r.ok) continue;
-      const raw=await r.text();
-      // allorigins wraps in JSON
-      let content=raw;
-      try{const j=JSON.parse(raw);if(j.contents) content=j.contents;}catch{}
-      // Extraire nom depuis title
-      const titleMatch=content.match(/<title[^>]*>([^<]+)<\/title>/i);
-      if(titleMatch){
-        let title=titleMatch[1].replace(/ - Google Maps.*/,'').replace(/Google Maps/,'').trim();
-        if(title&&title.length>2){placeName=title;fillFieldForce('nom',title);}
-      }
-      // Extraire coords
-      const coords=extractCoordsFromUrl(content);
-      if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
-      if(placeName) break;
-    }catch(e){continue;}
-  }
+  const {name, coords}=await resolveShortUrlToName(url);
+  if(name){placeName=name;fillFieldForce('nom',name);}
+  if(coords){fillField('lat',coords.lat.toFixed(6));fillField('lng',coords.lng.toFixed(6));refreshMap();}
   // Si on a un nom : lancer Find Place directement
   if(placeName){
     showToast('🔍 Nom trouvé — recherche Google Places...','info');
@@ -1589,6 +1552,14 @@ async function saveFiche(){
   const region=document.getElementById('region').value;
   const type=document.getElementById('type').value;
   if(!nom||!region||!type){showToast('Nom, Type et Région obligatoires','error');return;}
+  // lat/lng = pivot de toute la chaîne (votes, cartes, roadbook) → obligatoires.
+  const latVal=parseFloat(document.getElementById('lat').value);
+  const lngVal=parseFloat(document.getElementById('lng').value);
+  if(!Number.isFinite(latVal)||!Number.isFinite(lngVal)){
+    showToast('Latitude et longitude obligatoires (cœur de la carte et des votes)','error');
+    document.getElementById('lat').focus();
+    return;
+  }
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='⏳ Enregistrement...';
   try{
@@ -1616,8 +1587,8 @@ async function saveFiche(){
       note_famille:familyStarVal||null,
       tags:selectedTags.length?selectedTags:null,
       photo_url,
-      lat:parseFloat(document.getElementById('lat').value)||null,
-      lng:parseFloat(document.getElementById('lng').value)||null,
+      lat:latVal,
+      lng:lngVal,
       adresse:document.getElementById('adresse').value||null,
       tel:document.getElementById('tel').value||null,
       site_web:document.getElementById('siteWeb').value||null,
