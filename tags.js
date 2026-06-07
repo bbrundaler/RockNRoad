@@ -264,29 +264,43 @@
       const t=TYPES[typeKey]; return t ? (t.jourNuit||(FAMILLES[t.famille]||{}).jourNuit||'jour') : 'jour';
     },
 
-    // ══ CŒUR AUTO : classe un lieu depuis ses types Google (+ son nom) ══
-    // Range le lieu dans une famille + sous-distinction.
-    // Priorité : (1) types Google précis, (2) indices du NOM, (3) filet de
-    // sécurité tourist_attraction → Visiter. Le nom rattrape les cas où
-    // Google est avare en types (fréquent pour les châteaux français).
+    // ══ CŒUR AUTO : classe un lieu depuis son NOM puis ses types Google ══
+    // Priorité (décision 08/06 — le NOM prime) :
+    //   (1) indices FORTS du nom (château, abbaye… priment même si Google
+    //       tague 'museum' — ex. Château de Versailles → Patrimoine) ;
+    //   (2) type Google précis ;
+    //   (3) filet de sécurité tourist_attraction → Visiter.
     // p.types = tableau des types Google ; nom = libellé du lieu.
     // -> { famille, sousDistinction } | null si rien ne matche
     classerDepuisGoogle(types, nom){
       const set = new Set(Array.isArray(types)?types:[]);
-      // (1) Type Google PRÉCIS (tourist_attraction n'est dans aucune liste)
+      const n=(nom||'').toLowerCase();
+      // Types « commerce » : si Google l'affirme, le NOM ne doit PAS l'emporter
+      // (« Restaurant du Château » reste une Table, pas du Patrimoine).
+      const COMMERCE=['restaurant','meal_takeaway','cafe','coffee_shop','bakery',
+        'bar','pub','ice_cream_shop','lodging','hotel','motel','guest_house',
+        'bed_and_breakfast','spa','store','shopping_mall'];
+      const estCommerce = COMMERCE.some(gt=>set.has(gt));
+      // (1) Indices FORTS du nom — priment SAUF si c'est un commerce avéré
+      if(n && !estCommerce){
+        for(const [cle,regle] of Object.entries(INDICES_NOM)){
+          if(regle.mots.some(m=>n.includes(m)))
+            return { famille:SOUS_DISTINCTIONS[cle].famille, sousDistinction:cle };
+        }
+      }
+      // (2) Type Google PRÉCIS (tourist_attraction n'est dans aucune liste)
       for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
         if((sd.googleTypes||[]).some(gt=>set.has(gt)))
           return { famille:sd.famille, sousDistinction:cle };
       }
-      // (2) Indices du NOM (gratuit, rattrape les types Google imprécis)
-      const n=(nom||'').toLowerCase();
+      // (3) Indices du nom en RATTRAPAGE (si commerce sans sous-distinction trouvée)
       if(n){
         for(const [cle,regle] of Object.entries(INDICES_NOM)){
           if(regle.mots.some(m=>n.includes(m)))
             return { famille:SOUS_DISTINCTIONS[cle].famille, sousDistinction:cle };
         }
       }
-      // (3) Filet de sécurité : « à voir » sans rien de précis → Visiter
+      // (4) Filet de sécurité : « à voir » sans rien de précis → Visiter
       if(set.has('tourist_attraction') || set.has('point_of_interest'))
         return { famille:'visiter', sousDistinction:null };
       return null;
