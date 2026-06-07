@@ -95,9 +95,10 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 /* DOG */
 .toggle-group{display:flex;gap:7px;}
 .tog{flex:1;padding:9px;border:2px solid #E8DECE;border-radius:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;color:#aaa;}
-.tog.active.yes{border-color:var(--green);background:#e8f4e8;color:var(--green);}
-.tog.active.no{border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
-.tog.active.na{border-color:var(--gold);background:rgba(200,168,75,.1);color:#8B6914;}
+.tog.active.oui{border-color:var(--green);background:#e8f4e8;color:var(--green);}
+.tog.active.conditions{border-color:#BA7517;background:rgba(186,117,23,.12);color:#854F0B;}
+.tog.active.non{border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
+.tog.active.inconnu{border-color:#8a8a8a;background:rgba(120,120,120,.1);color:#5F5E5A;}
 /* GPS */
 .gps-row{display:flex;gap:8px;align-items:flex-end;}
 .gps-row .fg{flex:1;margin-bottom:0;}
@@ -423,9 +424,10 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
   <div class="form-card">
     <div class="fc-title">🐕 Dog-Friendly</div>
     <div class="toggle-group">
-      <div class="tog yes active" id="dogYes" onclick="setDog('yes')">✅ Oui</div>
-      <div class="tog na" id="dogNa" onclick="setDog('na')">❓ À vérifier</div>
-      <div class="tog no" id="dogNo" onclick="setDog('no')">❌ Non</div>
+      <div class="tog oui active" id="dogOui" onclick="setDog('oui')">✅ Oui</div>
+      <div class="tog conditions" id="dogConditions" onclick="setDog('conditions')">🟠 Sous conditions</div>
+      <div class="tog non" id="dogNon" onclick="setDog('non')">❌ Non</div>
+      <div class="tog inconnu" id="dogInconnu" onclick="setDog('inconnu')">❓ À vérifier</div>
     </div>
     <input type="hidden" id="dogFriendly" value="true">
     <div class="fg full" style="margin-top:10px;"><label>Info chien</label><input type="text" id="dogInfo" placeholder="Chiens acceptés en laisse partout..." autocomplete="off" value=""></div>
@@ -550,7 +552,7 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null,photoFile=null,dogVal='yes',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
 let mondeNuitVal=false;
 let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
@@ -725,7 +727,7 @@ async function importFromMaps(){
   });
   selectedTags=[];
   document.querySelectorAll('.tag-opt.on').forEach(t=>t.classList.remove('on'));
-  setDog('yes');
+  setDog('inconnu', true);
   familyStarVal=0;
   document.querySelectorAll('.star.on').forEach(s=>s.classList.remove('on'));
   selectedGooglePhotoUrl=null;
@@ -1181,28 +1183,27 @@ function deptToRegion(sousRegionText){
       if(phrase) fillFieldForce('description', phrase);
     }
 
-    // ── Dog-friendly NUANCÉ (origine : import — voir tags.js DOG_FRIENDLY) ─────
+    // ── Dog-friendly NUANCÉ (origine : import Google — voir tags.js DOG_FRIENDLY) ─
     // À l'import : on NE déduit PAS un état ferme (Google peu fiable + champs
-    // editorial_summary/reviews bannis). Défaut 'na' = « à confirmer » ; un
-    // membre fiabilisera ensuite. La fiabilité vient de l'humain.
-    // NB : le vrai système 3 états vert/ambre/gris + UI dédiée = chantier B5
-    // (touche le HTML du formulaire + le champ BDD). Ici on reste sur l'UI
-    // actuelle (yes/na/no), en posant 'na' par défaut.
+    // editorial_summary/reviews bannis). Défaut 'inconnu' = « à confirmer » ;
+    // un membre fiabilisera ensuite en oui/conditions/non. La fiabilité vient
+    // de l'humain. Seul signal fort lu ici : une mention restrictive dans le nom.
+    // setDog(..., true) marque dog_source='google' (posé par l'import).
     const nomDog=(p.name||'').toLowerCase();
-    let autoDog='na';      // défaut : « à confirmer »
+    let autoDog='inconnu';      // défaut : « à confirmer »
     let finalDogInfo='';
     if(/(chien|dog|animaux)\s?(interdit|non admis|non autoris)/.test(nomDog)){
-      autoDog='no';
-      finalDogInfo='⚠️ Mention dans le nom — à vérifier sur place';
+      autoDog='non';
+      finalDogInfo='⚠️ Mention restrictive dans le nom — à vérifier sur place';
     }
-    setDog(autoDog);
+    setDog(autoDog, true);
     if(finalDogInfo && !document.getElementById('dogInfo').value){
       fillField('dogInfo', finalDogInfo);
     }
     // Badge dans le résumé import
     const badgesEl=document.getElementById('ir-badges');
     if(badgesEl){
-      if(autoDog==='no') badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Chien : mention restrictive</span>`;
+      if(autoDog==='non') badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(204,68,0,.1);color:#cc4400;">🚫 Chien : mention restrictive</span>`;
       else badgesEl.innerHTML+=`<span class="ir-badge" style="background:rgba(120,120,120,.12);color:#5F5E5A;">⚪ Chien : à confirmer</span>`;
     }
 
@@ -1406,12 +1407,15 @@ function setFamilyStar(v){
 }
 
 // ── DOG ───────────────────────────────────────────────────────────────────────
-function setDog(v){
+function setDog(v, fromImport){
   dogVal=v;
-  document.getElementById('dogFriendly').value=v==='yes'?'true':'false';
-  ['yes','na','no'].forEach(x=>{
+  // Origine de l'info : 'google' si posé par l'import auto, 'membre' si l'humain clique
+  dogSource = fromImport ? 'google' : 'membre';
+  // Filet de sécurité : on garde aussi l'ancien booléen cohérent
+  document.getElementById('dogFriendly').value = v==='oui'?'true' : v==='non'?'false' : '';
+  ['oui','conditions','non','inconnu'].forEach(x=>{
     const el=document.getElementById('dog'+x.charAt(0).toUpperCase()+x.slice(1));
-    el.className='tog '+x+(x===v?' active':'');
+    if(el) el.className='tog '+x+(x===v?' active':'');
   });
   updatePreview();
 }
@@ -1466,12 +1470,12 @@ function updatePreview(){
   if(familyStarVal){nfEl.style.display='block';nfEl.querySelector('span').textContent='★'.repeat(familyStarVal);}
   else nfEl.style.display='none';
 
-  // Dog
-  const dogMap={yes:'🐕 Chien accepté',na:'❓ À vérifier',no:'🚫 Interdit'};
-  const dogColors={yes:'#edf7ed',na:'#fffbe8',no:'#ffe8e0'};
-  const dogTxt={yes:'#2C5016',na:'#8B6914',no:'#cc4400'};
+  // Dog (4 états)
+  const dogMap={oui:'🐕 Chien accepté',conditions:'🟠 Sous conditions',non:'🚫 Interdit',inconnu:'❓ À vérifier'};
+  const dogColors={oui:'#edf7ed',conditions:'rgba(186,117,23,.12)',non:'#ffe8e0',inconnu:'rgba(120,120,120,.1)'};
+  const dogTxt={oui:'#2C5016',conditions:'#854F0B',non:'#cc4400',inconnu:'#5F5E5A'};
   const d=document.getElementById('pcDog');
-  d.textContent=dogMap[dogVal];d.style.background=dogColors[dogVal];d.style.color=dogTxt[dogVal];
+  d.textContent=dogMap[dogVal]||dogMap.inconnu;d.style.background=dogColors[dogVal]||dogColors.inconnu;d.style.color=dogTxt[dogVal]||dogTxt.inconnu;
 
   // Tags
   const tagsEl=document.getElementById('pcTags');
@@ -1518,7 +1522,9 @@ async function saveFiche(){
       commentaire:document.getElementById('commentaire').value||null,
       conseil:document.getElementById('conseil').value||null,
       badge_text:document.getElementById('badge').value||null,
-      dog_friendly:dv==='yes'?true:dv==='no'?false:null,
+      dog_etat:dv,
+      dog_source:dogSource,
+      dog_friendly:dv==='oui'?true:dv==='non'?false:null,
       dog_info:document.getElementById('dogInfo').value||null,
       note:parseFloat(document.getElementById('noteGoogle').value)||null,
       note_famille:familyStarVal||null,

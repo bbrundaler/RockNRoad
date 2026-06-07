@@ -83,12 +83,14 @@
 .site-desc{font-size:11.5px;color:var(--muted);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .dog-tag{display:inline-flex;align-items:center;gap:3px;background:#edf7ed;color:#2C5016;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
-.dog-photo-badge.yes{background:rgba(44,80,22,.82);color:#b8f0b0;}
-.dog-photo-badge.no{background:rgba(180,40,0,.82);color:#ffd0c0;}
-.dog-photo-badge.na{background:rgba(60,50,20,.75);color:#f5d98a;}
+.dog-photo-badge.yes,.dog-photo-badge.oui{background:rgba(44,80,22,.82);color:#b8f0b0;}
+.dog-photo-badge.no,.dog-photo-badge.non{background:rgba(180,40,0,.82);color:#ffd0c0;}
+.dog-photo-badge.na,.dog-photo-badge.inconnu{background:rgba(60,50,20,.75);color:#f5d98a;}
+.dog-photo-badge.conditions{background:rgba(186,117,23,.82);color:#ffe0a8;}
 .dog-info-box{font-size:10px;color:#2C5016;background:#f0faf0;border-left:2px solid #2C5016;padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
-.dog-info-box.no{color:#cc4400;background:#fff3ee;border-left-color:#cc4400;}
-.dog-info-box.na{color:#8B6914;background:#fffbe8;border-left-color:#C8A84B;}
+.dog-info-box.no,.dog-info-box.non{color:#cc4400;background:#fff3ee;border-left-color:#cc4400;}
+.dog-info-box.na,.dog-info-box.inconnu{color:#8B6914;background:#fffbe8;border-left-color:#C8A84B;}
+.dog-info-box.conditions{color:#854F0B;background:#fdf4e6;border-left-color:#BA7517;}
 .conseil-box{background:rgba(200,168,75,.06);border-left:2px solid rgba(200,168,75,.35);padding:5px 8px;font-size:10.5px;color:var(--muted);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
 .maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--text);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
@@ -144,9 +146,10 @@
 .nuit-amenity{font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:10px;
   background:rgba(200,168,75,.1);color:rgba(200,168,75,.85);border:1px solid rgba(200,168,75,.15);}
 .nuit-dog{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:10px;}
-.nuit-dog.yes{background:rgba(44,80,22,.4);color:#7dd87d;}
-.nuit-dog.no{background:rgba(180,40,0,.4);color:#f08070;}
-.nuit-dog.na{background:rgba(139,105,20,.3);color:#e5c96a;}
+.nuit-dog.yes,.nuit-dog.oui{background:rgba(44,80,22,.4);color:#7dd87d;}
+.nuit-dog.no,.nuit-dog.non{background:rgba(180,40,0,.4);color:#f08070;}
+.nuit-dog.na,.nuit-dog.inconnu{background:rgba(139,105,20,.3);color:#e5c96a;}
+.nuit-dog.conditions{background:rgba(186,117,23,.4);color:#f0c070;}
 .nuit-notes{font-size:10px;color:rgba(200,168,75,.6);font-style:italic;border-left:2px solid rgba(200,168,75,.2);
   padding-left:6px;margin-bottom:8px;line-height:1.4;}
 .nuit-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px solid rgba(200,168,75,.08);}
@@ -184,9 +187,10 @@
 .em-dog-row{display:flex;gap:6px;margin-top:2px;}
 .em-dog-btn{flex:1;padding:7px;border-radius:7px;border:1.5px solid #e8dece;background:white;
   font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
-.em-dog-btn.active-yes{background:#e8f4e8;border-color:#2C5016;color:#2C5016;}
-.em-dog-btn.active-no{background:#ffe8e0;border-color:#cc4400;color:#cc4400;}
-.em-dog-btn.active-na{background:#fffbe8;border-color:#C8A84B;color:#8B6914;}
+.em-dog-btn.active-oui{background:#e8f4e8;border-color:#2C5016;color:#2C5016;}
+.em-dog-btn.active-conditions{background:#fdf4e6;border-color:#BA7517;color:#854F0B;}
+.em-dog-btn.active-non{background:#ffe8e0;border-color:#cc4400;color:#cc4400;}
+.em-dog-btn.active-inconnu{background:#fffbe8;border-color:#C8A84B;color:#8B6914;}
 .em-footer{padding:16px 24px;border-top:1px solid #f0ece4;display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:white;}
 .em-btn-save{padding:10px 24px;background:#1a1208;color:#C8A84B;border:none;border-radius:8px;
   font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
@@ -482,9 +486,10 @@
         <div class="em-fg full">
           <label class="em-label">Dog Friendly</label>
           <div class="em-dog-row">
-            <button class="em-dog-btn" id="em-dog-yes" onclick="setEmDog('yes')">🐕 Oui</button>
-            <button class="em-dog-btn" id="em-dog-no" onclick="setEmDog('no')">🚫 Non</button>
-            <button class="em-dog-btn" id="em-dog-na" onclick="setEmDog('na')">❓ À vérifier</button>
+            <button class="em-dog-btn" id="em-dog-oui" onclick="setEmDog('oui')">🐕 Oui</button>
+            <button class="em-dog-btn" id="em-dog-conditions" onclick="setEmDog('conditions')">🟠 Conditions</button>
+            <button class="em-dog-btn" id="em-dog-non" onclick="setEmDog('non')">🚫 Non</button>
+            <button class="em-dog-btn" id="em-dog-inconnu" onclick="setEmDog('inconnu')">❓ À vérifier</button>
           </div>
         </div>
         <div class="em-fg full">
@@ -964,6 +969,17 @@ function resolveRegionTab(rk){
   return null; // région sans section dédiée → createDynamicTab
 }
 let allLieux = []; // cache global
+
+// ── DOG-FRIENDLY : source unique de vérité (lit dog_etat, fallback dog_friendly) ──
+// 4 états : oui / conditions / non / inconnu. Les fiches pas encore migrées
+// n'ont que l'ancien booléen dog_friendly → on le traduit.
+function dogEtatDe(l){
+  if(l.dog_etat) return l.dog_etat;                 // nouvelle colonne prioritaire
+  if(l.dog_friendly===true) return 'oui';            // fallback ancien booléen
+  if(l.dog_friendly===false) return 'non';
+  return 'inconnu';
+}
+const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🟠 Sous conditions',non:'🚫 Non admis',inconnu:'❓ À vérifier'};
 // Votes stockés en localStorage : {lieu_id: {love:bool, top:bool, save:bool}}
 let votesData = JSON.parse(localStorage.getItem('rnr_votes') || '{}');
 let activeVoteFilter = null; // null=tous, 'love', 'top', 'save'
@@ -1310,7 +1326,8 @@ function buildRecapView(rk, regionName, lieux){
       const col=typeColor(l.type);
       const noteG=l.note?`<span class="recap-note">★ ${l.note}</span>`:'';
       const noteF=l.note_famille?`<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(200,168,75,.15);color:#8B6914;">${'★'.repeat(l.note_famille)}</span>`:'';
-      const dog=l.dog_friendly===true?'<span style="font-size:9px;background:#e8f4e8;color:#2C5016;padding:1px 6px;border-radius:8px;font-weight:700;">🐕 OK</span>':'';
+      const _de=dogEtatDe(l);const _c={oui:'#e8f4e8|#2C5016',conditions:'#fdf4e6|#854F0B',non:'#ffe8e0|#cc4400',inconnu:'#fffbe8|#8B6914'}[_de].split('|');
+      const dog=`<span style="font-size:9px;background:${_c[0]};color:${_c[1]};padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[_de]}</span>`;
       html+=`<div class="recap-row" onclick="highlightOnMap('${rk}','${l.id}')">
         <div class="recap-marker" style="background:${col}22;border:1.5px solid ${col};">
           <span style="font-size:10px;">${typeEmoji(l.type)}</span>
@@ -1356,7 +1373,7 @@ function initRegionMap(rk){
       <span style="font-size:10px;color:#888;">${l.type||'Lieu'} ${l.sous_region?'· '+l.sous_region:''}</span><br>
       ${l.note?`<span style="font-size:10px;color:#2C5016;font-weight:700;">★ ${l.note}</span> `:'' }
       ${noteF?`<span style="font-size:10px;color:#8B6914;font-weight:700;">${noteF}</span>`:''}
-      ${l.dog_friendly===true?'<br><span style="font-size:10px;background:#e8f4e8;color:#2C5016;padding:1px 6px;border-radius:8px;font-weight:700;">🐕 Chien OK</span>':''}
+      <br><span style="font-size:10px;background:#f0ece4;color:#444;padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
       <br><a href="${l.lat&&l.lng?'https://www.google.com/maps?q='+l.lat+','+l.lng:'https://maps.google.com/?q='+encodeURIComponent(l.nom||'')}" target="_blank" style="font-size:10px;color:#C8A84B;font-weight:700;text-decoration:none;">📍 Google Maps →</a>
     </div>`;
     const marker=L.marker([l.lat,l.lng],{icon:coloredIcon(col)}).addTo(map).bindPopup(popup);
@@ -1413,12 +1430,10 @@ function updateCarteInfoPanel(l){
     </div>`;
   }
 
-  // Dog badge
-  const dogHtml=l.dog_friendly===true
-    ?'<div class="cip-dog-badge cip-dog-yes">🐕 Chien OK</div>'
-    :l.dog_friendly===false
-    ?'<div class="cip-dog-badge cip-dog-no">🚫 Chien non admis</div>'
-    :'<div class="cip-dog-badge" style="background:#fffbe8;color:#8B6914;">❓ Chien à vérifier</div>';
+  // Dog badge (4 états via helper)
+  const _de=dogEtatDe(l);
+  const _dogStyles={oui:'background:#e8f4e8;color:#1e4010;',conditions:'background:#fdf4e6;color:#854F0B;',non:'background:#ffe8e0;color:#aa3300;',inconnu:'background:#fffbe8;color:#8B6914;'};
+  const dogHtml=`<div class="cip-dog-badge" style="${_dogStyles[_de]}">${DOG_LABELS[_de]}</div>`;
 
   // Note étoiles
   const noteG=l.note?`<div class="cip-stat"><div class="cip-stat-val">★${l.note}</div><div class="cip-stat-lbl">GOOGLE</div></div>`:'';
@@ -1471,7 +1486,7 @@ function initCarteGlobal(){
       <span style="font-size:10px;color:#888;">${l.type||'Lieu'} · ${l.region||''}</span><br>
       ${l.note?`<span style="font-size:10px;color:#2C5016;font-weight:700;">★ ${l.note}</span> `:''}
       ${noteF?`<span style="font-size:10px;color:#8B6914;font-weight:700;">${noteF}🐾</span>`:''}
-      ${l.dog_friendly===true?'<br><span style="font-size:10px;background:#e8f4e8;color:#2C5016;padding:1px 6px;border-radius:8px;font-weight:700;">🐕 OK</span>':''}
+      <br><span style="font-size:10px;background:#f0ece4;color:#444;padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
       <br><a href="https://www.google.com/maps?q=${l.lat},${l.lng}" target="_blank" style="font-size:10px;color:#C8A84B;font-weight:700;text-decoration:none;">📍 Maps →</a>
       <button onclick="showTab('${ALL_SUPABASE_REGIONS.includes(rk)?rk:'dyn-'+rk}')" style="font-size:9px;background:var(--dark);color:var(--gold);border:none;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:4px;">Voir fiche</button>
     </div>`;
@@ -1544,7 +1559,7 @@ function initFicheGlobal(){
       <span style="font-size:9px;color:#888;">${l.type||''} ${l.sous_region?'· '+l.sous_region:''}</span><br>
       ${l.note?`<span style="font-size:10px;font-weight:700;color:#2C5016;">★ ${l.note}</span> `:''}
       ${l.note_famille?`<span style="font-size:10px;font-weight:700;color:#8B6914;">${'★'.repeat(l.note_famille)} 🐾</span>`:''}
-      ${l.dog_friendly===true?'<br><span style="font-size:9px;background:#e8f4e8;color:#2C5016;border-radius:6px;padding:1px 5px;font-weight:700;">🐕 OK</span>':''}
+      <br><span style="font-size:9px;background:#f0ece4;color:#444;border-radius:6px;padding:1px 5px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
     </div>`;
     const marker=L.marker([l.lat,l.lng],{icon:coloredIcon(col)}).addTo(ficheGlobalMap).bindPopup(popup);
     if(!ficheGlobalMarkersByRegion[rk]) ficheGlobalMarkersByRegion[rk]=[];
@@ -1624,8 +1639,9 @@ function buildFicheContent(region){
       html+=`<div style="background:white;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
         <div style="background:${col};padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">🗺 ${sites.length} lieu${sites.length>1?'x':''}</div>`;
       sites.forEach((l,i)=>{
-        const dog=l.dog_friendly===true?'🐕 OK':l.dog_friendly===false?'🚫':'❓';
-        const dogStyle=l.dog_friendly===true?'background:#e8f4e8;color:#2C5016':l.dog_friendly===false?'background:#ffe8e0;color:#cc4400':'background:#fffbe8;color:#8B6914';
+        const _de=dogEtatDe(l);
+        const dog=DOG_LABELS[_de];
+        const dogStyle={oui:'background:#e8f4e8;color:#2C5016',conditions:'background:#fdf4e6;color:#854F0B',non:'background:#ffe8e0;color:#cc4400',inconnu:'background:#fffbe8;color:#8B6914'}[_de];
         html+=`<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 14px;border-bottom:1px solid #f0ece4;">
           <div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">${i+1}</div>
           <div style="flex:1;">
@@ -1725,10 +1741,10 @@ function createDynamicTab(tabId, regionName, lieux, appMain){
 
 function makeDynCard(l, cardType){
   const ph=l.photo_url?`url('${l.photo_url}')`:'linear-gradient(135deg,#88888844,#88888822)';
-  const dogStatus=l.dog_friendly===true?'yes':l.dog_friendly===false?'no':(l.dog_friendly===null||l.dog_friendly===undefined)?null:'na';
-  const dogLabel=dogStatus==='yes'?'🐕 Dog Friendly':dogStatus==='no'?'🚫 Non admis':dogStatus==='na'?'❓ À vérifier':null;
+  const dogStatus=dogEtatDe(l);
+  const dogLabel=DOG_LABELS[dogStatus];
   const dogPhotoBadge=dogLabel?`<div class="dog-photo-badge ${dogStatus}">${dogLabel}</div>`:'';
-  const dogInfoHtml=l.dog_info?`<div class="dog-info-box ${dogStatus||'na'}">🐾 ${l.dog_info.slice(0,120)}</div>`:'';
+  const dogInfoHtml=l.dog_info?`<div class="dog-info-box ${dogStatus}">🐾 ${l.dog_info.slice(0,120)}</div>`:'';
   const noteG=l.note?`<span style="background:#2C5016;color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;">★ ${l.note}</span>`:'';
   const noteF=l.note_famille?`<span style="background:rgba(200,168,75,.15);color:#8B6914;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;">${'★'.repeat(l.note_famille)} 🐾</span>`:'';
   const tags=l.tags&&l.tags.length?l.tags.slice(0,3).map(t=>`<span style="font-size:9px;background:rgba(200,168,75,.1);color:#8B6914;padding:1px 6px;border-radius:10px;">${t}</span>`).join(''):'';
@@ -1790,8 +1806,8 @@ function makeDynCard(l, cardType){
 
 function makeNuitCard(l){
   const ph = l.photo_url ? `url('${l.photo_url}')` : 'linear-gradient(135deg,#2a2318,#1a1510)';
-  const dogStatus = l.dog_friendly===true?'yes':l.dog_friendly===false?'no':'na';
-  const dogLabel  = dogStatus==='yes'?'🐕 Chien OK':dogStatus==='no'?'🚫 Non admis':'❓ À vérifier';
+  const dogStatus = dogEtatDe(l);
+  const dogLabel  = DOG_LABELS[dogStatus];
   const mapsUrl   = l.lat&&l.lng?`https://www.google.com/maps?q=${l.lat},${l.lng}`:`https://maps.google.com/?q=${encodeURIComponent(l.nom||'')}`;
 
   // Sous-type nuit
@@ -1868,7 +1884,8 @@ function addDynRegionTopbar(regionName, regionKey){
 
 // ── MODAL ÉDITION RAPIDE depuis carnet.html ───────────────────────────
 let editingLieuId = null;
-let emDogVal = 'na';
+let emDogVal = 'inconnu';
+let emDogSource = 'google';
 let emStarVal = 0;
 
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
@@ -1975,7 +1992,8 @@ function openEditModal(id){
   updateEmStars();
 
   // Dog
-  emDogVal = l.dog_friendly === true ? 'yes' : l.dog_friendly === false ? 'no' : 'na';
+  emDogVal = dogEtatDe(l);
+  emDogSource = l.dog_source || 'google';
   updateEmDog();
 
   document.getElementById('edit-overlay').classList.add('open');
@@ -1990,10 +2008,11 @@ function closeEditModal(){
 
 function setEmDog(val){
   emDogVal = val;
+  emDogSource = 'membre';   // l'humain a tranché → info fiabilisée
   updateEmDog();
 }
 function updateEmDog(){
-  ['yes','no','na'].forEach(v => {
+  ['oui','conditions','non','inconnu'].forEach(v => {
     const btn = document.getElementById('em-dog-'+v);
     if(btn) btn.className = 'em-dog-btn' + (emDogVal===v ? ' active-'+v : '');
   });
@@ -2027,7 +2046,9 @@ async function saveFromModal(){
       tel: document.getElementById('em-tel').value || null,
       dog_info: document.getElementById('em-dog-info').value || null,
       note_famille: emStarVal || null,
-      dog_friendly: emDogVal==='yes' ? true : emDogVal==='no' ? false : null,
+      dog_etat: emDogVal,
+      dog_source: emDogSource,
+      dog_friendly: emDogVal==='oui' ? true : emDogVal==='non' ? false : null,
       // La première URL = photo principale, les suivantes = photos secondaires
       ...(()=>{
         const urls = document.getElementById('em-photos').value
