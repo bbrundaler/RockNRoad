@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════════
-   RockNRoad — RÉFÉRENTIEL DE CONTENU  ·  tags.js
+   RockNRoad — RÉFÉRENTIEL DE CONTENU  ·  tags.js  ·  v2 (07/06/2026)
    ════════════════════════════════════════════════════════════════════════
    Le « tokens.css du contenu ». UN SEUL endroit déclare tout le vocabulaire
    des fiches. Toutes les pages lisent ce fichier. Pour ajouter / renommer /
@@ -11,8 +11,20 @@
    - ouvert mais structuré : on enrichit en ajoutant une ligne dans la bonne
      famille ; pas de saisie libre anarchique, pas de doublons.
 
-   Source : décisions Master v6.2 (anatomie de la fiche 2.1, décision 01/06 :
-   5 familles-mères + ~10 sous-univers ; règle transverse Jour/Nuit).
+   ── PHILOSOPHIE v2 (session 07/06, voir RockNRoad_Fiche_Standard_v1) ──
+   Vocabulaire ADOSSÉ AU RÉEL GOOGLE pour automatiser au maximum :
+   - l'AMBIANCE (familles, sous-distinctions) est MAISON — Google ne l'a pas,
+     c'est notre valeur ajoutée ;
+   - la classification AUTO se fait via les vrais `types` Google (Places API),
+     regroupés en paquets sous chaque sous-distinction ;
+   - une TABLE DE CORRESPONDANCE (type Google → famille + sous-distinction)
+     range chaque lieu importé automatiquement.
+
+   Aligné PALIER PRO 17 $ : aucune règle ne dépend de reviews / price_level
+   (jamais pris) ni de editorial_summary (hors standard). 0 coût ajouté.
+
+   Étage 2 (tags perso par groupe) = chantier BDD futur : un crochet est
+   réservé plus bas (api.fusionnerTagsGroupe) mais non implémenté.
 
    Inclusion : <script src="tags.js"></script>  (avant les pages qui l'utilisent)
    Accès :     window.RNR_TAGS  (objet global en lecture seule)
@@ -20,42 +32,86 @@
 (function(){
 
   /* ───────────────────────────────────────────────────────────────────
-     1) FAMILLES-MÈRES  (Master 01/06 — les 5 grandes ambiances)
-     Pour AJOUTER une famille : ajouter une entrée ici. C'est tout.
+     1) FAMILLES-MÈRES  (6 — les grandes ambiances, miroir des catégories
+        Google mais nommées par le RESSENTI)
      'jourNuit' = orientation par défaut (peut être surchargée par le type).
+     Pour AJOUTER une famille : une entrée ici. C'est tout.
      ─────────────────────────────────────────────────────────────────── */
   const FAMILLES = {
-    visiter:    { libelle:'Visiter',      emoji:'🏛️', jourNuit:'jour' },
-    nature:     { libelle:'Nature',       emoji:'🌿', jourNuit:'jour' },
-    nuit:       { libelle:'Nuit · Dormir',emoji:'🌙', jourNuit:'nuit' },
-    pause:      { libelle:'Pause',        emoji:'☕', jourNuit:'jour' },
-    activite:   { libelle:'Activité',     emoji:'🥾', jourNuit:'jour' }
+    visiter:  { libelle:'Visiter',       emoji:'🏛️', jourNuit:'jour', ordre:1 },
+    nature:   { libelle:'Nature',        emoji:'🌿', jourNuit:'jour', ordre:2 },
+    nuit:     { libelle:'Nuit · Dormir', emoji:'🌙', jourNuit:'nuit', ordre:3 },
+    pause:    { libelle:'Pause',         emoji:'☕', jourNuit:'jour', ordre:4 },
+    activite: { libelle:'Activité',      emoji:'🥾', jourNuit:'jour', ordre:5 },
+    loisirs:  { libelle:'Loisirs',       emoji:'🎡', jourNuit:'jour', ordre:6 }
   };
 
   /* ───────────────────────────────────────────────────────────────────
-     2) SOUS-UNIVERS  (Master 01/06 — ~9-10, rattachés à une famille-mère)
-     Chaque sous-univers pointe sa famille par sa clé.
-     Pour AJOUTER : une ligne, avec la bonne 'famille'.
+     2) SOUS-DISTINCTIONS  (15 — la finesse DANS une famille)
+     Chaque sous-distinction :
+       - famille     : clé de la famille-mère
+       - libelle     : affiché
+       - emoji       : pour la grille
+       - googleTypes : PAQUET de types Google (Places API) qui la déclenchent
+                       AUTOMATIQUEMENT à l'import. C'est le cœur de l'auto-
+                       classement. Ouvert : on ajoute un type à la liste.
+
+     ⚠ Types marqués « à confirmer » : leur présence exacte en Table A/B de
+       l'API varie. À vérifier au branchement réel (B4-b, test en ligne).
+       Ne pas considérer cette liste comme gravée tant que non testée.
+       Concernés : castle, hot_spring, ferris_wheel, farm, market, arena.
+
+     ⚠ winery est rattaché à 'terroir' (Activité) qui PRIME pour l'ambiance
+       (esprit RockNRoad = l'expérience, pas juste boire).
      ─────────────────────────────────────────────────────────────────── */
-  const SOUS_UNIVERS = {
-    patrimoine: { libelle:'Patrimoine',  emoji:'🏰', famille:'visiter' },
-    musee:      { libelle:'Musée',       emoji:'🖼️', famille:'visiter' },
-    paysage:    { libelle:'Paysage',     emoji:'🏞️', famille:'nature'  },
-    balade:     { libelle:'Balade',      emoji:'🚶', famille:'nature'  },
-    table:      { libelle:'Table',       emoji:'🍽️', famille:'pause'   },
-    bar:        { libelle:'Bar',         emoji:'🍷', famille:'pause'   },
-    bienetre:   { libelle:'Bien-être',   emoji:'💆', famille:'pause'   },
-    camping:    { libelle:'Camping',     emoji:'⛺', famille:'nuit'    },
-    gite:       { libelle:'Gîte',        emoji:'🏡', famille:'nuit'    },
-    terroir:    { libelle:'Terroir',     emoji:'🧺', famille:'activite'}
+  const SOUS_DISTINCTIONS = {
+    // ── Visiter ──
+    patrimoine: { famille:'visiter', libelle:'Patrimoine', emoji:'🏰',
+      googleTypes:['castle','historical_landmark','historical_place','monument','cultural_landmark','church','place_of_worship'] },
+    musee:      { famille:'visiter', libelle:'Musée & art', emoji:'🖼️',
+      googleTypes:['museum','art_gallery','tourist_attraction'] },
+
+    // ── Nature ──
+    paysage:    { famille:'nature', libelle:'Paysage', emoji:'🏞️',
+      googleTypes:['natural_feature','national_park','state_park','park'] },
+    balade:     { famille:'nature', libelle:'Balade', emoji:'🚶',
+      googleTypes:['hiking_area','garden','botanical_garden'] },
+    baignade:   { famille:'nature', libelle:'Baignade', emoji:'🏊',
+      googleTypes:['beach'] },
+
+    // ── Nuit · Dormir ──
+    camping:    { famille:'nuit', libelle:'Camping', emoji:'⛺',
+      googleTypes:['campground','camping_cabin','rv_park'] },
+    hotel:      { famille:'nuit', libelle:'Hôtel & gîte', emoji:'🏨',
+      googleTypes:['lodging','hotel','motel','guest_house','bed_and_breakfast','cottage','farmstay'] },
+
+    // ── Pause ──
+    table:      { famille:'pause', libelle:'Table', emoji:'🍽️',
+      googleTypes:['restaurant','meal_takeaway'] },
+    cafebar:    { famille:'pause', libelle:'Café & bar', emoji:'🍷',
+      googleTypes:['cafe','coffee_shop','bakery','bar','pub','ice_cream_shop'] },
+    bienetre:   { famille:'pause', libelle:'Bien-être', emoji:'💆',
+      googleTypes:['spa','wellness_center','sauna','hot_spring','massage'] },
+
+    // ── Activité ──
+    sport:      { famille:'activite', libelle:'Sport & aventure', emoji:'🧗',
+      googleTypes:['adventure_sports_center','sports_complex','ski_resort','marina'] },
+    terroir:    { famille:'activite', libelle:'Terroir', emoji:'🧺',
+      googleTypes:['winery','farm','market'] },
+
+    // ── Loisirs ──
+    parcs:      { famille:'loisirs', libelle:'Parcs & attractions', emoji:'🎡',
+      googleTypes:['amusement_park','water_park','ferris_wheel'] },
+    animaux:    { famille:'loisirs', libelle:'Animaux', emoji:'🦁',
+      googleTypes:['zoo','aquarium','wildlife_park'] },
+    spectacle:  { famille:'loisirs', libelle:'Spectacle', emoji:'🎭',
+      googleTypes:['stadium','arena'] }
   };
 
   /* ───────────────────────────────────────────────────────────────────
      3) TYPES  (les 6 types CONCRETS du formulaire de création actuel)
-     Ce que l'utilisateur choisit en 1 clic. Chaque type est rattaché à
-     une famille-mère + une orientation Jour/Nuit par défaut.
-     C'est le pont entre le formulaire existant (admin.html) et les familles.
-     Pour AJOUTER un type : une ligne.
+     Ce que l'utilisateur choisit en 1 clic. CLÉS INCHANGÉES depuis v1
+     pour ne pas casser le pont avec admin.html. Axe FACTUEL (filtrage fin).
      ─────────────────────────────────────────────────────────────────── */
   const TYPES = {
     Site:       { libelle:'Site à visiter',   emoji:'🏛️', famille:'visiter',  jourNuit:'jour' },
@@ -67,83 +123,158 @@
   };
 
   /* ───────────────────────────────────────────────────────────────────
-     4) JOUR / NUIT  (règle transverse Master — visible à tous les niveaux)
+     4) JOUR / NUIT  (règle transverse — visible à tous les niveaux)
      ─────────────────────────────────────────────────────────────────── */
   const JOUR_NUIT = {
-    jour: { libelle:'Jour',  emoji:'☀️' },
-    nuit: { libelle:'Nuit',  emoji:'🌙' }
+    jour: { libelle:'Jour', emoji:'☀️' },
+    nuit: { libelle:'Nuit', emoji:'🌙' }
   };
 
   /* ───────────────────────────────────────────────────────────────────
-     5a) TAGS AUTO  (alimentables AUTOMATIQUEMENT à l'import Google — 0 coût)
+     5a) TAGS AUTO  (déduits AUTOMATIQUEMENT à l'import — 0 coût, palier 17 $)
      ═══════════════════════════════════════════════════════════════════
-     Décision Bruno 06/06 : 100% des fiches arrivent par une partie automatique
-     (copier-coller Google Maps) qui pose une fiche de base standard. Ces tags
-     se déduisent de ce que Google renvoie DÉJÀ (types, nom, editorial_summary)
-     → leur capture ne coûte RIEN de plus. On en met le MAXIMUM.
-
-     IMPORTANT : les CLÉS reprennent EXACTEMENT celles du formulaire admin.html
-     actuel, pour ne pas casser le système d'auto-tags existant.
-
-     Chaque tag porte :
-       - libelle : affiché
-       - emoji   : pour la grille
-       - auto    : règles de détection Google (centralisées ICI, plus en dur
-                   dans admin.html) :
-                   · googleTypes : types Google qui déclenchent le tag
-                   · motsCles    : mots du nom/description qui déclenchent le tag
-     Pour AJOUTER un tag auto : une ligne + ses règles. Pour DÉSACTIVER une
-     règle (ex. trop cher) : vider auto, le tag reste choisissable à la main.
+     Règles de détection centralisées ICI (plus en dur dans admin.html) :
+       · googleTypes : types Google qui déclenchent le tag
+       · motsCles    : mots du NOM qui déclenchent le tag
+     ALIGNÉ 17 $ : aucune règle ne lit editorial_summary ni price_level.
+     (Le tag 'gratuit' de v1, basé sur price_level, est RETIRÉ — champ banni.)
+     Pour DÉSACTIVER une règle : vider 'auto', le tag reste choisissable à la main.
      ─────────────────────────────────────────────────────────────────── */
   const TAGS_AUTO = {
-    nature:     { libelle:'Nature',         emoji:'🌿', auto:{ googleTypes:['natural_feature','park','hiking_area','route'], motsCles:['cascade','lac ','foret','forêt','rocher','falaise','grotte'] } },
-    randonnee:  { libelle:'Rando',          emoji:'🥾', auto:{ googleTypes:['natural_feature','park','hiking_area','route'], motsCles:['colorado','rocher','falaise','grotte'] } },
-    baignade:   { libelle:'Baignade',       emoji:'🏊', auto:{ googleTypes:['beach','lake'], motsCles:['cascade','lac '] } },
-    historique: { libelle:'Historique',     emoji:'🏰', auto:{ googleTypes:['museum','historical_landmark','church','place_of_worship'], motsCles:['chateau','château','fort'] } },
-    vue:        { libelle:'Belle vue',      emoji:'🏔️', auto:{ googleTypes:[], motsCles:['chateau','château','fort','rocher','falaise','grotte'] } },
-    velo:       { libelle:'Vélo',           emoji:'🚴', auto:{ googleTypes:[], motsCles:['velo','vélo','canal'] } },
-    ombre:      { libelle:'Ombre',          emoji:'🌳', auto:{ googleTypes:[], motsCles:['foret','forêt'] } },
-    teardrop:   { libelle:'Teardrop OK',    emoji:'🚐', auto:{ googleTypes:['campground','campsite','rv_park'], motsCles:[] } },
-    enfants:    { libelle:'Enfants',        emoji:'👧', auto:{ googleTypes:['tourist_attraction','amusement_park'], motsCles:[] } },
-    gratuit:    { libelle:'Gratuit',        emoji:'🆓', auto:{ googleTypes:[], motsCles:['gratuit','libre'], priceLevelZero:true } },
-    unesco:     { libelle:'UNESCO',         emoji:'🌍', auto:{ googleTypes:[], motsCles:['unesco','patrimoine mondial'] } }
+    nature:     { libelle:'Nature',     emoji:'🌿', auto:{ googleTypes:['natural_feature','park','national_park','state_park','hiking_area'], motsCles:['cascade','lac','foret','forêt','rocher','falaise','grotte'] } },
+    randonnee:  { libelle:'Rando',      emoji:'🥾', auto:{ googleTypes:['hiking_area','adventure_sports_center'], motsCles:['sentier','rocher','falaise','grotte','col'] } },
+    baignade:   { libelle:'Baignade',   emoji:'🏊', auto:{ googleTypes:['beach','water_park'], motsCles:['plage','lac','baignade'] } },
+    historique: { libelle:'Historique', emoji:'🏰', auto:{ googleTypes:['museum','historical_landmark','historical_place','monument','church','place_of_worship','castle'], motsCles:['chateau','château','fort','abbaye','ruines'] } },
+    vue:        { libelle:'Belle vue',  emoji:'🏔️', auto:{ googleTypes:[], motsCles:['chateau','château','fort','rocher','falaise','grotte','panorama','belvedere','belvédère','sommet'] } },
+    enfants:    { libelle:'Enfants',    emoji:'👧', auto:{ googleTypes:['amusement_park','water_park','zoo','aquarium','wildlife_park'], motsCles:[] } },
+    teardrop:   { libelle:'Camping-car',emoji:'🚐', auto:{ googleTypes:['campground','rv_park','camping_cabin'], motsCles:[] } },
+    terroir:    { libelle:'Terroir',    emoji:'🧺', auto:{ googleTypes:['winery','farm','market'], motsCles:['vignoble','domaine','ferme','marché'] } }
   };
 
   /* ───────────────────────────────────────────────────────────────────
-     5b) TAGS COMPLÉMENT  (ajoutés par l'HUMAIN — sensibilité du groupe)
+     5b) TAGS COMPLÉMENT  (ajoutés par l'HUMAIN — Google ne les devine pas)
      ═══════════════════════════════════════════════════════════════════
-     Google ne peut pas les deviner. C'est l'enrichissement après la fiche
-     de base. Palette OUVERTE mais structurée : on grossit ici, grandeur nature.
+     L'enrichissement après la fiche de base. Palette OUVERTE mais structurée.
      ─────────────────────────────────────────────────────────────────── */
   const TAGS_COMPLEMENT = {
-    calme:        { libelle:'Calme',        emoji:'😌' },
-    anime:        { libelle:'Animé',        emoji:'🎉' },
-    'chien-plage':{ libelle:'Chien plage OK',emoji:'🐕' },
-    piscine:      { libelle:'Piscine',      emoji:'🏊' },
-    electricite:  { libelle:'Électricité',  emoji:'⚡' }
+    calme:        { libelle:'Calme',         emoji:'😌' },
+    anime:        { libelle:'Animé',         emoji:'🎉' },
+    romantique:   { libelle:'Romantique',    emoji:'💕' },
+    'chien-ok':   { libelle:'Chien OK',      emoji:'🐕' },
+    piscine:      { libelle:'Piscine',       emoji:'🏊' },
+    electricite:  { libelle:'Électricité',   emoji:'⚡' }
   };
 
   /* ───────────────────────────────────────────────────────────────────
-     PETITS HELPERS (lecture seule, pour que les pages n'aient pas à
-     connaître la structure interne — elles demandent, le référentiel répond).
+     6) DOG FRIENDLY NUANCÉ  (solde le Point Ouvert fiche n°1)
+     ═══════════════════════════════════════════════════════════════════
+     Remplace le badge binaire (qui ment). 3 ÉTATS + ORIGINE de l'info.
+     À la création : état 'inconnu' (gris, « à confirmer ») ; un MEMBRE
+     fiabilise ensuite en vert/ambre. La fiabilité vient de l'humain.
+     ─────────────────────────────────────────────────────────────────── */
+  const DOG_FRIENDLY = {
+    etats: {
+      oui:     { libelle:'Bienvenus',       couleur:'vert',  emoji:'🟢' },
+      conditions:{ libelle:'Sous conditions', couleur:'ambre', emoji:'🟠' },
+      inconnu: { libelle:'À confirmer',     couleur:'gris',  emoji:'⚪' }
+    },
+    origines: {
+      google: { libelle:'importé Google' },
+      membre: { libelle:'vérifié par un membre' }
+    },
+    defaut: { etat:'inconnu', origine:'google' }
+  };
+
+  /* ───────────────────────────────────────────────────────────────────
+     7) GÉNÉRATEUR DE PHRASE MAISON  (remplace editorial_summary, 0 coût)
+     ═══════════════════════════════════════════════════════════════════
+     Gabarit à trous : jamais de champ vide. Plus générique que Google,
+     mais gratuit et sans dépendance. Le groupe peut réécrire ensuite.
+     N'utilise QUE des données du palier 17 $ (type, commune, département, note).
+     ─────────────────────────────────────────────────────────────────── */
+  function phraseMaison(infos){
+    if(!infos) return '';
+    const sd   = infos.sousDistinction && SOUS_DISTINCTIONS[infos.sousDistinction];
+    const fam  = infos.famille && FAMILLES[infos.famille];
+    // nom de catégorie le plus parlant disponible
+    const quoi = (sd && sd.libelle) || (fam && fam.libelle) || 'Lieu';
+    const lieu = infos.commune ? ('à '+infos.commune) : '';
+    const dep  = infos.departement ? ('dans '+infos.departement) : '';
+    const noteTxt = (typeof infos.note==='number' && infos.note>0)
+      ? (', noté '+infos.note.toFixed(1).replace('.',',')+' ★') : '';
+    // assemblage propre, sans double espace ni virgule orpheline
+    const corps = [quoi, lieu, dep].filter(Boolean).join(' ');
+    return (corps + noteTxt).replace(/\s+/g,' ').trim();
+  }
+
+  /* ───────────────────────────────────────────────────────────────────
+     HELPERS (lecture seule — les pages demandent, le référentiel répond)
      ─────────────────────────────────────────────────────────────────── */
   const api = {
-    FAMILLES, SOUS_UNIVERS, TYPES, JOUR_NUIT, TAGS_AUTO, TAGS_COMPLEMENT,
+    FAMILLES, SOUS_DISTINCTIONS, TYPES, JOUR_NUIT,
+    TAGS_AUTO, TAGS_COMPLEMENT, DOG_FRIENDLY,
 
-    // famille-mère d'un type (clé) -> objet famille (ou null)
+    // familles triées par 'ordre' -> [{cle, ...}]
+    famillesOrdonnees(){
+      return Object.entries(FAMILLES)
+        .map(([cle,v])=>Object.assign({cle},v))
+        .sort((a,b)=>(a.ordre||99)-(b.ordre||99));
+    },
+
+    // sous-distinctions d'une famille (clé) -> [{cle, ...}]
+    sousDistinctionsDeFamille(familleKey){
+      return Object.entries(SOUS_DISTINCTIONS)
+        .filter(([,v])=>v.famille===familleKey)
+        .map(([cle,v])=>Object.assign({cle},v));
+    },
+
+    // famille-mère d'un type de formulaire (clé) -> objet famille (ou null)
     familleDuType(typeKey){
       const t=TYPES[typeKey]; return t ? FAMILLES[t.famille]||null : null;
     },
+
     // orientation Jour/Nuit d'un type (clé) -> 'jour' | 'nuit'
     jourNuitDuType(typeKey){
       const t=TYPES[typeKey]; return t ? (t.jourNuit||(FAMILLES[t.famille]||{}).jourNuit||'jour') : 'jour';
     },
-    // liste des sous-univers d'une famille (clé) -> [{cle, ...}]
-    sousUniversDeFamille(familleKey){
-      return Object.entries(SOUS_UNIVERS)
-        .filter(([,v])=>v.famille===familleKey)
-        .map(([cle,v])=>Object.assign({cle},v));
+
+    // ══ CŒUR AUTO : classe un lieu depuis ses types Google ══
+    // Range le lieu dans une famille + sous-distinction via la table de
+    // correspondance. p.types = tableau des types Google de la fiche.
+    // 'tourist_attraction' est traité en DERNIER RECOURS (fourre-tout).
+    // -> { famille, sousDistinction } | null si rien ne matche
+    classerDepuisGoogle(types){
+      if(!Array.isArray(types) || !types.length) return null;
+      const set = new Set(types);
+      // 1er passage : on ignore le fourre-tout pour privilégier le précis
+      for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
+        if((sd.googleTypes||[]).some(gt=>gt!=='tourist_attraction' && set.has(gt)))
+          return { famille:sd.famille, sousDistinction:cle };
+      }
+      // 2e passage : dernier recours, on accepte tourist_attraction
+      for(const [cle,sd] of Object.entries(SOUS_DISTINCTIONS)){
+        if((sd.googleTypes||[]).some(gt=>set.has(gt)))
+          return { famille:sd.famille, sousDistinction:cle };
+      }
+      return null;
     },
+
+    // ══ AUTO-TAGS : tags à cocher depuis une réponse Google (aligné 17 $) ══
+    // p = place Google ; lit p.types et p.name UNIQUEMENT (pas de champ cher).
+    // -> tableau de clés de tags (sans doublon)
+    autoTagsDepuisGoogle(p){
+      if(!p) return [];
+      const found=new Set();
+      const types=p.types||[];
+      const nom=(p.name||'').toLowerCase();
+      for(const [cle,t] of Object.entries(TAGS_AUTO)){
+        const r=t.auto; if(!r) continue;
+        if((r.googleTypes||[]).some(gt=>types.includes(gt))) found.add(cle);
+        if((r.motsCles||[]).some(m=>nom.includes(m)))        found.add(cle);
+      }
+      return [...found];
+    },
+
     // tous les tags (auto + complément) à plat -> [{cle, libelle, emoji, source}]
     tousLesTags(){
       const out=[];
@@ -151,30 +282,26 @@
       for(const [k,v] of Object.entries(TAGS_COMPLEMENT)) out.push({cle:k,libelle:v.libelle,emoji:v.emoji,source:'complement'});
       return out;
     },
-    // libellé d'un tag (cherche dans auto puis complément) -> string|null
+
+    // libellé d'un tag (auto puis complément) -> string|null
     libelleTag(tagKey){
       if(TAGS_AUTO[tagKey])       return TAGS_AUTO[tagKey].libelle;
       if(TAGS_COMPLEMENT[tagKey]) return TAGS_COMPLEMENT[tagKey].libelle;
       return null;
     },
-    // ══ AUTO-TAGS : calcule les tags à cocher depuis une réponse Google ══
-    // Centralise la logique aujourd'hui en dur dans admin.html.
-    // p = objet place Google (avec p.types, p.name, p.editorial_summary, p.price_level)
-    // -> renvoie un tableau de clés de tags (sans doublon)
-    autoTagsDepuisGoogle(p){
-      if(!p) return [];
-      const found=new Set();
-      const types=p.types||[];
-      const nom=(p.name||'').toLowerCase();
-      const desc=(p.editorial_summary&&p.editorial_summary.overview||'').toLowerCase();
-      const texte=nom+' '+desc;
-      for(const [cle,t] of Object.entries(TAGS_AUTO)){
-        const r=t.auto; if(!r) continue;
-        if((r.googleTypes||[]).some(gt=>types.includes(gt))) found.add(cle);
-        if((r.motsCles||[]).some(m=>texte.includes(m)))      found.add(cle);
-        if(r.priceLevelZero && p.price_level===0)            found.add(cle);
-      }
-      return [...found];
+
+    // génère la phrase de description maison (voir §7)
+    phraseMaison,
+
+    // ── ÉTAGE 2 (tags perso par groupe) — CROCHET RÉSERVÉ, NON IMPLÉMENTÉ ──
+    // Quand l'étage 2 existera (table tags_groupe + plafond), cette fonction
+    // fusionnera le vocabulaire MAISON avec les tags PERSO d'un groupe.
+    // Pour l'instant : renvoie les tags maison seuls.
+    fusionnerTagsGroupe(tagsPersoGroupe){
+      const maison=this.tousLesTags();
+      if(!Array.isArray(tagsPersoGroupe)||!tagsPersoGroupe.length) return maison;
+      const perso=tagsPersoGroupe.map(t=>({cle:t.cle,libelle:t.libelle,emoji:t.emoji||'🏷️',source:'groupe'}));
+      return maison.concat(perso);
     }
   };
 
