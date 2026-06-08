@@ -191,6 +191,8 @@
 .em-dog-btn.active-conditions{background:#fdf4e6;border-color:#BA7517;color:#854F0B;}
 .em-dog-btn.active-non{background:#ffe8e0;border-color:#cc4400;color:#cc4400;}
 .em-dog-btn.active-inconnu{background:#fffbe8;border-color:#C8A84B;color:#8B6914;}
+.em-dog-check{background:#fff8e8;border:1px solid rgba(200,168,75,.3);color:#8B6914;font-size:9.5px;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.em-dog-check:hover{background:#fef0c0;}
 .em-footer{padding:16px 24px;border-top:1px solid #f0ece4;display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:white;}
 .em-btn-save{padding:10px 24px;background:#1a1208;color:#C8A84B;border:none;border-radius:8px;
   font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
@@ -495,6 +497,11 @@
         <div class="em-fg full">
           <label class="em-label">Info chien</label>
           <input class="em-input" id="em-dog-info" type="text" placeholder="Détails sur les conditions…">
+          <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:9.5px;color:#aaa;font-weight:600;">🔎 Vérifier :</span>
+            <button type="button" class="em-dog-check" onclick="openEmDogSearch('web')">🔍 Recherche web</button>
+            <button type="button" class="em-dog-check" onclick="openEmDogSearch('bringfido')">🐕 BringFido</button>
+          </div>
         </div>
       </div>
     </div>
@@ -979,7 +986,7 @@ function dogEtatDe(l){
   if(l.dog_friendly===false) return 'non';
   return 'inconnu';
 }
-const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🟠 Sous conditions',non:'🚫 Non admis',inconnu:'❓ À vérifier'};
+const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🐕 Chien sous conditions',non:'🚫 Chien non admis',inconnu:'❓ Chien à vérifier'};
 // Votes stockés en localStorage : {lieu_id: {love:bool, top:bool, save:bool}}
 let votesData = JSON.parse(localStorage.getItem('rnr_votes') || '{}');
 let activeVoteFilter = null; // null=tous, 'love', 'top', 'save'
@@ -2010,6 +2017,16 @@ function setEmDog(val){
   emDogVal = val;
   emDogSource = 'membre';   // l'humain a tranché → info fiabilisée
   updateEmDog();
+}
+// Recherche d'info chien depuis la modale (liens sortants, 0 risque).
+function openEmDogSearch(source){
+  const nom=(document.getElementById('em-nom').value||'').trim();
+  if(!nom){showToast('Nom du lieu manquant','error');return;}
+  const lieu=encodeURIComponent(nom);
+  const url = source==='bringfido'
+    ? `https://www.google.com/search?q=site:bringfido.com+${lieu}`
+    : `https://www.google.com/search?q=${lieu}+chien+admis+accept%C3%A9`;
+  window.open(url,'_blank','noopener');
 }
 function updateEmDog(){
   ['oui','conditions','non','inconnu'].forEach(v => {

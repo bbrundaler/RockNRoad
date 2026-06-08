@@ -99,6 +99,8 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
 .tog.active.conditions{border-color:#BA7517;background:rgba(186,117,23,.12);color:#854F0B;}
 .tog.active.non{border-color:#cc4400;background:#ffe8e0;color:#cc4400;}
 .tog.active.inconnu{border-color:#8a8a8a;background:rgba(120,120,120,.1);color:#5F5E5A;}
+.dog-check-btn{background:#fff8e8;border:1px solid rgba(200,168,75,.3);color:#8B6914;font-size:10px;font-weight:700;padding:5px 11px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.dog-check-btn:hover{background:#fef0c0;}
 /* GPS */
 .gps-row{display:flex;gap:8px;align-items:flex-end;}
 .gps-row .fg{flex:1;margin-bottom:0;}
@@ -431,6 +433,11 @@ input.auto-filled{background:#fffbe8;border-color:rgba(200,168,75,.4);}
     </div>
     <input type="hidden" id="dogFriendly" value="true">
     <div class="fg full" style="margin-top:10px;"><label>Info chien</label><input type="text" id="dogInfo" placeholder="Chiens acceptés en laisse partout..." autocomplete="off" value=""></div>
+    <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:10px;color:#aaa;font-weight:600;">🔎 Vérifier l'info chien :</span>
+      <button type="button" class="dog-check-btn" onclick="openDogSearch('web')">🔍 Recherche web</button>
+      <button type="button" class="dog-check-btn" onclick="openDogSearch('bringfido')">🐕 BringFido</button>
+    </div>
   </div>
 
   <!-- CONTACT -->
@@ -1407,6 +1414,18 @@ function setFamilyStar(v){
 }
 
 // ── DOG ───────────────────────────────────────────────────────────────────────
+// Ouvre une recherche d'info chien dans un nouvel onglet (liens sortants, 0 risque).
+// Pas de source "officielle" fiable en API → on aide l'humain à vérifier vite.
+function openDogSearch(source){
+  const nom=(document.getElementById('nom').value||'').trim();
+  if(!nom){showToast('Renseigne d\'abord le nom du lieu','error');return;}
+  const lieu=encodeURIComponent(nom);
+  let url;
+  if(source==='bringfido') url=`https://www.google.com/search?q=site:bringfido.com+${lieu}`;
+  else url=`https://www.google.com/search?q=${lieu}+chien+admis+accept%C3%A9`;
+  window.open(url,'_blank','noopener');
+}
+
 function setDog(v, fromImport){
   dogVal=v;
   // Origine de l'info : 'google' si posé par l'import auto, 'membre' si l'humain clique
@@ -1471,7 +1490,7 @@ function updatePreview(){
   else nfEl.style.display='none';
 
   // Dog (4 états)
-  const dogMap={oui:'🐕 Chien accepté',conditions:'🟠 Sous conditions',non:'🚫 Interdit',inconnu:'❓ À vérifier'};
+  const dogMap={oui:'🐕 Chien OK',conditions:'🐕 Chien sous conditions',non:'🚫 Chien non admis',inconnu:'❓ Chien à vérifier'};
   const dogColors={oui:'#edf7ed',conditions:'rgba(186,117,23,.12)',non:'#ffe8e0',inconnu:'rgba(120,120,120,.1)'};
   const dogTxt={oui:'#2C5016',conditions:'#854F0B',non:'#cc4400',inconnu:'#5F5E5A'};
   const d=document.getElementById('pcDog');
