@@ -557,6 +557,16 @@ const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 // La clé Google ne vit PLUS dans le front. Tout passe par l'Edge Function serveur.
 const EDGE_FN=SURL+'/functions/v1/dynamic-action';
+// Récupère l'en-tête Authorization avec le TOKEN UTILISATEUR (pas la clé anon).
+// La serrure de l'Edge Function exige ce token pour autoriser les imports.
+async function edgeAuthHeaders(){
+  let token=SKEY;
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session?.access_token) token=session.access_token;
+  }catch(e){ console.warn('Session non récupérée pour Edge Function',e); }
+  return {'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+token};
+}
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
@@ -858,7 +868,7 @@ async function resolveShortUrlToName(url){
   try{
     const r=await fetch(EDGE_FN,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      headers:await edgeAuthHeaders(),
       body:JSON.stringify({action:'resolveurl', url}),
       signal:AbortSignal.timeout(10000)
     });
@@ -935,7 +945,7 @@ async function callPlacesApi(endpoint, params, _apiKey){
   try{
     const r=await fetch(EDGE_FN,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      headers:await edgeAuthHeaders(),
       body:JSON.stringify({action, ...params}),
       signal:AbortSignal.timeout(12000)
     });
