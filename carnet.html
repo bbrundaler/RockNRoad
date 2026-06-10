@@ -1839,15 +1839,35 @@ function makeNuitCard(l){
   const noteF = l.note_famille?`<span style="background:rgba(200,168,75,.15);color:rgba(200,168,75,.9);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">${coeursFamille(l.note_famille)}</span>`:'';
 
   return `<div class="nuit-card" id="dyncard-${l.id}" style="cursor:pointer;" onclick="openGrandeFiche('${l.id}')">
-    <div class="nuit-photo" style="background-image:${ph};background-size:cover;background-position:center;${[...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))].length>1?'cursor:pointer;':''}"
-      data-photos="${[...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))].join('|').replace(/"/g,'&quot;')}"
-      onclick="event.stopPropagation();const p=this.dataset.photos.split('|').filter(Boolean);if(p.length>1)openLightbox(p,'',0);">
-      <div class="nuit-overlay">
-        <span class="nuit-type-badge">${sousTypeEmoji} ${sousType} · ${l.sous_region||l.region||''}</span>
+    ${(()=>{
+      // Galerie multi-photos — même effet que la carte jour (classes partagées .photo-gallery)
+      const extraPhotos=(l.photos_urls||[]).filter(u=>u&&u!==l.photo_url).slice(0,2);
+      const allP=[...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];
+      const dataPhotos=allP.join('|').replace(/"/g,'&quot;');
+      const compteur=allP.length>1?`<div style="position:absolute;top:8px;left:9px;z-index:3;background:rgba(0,0,0,.55);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;cursor:pointer;">📷 ${allP.length}</div>`:'';
+      const overlayNuit=`<div class="nuit-overlay"><span class="nuit-type-badge">${sousTypeEmoji} ${sousType} · ${l.sous_region||l.region||''}</span></div>
+      <div class="dog-photo-badge ${dogStatus}" style="position:absolute;top:8px;right:9px;z-index:3;">${dogLabel}</div>`;
+      if(extraPhotos.length>0){
+        return `<div class="photo-gallery">
+      <div class="photo-main" style="background-image:${ph};cursor:pointer;"
+        data-photos="${dataPhotos}"
+        onclick="event.stopPropagation();const p=this.dataset.photos.split('|').filter(Boolean);if(p.length>1)openLightbox(p,'',0);">
+        ${overlayNuit}
+        ${compteur}
       </div>
-      <div class="dog-photo-badge ${dogStatus}" style="position:absolute;top:8px;right:9px;z-index:3;">${dogLabel}</div>
-      ${(()=>{const allP=[...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];return allP.length>1?`<div style="position:absolute;top:8px;left:9px;z-index:3;background:rgba(0,0,0,.55);color:white;font-size:10px;font-weight:700;padding:3px 8px;border-radius:12px;cursor:pointer;">📷 ${allP.length}</div>`:'';})()}
-    </div>
+      <div class="photo-thumbs">
+        ${extraPhotos.map(u=>`<div class="photo-thumb" style="background-image:url('${u}');"></div>`).join('')}
+        ${(l.photos_urls||[]).length>3?`<div class="photo-more">+${(l.photos_urls||[]).length-3}</div>`:''}
+      </div>
+    </div>`;
+      }
+      return `<div class="nuit-photo" style="background-image:${ph};background-size:cover;background-position:center;${allP.length>1?'cursor:pointer;':''}"
+      data-photos="${dataPhotos}"
+      onclick="event.stopPropagation();const p=this.dataset.photos.split('|').filter(Boolean);if(p.length>1)openLightbox(p,'',0);">
+      ${overlayNuit}
+      ${compteur}
+    </div>`;
+    })()}
     <div class="nuit-body">
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">${noteG}${noteF}</div>
       <h3 class="nuit-name">${l.nom||'—'}</h3>
