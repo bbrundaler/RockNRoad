@@ -930,12 +930,19 @@ const ENDPOINT_TO_ACTION={
   'details':'details',
   'nearbysearch':'nearbysearch'
 };
+// En-têtes d'authentification pour l'Edge Function : TOKEN UTILISATEUR (exigé
+// par la serrure pour les actions coûteuses), repli sur la clé anon si pas de session.
+async function edgeAuthHeaders(){
+  const {data:{session}}=await sb.auth.getSession();
+  const token=session?.access_token||SKEY;
+  return {'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+token};
+}
 async function callPlacesApi(endpoint, params, _apiKey){
   const action=ENDPOINT_TO_ACTION[endpoint]||endpoint;
   try{
     const r=await fetch(EDGE_FN,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      headers:await edgeAuthHeaders(),
       body:JSON.stringify({action, ...params}),
       signal:AbortSignal.timeout(12000)
     });
