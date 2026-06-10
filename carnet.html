@@ -1183,6 +1183,19 @@ async function loadDynamicFiches(){
           catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
           console.log('✓ Onglet dynamique créé:', tabRk, '('+regionName+')');
         }
+        // MÊME moteur que les onglets fixes, à CHAQUE rechargement (avant : contenu figé
+        // à la création → une suppression n'apparaissait qu'après rechargement de la page).
+        try{ populateRegionContent(tabRk, regionName, lieux); }
+        catch(err){ console.error('populateRegionContent '+tabRk, err); }
+      }
+    });
+
+    // Régions dynamiques devenues vides (dernière fiche supprimée) : afficher l'état vide
+    document.querySelectorAll('[id^="tab-dyn-"]').forEach(sec=>{
+      const rk=sec.id.replace('tab-dyn-','');
+      if(!byTab[rk]){
+        try{ populateRegionContent(rk, rk.charAt(0).toUpperCase()+rk.slice(1), []); }
+        catch(err){ console.error('populateRegionContent (vide) '+rk, err); }
       }
     });
 
@@ -1712,36 +1725,19 @@ function switchRegionView(rk, view){
 const _origShowTab = window.showTab;
 
 function createDynamicTab(tabId, regionName, lieux, appMain){
+  // COQUILLE seulement — le contenu est rempli par populateRegionContent,
+  // le MÊME moteur que les onglets fixes (mondes jour/nuit, filtres votes, cartes galerie).
+  // (Au passage : table de couleurs hex par région supprimée — loi « zéro couleur en dur ».)
+  const rk=tabId.replace('tab-dyn-','');
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;
-  
-  // Section header
-  const regionColors={
-    'alsace':'#8B2020','bretagne':'#1a6a5a','normandie':'#3a5a8a',
-    'provence':'#8B4513','occitanie':'#c87a00','alpes':'#4a4a8a',
-    'auvergne':'#5a6a3a','ardenne':'#3a6a3a','nord':'#2a4a7a',
-    'corse':'#2a7a5a','loire':'#6B6B14','jura':'#5a6a3a',
-  };
-  const key=regionName.toLowerCase().replace(/[^a-z]/g,'');
-  const col=regionColors[key]||'#888';
-  
-  // Group by type
-  const sites=lieux.filter(l=>l.type==='Site'||!l.type);
-  const campings=lieux.filter(l=>l.type==='Camping');
-  const autres=lieux.filter(l=>l.type&&l.type!=='Site'&&l.type!=='Camping');
-  
   tab.innerHTML=`
     <div class="inner">
-      <div class="section-header sh-${key}" style="background:linear-gradient(135deg,${col}22,${col}11);border-left:4px solid ${col};border-radius:10px;padding:16px 20px;margin-bottom:20px;">
-        <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:${col};margin-bottom:4px;">${regionName}</h2>
-        <p style="font-size:12px;color:#888;">${lieux.length} fiche${lieux.length>1?'s':''} · Créées via RockNRoad</p>
+      <div class="section-header" style="background:linear-gradient(135deg,rgba(200,168,75,.13),rgba(200,168,75,.05));border-left:4px solid var(--gold);border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);margin-bottom:4px;">${regionName}</h2>
+        <p style="font-size:12px;color:#888;">Créées via RockNRoad</p>
       </div>
-      ${sites.length?`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div>
-        <div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`:''}
-      ${campings.length?`<div class="divl" style="margin-top:24px;"><div class="divl-t">⛺ ${campings.length} camping${campings.length>1?'s':''}</div></div>
-        <div class="sites-grid">${campings.map(l=>makeDynCard(l,'camping')).join('')}</div>`:''}
-      ${autres.length?`<div class="divl" style="margin-top:24px;"><div class="divl-t">📍 ${autres.length} autre${autres.length>1?'s':''}</div></div>
-        <div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`:''}
+      <div id="${rk}-content"></div>
     </div>`;
   appMain.appendChild(tab);
 }
