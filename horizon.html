@@ -8,35 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<script src="chrome.js"></script>
 <style>
-:root{
-  /* variables propres à la page Horizon (les couleurs viennent de tokens.css) */
-  --ft:var(--font-title,'Playfair Display',serif);
-  --fb:var(--font-body,'Inter',sans-serif);
-  --topbar-h:56px;
-  --blk:rgba(22,20,16,.62);       /* fond de bloc translucide (structurel) */
-  --blk-bd:rgba(200,168,75,.2);   /* liseré de bloc */
-}
+/* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
+   — plus AUCUNE variable locale : tout vient de tokens.css.
+   — la barre du haut est injectée par chrome.js (la couverture).   */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}            /* << pas de scroll : tout tient à l'écran */
-body{font-family:var(--fb);color:var(--creme);
-  background:radial-gradient(1200px 700px at 75% -15%,rgba(200,168,75,.10),transparent 60%),
-   linear-gradient(160deg,var(--dark),var(--dark2) 55%,var(--dark3));}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
-.topbar{height:var(--topbar-h);display:flex;align-items:center;gap:16px;
-  padding:0 20px;background:rgba(15,13,9,.85);backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(200,168,75,.16);}
-.brand{display:flex;align-items:center;gap:9px;font-family:var(--ft);font-weight:600;font-size:17px;}
-.brand .dot{width:25px;height:25px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:14px;}
-.brand em{font-style:italic;color:var(--gold-light);}
-.modes{display:flex;gap:4px;margin-left:8px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.18);border-radius:11px;padding:4px;}
-.mode{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(245,239,224,.55);cursor:pointer;}
-.mode.on{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);}
-.tag{margin-left:auto;font-size:12px;color:rgba(245,239,224,.5);}
-
-/* SCÈNE = hauteur écran moins topbar, en grille, sans scroll */
+/* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
-  height:calc(100vh - var(--topbar-h));
+  height:calc(100vh - 56px);
   padding:12px;display:grid;gap:11px;
   grid-template-columns:290px 1fr 340px;
   grid-template-rows:auto 1fr auto;
@@ -46,12 +29,12 @@ body{font-family:var(--fb);color:var(--creme);
     "write write write";
   min-height:0;
 }
-.blk{background:var(--blk);border:1px solid var(--blk-bd);border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.3);overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0;}
+.blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0;}
 .bh{display:flex;align-items:center;gap:7px;padding:9px 13px 0;flex-shrink:0;}
-.bh .ic{width:21px;height:21px;border-radius:6px;background:rgba(200,168,75,.16);display:grid;place-items:center;font-size:11px;}
-.bh h3{font-family:var(--ft);font-size:13.5px;font-weight:600;}
-.bh .pin{margin-left:auto;color:rgba(245,239,224,.3);font-size:12px;cursor:pointer;}
+.bh .ic{width:21px;height:21px;border-radius:var(--r-sm);background:var(--gold-a20);display:grid;place-items:center;font-size:11px;}
+.bh h3{font-family:var(--font-title);font-size:13.5px;font-weight:600;color:var(--ink);}
+.bh .pin{margin-left:auto;color:var(--ink-dim);opacity:.5;font-size:12px;cursor:pointer;}
 .bb{padding:9px 13px 12px;flex:1;display:flex;flex-direction:column;min-height:0;}
 
 .b-ind{grid-area:ind;} .b-crew{grid-area:crew;} .b-vote{grid-area:vote;}
@@ -60,49 +43,47 @@ body{font-family:var(--fb);color:var(--creme);
 /* carte : remplit sa zone SANS déborder */
 .b-map .bb{padding:5px;align-items:center;justify-content:center;}
 .francemap{width:100%;height:100%;display:block;overflow:visible;}
-.region{fill:rgba(245,239,224,.06);stroke:rgba(200,168,75,.4);stroke-width:1;cursor:pointer;
+.region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
-.region:hover{fill:rgba(200,168,75,.8);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px rgba(200,168,75,.32));}
-.rlabel{font-family:var(--fb);font-size:9px;font-weight:600;fill:rgba(245,239,224,.78);pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:rgba(15,13,9,.7);stroke-width:2.2px;}
+.region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
+.rlabel{font-family:var(--font-body);font-size:9px;font-weight:600;fill:var(--ink);opacity:.78;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:2.2px;}
 
 /* indicateurs en ligne */
 .inds{display:flex;gap:10px 16px;flex-wrap:wrap;align-content:flex-start;}
 .ind{display:flex;flex-direction:column;min-width:54px;}
-.ind .n{font-family:var(--ft);font-size:19px;font-weight:700;color:var(--gold-light);line-height:1;}
-.ind .l{font-size:9.5px;color:rgba(245,239,224,.5);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.ind .n{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--gold-text);line-height:1;}
+.ind .l{font-size:9.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 
 /* fiche */
-.fiche .ph{height:96px;border-radius:9px;display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
-.fiche .ph .ev{font-family:var(--ft);font-weight:700;font-size:21px;color:rgba(255,255,255,.92);text-shadow:0 2px 10px rgba(0,0,0,.5);z-index:2;}
+.fiche .ph{height:96px;border-radius:var(--r);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
+/* texte SUR IMAGE : invariant par nature (toujours clair sur visuel), pas un rôle de thème */
+.fiche .ph .ev{font-family:var(--font-title);font-weight:700;font-size:21px;color:rgba(255,255,255,.92);text-shadow:0 2px 10px rgba(0,0,0,.5);z-index:2;}
 .fiche .ph .fl{position:absolute;font-size:58px;opacity:.15;}
-.fiche .nm{font-family:var(--ft);font-size:15px;font-weight:600;}
-.fiche .mt{font-size:11px;color:rgba(245,239,224,.52);margin:2px 0 7px;}
+.fiche .nm{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
+.fiche .mt{font-size:11px;color:var(--ink-dim);margin:2px 0 7px;}
 .chips{display:flex;flex-wrap:wrap;gap:5px;}
-.chip{font-size:10.5px;background:rgba(200,168,75,.14);border:1px solid rgba(200,168,75,.3);padding:3px 8px;border-radius:12px;}
 
 /* vote */
-.cq{font-family:var(--ft);font-size:15px;font-weight:600;margin-bottom:2px;}
-.ch{font-size:11px;color:rgba(245,239,224,.5);font-style:italic;margin-bottom:9px;}
+.cq{font-family:var(--font-title);font-size:15px;font-weight:600;margin-bottom:2px;color:var(--ink);}
+.ch{font-size:11px;color:var(--ink-dim);font-style:italic;margin-bottom:9px;}
 .opts{display:flex;flex-direction:column;gap:8px;}
-.opt{background:rgba(245,239,224,.05);border:1.5px solid rgba(200,168,75,.25);border-radius:10px;padding:12px 8px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;transition:.2s;}
-.opt:hover{background:rgba(200,168,75,.18);border-color:var(--gold);transform:translateY(-2px);}
+.opt{background:transparent;border:1.5px solid var(--gold-a35);border-radius:var(--r);padding:12px 8px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;transition:.2s;color:var(--ink);}
+.opt:hover{background:var(--gold-a20);border-color:var(--gold);transform:translateY(-2px);}
 .opt .i{font-size:18px;display:block;margin-bottom:3px;}
 
 /* écriture en bandeau bas */
 .b-write .bb{flex-direction:row;gap:11px;align-items:stretch;}
 .write-l{flex:1;display:flex;flex-direction:column;}
-.write textarea{width:100%;flex:1;background:rgba(15,13,9,.5);border:1px solid rgba(200,168,75,.22);border-radius:10px;padding:9px 11px;color:var(--creme);font-family:var(--fb);font-size:13px;resize:none;min-height:40px;}
+.write textarea{flex:1;resize:none;min-height:40px;}   /* le style des champs vient d'app.css */
 .write-r{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:230px;}
-.write-r .lbl{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.write-r .lbl{font-size:10px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
 .vt{display:flex;flex-wrap:wrap;gap:5px;}
-.vtag{font-size:11px;background:rgba(245,239,224,.06);border:1px solid rgba(245,239,224,.18);border-radius:8px;padding:5px 9px;cursor:pointer;transition:.2s;}
-.vtag:hover{background:rgba(200,168,75,.2);border-color:var(--gold);}
 
 /* groupe */
 .avts{display:flex;margin-bottom:8px;}
-.av2{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--dark);border:2px solid var(--dark2);margin-right:-7px;}
-.msg{font-size:12px;margin-bottom:6px;line-height:1.35;}
-.msg .w{color:var(--gold-light);font-weight:600;}
+.av2{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;border:2px solid var(--surface);margin-right:-7px;}
+.msg{font-size:12px;margin-bottom:6px;line-height:1.35;color:var(--ink);}
+.msg .w{color:var(--gold-text);font-weight:600;}
 
 @media(max-width:880px){
   html,body{overflow:auto;}
@@ -113,12 +94,7 @@ body{font-family:var(--fb);color:var(--creme);
 </style>
 </head>
 <body>
-<div class="topbar">
-  <a class="brand" href="home.html" style="text-decoration:none;color:inherit;"><span class="dot">◆</span> Rock<em>N</em>Road</a>
-  <div class="modes"><span class="mode on">Horizon</span><span class="mode">Voter</span><span class="mode">Détail voyage</span></div>
-  <span class="tag">Alors, on part où ? · le rêve prend forme</span>
-  <button id="hz-logout" title="Se déconnecter" style="margin-left:14px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.2);color:var(--creme);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--fb);">Quitter</button>
-</div><div class="stage">
+<div class="stage">
   <div class="blk b-ind">
     <div class="bh"><span class="ic">📊</span><h3>Votre voyage prend forme</h3><span class="pin">📌</span></div>
     <div class="bb"><div class="inds">
@@ -137,7 +113,7 @@ body{font-family:var(--fb);color:var(--creme);
         <div class="av2" style="background:linear-gradient(135deg,#13384a,#3d8fb0)">M</div>
         <div class="av2" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
         <div class="av2" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
-        <div class="av2" style="background:rgba(245,239,224,.15);color:var(--creme)">+2</div>
+        <div class="av2" style="background:var(--gold-a20);color:var(--ink)">+2</div>
       </div>
       <div class="msg"><span class="w">Paul</span> : super spot en Aquitaine, je crée la fiche !</div>
       <div class="msg"><span class="w">Léa</span> : Bretagne à fond pour les dolmens 🌊</div>
@@ -184,7 +160,7 @@ body{font-family:var(--fb);color:var(--creme);
       <div class="ph" id="hz-fiche-ph" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))"><span class="fl">🏰</span><span class="ev" id="hz-fiche-region">…</span></div>
       <div class="nm" id="hz-fiche-nom">Chargement…</div>
       <div class="mt" id="hz-fiche-mt">La fiche la mieux notée du groupe</div>
-      <div class="chips" id="hz-fiche-chips"><span class="chip">⭐ coup de cœur</span></div>
+      <div class="chips" id="hz-fiche-chips"><span class="rr-badge">⭐ coup de cœur</span></div>
     </div>
   </div>
   <div class="blk write b-write">
@@ -192,7 +168,7 @@ body{font-family:var(--fb);color:var(--creme);
     <div class="bb">
       <div class="write-l"><textarea placeholder="Leader, c'est à vous : « Et si on partait vers le Sud cette année ? »"></textarea></div>
       <div class="write-r"><span class="lbl">+ attacher un choix</span>
-        <div class="vt"><span class="vtag">Pour / Contre</span><span class="vtag">Choix A/B</span><span class="vtag">Note /5</span><span class="vtag">Élimination</span><span class="vtag">Question libre</span></div>
+        <div class="vt"><span class="rr-filtre">Pour / Contre</span><span class="rr-filtre">Choix A/B</span><span class="rr-filtre">Note /5</span><span class="rr-filtre">Élimination</span><span class="rr-filtre">Question libre</span></div>
       </div>
     </div>
   </div>
@@ -299,6 +275,7 @@ async function loadHorizonData(userId){
       .select('groupe_id, groupes(*)').eq('user_id',userId).limit(1).single();
     if(eMem||!mem){ console.warn('Horizon: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
+    if(window.rnrChrome && mem.groupes && mem.groupes.nom){ rnrChrome.setGroupe(mem.groupes.nom); }
 
     // 2) Charger les fiches du groupe (table lieux)
     const {data:lieux,error:eLieux}=await sb.from('lieux')
@@ -338,10 +315,7 @@ async function loadHorizonData(userId){
 }
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
-document.addEventListener('DOMContentLoaded',()=>{
-  const lo=document.getElementById('hz-logout');
-  if(lo) lo.addEventListener('click',logout);
-});
+/* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
 </script>
 <script src="boussole.js" defer></script>
 </body>
