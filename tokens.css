@@ -1,20 +1,69 @@
 /* ═══════════════════════════════════════════════════════════════════
-   RockNRoad — tokens.css
+   RockNRoad — tokens.css  v2  (Chantier design, charte Design v1)
    SOURCE UNIQUE de toutes les variables CSS du projet.
 
    RÈGLE ABSOLUE : Ne jamais redéfinir ces variables dans une page HTML.
    Pour modifier une valeur → changer ICI uniquement.
    Chargé EN PREMIER dans le <head> de chaque page.
+
+   ARCHITECTURE v2 — TOKENS SÉMANTIQUES :
+   Les pages converties n'utilisent QUE des rôles (--bg, --surface,
+   --paper, --ink…). Chaque thème remappe les rôles :
+   · défaut  = thème CLAIR « carnet ouvert » (valeurs dans :root)
+   · [data-theme="sombre"] = « la veillée » (posé sur <html> par chrome.js)
+   Le CHROME (navbar, boussole) reste sombre + or dans les deux thèmes.
+   Vocabulaire : « clair / sombre » — JAMAIS « jour/nuit » (déjà pris
+   par sites-à-visiter / où-dormir dans le carnet).
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
 
-  /* ── Sidebar ─────────────────────────────────────────────────────── */
-  --sb: 215px;           /* largeur sidebar — modifier ICI pour tout changer */
+  /* ═══ INVARIANTS DE MARQUE (identiques dans les deux thèmes) ═════ */
 
-  /* ── Couleurs principales ────────────────────────────────────────── */
+  /* — L'or — */
   --gold:        #C8A84B;
   --gold-light:  #E8C86B;
+  --gold-deep:   #8b6914;   /* or sombre lisible sur fond clair */
+  --gold-a10:    rgba(200,168,75,.10);   /* remplacent tous les        */
+  --gold-a20:    rgba(200,168,75,.20);   /* rgba(200,168,75,…) en dur  */
+  --gold-a35:    rgba(200,168,75,.35);
+
+  /* — Autres couleurs de marque — */
+  --green:       #2C5016;   /* vert action / succès */
+
+  /* — Le chrome : la « couverture en cuir » (navbar, boussole) — */
+  --chrome-bg:       #161410;
+  --chrome-ink:      #F5EFE0;
+  --chrome-ink-dim:  rgba(245,239,224,.62);
+
+  /* — Typographie (partout, exclusivement) — */
+  --font-title: 'Playfair Display', serif;
+  --font-body:  'Inter', sans-serif;
+
+  /* — Formes : TROIS arrondis + pilule, pas d'autres valeurs — */
+  --r-sm:   6px;
+  --r:      10px;
+  --r-lg:   16px;
+  --r-pill: 999px;
+
+  /* ═══ RÔLES SÉMANTIQUES — THÈME CLAIR « carnet ouvert » (défaut) ═ */
+
+  --bg:           #EFE8D6;              /* canevas : la page du carnet */
+  --surface:      #F7F2E5;              /* blocs d'interface           */
+  --surface-line: rgba(26,18,8,.10);
+  --paper:        #FCF9F0;              /* cartes contenu (fiches…)    */
+  --paper-line:   rgba(26,18,8,.08);
+  --ink:          #1a1208;              /* texte principal             */
+  --ink-dim:      #6B5F4A;              /* texte atténué               */
+  --gold-text:    #8b6914;              /* or lisible selon le fond    */
+  --shadow:       0 2px 10px rgba(26,18,8,.08);
+  --shadow-hover: 0 8px 26px rgba(26,18,8,.14);
+
+  /* ═══ LEGACY v1 — conservés tant que des pages non converties les
+     utilisent. SUPPRESSION en fin de chantier design, page par page.
+     NE PLUS LES UTILISER dans du code nouveau. ═════════════════════ */
+
+  --sb: 215px;              /* largeur ex-sidebar — encore lu par sidebar.css */
 
   --dark:        #0f0d09;   /* fond principal le plus sombre */
   --dark2:       #161410;   /* fond secondaire */
@@ -25,21 +74,13 @@
 
   --text:        #1a1208;   /* texte principal sur fond clair */
   --muted:       #6B5F4A;   /* texte atténué */
-  --green:       #2C5016;   /* vert action / succès */
 
-  /* ── Couleurs régions ────────────────────────────────────────────── */
+  /* — Couleurs régions (DONNÉES, pas design : migreront vers carto.js) — */
   --pyr:  #2C5016;   /* Pyrénées — vert */
   --atl:  #1a5a7a;   /* Atlantique — bleu */
   --bou:  #6B3288;   /* Bourgogne — violet */
 
-  /* ── Typographie ─────────────────────────────────────────────────── */
-  --font-title: 'Playfair Display', serif;
-  --font-body:  'Inter', sans-serif;
-
-  /* ── Effets ──────────────────────────────────────────────────────── */
-  --r:     10px;
-
-  /* ── Aliases home.html (tirets) ── */
+  /* — Aliases home.html (tirets) — */
   --dark-2:    #161410;   /* = --dark2 */
   --dark-3:    #1E1B14;   /* = --dark3 */
   --cream-dim: rgba(245,239,224,.6);   /* alias home.html */
@@ -47,4 +88,21 @@
   --sh:    0 2px 12px rgba(0,0,0,.07);
   --shhov: 0 8px 28px rgba(0,0,0,.13);
 
+}
+
+/* ═══ THÈME SOMBRE « la veillée » ═══════════════════════════════════
+   Posé par chrome.js : <html data-theme="sombre">.
+   Seuls les rôles basculent — la marque et le chrome ne bougent pas.
+   Le papier reste du papier (crème) dans les deux mondes.            */
+[data-theme="sombre"] {
+  --bg:           #0f0d09;
+  --surface:      #1E1B14;
+  --surface-line: var(--gold-a20);
+  --paper:        #F5EFE0;
+  --paper-line:   transparent;
+  --ink:          #F5EFE0;
+  --ink-dim:      rgba(245,239,224,.62);
+  --gold-text:    #E8C86B;
+  --shadow:       0 2px 12px rgba(0,0,0,.30);
+  --shadow-hover: 0 8px 28px rgba(0,0,0,.45);
 }
