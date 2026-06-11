@@ -7,27 +7,18 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
-<link rel="stylesheet" href="sidebar.css">
 <link rel="stylesheet" href="app.css">
-<script src="sidebar.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 
 html,body{height:100%;overflow:hidden;background:var(--dark);}
 
 /* ── LAYOUT ── */
-#app{display:grid;grid-template-columns:var(--sb) 1fr var(--panel);grid-template-rows:1fr 80px 170px;height:100vh;position:relative;}
-
-/* ── SIDEBAR (styles via sidebar.css — override grille uniquement) ── */
-#sidebar{
-  grid-row:1/4;grid-column:1;
-  position:sticky;top:0;height:100vh;
-  z-index:10;
-}
+#app{display:grid;grid-template-columns:1fr var(--panel);grid-template-rows:1fr 80px 170px;height:100vh;position:relative;}
 
 /* ── HERO MAP ── */
 #hero{
-  grid-row:1;grid-column:2;
+  grid-row:1;grid-column:1;
   position:relative;overflow:hidden;
 }
 #hero-bg{
@@ -113,7 +104,7 @@ html,body{height:100%;overflow:hidden;background:var(--dark);}
 
 /* ── RIGHT PANEL ── */
 #panel{
-  grid-row:1;grid-column:3;
+  grid-row:1;grid-column:2;
   background:rgba(20,17,12,.88);
   border-left:1px solid rgba(200,168,75,.12);
   backdrop-filter:blur(24px);
@@ -187,7 +178,7 @@ html,body{height:100%;overflow:hidden;background:var(--dark);}
 
 /* ── STATS BAR ── */
 #stats-bar{
-  grid-row:2;grid-column:2/4;
+  grid-row:2;grid-column:1/3;
   background:rgba(10,8,5,.95);
   border-top:1px solid rgba(200,168,75,.1);
   display:flex;align-items:center;
@@ -221,7 +212,7 @@ html,body{height:100%;overflow:hidden;background:var(--dark);}
 
 /* ── CARDS ITINÉRAIRE ── */
 #itineraire{
-  grid-row:3;grid-column:2/4;
+  grid-row:3;grid-column:1/3;
   background:rgba(15,13,9,.97);
   border-top:1px solid rgba(200,168,75,.08);
   padding:14px 0;
@@ -303,9 +294,6 @@ html,body{height:100%;overflow:hidden;background:var(--dark);}
 </head>
 <body>
 <div id="app">
-
-  <!-- ── SIDEBAR ── -->
-  <div id="sidebar"></div>
 
   <!-- ── HERO MAP ── -->
   <main id="hero">
@@ -553,6 +541,5 @@ function scrollItinPrev(){
   document.getElementById('itin-track').scrollBy({left:-320,behavior:'smooth'});
 }
 </script>
-<script src="boussole.js" defer></script>
 </body>
 </html>
