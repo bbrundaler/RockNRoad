@@ -8,39 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<script src="chrome.js"></script>
 <style>
-:root{
-  /* variables propres à la page Souvenir (les couleurs viennent de tokens.css) */
-  --ft:var(--font-title,'Playfair Display',serif);
-  --fb:var(--font-body,'Inter',sans-serif);
-  --topbar-h:56px;
-  --blk:rgba(22,20,16,.62);
-  --blk-bd:rgba(200,168,75,.2);
-}
+/* SOUVENIR converti grammaire v2 (Charte Design v1, recette de la pilote horizon)
+   — plus AUCUNE variable locale : tout vient de tokens.css.
+   — la barre du haut est injectée par chrome.js (la couverture).   */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow:hidden;}
-body{font-family:var(--fb);color:var(--creme);
-  background:radial-gradient(1200px 700px at 75% -15%,rgba(200,168,75,.10),transparent 60%),
-   linear-gradient(160deg,var(--dark),var(--dark2) 55%,var(--dark3));}
-
-/* ── TOPBAR (commune au site) ── */
-.topbar{height:var(--topbar-h);display:flex;align-items:center;gap:16px;
-  padding:0 20px;background:rgba(15,13,9,.85);backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(200,168,75,.16);}
-.brand{display:flex;align-items:center;gap:9px;font-family:var(--ft);font-weight:600;font-size:17px;text-decoration:none;color:inherit;}
-.brand .dot{width:25px;height:25px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:14px;}
-.brand em{font-style:italic;color:var(--gold-light);}
-.modes{display:flex;gap:4px;margin-left:8px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.18);border-radius:11px;padding:4px;}
-.mode{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(245,239,224,.55);cursor:pointer;text-decoration:none;}
-.mode.on{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);}
-.tag{margin-left:auto;font-size:12px;color:rgba(245,239,224,.5);font-style:italic;font-family:var(--ft);}
-.btn-quit{margin-left:14px;background:rgba(245,239,224,.06);border:1px solid rgba(200,168,75,.2);
-  color:var(--creme);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:var(--fb);}
-.btn-quit:hover{border-color:var(--gold);}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* ── SCÈNE : hauteur écran, grille en blocs, sans scroll ── */
 .stage{
-  height:calc(100vh - var(--topbar-h));
+  height:calc(100vh - 56px);
   padding:12px;display:grid;gap:11px;
   grid-template-columns:1fr 360px;
   grid-template-rows:1fr auto;
@@ -51,16 +30,17 @@ body{font-family:var(--fb);color:var(--creme);
 }
 
 /* ── BLOC générique ── */
-.blk{background:var(--blk);border:1px solid var(--blk-bd);border-radius:14px;
+.blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
   display:flex;flex-direction:column;min-height:0;overflow:hidden;
-  box-shadow:0 6px 22px rgba(0,0,0,.25);}
-.bh{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(200,168,75,.12);}
-.bh .ic{font-size:14px;}
-.bh h3{font-family:var(--ft);font-size:13.5px;font-weight:600;flex:1;}
+  box-shadow:var(--shadow);}
+.bh{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--surface-line);}
+.bh .ic{font-size:15px;}
+.bh h3{font-family:var(--font-title);font-size:15px;font-weight:600;flex:1;color:var(--ink);}
 .bh .pin{opacity:.5;font-size:12px;}
 .bb{padding:13px 14px;flex:1;min-height:0;display:flex;flex-direction:column;}
 
-/* ── HÉRO : le dernier voyage ── */
+/* ── HÉRO : le dernier voyage ──
+   (l'intérieur de .hero-img = texte SUR IMAGE : couleurs invariantes par nature) */
 .b-hero{grid-area:hero;}
 .hero-img{flex:1;min-height:0;border-radius:12px;position:relative;overflow:hidden;
   background:linear-gradient(135deg,#3a2c12,var(--gold) 140%),
@@ -69,51 +49,51 @@ body{font-family:var(--fb);color:var(--creme);
 .hero-img .veil{position:absolute;inset:0;background:linear-gradient(to top,rgba(15,13,9,.78),transparent 55%);}
 .hero-cap{position:relative;padding:18px 20px;z-index:2;}
 .hero-cap .yr{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light);}
-.hero-cap .ti{font-family:var(--ft);font-size:30px;font-weight:700;color:#fff;line-height:1.05;margin:3px 0 4px;
+.hero-cap .ti{font-family:var(--font-title);font-size:30px;font-weight:700;color:#fff;line-height:1.05;margin:3px 0 4px;
   text-shadow:0 2px 12px rgba(0,0,0,.5);}
-.hero-cap .su{font-family:var(--ft);font-size:14px;font-style:italic;color:rgba(245,239,224,.82);}
+.hero-cap .su{font-family:var(--font-title);font-size:14px;font-style:italic;color:rgba(245,239,224,.82);}
 .hero-meta{display:flex;gap:16px;margin-top:11px;}
 .hero-meta .m{display:flex;flex-direction:column;}
-.hero-meta .m .n{font-family:var(--ft);font-size:18px;font-weight:700;color:var(--gold-light);line-height:1;}
+.hero-meta .m .n{font-family:var(--font-title);font-size:18px;font-weight:700;color:var(--gold-light);line-height:1;}
 .hero-meta .m .l{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,239,224,.5);margin-top:3px;}
 
 /* ── GALERIE photos ── */
 .b-gallery{grid-area:gallery;}
 .gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;flex:1;min-height:0;overflow:hidden;}
-.gal-cell{border-radius:9px;position:relative;overflow:hidden;min-height:60px;
-  background:linear-gradient(135deg,rgba(200,168,75,.18),rgba(22,20,16,.6));
+.gal-cell{border-radius:var(--r-sm);position:relative;overflow:hidden;min-height:60px;
+  background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));
   display:flex;align-items:center;justify-content:center;font-size:24px;opacity:.92;
   transition:transform .25s;}
 .gal-cell:hover{transform:scale(1.03);}
-.gal-cell.add{background:rgba(245,239,224,.05);border:1px dashed rgba(200,168,75,.35);
-  cursor:pointer;flex-direction:column;gap:4px;font-size:20px;color:var(--gold-light);}
-.gal-cell.add .t{font-size:10px;color:rgba(245,239,224,.6);}
-.gal-note{margin-top:9px;font-size:10.5px;color:rgba(245,239,224,.45);font-style:italic;line-height:1.4;}
+.gal-cell.add{background:var(--gold-a10);border:1px dashed var(--gold-a35);
+  cursor:pointer;flex-direction:column;gap:4px;font-size:20px;color:var(--gold-text);}
+.gal-cell.add .t{font-size:11px;color:var(--ink-dim);}
+.gal-note{margin-top:9px;font-size:11.5px;color:var(--ink-dim);font-style:italic;line-height:1.4;}
 
 /* ── ÉTAGÈRE : nos aventures passées ── */
 .b-shelf{grid-area:shelf;}
 .shelf-track{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;flex:1;align-items:stretch;scrollbar-width:thin;}
 .shelf-track::-webkit-scrollbar{height:6px;}
-.shelf-track::-webkit-scrollbar-thumb{background:rgba(200,168,75,.3);border-radius:3px;}
-.trip{flex-shrink:0;width:150px;border-radius:11px;overflow:hidden;position:relative;cursor:pointer;
-  border:1px solid rgba(200,168,75,.18);transition:transform .25s,border-color .25s;}
+.shelf-track::-webkit-scrollbar-thumb{background:var(--gold-a35);border-radius:3px;}
+.trip{flex-shrink:0;width:150px;border-radius:var(--r);overflow:hidden;position:relative;cursor:pointer;
+  border:1px solid var(--gold-a20);transition:transform .25s,border-color .25s;}
 .trip:hover{transform:translateY(-3px);border-color:var(--gold);}
-.trip .ph{height:84px;background:linear-gradient(135deg,rgba(200,168,75,.25),rgba(22,20,16,.7));
+.trip .ph{height:84px;background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));
   display:flex;align-items:center;justify-content:center;font-size:26px;}
 .trip .in{padding:8px 10px;}
-.trip .in .y{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--gold-light);text-transform:uppercase;}
-.trip .in .n{font-family:var(--ft);font-size:13px;font-weight:600;color:#fff;line-height:1.15;margin-top:2px;}
-.trip .in .d{font-size:10px;color:rgba(245,239,224,.5);margin-top:2px;}
+.trip .in .y{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--gold-text);text-transform:uppercase;}
+.trip .in .n{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--ink);line-height:1.15;margin-top:2px;}
+.trip .in .d{font-size:11px;color:var(--ink-dim);margin-top:2px;}
 
 /* ── BOUCLE : refermer / relancer ── */
 .b-loop{grid-area:loop;align-items:center;justify-content:center;text-align:center;}
 .b-loop .bb{align-items:center;justify-content:center;text-align:center;}
-.loop-q{font-family:var(--ft);font-size:16px;font-weight:600;color:var(--creme);line-height:1.3;margin-bottom:4px;}
-.loop-s{font-size:12px;color:rgba(245,239,224,.55);font-style:italic;margin-bottom:13px;max-width:240px;}
-.loop-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:11px;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light));color:var(--dark);
-  font-family:var(--ft);font-weight:700;font-size:14px;text-decoration:none;
-  box-shadow:0 6px 18px rgba(200,168,75,.28);transition:transform .2s;}
+.loop-q{font-family:var(--font-title);font-size:18px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:4px;}
+.loop-s{font-size:13px;color:var(--ink-dim);font-style:italic;margin-bottom:13px;max-width:240px;}
+.loop-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:var(--r-pill);
+  background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;
+  font-family:var(--font-title);font-weight:700;font-size:15px;text-decoration:none;
+  box-shadow:0 6px 18px var(--gold-a35);transition:transform .2s;}
 .loop-btn:hover{transform:translateY(-2px);}
 
 @media(max-width:820px){
@@ -123,18 +103,6 @@ body{font-family:var(--fb);color:var(--creme);
 </style>
 </head>
 <body>
-<a class="brand-skip"></a>
-<div class="topbar">
-  <a class="brand" href="home.html"><span class="dot">◆</span> Rock<em>N</em>Road</a>
-  <div class="modes">
-    <span class="mode on">Souvenir</span>
-    <a class="mode" href="carnet.html#fiche">Roadbook</a>
-    <a class="mode" href="horizon.html">Horizon</a>
-  </div>
-  <span class="tag">L'aventure ne s'oublie pas · l'émotion jusqu'au bout</span>
-  <button id="sv-logout" class="btn-quit" title="Se déconnecter">Quitter</button>
-</div>
-
 <div class="stage">
 
   <!-- ── HÉRO : le dernier voyage vécu ── -->
@@ -181,7 +149,7 @@ body{font-family:var(--fb);color:var(--creme);
         <div class="trip"><div class="ph">🌊</div><div class="in"><div class="y">2024</div><div class="n">Côte Atlantique</div><div class="d">Aquitaine · 12 j</div></div></div>
         <div class="trip"><div class="ph">🏔️</div><div class="in"><div class="y">2023</div><div class="n">Tour des Pyrénées</div><div class="d">Occitanie · 10 j</div></div></div>
         <div class="trip"><div class="ph">🍇</div><div class="in"><div class="y">2022</div><div class="n">Vignes de Bourgogne</div><div class="d">Bourgogne · 6 j</div></div></div>
-        <div class="trip"><div class="ph">🧭</div><div class="in" style="display:flex;flex-direction:column;justify-content:center;height:100%;"><div class="n" style="color:var(--gold-light);">Et le prochain ?</div><div class="d">à écrire…</div></div></div>
+        <div class="trip"><div class="ph">🧭</div><div class="in" style="display:flex;flex-direction:column;justify-content:center;height:100%;"><div class="n" style="color:var(--gold-text);">Et le prochain ?</div><div class="d">à écrire…</div></div></div>
       </div>
     </div>
   </div>
@@ -208,10 +176,7 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
 })();
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
-document.addEventListener('DOMContentLoaded',()=>{
-  const lo=document.getElementById('sv-logout');
-  if(lo) lo.addEventListener('click',logout);
-});
+/* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
 </script>
 <script src="boussole.js" defer></script>
 </body>
