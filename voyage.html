@@ -20,7 +20,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 /* (270 lignes de CSS mort du prototype héros/markers/itin supprimées — prouvé zéro usage, 11/06) */
 
 /* MAIN */
-#app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}
+#app-main{flex:1;min-height:0;width:100%;margin-left:0;display:flex;flex-direction:column;}  /* margin-left:0 OBLIGATOIRE : neutralise le margin-left:var(--sb) legacy d'app.css */
 /* Actions du voyage, logées dans l'en-tête du panneau Itinéraire */
 .panel-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
 .tb-btn{padding:6px 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;border:1px solid transparent;}
