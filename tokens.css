@@ -46,13 +46,15 @@
   --r-lg:   16px;
   --r-pill: 999px;
 
-  /* ═══ RÔLES SÉMANTIQUES — THÈME CLAIR « carnet ouvert » (défaut) ═ */
+  /* ═══ RÔLES SÉMANTIQUES — THÈME CLAIR « carnet ouvert » (défaut) ═
+     Calibrage 11/06 : palette neutralisée (ivoire-grège, moins jaune)
+     suite au retour de test — l'or reste l'accent, le fond se calme. */
 
-  --bg:           #EFE8D6;              /* canevas : la page du carnet */
-  --surface:      #F7F2E5;              /* blocs d'interface           */
-  --surface-line: rgba(26,18,8,.10);
-  --paper:        #FCF9F0;              /* cartes contenu (fiches…)    */
-  --paper-line:   rgba(26,18,8,.08);
+  --bg:           #F2EFE8;              /* canevas : la page du carnet */
+  --surface:      #FAF8F2;              /* blocs d'interface           */
+  --surface-line: rgba(26,18,8,.09);
+  --paper:        #FFFDF8;              /* cartes contenu (fiches…)    */
+  --paper-line:   rgba(26,18,8,.07);
   --ink:          #1a1208;              /* texte principal             */
   --ink-dim:      #6B5F4A;              /* texte atténué               */
   --gold-text:    #8b6914;              /* or lisible selon le fond    */

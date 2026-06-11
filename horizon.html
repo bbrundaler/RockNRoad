@@ -21,7 +21,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .stage{
   height:calc(100vh - 56px);
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:290px 1fr 340px;
+  grid-template-columns:340px 1fr 400px;
   grid-template-rows:auto 1fr auto;
   grid-template-areas:
     "ind   map   crew"
@@ -32,8 +32,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
   box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0;}
 .bh{display:flex;align-items:center;gap:7px;padding:9px 13px 0;flex-shrink:0;}
-.bh .ic{width:21px;height:21px;border-radius:var(--r-sm);background:var(--gold-a20);display:grid;place-items:center;font-size:11px;}
-.bh h3{font-family:var(--font-title);font-size:13.5px;font-weight:600;color:var(--ink);}
+.bh .ic{width:23px;height:23px;border-radius:var(--r-sm);background:var(--gold-a20);display:grid;place-items:center;font-size:12px;}
+.bh h3{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
 .bh .pin{margin-left:auto;color:var(--ink-dim);opacity:.5;font-size:12px;cursor:pointer;}
 .bb{padding:9px 13px 12px;flex:1;display:flex;flex-direction:column;min-height:0;}
 
@@ -46,43 +46,43 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
 .region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
-.rlabel{font-family:var(--font-body);font-size:9px;font-weight:600;fill:var(--ink);opacity:.78;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:2.2px;}
+.rlabel{font-family:var(--font-body);font-size:10px;font-weight:600;fill:var(--ink);opacity:.78;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:2.2px;}
 
 /* indicateurs en ligne */
 .inds{display:flex;gap:10px 16px;flex-wrap:wrap;align-content:flex-start;}
 .ind{display:flex;flex-direction:column;min-width:54px;}
-.ind .n{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--gold-text);line-height:1;}
-.ind .l{font-size:9.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.ind .n{font-family:var(--font-title);font-size:22px;font-weight:700;color:var(--gold-text);line-height:1;}
+.ind .l{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 
 /* fiche */
-.fiche .ph{height:96px;border-radius:var(--r);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
+.fiche .ph{height:112px;border-radius:var(--r);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
 /* texte SUR IMAGE : invariant par nature (toujours clair sur visuel), pas un rôle de thème */
 .fiche .ph .ev{font-family:var(--font-title);font-weight:700;font-size:21px;color:rgba(255,255,255,.92);text-shadow:0 2px 10px rgba(0,0,0,.5);z-index:2;}
 .fiche .ph .fl{position:absolute;font-size:58px;opacity:.15;}
-.fiche .nm{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
-.fiche .mt{font-size:11px;color:var(--ink-dim);margin:2px 0 7px;}
+.fiche .nm{font-family:var(--font-title);font-size:16.5px;font-weight:600;color:var(--ink);}
+.fiche .mt{font-size:12.5px;color:var(--ink-dim);margin:2px 0 7px;}
 .chips{display:flex;flex-wrap:wrap;gap:5px;}
 
 /* vote */
-.cq{font-family:var(--font-title);font-size:15px;font-weight:600;margin-bottom:2px;color:var(--ink);}
-.ch{font-size:11px;color:var(--ink-dim);font-style:italic;margin-bottom:9px;}
+.cq{font-family:var(--font-title);font-size:17px;font-weight:600;margin-bottom:2px;color:var(--ink);}
+.ch{font-size:12.5px;color:var(--ink-dim);font-style:italic;margin-bottom:9px;}
 .opts{display:flex;flex-direction:column;gap:8px;}
-.opt{background:transparent;border:1.5px solid var(--gold-a35);border-radius:var(--r);padding:12px 8px;text-align:center;font-weight:600;font-size:13px;cursor:pointer;transition:.2s;color:var(--ink);}
+.opt{background:transparent;border:1.5px solid var(--gold-a35);border-radius:var(--r);padding:14px 8px;text-align:center;font-weight:600;font-size:14.5px;cursor:pointer;transition:.2s;color:var(--ink);}
 .opt:hover{background:var(--gold-a20);border-color:var(--gold);transform:translateY(-2px);}
 .opt .i{font-size:18px;display:block;margin-bottom:3px;}
 
 /* écriture en bandeau bas */
 .b-write .bb{flex-direction:row;gap:11px;align-items:stretch;}
 .write-l{flex:1;display:flex;flex-direction:column;}
-.write textarea{flex:1;resize:none;min-height:40px;}   /* le style des champs vient d'app.css */
+.write textarea{flex:1;resize:none;min-height:64px;font-size:14px;}   /* le style des champs vient d'app.css */
 .write-r{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:230px;}
-.write-r .lbl{font-size:10px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.write-r .lbl{font-size:11px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
 .vt{display:flex;flex-wrap:wrap;gap:5px;}
 
 /* groupe */
 .avts{display:flex;margin-bottom:8px;}
-.av2{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;border:2px solid var(--surface);margin-right:-7px;}
-.msg{font-size:12px;margin-bottom:6px;line-height:1.35;color:var(--ink);}
+.av2{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;border:2px solid var(--surface);margin-right:-7px;}
+.msg{font-size:13.5px;margin-bottom:6px;line-height:1.35;color:var(--ink);}
 .msg .w{color:var(--gold-text);font-weight:600;}
 
 @media(max-width:880px){
