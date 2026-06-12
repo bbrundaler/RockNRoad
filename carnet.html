@@ -529,7 +529,7 @@
 
 <!-- ══ OVERLAY MOBILE ══ -->
 <!-- ══ APP MAIN ══ -->
-<div id="app-main">
+<div id="carnet-main"> <!-- ex app-main : renommé pour échapper au Template A legacy d'app.css (marge sidebar) -->
 
   <!-- Barre de navigation : injectée par chrome.js. Quitter → window.logout() (défini plus bas). -->
   <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
@@ -879,7 +879,7 @@
 <div class="section" id="tab-srilanka"><div class="inner"><div id="content-srilanka"><div style="text-align:center;padding:60px 20px;color:var(--ink-dim);"><div style="font-size:48px;margin-bottom:12px;">🌴</div><h3 style="font-family:Playfair Display,serif;font-size:22px;color:var(--ink);margin-bottom:8px;">Sri Lanka</h3><p>Ajoutez vos premières fiches via <a href="admin.html" style="color:var(--gold);">Créer une fiche</a></p></div></div></div></div>
 <div class="section" id="tab-mexique"><div class="inner"><div id="content-mexique"><div style="text-align:center;padding:60px 20px;color:var(--ink-dim);"><div style="font-size:48px;margin-bottom:12px;">🌵</div><h3 style="font-family:Playfair Display,serif;font-size:22px;color:var(--ink);margin-bottom:8px;">Mexique</h3><p>Ajoutez vos premières fiches via <a href="admin.html" style="color:var(--gold);">Créer une fiche</a></p></div></div></div></div>
 
-</div><!-- /app-main -->
+</div><!-- /carnet-main -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const {createClient}=supabase;
@@ -908,8 +908,9 @@ function requestIdleCallbackSafe(cb){
   // Handle hash navigation from other pages
   const hash=window.location.hash.replace('#','');
   const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
-  // Sans hash ou avec #overview → home.html est la vraie page d'accueil
-  if(!hash || hash==='overview'){window.location.href='home.html';return;}
+  // Sans hash (clic « Carnet » du chrome) ou #overview → région par défaut.
+  // (L'ancienne vue d'ensemble reste détrônée par le Hub — décision v9. Défaut configurable via la future Console Admin.)
+  if(!hash || hash==='overview'){showTab('alsace');}
   if(validTabs.includes(hash)){
     showTab(hash);
   } else if(hash.startsWith('dyn-')){
@@ -1146,7 +1147,7 @@ async function loadDynamicFiches(){
       byRegion[rk].push(l);
     });
 
-    const appMain=document.getElementById('app-main');
+    const appMain=document.getElementById('carnet-main');
 
     // ── Grouper par onglet de destination (pas par région source)
     const byTab = {};
@@ -2220,7 +2221,7 @@ window.showTab=function(id){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   const sec=document.getElementById("tab-"+id);if(sec)sec.classList.add("active");
   const ab=document.getElementById("snav-"+id);if(ab)ab.classList.add("active");
-  const am=document.getElementById("app-main");if(am)am.scrollTo(0,0);
+  const am=document.getElementById("carnet-main");if(am)am.scrollTo(0,0);
   if(history.replaceState) history.replaceState(null,null,'#'+id);
   // Lazy init Leaflet maps
   if(id==='carte' && allLieux.length) setTimeout(()=>initCarteGlobal(),80);
@@ -2312,7 +2313,7 @@ updateVoyageBtn();
 
 </script>
 
-</div><!-- /app-main -->
+</div><!-- /carnet-main -->
 
 <!-- ═══ GRANDE FICHE (lecture riche) ═══ -->
 <div id="gf-overlay" onclick="if(event.target===this)closeGrandeFiche()">
