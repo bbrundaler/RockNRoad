@@ -522,7 +522,7 @@
   <button class="rtb-btn" onclick="showTab('pyrenees')" id="rtb-als-pyr">🏔️ Pyrénées</button>
   <button class="rtb-btn" onclick="showTab('atlantique')" id="rtb-als-atl">🌊 Atlantique</button>
   <button class="rtb-btn" onclick="showTab('bourgogne')" id="rtb-als-bou">🍷 Bourgogne</button>
-  <div id="rtb-dyn-alsace" style="display:contents;"></div>
+  <div id="rtb-dyn-alsace" class="rtb-dyn-slot" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-als" style="background:linear-gradient(135deg,#8B2020 0%,#5a1010 60%,#3a0808 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
   <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🥨</div>
@@ -550,7 +550,7 @@
   <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
   <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
   <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-pyrenees" style="display:contents;"></div>
+  <div id="rtb-dyn-pyrenees" class="rtb-dyn-slot" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-pyr" style="background:linear-gradient(135deg,#2C5016dd 0%,#2C501688 60%,#2C501644 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
   <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🏔️</div>
@@ -592,7 +592,7 @@
   <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
   <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
   <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-atlantique" style="display:contents;"></div>
+  <div id="rtb-dyn-atlantique" class="rtb-dyn-slot" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-atl" style="background:linear-gradient(135deg,#1a5a7add 0%,#1a5a7a88 60%,#1a5a7a44 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
   <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🌊</div>
@@ -632,7 +632,7 @@
   <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
   <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
   <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-bourgogne" style="display:contents;"></div>
+  <div id="rtb-dyn-bourgogne" class="rtb-dyn-slot" style="display:contents;"></div>
 </div>
 <div class="sh-compact sh-bou" style="background:linear-gradient(135deg,#6B3288dd 0%,#6B328888 60%,#6B328844 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
   <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🍷</div>
@@ -1114,6 +1114,14 @@ async function loadDynamicFiches(){
         // à la création → une suppression n'apparaissait qu'après rechargement de la page).
         try{ populateRegionContent(tabRk, regionName, lieux); }
         catch(err){ console.error('populateRegionContent '+tabRk, err); }
+      }
+    });
+
+    // Re-passe d'équité : chaque barre (fixe ET dynamique) reçoit les boutons de TOUTES
+    // les régions dynamiques (idempotent — les premières créées manquaient chez les suivantes).
+    Object.keys(byTab).forEach(rk=>{
+      if(!ALL_SUPABASE_REGIONS.includes(rk) && byTab[rk] && byTab[rk].length){
+        try{ addDynRegionTopbar(byTab[rk][0].region || rk, rk); }catch(e){}
       }
     });
 
@@ -1676,10 +1684,17 @@ function createDynamicTab(tabId, regionName, lieux, appMain){
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;
   tab.innerHTML=`
+    <div class="region-topbar visible" id="rtb-bar-${rk}">
+      <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
+      <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
+      <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
+      <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
+      <div id="rtb-dyn-${rk}" class="rtb-dyn-slot" style="display:contents;"></div>
+    </div>
     <div class="sh-compact" style="background:linear-gradient(135deg,rgba(200,168,75,.30) 0%,rgba(200,168,75,.10) 60%,rgba(200,168,75,.04) 100%),var(--chrome-bg);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
       <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">${emoji}</div>
-      <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:white;margin-bottom:4px;">${regionName}</h2>
-      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Vos découvertes · Créées via RockNRoad</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:6px;letter-spacing:-.5px;">${regionName}</h2>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Vos découvertes · Votre région</div>
     </div>
     <div class="inner">
       <div id="${rk}-content"></div>
@@ -1837,14 +1852,14 @@ function addDynRegionTopbar(regionName, regionKey){
   // Add to all 3 French topbars
   const regionEmojis2={'alsace':'🥨','bretagne':'🦞','normandie':'🐄','provence':'☀️','occitanie':'🌻','alpes':'⛷️','auvergne':'🌋','ardenne':'🍾','nord':'🌷','corse':'🏝️','loire':'🏰','jura':'🧀'};
   const emoji=regionEmojis2[regionKey]||'📍';
-  ['alsace','pyrenees','atlantique','bourgogne'].forEach(parentId=>{
-    const rtbDyn=document.getElementById('rtb-dyn-'+parentId);
-    if(rtbDyn&&!document.getElementById('rtb-dyn-'+parentId+'-'+regionKey)){
+  document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
+    const parentId=slot.id.replace('rtb-dyn-','');
+    if(!document.getElementById('rtb-dyn-'+parentId+'-'+regionKey)){
       const btn=document.createElement('button');
       btn.className='rtb-btn';btn.id='rtb-dyn-'+parentId+'-'+regionKey;
       btn.innerHTML=`${emoji} ${regionName}`;
-      btn.onclick=()=>showTab('dyn-'+regionKey);
-      rtbDyn.appendChild(btn);
+      btn.setAttribute('onclick',"showTab('dyn-"+regionKey+"')"); // attribut (pas propriété) : requis par la sync d'état actif
+      slot.appendChild(btn);
     }
   });
   return; // old function body below is now dead
@@ -1931,10 +1946,10 @@ function openGrandeFiche(id){
     pratique += `<div class="gf-cell"><div class="gf-cell-t">🕒 HORAIRES</div><div class="gf-cell-v">${esc(l.horaires_text).split('|').join('<br>')}${statut?'<br>'+statut:''}</div></div>`;
   }
   if(l.accessibilite || l.wheelchair) pratique += `<div class="gf-cell"><div class="gf-cell-t">♿ ACCESSIBILITÉ</div><div class="gf-cell-v">${esc(l.accessibilite||'Accès PMR')}<br><span style="opacity:.4;font-size:10px;">(à confirmer sur place)</span></div></div>`;
-  if(l.tel) pratique += `<div class="gf-cell"><div class="gf-cell-t">📞 CONTACT</div><div class="gf-cell-v"><a href="tel:${esc(l.tel)}" style="color:#d8cfc0;">${esc(l.tel)}</a></div></div>`;
+  if(l.tel) pratique += `<div class="gf-cell"><div class="gf-cell-t">📞 CONTACT</div><div class="gf-cell-v"><a href="tel:${esc(l.tel)}" style="color:var(--ink);">${esc(l.tel)}</a></div></div>`;
   if(l.adresse||l.sous_region) pratique += `<div class="gf-cell"><div class="gf-cell-t">📍 ADRESSE</div><div class="gf-cell-v">${esc(l.adresse||l.sous_region)}</div></div>`;
 
-  const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:#2a2418;color:var(--gold-light);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
+  const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
 
   document.getElementById('gf-body').innerHTML = `
     <div class="gf-cover" style="background-image:${cover};">
@@ -2151,19 +2166,13 @@ window.showTab=function(id){
   if(id==='carte' && allLieux.length) setTimeout(()=>initCarteGlobal(),80);
   if(id==='fiche'){ setTimeout(()=>{ initFicheGlobal(); buildFicheContent(currentFicheRegion); },80); }
 
-  // Update region topbar active state — sync all French topbars by onclick
-  const franceTabs=['alsace','pyrenees','atlantique','bourgogne'];
-  if(franceTabs.includes(id)){
-    // Sync all topbars (alsace-bar, rtb-pyrenees, rtb-atlantique, rtb-bourgogne)
-    ['rtb-alsace-bar','rtb-pyrenees','rtb-atlantique','rtb-bourgogne'].forEach(tbId=>{
-      const tb=document.getElementById(tbId);
-      if(!tb)return;
-      tb.querySelectorAll('.rtb-btn').forEach(btn=>{
-        const oc=btn.getAttribute('onclick')||'';
-        btn.classList.toggle('active', oc.includes("'"+id+"'"));
-      });
+  // Sync de l'état actif sur TOUTES les barres de régions (fixes + dynamiques)
+  document.querySelectorAll('.region-topbar').forEach(tb=>{
+    tb.querySelectorAll('.rtb-btn').forEach(btn=>{
+      const oc=btn.getAttribute('onclick')||'';
+      btn.classList.toggle('active', oc.includes("'"+id+"'"));
     });
-  }
+  });
 };
 
 
@@ -2213,8 +2222,8 @@ updateVoyageBtn();
 </div>
 <style>
 #gf-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
-#gf-modal{ /* GRANDE FICHE : modale sombre dans les DEUX thèmes (veillée de lecture) — couleurs invariantes */
-  background:var(--chrome-bg);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;}
+#gf-modal{ /* GRANDE FICHE : suit les rôles (papier en clair, sombre en sombre) — décision Bruno 12/06 */
+  background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;}
 #gf-body{border-radius:16px;overflow:hidden;}
 .gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:16px 16px 0 0;}
 .gf-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
@@ -2223,24 +2232,24 @@ updateVoyageBtn();
 .gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
 .gf-content{padding:16px 22px 22px;}
 .gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:#F5EFE0!important;}
-.gf-sub{font-size:12px;color:rgba(200,168,75,.7);margin:0 0 16px;}
-.gf-desc{font-size:14px;line-height:1.6;color:#d8cfc0;margin:0 0 14px;}
-.gf-quote{background:#1E1B14;border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
-.gf-quote-t{font-size:10px;color:rgba(200,168,75,.6);font-weight:700;margin-bottom:4px;}
-.gf-quote p{font-size:13px;line-height:1.6;color:#d8cfc0;margin:0;font-style:italic;}
+.gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:var(--ink)!important;}
+.gf-sub{font-size:12px;color:var(--gold-text);margin:0 0 16px;}
+.gf-desc{font-size:14px;line-height:1.6;color:var(--ink-dim);margin:0 0 14px;}
+.gf-quote{background:var(--surface);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
+.gf-quote-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
+.gf-quote p{font-size:13px;line-height:1.6;color:var(--ink-dim);margin:0;font-style:italic;}
 .gf-conseil{background:var(--gold-a10);border:1px solid var(--gold-a20);padding:11px 14px;border-radius:8px;margin-bottom:16px;}
-.gf-conseil-t{font-size:11px;color:var(--gold-light);font-weight:700;}
-.gf-conseil p{font-size:13px;color:#d8cfc0;margin:4px 0 0;line-height:1.5;}
+.gf-conseil-t{font-size:11px;color:var(--gold-text);font-weight:700;}
+.gf-conseil p{font-size:13px;color:var(--ink-dim);margin:4px 0 0;line-height:1.5;}
 .gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.gf-cell{background:#1E1B14;padding:10px 12px;border-radius:8px;}
-.gf-cell-t{font-size:10px;color:rgba(200,168,75,.6);font-weight:700;margin-bottom:4px;}
-.gf-cell-v{font-size:12px;color:#d8cfc0;line-height:1.6;}
+.gf-cell{background:var(--surface);padding:10px 12px;border-radius:8px;}
+.gf-cell-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
+.gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
 .gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
 .gf-votebar{border-top:1px solid var(--gold-a20);padding-top:8px;margin-bottom:12px;}
 .gf-actions{display:flex;gap:8px;}
 .gf-btn-gold{flex:1;background:var(--gold);color:#0f0d09;font-weight:700;font-size:13px;padding:10px;border:none;border-radius:8px;cursor:pointer;text-align:center;text-decoration:none;}
-.gf-btn-dark{background:#1E1B14;border:1px solid var(--gold-a35);color:var(--gold-light);font-size:13px;padding:10px 14px;border-radius:8px;cursor:pointer;}
+.gf-btn-dark{background:var(--chrome-bg);border:1px solid var(--gold-a35);color:var(--gold-light);font-size:13px;padding:10px 14px;border-radius:8px;cursor:pointer;}
 </style>
 
 <script src="boussole.js" defer></script>
