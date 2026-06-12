@@ -841,6 +841,15 @@ async function loadDynamicFiches(){
       }
     });
 
+    // Ordre DÉTERMINISTE : dans chaque barre, les régions dynamiques sont triées
+    // alphabétiquement (après les 4 références). Sans ce tri, chaque barre gardait
+    // son ordre d'arrivée propre → les boutons « bougeaient » d'un onglet à l'autre.
+    document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
+      [...slot.children]
+        .sort((a,b)=>(a.dataset.rname||a.textContent).localeCompare(b.dataset.rname||b.textContent,'fr'))
+        .forEach(btn=>slot.appendChild(btn));
+    });
+
     // Régions devenues vides (dernière fiche supprimée) ou sans fiche : état vide propre
     document.querySelectorAll('[data-region-tab]').forEach(sec=>{
       const rk=sec.getAttribute('data-region-tab');
@@ -1636,6 +1645,7 @@ function addDynRegionTopbar(regionName, regionKey){
       const btn=document.createElement('button');
       btn.className='rtb-btn';btn.id='rtb-dyn-'+parentId+'-'+regionKey;
       btn.innerHTML=`${emoji} ${regionName}`;
+      btn.dataset.rname=regionName; // clé de tri (sans l'émoji)
       btn.setAttribute('onclick',"showTab('dyn-"+regionKey+"')"); // attribut (pas propriété) : requis par la sync d'état actif
       slot.appendChild(btn);
     }
