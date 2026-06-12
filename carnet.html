@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<script src="chrome.js"></script>
 
 <style>
 
@@ -24,16 +25,15 @@
 
 /* APP MAIN */
 
-#top-bar{background:rgba(22,20,16,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,168,75,.15);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-.brand{display:flex;align-items:center;gap:9px;font-family:'Playfair Display',serif;font-weight:600;font-size:16px;text-decoration:none;color:var(--creme);}
-.brand .dot{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:grid;place-items:center;color:var(--dark);font-size:13px;}
-.brand em{font-style:italic;color:var(--gold-light);}
-.top-bar-right{display:flex;align-items:center;gap:10px;}
-.tb-quit{background:rgba(245,239,224,.06);color:var(--creme);border:1px solid rgba(200,168,75,.2);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
-.tb-quit:hover{border-color:var(--gold);}
-.top-voyage-btn{display:none;align-items:center;gap:6px;background:var(--dark);color:var(--gold);font-size:10.5px;font-weight:700;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;}
+/* La barre du haut vient de chrome.js (la couverture). La topbar locale est supprimée.
+   Le compteur d'itinéraire devient une pastille flottante (bas-gauche, en face de la Boussole). */
+.top-voyage-btn{display:none;position:fixed;bottom:20px;left:20px;z-index:900;align-items:center;gap:6px;
+  background:var(--chrome-bg);color:var(--gold);font-size:10.5px;font-weight:700;padding:8px 16px;
+  border-radius:var(--r-pill);border:1px solid var(--gold-a35);cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 18px rgba(0,0,0,.35);} /* ombre sur flottant : invariant */
 .top-voyage-btn.visible{display:flex;}
-.top-voyage-btn:hover{background:var(--gold);color:var(--dark);}
+@media (max-width:700px){.top-voyage-btn{bottom:84px;}} /* au-dessus de la tabbar mobile, comme la Boussole */
+.top-voyage-btn:hover{background:var(--gold);color:var(--chrome-bg);}
 
 /* SECTIONS */
 .section{display:none;flex:1;}
@@ -311,12 +311,12 @@
 /* RESPONSIVE */
 @media(max-width:1200px){.sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:repeat(3,1fr)!important;}}
 @media(max-width:900px){
-  #top-bar{padding:0 14px;}
+  
   .inner{padding:14px 12px 60px;}
   .sites-grid,.camps-grid,.ov-grid,.dgrid{grid-template-columns:1fr!important;}
   .sh-compact{margin:14px 14px 0;}
 }
-@media print{#top-bar{display:none;}.section{display:block!important;}}
+@media print{.rnrc-nav,.rnrc-tabbar,.bsl-btn,.top-voyage-btn{display:none!important;}.section{display:block!important;}}
 
 /* TIPS / CONSEILS */
 .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:4px;}
@@ -528,19 +528,10 @@
 <!-- ══ APP MAIN ══ -->
 <div id="app-main">
 
-  <!-- Top bar -->
-  <div id="top-bar">
-    <div style="display:flex;align-items:center;gap:14px;">
-      <a class="brand" href="home.html"><span class="dot">◆</span> Rock<em>N</em>Road</a>
-      <div class="top-bar-title" id="top-bar-title">Vue d'<span>ensemble</span></div>
-    </div>
-    <div class="top-bar-right">
-      <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
-        🧭 <span id="top-voyage-count">0</span> lieu(x) · Voir l'itinéraire
-      </button>
-      <button class="tb-quit" onclick="logout()" title="Se déconnecter">Quitter</button>
-    </div>
-  </div>
+  <!-- Barre de navigation : injectée par chrome.js. Quitter → window.logout() (défini plus bas). -->
+  <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
+    🧭 <span id="top-voyage-count">0</span> lieu(x) · Voir l'itinéraire
+  </button>
 
 <!-- OVERVIEW -->
 <div class="section active" id="tab-overview">
@@ -1069,6 +1060,7 @@ async function loadGroupeProfil(userId) {
         DEPART.lng = g.lng_depart;
         DEPART.nom = g.nom || g.adresse_depart || 'Votre départ';
       }
+      if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
       updateDepartLabel();
       return;
     }
@@ -1083,6 +1075,7 @@ async function loadGroupeProfil(userId) {
       DEPART.nom = g.nom || g.adresse_depart || 'Votre départ';
     }
     sessionStorage.setItem('rnr_groupe', JSON.stringify(g));
+    if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
     updateDepartLabel();
   } catch(e) {
     console.warn('Profil groupe non chargé, utilisation valeur par défaut', e);
@@ -2224,7 +2217,6 @@ window.showTab=function(id){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   const sec=document.getElementById("tab-"+id);if(sec)sec.classList.add("active");
   const ab=document.getElementById("snav-"+id);if(ab)ab.classList.add("active");
-  const tb=document.getElementById("top-bar-title");if(tb&&TITLES[id])tb.textContent=TITLES[id];
   const am=document.getElementById("app-main");if(am)am.scrollTo(0,0);
   if(history.replaceState) history.replaceState(null,null,'#'+id);
   // Lazy init Leaflet maps

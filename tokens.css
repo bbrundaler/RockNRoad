@@ -108,3 +108,24 @@
   --shadow:       0 2px 12px rgba(0,0,0,.30);
   --shadow-hover: 0 8px 28px rgba(0,0,0,.45);
 }
+
+/* ═══ STATUTS SÉMANTIQUES (invariants — ajout v2.1, chantier carnet) ════
+   Couleurs de SENS, identiques dans les deux thèmes : un « oui » reste
+   vert en clair comme en sombre. Centralisées ici pour solder les copies
+   divergentes (le dog 4 états était dupliqué trois fois dans carnet.html).
+   Convention : -bg = fond pâle (posé sur le papier) · -ink = texte/icône
+   · -vif = variante lumineuse pour les surfaces sombres (monde nuit).   */
+:root{
+  /* oui / ouvert / validé */
+  --st-ok-ink:  #2C5016;  --st-ok-bg:  #E8F4E8;  --st-ok-vif:  #7DD87D;
+  /* sous conditions / avertissement */
+  --st-warn-ink:#854F0B;  --st-warn-bg:#FDF4E6;  --st-warn-line:#BA7517;  --st-warn-vif:#F0C070;
+  /* non / fermé / suppression */
+  --st-bad-ink: #CC4400;  --st-bad-bg: #FFF3EE;  --st-bad-vif: #F08070;
+  /* inconnu / non renseigné */
+  --st-na-ink:  #8B6914;  --st-na-bg:  #FFFBE8;  --st-na-vif:  #E5C96A;
+  /* votes du groupe */
+  --st-love:    #DC3C64;  --st-save:   #2850A0;
+  /* liens utilitaires (web / tél.) */
+  --st-link:    #2A5AAA;  --st-link-bg:#F0F4FF;  --st-link-line:#C0D0F0;
+}
