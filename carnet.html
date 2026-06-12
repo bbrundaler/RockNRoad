@@ -515,289 +515,7 @@
 
 <!-- (Vue d'ensemble v1 supprimée — détrônée par le Hub, décision v9. Arrivée sans hash → région par défaut.) -->
 
-<!-- ══ SECTION ALSACE (France - région par défaut) ══ -->
-<div class="section" id="tab-alsace">
-<div class="region-topbar visible" id="rtb-alsace-bar">
-  <button class="rtb-btn active" onclick="showTab('alsace')" id="rtb-alsace-btn">🥨 Alsace</button>
-  <button class="rtb-btn" onclick="showTab('pyrenees')" id="rtb-als-pyr">🏔️ Pyrénées</button>
-  <button class="rtb-btn" onclick="showTab('atlantique')" id="rtb-als-atl">🌊 Atlantique</button>
-  <button class="rtb-btn" onclick="showTab('bourgogne')" id="rtb-als-bou">🍷 Bourgogne</button>
-  <div id="rtb-dyn-alsace" class="rtb-dyn-slot" style="display:contents;"></div>
-</div>
-<div class="sh-compact sh-als" style="background:linear-gradient(135deg,#8B2020 0%,#5a1010 60%,#3a0808 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
-  <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🥨</div>
-  <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:6px;letter-spacing:-.5px;">Alsace</h2>
-  <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Depuis votre départ · Sur place · Votre région</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;" id="alsace-tags">
-    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🥨 Alsace</span>
-    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🍷 Route des vins</span>
-    <span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Villages médiévaux</span>
-  </div>
-</div>
-<div class="inner" id="alsace-content">
-  <div style="text-align:center;padding:40px 20px;color:var(--ink-dim);">
-    <div style="font-size:40px;margin-bottom:10px;">🥨</div>
-    <h3 style="font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:6px;">Vos fiches Alsace apparaîtront ici</h3>
-    <p style="font-size:13px;margin-bottom:16px;">Créez votre première fiche Alsace — elle s'affichera automatiquement dans cette section.</p>
-    <a href="admin.html" style="display:inline-block;background:var(--gold);color:var(--chrome-bg);font-weight:700;font-size:12px;padding:10px 22px;border-radius:8px;text-decoration:none;">➕ Créer une fiche Alsace</a>
-  </div>
-</div>
-</div>
-
-<div class="section" id="tab-pyrenees">
-<div class="region-topbar visible" id="rtb-pyrenees">
-  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
-  <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-  <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
-  <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-pyrenees" class="rtb-dyn-slot" style="display:contents;"></div>
-</div>
-<div class="sh-compact sh-pyr" style="background:linear-gradient(135deg,#2C5016dd 0%,#2C501688 60%,#2C501644 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
-  <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🏔️</div>
-  <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:white;margin-bottom:4px;">Pyrénées</h2>
-  <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Béarn · Hautes-Pyrénées · ≈ 860 km depuis votre départ · Via Pau</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏔️ Béarn</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Bigorre</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🐕 Chien OK partout</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏘️ Lescun</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🌊 Gavarnie</span></div>
-</div>
-<!-- Vue tabs : Fiches | Carte & Récap -->
-<div class="region-view-tabs">
-  <button class="rvt-btn active" onclick="switchRegionView('pyrenees','fiches')" id="rvt-pyrenees-fiches">📋 Fiches</button>
-  <button class="rvt-btn" onclick="switchRegionView('pyrenees','recap')" id="rvt-pyrenees-recap">🗺️ Carte & Récap</button>
-</div>
-<!-- FICHES VIEW -->
-<div class="region-view active" id="rv-pyrenees-fiches">
-  <div class="inner" id="pyrenees-content">
-    <div class="region-loader">
-      <div class="spinner2"></div>
-      <p style="font-size:13px;color:var(--ink-dim);">Chargement des fiches Pyrénées…</p>
-      <a href="admin.html" style="display:inline-block;margin-top:14px;background:var(--gold);color:var(--chrome-bg);font-weight:700;font-size:11px;padding:8px 18px;border-radius:8px;text-decoration:none;">➕ Créer une fiche Pyrénées</a>
-    </div>
-  </div>
-</div>
-<!-- CARTE & RÉCAP VIEW -->
-<div class="region-view" id="rv-pyrenees-recap">
-  <div class="region-map-container" id="map-container-pyrenees">
-    <div id="map-pyrenees" style="height:380px;"></div>
-  </div>
-  <div class="recap-list" id="recap-list-pyrenees">
-    <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte & récap disponibles après chargement des fiches.</div>
-  </div>
-</div>
-</div>
-
-<!-- ATLANTIQUE -->
-
-<div class="section" id="tab-atlantique">
-<div class="region-topbar visible" id="rtb-atlantique">
-  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
-  <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-  <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
-  <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-atlantique" class="rtb-dyn-slot" style="display:contents;"></div>
-</div>
-<div class="sh-compact sh-atl" style="background:linear-gradient(135deg,#1a5a7add 0%,#1a5a7a88 60%,#1a5a7a44 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
-  <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🌊</div>
-  <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:white;margin-bottom:4px;">Atlantique</h2>
-  <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Gironde · Landes · ≈ 870 km depuis votre départ · Via Bordeaux</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🌊 Gironde</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🌲 Landes</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🦪 Huîtres</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🚴 Forêt vélo</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏖️ Dune du Pilat</span></div>
-</div>
-<!-- Vue tabs : Fiches | Carte & Récap -->
-<div class="region-view-tabs">
-  <button class="rvt-btn active" onclick="switchRegionView('atlantique','fiches')" id="rvt-atlantique-fiches">📋 Fiches</button>
-  <button class="rvt-btn" onclick="switchRegionView('atlantique','recap')" id="rvt-atlantique-recap">🗺️ Carte & Récap</button>
-</div>
-<!-- FICHES VIEW -->
-<div class="region-view active" id="rv-atlantique-fiches">
-  <div class="inner" id="atlantique-content">
-    <div class="region-loader">
-      <div class="spinner2"></div>
-      <p style="font-size:13px;color:var(--ink-dim);">Chargement des fiches Atlantique…</p>
-      <a href="admin.html" style="display:inline-block;margin-top:14px;background:var(--gold);color:var(--chrome-bg);font-weight:700;font-size:11px;padding:8px 18px;border-radius:8px;text-decoration:none;">➕ Créer une fiche Atlantique</a>
-    </div>
-  </div>
-</div>
-<!-- CARTE & RÉCAP VIEW -->
-<div class="region-view" id="rv-atlantique-recap">
-  <div class="region-map-container" id="map-container-atlantique">
-    <div id="map-atlantique" style="height:380px;"></div>
-  </div>
-  <div class="recap-list" id="recap-list-atlantique">
-    <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte & récap disponibles après chargement des fiches.</div>
-  </div>
-</div>
-</div>
-
-<div class="section" id="tab-bourgogne">
-<div class="region-topbar visible" id="rtb-bourgogne">
-  <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
-  <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-  <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
-  <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
-  <div id="rtb-dyn-bourgogne" class="rtb-dyn-slot" style="display:contents;"></div>
-</div>
-<div class="sh-compact sh-bou" style="background:linear-gradient(135deg,#6B3288dd 0%,#6B328888 60%,#6B328844 100%);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
-  <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">🍷</div>
-  <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:white;margin-bottom:4px;">Bourgogne</h2>
-  <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Côte-d'Or · Yonne · ≈ 280 km depuis votre départ · Via Dijon</div>
-  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🍷 Côte-d'Or</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏰 Yonne</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🚴 Canal</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">🏛️ Guédelon</span><span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">⛷️ Jura proche</span></div>
-</div>
-<!-- Vue tabs : Fiches | Carte & Récap -->
-<div class="region-view-tabs">
-  <button class="rvt-btn active" onclick="switchRegionView('bourgogne','fiches')" id="rvt-bourgogne-fiches">📋 Fiches</button>
-  <button class="rvt-btn" onclick="switchRegionView('bourgogne','recap')" id="rvt-bourgogne-recap">🗺️ Carte & Récap</button>
-</div>
-<!-- FICHES VIEW -->
-<div class="region-view active" id="rv-bourgogne-fiches">
-  <div class="inner" id="bourgogne-content">
-    <div class="region-loader">
-      <div class="spinner2"></div>
-      <p style="font-size:13px;color:var(--ink-dim);">Chargement des fiches Bourgogne…</p>
-      <a href="admin.html" style="display:inline-block;margin-top:14px;background:var(--gold);color:var(--chrome-bg);font-weight:700;font-size:11px;padding:8px 18px;border-radius:8px;text-decoration:none;">➕ Créer une fiche Bourgogne</a>
-    </div>
-  </div>
-</div>
-<!-- CARTE & RÉCAP VIEW -->
-<div class="region-view" id="rv-bourgogne-recap">
-  <div class="region-map-container" id="map-container-bourgogne">
-    <div id="map-bourgogne" style="height:380px;"></div>
-  </div>
-  <div class="recap-list" id="recap-list-bourgogne">
-    <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte & récap disponibles après chargement des fiches.</div>
-  </div>
-</div>
-</div>
-
-<!-- ══ CARTE ══ -->
-<div class="section" id="tab-carte">
-<div class="inner">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap;">
-    <div>
-      <h2 class="sec-title" style="margin-bottom:2px;">Carte <em>Interactive</em></h2>
-      <p class="sec-lead" style="margin:0;">Tous vos lieux depuis Supabase — filtrez par région</p>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <label style="font-size:11px;font-weight:700;color:var(--ink-dim);white-space:nowrap;">🗺 Région :</label>
-      <select id="carte-region-select" onchange="carteFilterSelect(this.value)"
-        style="padding:8px 14px;border:1.5px solid var(--gold-a35);border-radius:8px;font-size:12px;font-weight:600;background:var(--paper);color:var(--ink);cursor:pointer;font-family:'Inter',sans-serif;min-width:180px;">
-        <option value="all">🌍 Toutes les régions</option>
-        <option value="Alsace">🥨 Alsace</option>
-        <option value="Aquitaine">🍷 Aquitaine</option>
-        <option value="Auvergne">🌋 Auvergne</option>
-        <option value="Basse-Normandie">🏰 Basse-Normandie</option>
-        <option value="Bourgogne">🍇 Bourgogne</option>
-        <option value="Bretagne">🦞 Bretagne</option>
-        <option value="Centre">🏰 Centre</option>
-        <option value="Champagne-Ardenne">🥂 Champagne-Ardenne</option>
-        <option value="Corse">🏝️ Corse</option>
-        <option value="Franche-Comté">⛰️ Franche-Comté</option>
-        <option value="Haute-Normandie">⛵ Haute-Normandie</option>
-        <option value="Île-de-France">🗼 Île-de-France</option>
-        <option value="Languedoc-Roussillon">🌻 Languedoc-Roussillon</option>
-        <option value="Limousin">🌿 Limousin</option>
-        <option value="Lorraine">⚜️ Lorraine</option>
-        <option value="Midi-Pyrénées">🏔️ Midi-Pyrénées</option>
-        <option value="Nord-Pas-de-Calais">🌷 Nord-Pas-de-Calais</option>
-        <option value="Pays de la Loire">🌊 Pays de la Loire</option>
-        <option value="Picardie">🌾 Picardie</option>
-        <option value="Poitou-Charentes">🐚 Poitou-Charentes</option>
-        <option value="Provence-Alpes-Côte-d-Azur">☀️ Provence-Alpes-Côte d'Azur</option>
-        <option value="Rhône-Alpes">⛷️ Rhône-Alpes</option>
-      </select>
-    </div>
-  </div>
-  <div id="carte-filter-extra" style="display:none;"></div>
-  <div id="carte-global-map"></div>
-  <!-- Panneau info dynamique -->
-  <div id="carte-info-panel">
-    <div class="cip-idle">
-      <div class="cip-icon">📍</div>
-      <p id="cip-idle-text">Survole ou clique un lieu sur la carte pour voir sa distance depuis <strong>Avenheim-Schnersheim</strong>, ses infos et si les chiens sont acceptés.</p>
-    </div>
-  </div>
-</div>
-</div>
-
-<div class="section" id="tab-tips"><div class="inner">
-  <h2 class="sec-title">Conseils & <em>Pratique</em></h2>
-  <p class="sec-lead">Tout ce qu'il faut pour voyager sereinement avec teardrop, vélos et Golden Retriever — en plein été !</p>
-  <div class="info-banner">☀️ <strong>Voyage en plein été :</strong> réservez vos campings le plus tôt possible. Les campings du Bassin d'Arcachon et des Landes se remplissent dès avril-mai pour juillet-août !</div>
-  <div class="tips-grid">
-    <div class="tip-card"><div class="tip-title">🐾 Chien en camping</div><ul class="tip-list"><li>Appeler pour confirmer l'acceptation</li><li>Préciser race &amp; taille (Golden Retriever)</li><li>Demander si emplacements clôturés</li><li>Carnet vaccination à jour (rage)</li><li>Nuit chaude : prévoir ventilation tente</li></ul></div>
-    <div class="tip-card"><div class="tip-title">🌊 Chien sur les plages (été)</div><ul class="tip-list"><li>Juil–août : interdit zone de baignade</li><li>Matin avant 9h : plages souvent autorisées</li><li>Dune du Pilat : laisse OK toute la dune !</li><li>Cap Ferret Bassin : plus permissif qu'Océan</li><li>Toujours avoir une laisse sur soi</li></ul></div>
-    <div class="tip-card"><div class="tip-title">📋 Campings en été</div><ul class="tip-list"><li>Landes/Arcachon : réserver 4–6 sem. avant</li><li>Pyrénées/Bourgogne : 2–3 sem. suffisent</li><li>Mentionner : teardrop + tente + chien + 3p</li><li>Confirmer électricité 16A impérativement</li><li>Demander taille minimale emplacement</li></ul></div>
-    <div class="tip-card"><div class="tip-title">⚡ Vélos électriques</div><ul class="tip-list"><li>Recharge sur borne camping ou prise normale</li><li>App Komoot pour pistes cyclables</li><li>Voies vertes Landes : interdites aux voitures</li><li>Canal de Bourgogne : plat et ombragé</li><li>Antivols U robustes pour les haltes</li></ul></div>
-    <div class="tip-card"><div class="tip-title">🚐 Teardrop pratique</div><ul class="tip-list"><li>Emplacement minimum 10m de long</li><li>Arriver avant 18h pour un bon emplacement</li><li>Laisser le Teardrop au camping certains jours</li><li>Vérifier accès vélos depuis l'emplacement</li><li>GPS : signaler remorque dans les réglages</li></ul></div>
-    <div class="tip-card"><div class="tip-title">🌡️ Chaleur estivale</div><ul class="tip-list"><li>Visiter châteaux &amp; grottes : fraîcheur garantie</li><li>Partir tôt (7–9h) pour les randonnées</li><li>Sieste l'après-midi : adapté au chien aussi</li><li>Eau abondante pour le Golden Retriever</li><li>Dune du Pilat : y aller en soirée !</li></ul></div>
-  </div>
-  <div class="divl"><div class="divl-t">📞 Script de réservation camping</div></div>
-  <div class="script-box">
-    <strong style="color:var(--gold-text)">"Bonjour, je souhaite réserver un emplacement pour une voiture avec remorque teardrop (environ 10 mètres au total), une tente additionnelle à côté, et un chien Golden Retriever. Nous sommes 3 personnes. Avez-vous des emplacements adaptés avec branchement électrique 16A disponibles ?"</strong>
-    <br><br>
-    <strong>Questions à poser impérativement :</strong> taille minimum de l'emplacement · acceptation du chien confirmée · électricité 16A disponible · accès facile aux vélos depuis l'emplacement · date d'ouverture et fermeture
-  </div>
-</div></div>
-
-<!-- FOOTER -->
-
-<!-- FICHE RÉCAPITULATIVE -->
-
-<!-- FICHE RÉCAPITULATIVE -->
-<div class="section" id="tab-fiche">
-<div class="inner">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-    <div>
-      <h2 class="sec-title">Fiche <em>Récapitulative</em></h2>
-      <p style="font-size:13px;color:var(--ink-dim);margin-top:4px;">Vue globale par région — carte + liste de tous les sites</p>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <select id="fiche-region-select" onchange="ficheSelectRegion(this.value)" style="padding:9px 14px;border:1.5px solid var(--gold-a35);border-radius:8px;font-size:12px;font-weight:600;background:var(--paper);color:var(--ink);cursor:pointer;font-family:'Inter',sans-serif;">
-        <option value="all">🌍 Toutes les régions</option>
-        <option value="Alsace">🥨 Alsace</option>
-        <option value="Aquitaine">🍷 Aquitaine</option>
-        <option value="Auvergne">🌋 Auvergne</option>
-        <option value="Basse-Normandie">🏰 Basse-Normandie</option>
-        <option value="Bourgogne">🍇 Bourgogne</option>
-        <option value="Bretagne">🦞 Bretagne</option>
-        <option value="Centre">🏰 Centre</option>
-        <option value="Champagne-Ardenne">🥂 Champagne-Ardenne</option>
-        <option value="Corse">🏝️ Corse</option>
-        <option value="Franche-Comté">⛰️ Franche-Comté</option>
-        <option value="Haute-Normandie">⛵ Haute-Normandie</option>
-        <option value="Île-de-France">🗼 Île-de-France</option>
-        <option value="Languedoc-Roussillon">🌻 Languedoc-Roussillon</option>
-        <option value="Limousin">🌿 Limousin</option>
-        <option value="Lorraine">⚜️ Lorraine</option>
-        <option value="Midi-Pyrénées">🏔️ Midi-Pyrénées</option>
-        <option value="Nord-Pas-de-Calais">🌷 Nord-Pas-de-Calais</option>
-        <option value="Pays de la Loire">🌊 Pays de la Loire</option>
-        <option value="Picardie">🌾 Picardie</option>
-        <option value="Poitou-Charentes">🐚 Poitou-Charentes</option>
-        <option value="Provence-Alpes-Côte-d-Azur">☀️ Provence-Alpes-Côte d'Azur</option>
-        <option value="Rhône-Alpes">⛷️ Rhône-Alpes</option>
-      </select>
-      <button onclick="window.print()" style="background:var(--gold);color:var(--chrome-bg);font-weight:700;font-size:12px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;">🖨️ Imprimer</button>
-    </div>
-  </div>
-
-  <!-- Carte Leaflet fiche -->
-  <div style="border-radius:12px;overflow:hidden;border:2px solid var(--gold-a35);box-shadow:0 4px 20px rgba(0,0,0,.1);margin-bottom:28px;">
-    <div id="fiche-global-map" style="height:420px;"></div>
-  </div>
-
-  <!-- Contenu dynamique par région -->
-  <div id="fiche-content">
-    <div class="region-loader">
-      <div class="spinner2"></div>
-      <p style="font-size:13px;">Chargement des fiches…</p>
-    </div>
-  </div>
-</div>
-</div>
-
-<footer style="background:#0d0d0d;color:rgba(245,239,224,.35);text-align:center;padding:18px 20px;font-size:11px;letter-spacing:2px;">
-    <div style="font-size:26px;margin-bottom:10px;">🐾</div>
-    <div style="font-family:'Playfair Display',serif;font-size:18px;color:rgba(200,168,75,.7);margin-bottom:6px;">RockNRoad · Aventures</div>
-    <div style="margin-top:4px;">⛺ 19 Campings &nbsp;·&nbsp; 🗺 22 Sites</div>
-  </footer>
+<!-- ══ RÉGIONS : 100 %% dynamiques (décision Bruno 12/06) — toutes générées par createRegionTab. ══ -->
 
 <!-- ══ SECTIONS EUROPE ══ -->
 <div class="section" id="tab-allemagne"><div class="inner"><div id="rtb-allemagne"></div><div id="content-allemagne"><div style="text-align:center;padding:60px 20px;color:var(--ink-dim);"><div style="font-size:48px;margin-bottom:12px;">🇩🇪</div><h3 style="font-family:Playfair Display,serif;font-size:22px;color:var(--ink);margin-bottom:8px;">Allemagne</h3><p>Ajoutez vos premières fiches via <a href="admin.html" style="color:var(--gold);">Créer une fiche</a> → Région Alsace/Europe</p></div></div></div></div>
@@ -843,6 +561,12 @@ function requestIdleCallbackSafe(cb){
   const e=session.user.email;
   const ac=document.getElementById("auth-check");if(ac){ac.style.opacity="0";setTimeout(()=>ac.style.display="none",500);}
   const mc=document.getElementById("main-content");if(mc)mc.style.display="block";
+  // MOTEUR UNIQUE : les 4 régions de référence existent toujours, même vides.
+  // Les autres régions naissent des données (loadDynamicFiches).
+  ALL_SUPABASE_REGIONS.forEach(rk=>{
+    try{ createRegionTab('tab-'+rk, rk, REGION_META[rk].nom, []); }
+    catch(e){ console.error('createRegionTab '+rk, e); }
+  });
   // Handle hash navigation from other pages
   const hash=window.location.hash.replace('#','');
   const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
@@ -875,8 +599,7 @@ window.addEventListener('hashchange',function(){
 // ── FICHES DYNAMIQUES SUPABASE v21 ───────────────────────────────────────
 // Régions désormais toutes dynamiques (Alsace + Pyrénées + Atlantique + Bourgogne)
 const ALL_SUPABASE_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
-// Alias : rk normalisé → id de section HTML existante
-// Sections HTML fixes : tab-alsace, tab-pyrenees, tab-atlantique, tab-bourgogne
+// Alias : rk normalisé → région de référence (créée par createRegionTab au démarrage)
 const REGION_ALIASES = {
   // Pyrénées / Sud-Ouest
   'midipyrenees':'pyrenees',
@@ -898,7 +621,7 @@ const REGION_ALIASES = {
 function resolveRegionTab(rk){
   if(REGION_ALIASES[rk]) return REGION_ALIASES[rk];
   if(ALL_SUPABASE_REGIONS.includes(rk)) return rk;
-  return null; // région sans section dédiée → createDynamicTab
+  return null; // région sans alias → onglet généré sous tab-dyn-<rk>
 }
 let allLieux = []; // cache global
 
@@ -1084,37 +807,30 @@ async function loadDynamicFiches(){
       byTab[destTab].push(...byRegion[rk]);
     });
 
-    // ── Peupler les onglets avec tous leurs lieux rassemblés
+    // ── Peupler les onglets : MOTEUR UNIQUE pour 100 % des régions
     Object.keys(byTab).forEach(tabRk=>{
       const lieux=byTab[tabRk];
-      const FIXED={'alsace':'Alsace','pyrenees':'Pyrénées','atlantique':'Atlantique','bourgogne':'Bourgogne'};
-
-      if(FIXED.hasOwnProperty(tabRk)){
-        // Onglet fixe existant (Alsace/Pyrénées/Atlantique/Bourgogne)
-        populateRegionContent(tabRk, FIXED[tabRk], lieux);
-        buildRecapView(tabRk, FIXED[tabRk], lieux);
-      } else {
-        // Région nouvelle (ex: Bretagne) : créer l'onglet dynamiquement
-        const regionName = lieux[0].region || tabRk;
-        const tabId = 'tab-dyn-'+tabRk;
-        if(!document.getElementById(tabId)){
-          // Chaque étape isolée : si l'une plante, les autres continuent.
-          // createDynamicTab est prioritaire (crée l'onglet lui-même).
-          try{ createDynamicTab(tabId, regionName, lieux, appMain); }
-          catch(err){ console.error('createDynamicTab '+tabRk, err); }
-          try{ addDynRegionTopbar(regionName, tabRk); }
-          catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
-          try{ addCarteFilterBtn(regionName, lieux[0].region); }
-          catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
-          try{ addFicheSelectOption(regionName, lieux[0].region); }
-          catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
-          console.log('✓ Onglet dynamique créé:', tabRk, '('+regionName+')');
-        }
-        // MÊME moteur que les onglets fixes, à CHAQUE rechargement (avant : contenu figé
-        // à la création → une suppression n'apparaissait qu'après rechargement de la page).
-        try{ populateRegionContent(tabRk, regionName, lieux); }
-        catch(err){ console.error('populateRegionContent '+tabRk, err); }
+      const isRef=ALL_SUPABASE_REGIONS.includes(tabRk); // régions de référence (créées au démarrage)
+      const regionName=isRef?REGION_META[tabRk].nom:(lieux[0].region||tabRk);
+      const tabId=isRef?'tab-'+tabRk:'tab-dyn-'+tabRk;
+      if(!document.getElementById(tabId)){
+        try{ createRegionTab(tabId, tabRk, regionName, lieux); }
+        catch(err){ console.error('createRegionTab '+tabRk, err); }
+        console.log('✓ Onglet région créé:', tabRk, '('+regionName+')');
       }
+      if(!isRef){
+        try{ addDynRegionTopbar(regionName, tabRk); }
+        catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
+        try{ addCarteFilterBtn(regionName, lieux[0].region); }
+        catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
+        try{ addFicheSelectOption(regionName, lieux[0].region); }
+        catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
+      }
+      // Mêmes moteurs de contenu pour toutes les régions, à chaque rechargement.
+      try{ populateRegionContent(tabRk, regionName, lieux); }
+      catch(err){ console.error('populateRegionContent '+tabRk, err); }
+      try{ buildRecapView(tabRk, regionName, lieux); }
+      catch(err){ console.error('buildRecapView '+tabRk, err); }
     });
 
     // Re-passe d'équité : chaque barre (fixe ET dynamique) reçoit les boutons de TOUTES
@@ -1125,11 +841,12 @@ async function loadDynamicFiches(){
       }
     });
 
-    // Régions dynamiques devenues vides (dernière fiche supprimée) : afficher l'état vide
-    document.querySelectorAll('[id^="tab-dyn-"]').forEach(sec=>{
-      const rk=sec.id.replace('tab-dyn-','');
+    // Régions devenues vides (dernière fiche supprimée) ou sans fiche : état vide propre
+    document.querySelectorAll('[data-region-tab]').forEach(sec=>{
+      const rk=sec.getAttribute('data-region-tab');
       if(!byTab[rk]){
-        try{ populateRegionContent(rk, rk.charAt(0).toUpperCase()+rk.slice(1), []); }
+        const nom=(REGION_META[rk]&&REGION_META[rk].nom)||rk.charAt(0).toUpperCase()+rk.slice(1);
+        try{ populateRegionContent(rk, nom, []); }
         catch(err){ console.error('populateRegionContent (vide) '+rk, err); }
       }
     });
@@ -1666,23 +1383,46 @@ function switchRegionView(rk, view){
 // ── CARTE GLOBALE : lazy init when tab shown ──────────────────────────
 const _origShowTab = window.showTab;
 
-function createDynamicTab(tabId, regionName, lieux, appMain){
-  // COQUILLE seulement — le contenu est rempli par populateRegionContent,
-  // le MÊME moteur que les onglets fixes (mondes jour/nuit, filtres votes, cartes galerie).
-  // Bandeau = même structure sh-compact que les régions fixes (filigrane émoji 25 %).
-  const rk=tabId.replace('tab-dyn-','');
-  const REGION_EMOJIS={
-    'iledefrance':'🗼','bretagne':'⛵','normandie':'🐄','provence':'🌻',
-    'provencealpescotedazur':'🌻','auvergne':'🌋','auvergnerhonealpes':'🌋',
-    'occitanie':'☀️','hautsdefrance':'🌾','nord':'🌾','corse':'🏝️',
-    'paysdelaloire':'🏰','centrevaldeloire':'🏰','loire':'🏰','jura':'⛰️',
-    'rhonealpes':'⛰️','alpes':'⛰️','grandest':'🥨','champagneardenne':'🍾',
-    'lorraine':'🌳','picardie':'🌾','limousin':'🐂','poitoucharentes':'🐚',
-  };
-  const key=regionName.toLowerCase().replace(/[^a-z]/g,'');
-  const emoji=REGION_EMOJIS[key]||'🗺️';
+// ── MOTEUR UNIQUE DE PAGES RÉGION (décision Bruno 12/06 : 100 % dynamique) ──
+// REGION_META = DONNÉES d'identité visuelle des régions historiques (gradients,
+// emojis, sous-titres, chips). Les régions sans entrée reçoivent l'habillage
+// neutre or-anthracite. Ces données migreront vers carto.js à terme.
+const REGION_META={
+  alsace:{nom:"Alsace",emoji:"🥨",grad:"linear-gradient(135deg,#8B2020 0%,#5a1010 60%,#3a0808 100%)",
+    sub:"Depuis votre départ · Sur place · Votre région",
+    tags:["🥨 Alsace","🍷 Route des vins","🏰 Villages médiévaux"]},
+  pyrenees:{nom:"Pyrénées",emoji:"🏔️",grad:"linear-gradient(135deg,#2C5016dd 0%,#2C501688 60%,#2C501644 100%)",
+    sub:"Béarn · Hautes-Pyrénées · ≈ 860 km depuis votre départ · Via Pau",
+    tags:["🏔️ Béarn","🏰 Bigorre","🐕 Chien OK partout","🏘️ Lescun","🌊 Gavarnie"]},
+  atlantique:{nom:"Atlantique",emoji:"🌊",grad:"linear-gradient(135deg,#1a5a7add 0%,#1a5a7a88 60%,#1a5a7a44 100%)",
+    sub:"Gironde · Landes · ≈ 870 km depuis votre départ · Via Bordeaux",
+    tags:["🌊 Gironde","🌲 Landes","🦪 Huîtres","🚴 Forêt vélo","🏖️ Dune du Pilat"]},
+  bourgogne:{nom:"Bourgogne",emoji:"🍷",grad:"linear-gradient(135deg,#6B3288dd 0%,#6B328888 60%,#6B328844 100%)",
+    sub:"Côte-d'Or · Yonne · ≈ 280 km depuis votre départ · Via Dijon",
+    tags:["🍷 Côte-d'Or","🏰 Yonne","🚴 Canal","🏛️ Guédelon","⛷️ Jura proche"]},
+};
+const REGION_EMOJIS={
+  'iledefrance':'🗼','bretagne':'⛵','normandie':'🐄','provence':'🌻',
+  'provencealpescotedazur':'🌻','auvergne':'🌋','auvergnerhonealpes':'🌋',
+  'occitanie':'☀️','hautsdefrance':'🌾','nord':'🌾','corse':'🏝️',
+  'paysdelaloire':'🏰','centrevaldeloire':'🏰','loire':'🏰','centre':'🏰','jura':'⛰️',
+  'rhonealpes':'⛰️','alpes':'⛰️','grandest':'🥨','champagneardenne':'🍾',
+  'lorraine':'🌳','picardie':'🌾','limousin':'🐂','poitoucharentes':'🐚',
+};
+function createRegionTab(tabId, rk, regionName, lieux){
+  // Coquille COMPLÈTE et identique pour toutes les régions : barre de régions,
+  // bandeau, commutateur Fiches / Carte & Récap. Le contenu vient de
+  // populateRegionContent + buildRecapView (mêmes moteurs pour toutes).
+  const appMain=document.getElementById('carnet-main');
+  if(!appMain || document.getElementById(tabId)) return;
+  const meta=REGION_META[rk]||null;
+  const key=(regionName||rk).toLowerCase().replace(/[^a-z]/g,'');
+  const emoji=meta?meta.emoji:(REGION_EMOJIS[key]||'🗺️');
+  const grad=meta?meta.grad:'linear-gradient(135deg,rgba(200,168,75,.30) 0%,rgba(200,168,75,.10) 60%,rgba(200,168,75,.04) 100%),var(--chrome-bg)';
+  const sub=meta?meta.sub:'Vos découvertes · Votre région';
+  const tags=(meta?meta.tags:[]).map(t=>`<span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">${t}</span>`).join('');
   const tab=document.createElement('div');
-  tab.className='section';tab.id=tabId;
+  tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
     <div class="region-topbar visible" id="rtb-bar-${rk}">
       <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
@@ -1691,13 +1431,31 @@ function createDynamicTab(tabId, regionName, lieux, appMain){
       <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
       <div id="rtb-dyn-${rk}" class="rtb-dyn-slot" style="display:contents;"></div>
     </div>
-    <div class="sh-compact" style="background:linear-gradient(135deg,rgba(200,168,75,.30) 0%,rgba(200,168,75,.10) 60%,rgba(200,168,75,.04) 100%),var(--chrome-bg);border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
+    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
       <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">${emoji}</div>
       <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:6px;letter-spacing:-.5px;">${regionName}</h2>
-      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">Vos découvertes · Votre région</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">${sub}</div>
+      ${tags?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${tags}</div>`:''}
     </div>
-    <div class="inner">
-      <div id="${rk}-content"></div>
+    <div class="region-view-tabs">
+      <button class="rvt-btn active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">📋 Fiches</button>
+      <button class="rvt-btn" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">🗺️ Carte & Récap</button>
+    </div>
+    <div class="region-view active" id="rv-${rk}-fiches">
+      <div class="inner" id="${rk}-content">
+        <div class="region-loader">
+          <div class="spinner2"></div>
+          <p style="font-size:13px;color:var(--ink-dim);">Chargement des fiches ${regionName}…</p>
+        </div>
+      </div>
+    </div>
+    <div class="region-view" id="rv-${rk}-recap">
+      <div class="region-map-container" id="map-container-${rk}">
+        <div id="map-${rk}" style="height:380px;"></div>
+      </div>
+      <div class="recap-list" id="recap-list-${rk}">
+        <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte & récap disponibles après chargement des fiches.</div>
+      </div>
     </div>`;
   appMain.appendChild(tab);
 }
