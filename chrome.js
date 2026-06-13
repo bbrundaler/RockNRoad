@@ -107,7 +107,7 @@
     if(mobile){ a.innerHTML = '<span>'+ICONS[l.id]+'</span>'+l.label; }
     else { a.textContent = l.label; }
     if(pageActive(l.href)) a.className = 'rnrc-on';
-    if(!mobile && l.id === PHASE && !pageActive(l.href)) a.className += (a.className?' ':'') + 'rnrc-phase';
+    /* rnrc-phase désactivé — reprendre quand multi-phases actives */
     return a;
   }
 
