@@ -14,6 +14,9 @@
      existe (déconnexion Supabase), sinon repli vers index.html.
    - Nom du groupe : 'Mon groupe' par défaut ; la page peut le préciser
      via  rnrChrome.setGroupe('Famille Brundaler').
+   - Console plateforme (niveau A) : masquée par défaut, révélée uniquement
+     si la page appelle  rnrChrome.setSuperAdmin(true)  après vérification
+     Supabase de is_superadmin. Jamais visible côté client seul.
    - Phase en cours (pastille d'or sous l'univers actif de la phase) :
      constante PHASE ci-dessous. Branchement futur : config_plateforme
      (Console Admin) — ne pas inventer d'autre mécanisme d'ici là.
@@ -72,6 +75,12 @@
   +'.rnrc-groupe{font-size:13.5px;color:var(--chrome-ink-dim);text-decoration:none;'
   +'white-space:nowrap;font-family:var(--font-body);}'
   +'.rnrc-groupe:hover{color:var(--gold-light);}'
+  +'.rnrc-console{width:30px;height:30px;border-radius:50%;cursor:pointer;display:none;'
+  +'background:var(--gold-a10);border:1px solid var(--gold-a35);font-size:14px;'
+  +'display:none;align-items:center;justify-content:center;text-decoration:none;'
+  +'transition:background .15s;color:var(--chrome-ink-dim);}'
+  +'.rnrc-console:hover{background:var(--gold-a20);color:var(--gold-light);}'
+  +'.rnrc-console.rnrc-sa-visible{display:flex;}'
   +'.rnrc-theme{width:34px;height:34px;border-radius:50%;cursor:pointer;'
   +'background:var(--gold-a10);border:1px solid var(--gold-a35);font-size:15px;'
   +'display:flex;align-items:center;justify-content:center;transition:background .15s;padding:0;}'
@@ -140,6 +149,15 @@
     grp.textContent = 'Mon groupe ⚙️';
     right.appendChild(grp);
 
+    /* Console plateforme — cachée par défaut, révélée par setSuperAdmin(true) */
+    var cons = document.createElement('a');
+    cons.className = 'rnrc-console';
+    cons.href = 'config.html';
+    cons.title = 'Console plateforme';
+    cons.textContent = '🛠️';
+    if(pageActive('config.html')) cons.style.color = 'var(--gold-light)';
+    right.appendChild(cons);
+
     var add = document.createElement('a');
     add.className = 'rnrc-add';
     add.href = 'admin.html';
@@ -180,7 +198,8 @@
 
     /* API minimale pour les pages */
     window.rnrChrome = {
-      setGroupe: function(nom){ if(nom){ grp.textContent = nom + ' ⚙️'; } }
+      setGroupe:     function(nom){ if(nom){ grp.textContent = nom + ' ⚙️'; } },
+      setSuperAdmin: function(ok){ if(ok){ cons.classList.add('rnrc-sa-visible'); } }
     };
   }
 

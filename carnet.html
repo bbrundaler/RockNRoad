@@ -716,11 +716,12 @@ async function loadGroupeProfil(userId) {
         DEPART.nom = g.nom || g.adresse_depart || 'Votre départ';
       }
       if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
+      if (window.rnrChrome && sessionStorage.getItem('rnr_sa') === '1') rnrChrome.setSuperAdmin(true);
       updateDepartLabel();
       return;
     }
     // Sinon charger depuis Supabase
-    const { data: membre } = await sb.from('membres').select('groupe_id, groupes(*)').eq('user_id', userId).single();
+    const { data: membre } = await sb.from('membres').select('groupe_id, is_superadmin, groupes(*)').eq('user_id', userId).single();
     if (!membre) { window.location.href = 'onboarding.html'; return; }
     const g = membre.groupes;
     currentGroupeId = g.id;
@@ -730,7 +731,9 @@ async function loadGroupeProfil(userId) {
       DEPART.nom = g.nom || g.adresse_depart || 'Votre départ';
     }
     sessionStorage.setItem('rnr_groupe', JSON.stringify(g));
+    if (membre.is_superadmin) { try { sessionStorage.setItem('rnr_sa','1'); } catch(e){} }
     if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
+    if (window.rnrChrome && membre.is_superadmin) rnrChrome.setSuperAdmin(true);
     updateDepartLabel();
   } catch(e) {
     console.warn('Profil groupe non chargé, utilisation valeur par défaut', e);

@@ -599,13 +599,16 @@ async function loadGroupeProfil(userId) {
     if (cached) {
       const g = JSON.parse(cached);
       currentGroupeId = g.id;
+      if (window.rnrChrome && sessionStorage.getItem('rnr_sa') === '1') rnrChrome.setSuperAdmin(true);
       await checkImportLimit();
       return;
     }
-    const {data:membre} = await sb.from('membres').select('groupe_id, groupes(*)').eq('user_id',userId).single();
+    const {data:membre} = await sb.from('membres').select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).single();
     if (membre) {
       currentGroupeId = membre.groupe_id;
       if (membre.groupes) sessionStorage.setItem('rnr_groupe', JSON.stringify(membre.groupes));
+      if (membre.is_superadmin) { try { sessionStorage.setItem('rnr_sa','1'); } catch(e){} }
+      if (window.rnrChrome && membre.is_superadmin) rnrChrome.setSuperAdmin(true);
       await checkImportLimit();
     }
   } catch(e) { console.warn('Groupe non chargé', e); }

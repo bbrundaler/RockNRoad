@@ -490,6 +490,7 @@ async function checkSuperAdmin(userId) {
     if (isSuperAdmin) {
       document.getElementById('admin-section').style.display = 'block';
       loadAdminData();
+      if(window.rnrChrome) rnrChrome.setSuperAdmin(true);
     }
   } catch(e) { console.warn('Super admin check:', e); }
 }
