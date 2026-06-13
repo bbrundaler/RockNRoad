@@ -103,7 +103,7 @@
   --paper:        #F5EFE0;
   --paper-line:   transparent;
   --ink:          #F5EFE0;
-  --ink-dim:      rgba(245,239,224,.62);
+  --ink-dim:      rgba(245,239,224,.78);  /* remonté de .62 → .78 (13/06) : labels secondaires plus lisibles en sombre */
   --gold-text:    #E8C86B;
   --shadow:       0 2px 12px rgba(0,0,0,.30);
   --shadow-hover: 0 8px 28px rgba(0,0,0,.45);
