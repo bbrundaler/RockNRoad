@@ -617,15 +617,23 @@ async function loadAdminData() {
       membresCount[m.groupe_id] = (membresCount[m.groupe_id] || 0) + 1;
     });
 
+    // Identifier le groupe courant (pour le badge "Votre groupe")
+    let monGroupeId = null;
+    try {
+      const cached = sessionStorage.getItem('rnr_groupe');
+      if (cached) monGroupeId = JSON.parse(cached).id;
+    } catch(e){}
+
     container.innerHTML = groupes.map(g => {
       const count = counts[g.id] || 0;
       const pct = Math.min(100, Math.round(count / (g.import_limit || 30) * 100));
       const barColor = pct >= 100 ? 'var(--st-bad-ink)' : pct >= 80 ? 'var(--st-warn-line)' : 'var(--green)';
+      const estMonGroupe = g.id === monGroupeId;
       return `
         <div class="admin-groupe-row" id="ag-${g.id}">
           <div class="ag-header">
             <div class="ag-info">
-              <div class="ag-nom">${g.nom || '—'}</div>
+              <div class="ag-nom">${g.nom || '—'}${estMonGroupe ? ' <span style="font-size:10px;font-weight:700;color:var(--gold);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:10px;padding:2px 8px;margin-left:6px;vertical-align:middle;">🏠 Votre groupe</span>' : ''}</div>
               <div class="ag-meta">${g.adresse_depart || ''} · ${membresCount[g.id] || 1} membre(s) · créé le ${new Date(g.created_at).toLocaleDateString('fr-FR')}</div>
             </div>
             <div class="ag-stats">
@@ -646,6 +654,26 @@ async function loadAdminData() {
                 </button>
               `).join('')}
               <button class="ag-limit-btn custom" onclick="setCustomLimit('${g.id}')">✏️ Autre</button>
+            </div>
+          </div>
+          <div class="ag-controls">
+            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);">Photos</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              <button class="ag-limit-btn ${g.niveau_photos!==true?'active':''}"
+                onclick="setNiveauPhotos('${g.id}', false, this)">📷 Standard (1)</button>
+              <button class="ag-limit-btn ${g.niveau_photos===true?'active':''}"
+                onclick="setNiveauPhotos('${g.id}', true, this)">📸 Premium (5)</button>
+            </div>
+          </div>
+          <div class="ag-controls">
+            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);">Catégorie</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              ${['standard','amis','fidele','admin'].map(c => `
+                <button class="ag-limit-btn ${(g.categorie||'standard')===c?'active':''}"
+                  onclick="setCategorie('${g.id}', '${c}', this)">
+                  ${({standard:'Standard',amis:'Amis',fidele:'Fidèle',admin:'Admin'})[c]}
+                </button>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -679,6 +707,42 @@ async function setCustomLimit(groupeId) {
   const limit = Math.max(1, parseInt(val));
   await setLimit(groupeId, limit, null);
   loadAdminData(); // Refresh
+}
+
+async function setNiveauPhotos(groupeId, niveau, btn) {
+  try {
+    const { error } = await sb.from('groupes')
+      .update({ niveau_photos: niveau })
+      .eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) {
+      const group = row.querySelectorAll('.ag-controls')[1]; // 2e bloc = Photos
+      group.querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    }
+    if (btn) btn.classList.add('active');
+    showToast('✅ Niveau photos : ' + (niveau ? 'Premium (5)' : 'Standard (1)'), 'success');
+  } catch(e) {
+    showToast('Erreur : ' + e.message, 'error');
+  }
+}
+
+async function setCategorie(groupeId, categorie, btn) {
+  try {
+    const { error } = await sb.from('groupes')
+      .update({ categorie })
+      .eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) {
+      const group = row.querySelectorAll('.ag-controls')[2]; // 3e bloc = Catégorie
+      group.querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    }
+    if (btn) btn.classList.add('active');
+    showToast('✅ Catégorie : ' + categorie, 'success');
+  } catch(e) {
+    showToast('Erreur : ' + e.message, 'error');
+  }
 }
 </script>
 
