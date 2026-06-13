@@ -194,11 +194,16 @@ async function loadHubData(userId){
   try{
     /* Groupe de l'utilisateur (même requête éprouvée qu'Horizon) */
     const {data:mem,error:eMem}=await sb.from('membres')
-      .select('groupe_id, groupes(*)').eq('user_id',userId).limit(1).single();
+      .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).limit(1).single();
     if(eMem||!mem){ console.warn('Hub: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
     const nomGroupe=(mem.groupes&&mem.groupes.nom)?mem.groupes.nom:'Mon groupe';
-    if(window.rnrChrome) rnrChrome.setGroupe(nomGroupe);
+    /* Stocker dans sessionStorage pour que chrome.js et les autres pages lisent le cache */
+    try {
+      var gCache = Object.assign({}, mem.groupes||{}, {is_superadmin: mem.is_superadmin===true});
+      sessionStorage.setItem('rnr_groupe', JSON.stringify(gCache));
+    } catch(e){}
+    if(window.rnrChrome){ rnrChrome.setGroupe(nomGroupe); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
     document.getElementById('gr-lien').textContent=nomGroupe+' ⚙️';
 
     /* Nombre de membres */

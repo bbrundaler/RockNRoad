@@ -272,10 +272,14 @@ async function loadHorizonData(userId){
   try{
     // 1) Trouver le groupe de l'utilisateur (même logique que carnet.html)
     const {data:mem,error:eMem}=await sb.from('membres')
-      .select('groupe_id, groupes(*)').eq('user_id',userId).limit(1).single();
+      .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).limit(1).single();
     if(eMem||!mem){ console.warn('Horizon: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
-    if(window.rnrChrome && mem.groupes && mem.groupes.nom){ rnrChrome.setGroupe(mem.groupes.nom); }
+    try {
+      var gCache = Object.assign({}, mem.groupes||{}, {is_superadmin: mem.is_superadmin===true});
+      sessionStorage.setItem('rnr_groupe', JSON.stringify(gCache));
+    } catch(e){}
+    if(window.rnrChrome && mem.groupes && mem.groupes.nom){ rnrChrome.setGroupe(mem.groupes.nom); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
 
     // 2) Charger les fiches du groupe (table lieux)
     const {data:lieux,error:eLieux}=await sb.from('lieux')

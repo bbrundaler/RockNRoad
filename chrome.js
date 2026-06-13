@@ -201,6 +201,16 @@
       setGroupe:     function(nom){ if(nom){ grp.textContent = nom + ' ⚙️'; } },
       setSuperAdmin: function(ok){ if(ok){ cons.classList.add('rnrc-sa-visible'); } }
     };
+
+    /* Lecture immédiate du cache sessionStorage — évite d'attendre la page */
+    try {
+      var cached = sessionStorage.getItem('rnr_groupe');
+      if(cached){
+        var g = JSON.parse(cached);
+        if(g.nom) grp.textContent = g.nom + ' ⚙️';
+        if(g.is_superadmin) cons.classList.add('rnrc-sa-visible');
+      }
+    } catch(e){}
   }
 
   if(document.readyState === 'loading'){

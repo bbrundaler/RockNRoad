@@ -730,7 +730,7 @@ async function loadGroupeProfil(userId) {
       DEPART.lng = g.lng_depart;
       DEPART.nom = g.nom || g.adresse_depart || 'Votre départ';
     }
-    sessionStorage.setItem('rnr_groupe', JSON.stringify(g));
+    sessionStorage.setItem('rnr_groupe', JSON.stringify(Object.assign({}, g, {is_superadmin: membre.is_superadmin===true})));
     if (membre.is_superadmin) { try { sessionStorage.setItem('rnr_sa','1'); } catch(e){} }
     if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
     if (window.rnrChrome && membre.is_superadmin) rnrChrome.setSuperAdmin(true);

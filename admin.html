@@ -607,7 +607,7 @@ async function loadGroupeProfil(userId) {
     const {data:membre} = await sb.from('membres').select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).single();
     if (membre) {
       currentGroupeId = membre.groupe_id;
-      if (membre.groupes) sessionStorage.setItem('rnr_groupe', JSON.stringify(membre.groupes));
+      if (membre.groupes) sessionStorage.setItem('rnr_groupe', JSON.stringify(Object.assign({}, membre.groupes, {is_superadmin: membre.is_superadmin===true})));
       if (membre.is_superadmin) { try { sessionStorage.setItem('rnr_sa','1'); } catch(e){} }
       if (window.rnrChrome && membre.groupes && membre.groupes.nom) rnrChrome.setGroupe(membre.groupes.nom);
       if (window.rnrChrome && membre.is_superadmin) rnrChrome.setSuperAdmin(true);
