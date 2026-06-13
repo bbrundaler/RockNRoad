@@ -179,7 +179,7 @@ body {
 
 /* ── Card commune ────────────────────────────────────────────────── */
 .cfg-card {
-  background: var(--paper);
+  background: var(--surface);
   border: 1px solid rgba(0,0,0,.06);
   border-radius: 12px;
   padding: 24px 28px;
@@ -219,7 +219,7 @@ input[type="number"], textarea, select {
   font-size: 13px;
   font-family: var(--font-body);
   color: var(--ink);
-  background: var(--paper);
+  background: var(--surface);
   transition: border-color .15s;
   outline: none;
 }
