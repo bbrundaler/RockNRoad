@@ -20,7 +20,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 /* (270 lignes de CSS mort du prototype héros/markers/itin supprimées — prouvé zéro usage, 11/06) */
 
 /* MAIN */
-#app-main{flex:1;min-height:0;width:100%;margin-left:0;display:flex;flex-direction:column;}  /* margin-left:0 OBLIGATOIRE : neutralise le margin-left:var(--sb) legacy d'app.css */
+#app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}  /* enveloppe locale du voyage (Template A retiré d'app.css le 13/06) */
 /* Actions du voyage, logées dans l'en-tête du panneau Itinéraire */
 .panel-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
 .tb-btn{padding:6px 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;border:1px solid transparent;}
@@ -48,7 +48,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 /* étapes = mini-cartes PAPIER (encres fixes sur papier) */
 .stop-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:6px;cursor:grab;transition:box-shadow .15s;}
 .stop-item:hover{box-shadow:var(--shadow-hover);}
-.drag-handle{color:#c4b89e;font-size:14px;cursor:grab;flex-shrink:0;user-select:none;}
+.drag-handle{color:#c4b89e;font-size:16px;cursor:grab;flex-shrink:0;user-select:none;touch-action:none;padding:4px 6px;margin:-4px -2px;} /* touch-action:none = la poignée capte le geste au lieu du scroll */
 .stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#1a1208;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
 .stop-info{flex:1;min-width:0;}
 .stop-name{font-size:13px;font-weight:600;color:#1a1208;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -205,6 +205,41 @@ function initListEvents(){
     const item = e.target.closest('.stop-item');
     if(item) item.style.opacity='';
   });
+  // ── Réordonner via la poignée ⠿ — POINTER EVENTS : couvre le TACTILE et la souris.
+  // (Le D&D HTML5 ci-dessus n'émet AUCUN événement au doigt — limite du standard.)
+  let pDragEl=null;
+  list.addEventListener('pointerdown', e=>{
+    const handle=e.target.closest('.drag-handle');
+    if(!handle) return;
+    pDragEl=handle.closest('.stop-item');
+    if(!pDragEl||!pDragEl.dataset.uid){ pDragEl=null; return; }
+    e.preventDefault();
+    try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+    pDragEl.style.opacity='0.4';
+  });
+  list.addEventListener('pointermove', e=>{
+    if(!pDragEl) return;
+    e.preventDefault();
+    const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('.stop-item');
+    if(over&&over!==pDragEl){
+      const r=over.getBoundingClientRect();
+      if(e.clientY < r.top + r.height/2) list.insertBefore(pDragEl, over);
+      else list.insertBefore(pDragEl, over.nextSibling);
+    }
+  });
+  const endPointerDrag=()=>{
+    if(!pDragEl) return;
+    pDragEl.style.opacity='';
+    pDragEl=null;
+    // L'ordre final = l'ordre du DOM après l'aperçu en direct
+    const order=[...list.querySelectorAll('.stop-item')].map(el=>el.dataset.uid);
+    voyage.sort((a,b)=>order.indexOf(a.uid)-order.indexOf(b.uid));
+    saveVoyage();
+    render(); // renumérote, recalcule les distances, redessine la carte
+  };
+  list.addEventListener('pointerup', endPointerDrag);
+  list.addEventListener('pointercancel', endPointerDrag);
+
   list.addEventListener('dragover', e=>{ e.preventDefault(); });
   list.addEventListener('drop', e=>{
     e.preventDefault();
