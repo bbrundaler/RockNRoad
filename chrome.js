@@ -62,6 +62,13 @@
   +'.rnrc-links a.rnrc-phase::after{content:"";position:absolute;left:50%;bottom:1px;'
   +'transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--gold);}'
   +'.rnrc-right{display:flex;align-items:center;gap:12px;}'
++'.rnrc-add{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;'
++'letter-spacing:.5px;color:var(--gold);background:var(--gold-a10);'
++'border:1px solid var(--gold-a35);border-radius:var(--r-pill);'
++'padding:6px 13px;text-decoration:none;white-space:nowrap;'
++'transition:background .15s,color .15s;font-family:var(--font-body);}'
++'.rnrc-add:hover{background:var(--gold);color:var(--chrome-bg);}'
++'@media(max-width:700px){.rnrc-add span.rnrc-add-label{display:none;}}'
   +'.rnrc-groupe{font-size:13.5px;color:var(--chrome-ink-dim);text-decoration:none;'
   +'white-space:nowrap;font-family:var(--font-body);}'
   +'.rnrc-groupe:hover{color:var(--gold-light);}'
@@ -132,6 +139,13 @@
     grp.href = 'onboarding.html';
     grp.textContent = 'Mon groupe ⚙️';
     right.appendChild(grp);
+
+    var add = document.createElement('a');
+    add.className = 'rnrc-add';
+    add.href = 'admin.html';
+    add.title = 'Créer une nouvelle fiche lieu';
+    add.innerHTML = '+ <span class="rnrc-add-label">Fiche</span>';
+    right.appendChild(add);
 
     var th = document.createElement('button');
     th.className = 'rnrc-theme';

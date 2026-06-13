@@ -1582,14 +1582,23 @@ async function saveFiche(){
 
 function showConfirmation(nom, region, type){
   // Calculer l'onglet carnet correspondant à la région
-  const REGION_TO_TAB = {
-    'Alsace':'tab-alsace','Lorraine':'tab-alsace','Champagne-Ardenne':'tab-alsace',
-    'Aquitaine':'tab-atlantique','Pays de la Loire':'tab-atlantique',
-    'Midi-Pyrénées':'tab-pyrenees',
-    'Bourgogne':'tab-bourgogne','Franche-Comté':'tab-bourgogne',
+  // Normalise le nom de région → clé carnet (même algo que normalizeRegionKey dans carnet.js)
+  function normalizeForCarnet(r){
+    return (r||'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]/g,'');
+  }
+  // Régions fixes (4 tabs statiques du carnet)
+  const FIXED_TABS = {
+    alsace:1, lorraine:1, champagneardenne:1,
+    pyrenees:1,
+    atlantique:1, aquitaine:1, paysdelaloire:1,
+    bourgogne:1, franchecomte:1,
   };
-  const tabId = REGION_TO_TAB[region] || null;
-  const carnetUrl = tabId ? `carnet.html#${tabId.replace('tab-','')}` : 'carnet.html';
+  const rk = normalizeForCarnet(region);
+  const isFixed = FIXED_TABS[rk] || false;
+  // Régions fixes : hash direct ; régions dyn : hash #dyn-xxx
+  const carnetUrl = rk ? (isFixed ? `carnet.html#${rk}` : `carnet.html#dyn-${rk}`) : 'carnet.html';
 
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(15,13,9,.88);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
