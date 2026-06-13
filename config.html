@@ -414,10 +414,49 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
     </div>
 
     <!-- ── Section Admin (super-admin uniquement) ── -->
+    <!-- ── Section Admin (super-admin uniquement) ── -->
     <div id="admin-section">
+
+      <!-- Carte : Inviter un utilisateur -->
       <div class="cfg-card">
         <div class="cfg-card-title">
-          <span>🛡️</span> Administration
+          <span>✉️</span> Inviter un utilisateur
+          <span class="admin-badge">SUPER ADMIN</span>
+        </div>
+        <p style="font-size:12px;color:var(--ink-dim);margin-bottom:18px;line-height:1.6;">
+          L'invité reçoit un email avec un lien de confirmation. Il choisit son mot de passe puis est rattaché automatiquement au bon groupe.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);display:block;margin-bottom:6px;">Email</label>
+            <input id="inv-email" type="email" placeholder="prenom@exemple.fr"
+              style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--gold-a20);background:var(--surface);color:var(--ink);font-size:14px;font-family:var(--font-body);">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);display:block;margin-bottom:6px;">Rattacher à</label>
+            <select id="inv-groupe" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--gold-a20);background:var(--surface);color:var(--ink);font-size:14px;font-family:var(--font-body);">
+              <option value="">⏳ Chargement des groupes…</option>
+              <option value="__nouveau__">➕ Nouveau groupe (l'invité crée le sien)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);display:block;margin-bottom:6px;">Rôle</label>
+            <div style="display:flex;gap:8px;">
+              <button class="ag-limit-btn active" id="inv-role-membre" onclick="setInvRole('membre',this)">👤 Membre</button>
+              <button class="ag-limit-btn" id="inv-role-admin" onclick="setInvRole('admin',this)">🔑 Admin du groupe</button>
+            </div>
+          </div>
+          <div id="inv-feedback" style="font-size:12px;min-height:18px;"></div>
+          <button class="save-btn" onclick="sendInvitation()" style="align-self:flex-start;">
+            ✉️ Envoyer l'invitation
+          </button>
+        </div>
+      </div>
+
+      <!-- Carte : Groupes -->
+      <div class="cfg-card">
+        <div class="cfg-card-title">
+          <span>🛡️</span> Groupes
           <span class="admin-badge">SUPER ADMIN</span>
         </div>
         <p style="font-size:12px;color:var(--ink-dim);margin-bottom:18px;line-height:1.6;">
@@ -430,6 +469,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
           🔄 Rafraîchir
         </button>
       </div>
+
     </div>
 
   </div>
@@ -441,6 +481,7 @@ label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-tra
 const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 const {createClient}=supabase;
+const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const sb=createClient(SURL,SKEY);
 
 async function checkAuth(){
@@ -495,6 +536,48 @@ async function checkSuperAdmin(userId) {
   } catch(e) { console.warn('Super admin check:', e); }
 }
 
+// ── Invitation ────────────────────────────────────────────────────────────────
+let invRole = 'membre';
+
+function setInvRole(role, btn) {
+  invRole = role;
+  document.querySelectorAll('#inv-role-membre,#inv-role-admin').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function invFeedback(msg, ok) {
+  const el = document.getElementById('inv-feedback');
+  el.style.color = ok ? 'var(--green)' : 'var(--st-bad-ink)';
+  el.textContent = msg;
+}
+
+async function sendInvitation() {
+  const email = document.getElementById('inv-email').value.trim();
+  const groupeVal = document.getElementById('inv-groupe').value;
+  if (!email) { invFeedback('⚠️ Email requis.', false); return; }
+
+  invFeedback('⏳ Envoi en cours…', true);
+
+  // Métadonnées transmises à l'invité (lues par onboarding.html au premier login)
+  const meta = { role: invRole };
+  if (groupeVal && groupeVal !== '__nouveau__') meta.groupe_id = groupeVal;
+
+  try {
+    // Appel via Edge Function (SERVICE_ROLE requis pour inviteUserByEmail — côté serveur)
+    const { data: { session } } = await sb.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch(EDGE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'invite_user', email, meta })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { invFeedback('❌ ' + (json.error || 'Erreur serveur'), false); return; }
+    invFeedback('✅ Invitation envoyée à ' + email, true);
+    document.getElementById('inv-email').value = '';
+  } catch(e) { invFeedback('❌ ' + e.message, false); }
+}
+
 async function loadAdminData() {
   const container = document.getElementById('admin-groupes');
   container.innerHTML = '<div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement...</div>';
@@ -507,6 +590,14 @@ async function loadAdminData() {
     if (!groupes?.length) {
       container.innerHTML = '<p style="color:var(--ink-dim);font-size:12px;">Aucun groupe trouvé.</p>';
       return;
+    }
+
+    // Peupler le select d'invitation
+    const sel = document.getElementById('inv-groupe');
+    if (sel) {
+      sel.innerHTML = groupes.map(g =>
+        `<option value="${g.id}">${g.nom || '—'}</option>`
+      ).join('') + '<option value="__nouveau__">➕ Nouveau groupe (l\'invité crée le sien)</option>';
     }
 
     // Charger le nb de fiches par groupe

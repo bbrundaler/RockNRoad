@@ -494,6 +494,32 @@ let membres=[]; // [{nom:'Bruno'},{nom:'Marie'}]
   // Types de voyages toggle
   document.querySelectorAll('.vtype').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('on')));
 
+  // ── Invitation : rattachement automatique si user_metadata contient groupe_id ──
+  const meta = currentUser.user_metadata || {};
+  if (meta.groupe_id) {
+    // L'utilisateur a été invité dans un groupe existant — rattachement automatique
+    try {
+      // Vérifier qu'il n'est pas déjà membre (double-clic sur le lien)
+      const { data: existingMembre } = await sb.from('membres')
+        .select('groupe_id').eq('user_id', currentUser.id).single();
+      if (!existingMembre) {
+        await sb.from('membres').insert({
+          user_id: currentUser.id,
+          groupe_id: meta.groupe_id,
+          role: meta.role || 'membre'
+        });
+      }
+      // Vider les métadonnées d'invitation (ne pas rejouer au prochain login)
+      await sb.auth.updateUser({ data: { groupe_id: null, role: null } });
+      // Rediriger vers le Hub
+      window.location.href = 'home.html';
+      return;
+    } catch(e) {
+      console.warn('Rattachement automatique échoué:', e);
+      // En cas d'échec : laisser l'utilisateur passer par le formulaire
+    }
+  }
+
   // Charger le profil existant
   const cached=sessionStorage.getItem('rnr_groupe');
   if(cached){ fillForm(JSON.parse(cached)); return; }
