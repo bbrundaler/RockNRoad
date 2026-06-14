@@ -120,6 +120,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .int-card:hover{border-color:var(--gold);background:var(--gold-a10);transform:translateX(2px);}
 .int-t{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
 .int-ex{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:3px;}
+/* Sélecteur de fiche (5ᵉ intention) */
+.nv-select{width:100%;padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:9px;
+  background:var(--paper);color:var(--ink);font-size:14px;}
+/* Vignette de la fiche soumise au vote */
+.q-fiche{display:flex;gap:11px;align-items:center;margin:10px 0 4px;padding:8px;
+  border:1px solid var(--surface-line);border-radius:11px;background:var(--paper);}
+.q-fiche-ph{width:48px;height:48px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
+  font-size:22px;background:var(--gold-a20);background-size:cover;background-position:center;}
+.q-fiche-in{min-width:0;}
+.q-fiche-nm{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.q-fiche-mt{font-size:12px;color:var(--ink-dim);margin-top:2px;}
+.q-fiche-off{opacity:.65;}
 
 /* ── GROUPE ── */
 .b-group{grid-area:group;}
@@ -388,7 +401,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* Démarrage du bloc Partager */
 (async()=>{
   const ok = await chargerContexte();
-  if(ok){ await chargerMessages(); await chargerVotes(); }
+  if(ok){ await chargerMessages(); await chargerFiches(); await chargerVotes(); }
   else document.getElementById('share-feed').innerHTML='<div class="share-empty">Connecte-toi pour voir les messages du groupe.</div>';
 })();
 
@@ -412,9 +425,26 @@ let RNR_clos = [];
 let RNR_celebreEnCours = false;      // propositions ouvertes du groupe
 let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
 let RNR_vedetteId = null;
+let RNR_fiches = [];     // fiches du carnet du groupe (cache) — alimente le vote « garder/écarter »
 let RNR_nbMembres = 1;
 
 function escH(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
+
+/* ── Fiches du carnet (pour le vote « garder/écarter une fiche », 5ᵉ intention) ──
+   Même accès que carnet.html (lieux scopés groupe via RLS). Chargé une fois en cache.
+   Champs minimaux : id, nom, region, photo_url (titre = l.nom, confirmé sur le réel). */
+async function chargerFiches(){
+  if(!RNR_groupeId){ RNR_fiches=[]; return; }
+  const {data,error}=await sb.from('lieux')
+    .select('id,nom,region,photo_url')
+    .eq('groupe_id',RNR_groupeId)
+    .order('nom',{ascending:true});
+  if(error){ console.warn('fiches',error); RNR_fiches=[]; return; }
+  RNR_fiches = data||[];
+}
+/* Retrouve une fiche par id ; null si elle n'existe plus (supprimée du carnet) →
+   le vote survit à la disparition de sa cible (parallèle G4 anonymisation). */
+function ficheParId(id){ return RNR_fiches.find(f=>f.id===id) || null; }
 
 /* ── Chargement ── */
 async function chargerVotes(){
@@ -620,6 +650,23 @@ function moteurAnimation(vedette, nbVote, total){
   return ligne('🧭','Prêts pour la prochaine aventure ? Lancez une idée.');
 }
 
+/* Vignette de la fiche soumise au vote (photo + nom + région).
+   Dégrade proprement si la fiche a été retirée du carnet (G4 : le vote survit). */
+function vignetteFiche(lieuId){
+  const f=ficheParId(lieuId);
+  if(!f){
+    return '<div class="q-fiche q-fiche-off"><div class="q-fiche-ph">🗺️</div>'+
+      '<div class="q-fiche-in"><div class="q-fiche-nm">Fiche retirée du carnet</div>'+
+      '<div class="q-fiche-mt">le vote reste valable</div></div></div>';
+  }
+  const ph = f.photo_url
+    ? '<div class="q-fiche-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
+    : '<div class="q-fiche-ph">🗺️</div>';
+  return '<div class="q-fiche">'+ph+
+    '<div class="q-fiche-in"><div class="q-fiche-nm">'+escH(f.nom)+'</div>'+
+    '<div class="q-fiche-mt">'+escH(f.region||'')+'</div></div></div>';
+}
+
 /* ── Rendu : vedette "Question à trancher" (selon type) ── */
 function rendreVedette(){
   const body=document.getElementById('q-body');
@@ -631,6 +678,7 @@ function rendreVedette(){
   let html='<div class="q-big">'+escH(p.titre)+'</div>';
   const sub = TYPES_VOTE[p.type].label;
   html+='<div class="q-sub">'+escH(sub)+'</div>';
+  if(p.lieu_id) html+=vignetteFiche(p.lieu_id);
   const mien=monVote(p.id);
 
   if(p.type==='note'){
@@ -719,7 +767,8 @@ const INTENTIONS = [
   { type:'choix',       titre:'Trancher entre des options', ex:'« Mer ou Montagne ? », « Quel camping ? »', besoinOptions:true },
   { type:'pour_contre', titre:'Demander un oui ou un non',   ex:'« On part en août ? », « On garde 3 nuits ? »', besoinOptions:false },
   { type:'note',        titre:'Faire noter une idée',        ex:'« Cette rando, vous la sentez comment ? » (note /5)', besoinOptions:false },
-  { type:'question',    titre:'Poser une question ouverte',  ex:'« Des idées pour les soirées ? »', besoinOptions:false }
+  { type:'question',    titre:'Poser une question ouverte',  ex:'« Des idées pour les soirées ? »', besoinOptions:false },
+  { type:'elimination', titre:'Garder ou écarter une fiche', ex:'On tranche le sort d\'un lieu du carnet', besoinOptions:false, besoinFiche:true }
 ];
 let NV_intention = null;
 
@@ -752,6 +801,36 @@ function etapeIntention(){
 function choisirIntention(i){
   NV_intention = INTENTIONS[i];
   const box=document.getElementById('vmodal-inner');
+
+  /* Cas spécial : vote sur une fiche du carnet (5ᵉ intention) */
+  if(NV_intention.besoinFiche){
+    if(!RNR_fiches.length){
+      box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+
+        '<div class="vhint" style="margin-top:8px">Le carnet du groupe n\'a encore aucune fiche à départager. '+
+        'Crée d\'abord des lieux dans le carnet, puis reviens lancer ce vote.</div>'+
+        '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button></div>';
+      return;
+    }
+    let opts='<option value="">— Choisis une fiche —</option>';
+    RNR_fiches.forEach(f=>{
+      const lbl = f.nom + (f.region ? ' · '+f.region : '');
+      opts+='<option value="'+escH(f.id)+'">'+escH(lbl)+'</option>';
+    });
+    box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+
+      '<label>Quelle fiche soumettre au groupe ?</label>'+
+      '<select id="nv-fiche" class="nv-select" onchange="majTitreFiche()">'+opts+'</select>'+
+      '<label>La question</label>'+
+      '<input type="text" id="nv-titre" maxlength="120" placeholder="On garde cette fiche ?">'+
+      '<div class="vhint" style="margin-top:8px">Le groupe répondra <b>Garder</b> ou <b>Écarter</b>.</div>'+
+      '<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+      '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>'+
+      '<div class="vmodal-foot">'+
+        '<button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button>'+
+        '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button>'+
+      '</div>';
+    return;
+  }
+
   let champs='<label>Ta question</label><input type="text" id="nv-titre" maxlength="120" placeholder="'+escH(exemplePlaceholder())+'">';
   if(NV_intention.besoinOptions){
     champs+='<label>Les réponses possibles</label><div id="nv-opts">'+voptRow('','Ex. : La mer')+voptRow('','Ex. : La montagne')+'</div>'+
@@ -767,6 +846,13 @@ function choisirIntention(i){
       '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button>'+
     '</div>';
   const t=document.getElementById('nv-titre'); if(t) t.focus();
+}
+/* Pré-remplit la question quand on choisit une fiche (si l'utilisateur n'a rien tapé) */
+function majTitreFiche(){
+  const sel=document.getElementById('nv-fiche'), t=document.getElementById('nv-titre');
+  if(!sel||!t) return;
+  const f=ficheParId(sel.value);
+  if(f && (!t.value || t.dataset.auto==='1')){ t.value='On garde « '+f.nom+' » ?'; t.dataset.auto='1'; }
 }
 function exemplePlaceholder(){
   switch(NV_intention.type){
@@ -793,12 +879,18 @@ async function creerVote(){
   const titre=(document.getElementById('nv-titre').value||'').trim();
   if(!titre){ alert('Donne une question au vote.'); return; }
   const dateStr=document.getElementById('nv-date').value;
-  let options=[];
-  if(NV_intention.besoinOptions){
+  let options=[], lieuId=null;
+  if(NV_intention.besoinFiche){
+    const sel=document.getElementById('nv-fiche');
+    lieuId = sel ? sel.value : '';
+    if(!lieuId){ alert('Choisis une fiche à départager.'); return; }
+    options=['Garder','Écarter'];        // figées (D-ECH-8 : intention, pas plomberie)
+  } else if(NV_intention.besoinOptions){
     options=[...document.querySelectorAll('#nv-opts input')].map(i=>i.value.trim()).filter(Boolean);
     if(options.length<2){ alert('Mets au moins 2 options à départager.'); return; }
   }
   const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:NV_intention.type, titre:titre, options:options };
+  if(lieuId) row.lieu_id=lieuId;
   if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
   const {data,error}=await sb.from('propositions').insert(row).select().single();
   if(error){ console.warn('creer',error); alert('Vote non créé.'); return; }
