@@ -130,6 +130,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .waiting .w{color:var(--gold-text);font-weight:600;}
 .waiting-pill{display:inline-block;font-size:11px;font-weight:700;color:#1a1208;
   background:var(--gold-light);border-radius:20px;padding:2px 9px;margin-top:8px;}
+/* pastille membre « en attente de vote » : éteinte, sobre (non-nominatif) */
+.av2-off{background:var(--gold-a20)!important;color:var(--ink-dim)!important;}
+/* ligne d'animation du moteur (D-ECH-3) : la voix qui réveille le groupe */
+.grp-pulse-line{display:flex;gap:8px;align-items:flex-start;}
+.grp-pulse-line .em{flex-shrink:0;font-size:15px;line-height:1.5;}
 
 /* ── PARTAGER AU GROUPE (sans créer de fiche) ── */
 .b-share{grid-area:share;}
@@ -189,17 +194,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk b-group">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="avts">
-        <div class="av2" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))">B</div>
-        <div class="av2" style="background:linear-gradient(135deg,#13384a,#3d8fb0)">M</div>
-        <div class="av2" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
-        <div class="av2" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
-        <div class="av2" style="background:var(--gold-a20);color:var(--ink)">+2</div>
-      </div>
-      <div class="waiting">
-        On attend le vote de <span class="w">Léa</span> et <span class="w">Paul</span> sur « Mer ou Montagne ».
-        <br><span class="waiting-pill">2 votes en attente</span>
-      </div>
+      <div class="avts" id="grp-avts"></div>
+      <div class="waiting" id="grp-pulse">Chargement…</div>
     </div>
   </div>
 
@@ -273,6 +269,7 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
 let RNR_groupeId = null;
 let RNR_userId   = null;
 let RNR_userNom  = null;
+let RNR_dernierMsg = null;   /* date ISO du dernier message — alimente le moteur d'animation (D-ECH-3) */
 
 /* Initiale + couleur stable dérivée du nom (mêmes pastilles que la maquette) */
 function initialeDe(nom){ return (nom||'?').trim().charAt(0).toUpperCase() || '?'; }
@@ -336,8 +333,10 @@ async function chargerMessages(){
   if(error){ feed.innerHTML='<div class="share-empty">Impossible de charger les messages.</div>'; console.warn(error); return; }
   if(!msgs||!msgs.length){
     feed.innerHTML='<div class="share-empty">Rien de partagé pour l\'instant.<br>Lance la discussion : un mot, une idée, un coup de cœur 👇</div>';
+    RNR_dernierMsg = null;
     return;
   }
+  RNR_dernierMsg = msgs[msgs.length-1].created_at;
   feed.innerHTML = msgs.map(m=>{
     const nom = m.auteur_nom || 'Voyageur';
     const av  = '<div class="share-av" style="background:'+couleurAvatar(nom)+'">'+escapeHtml(initialeDe(nom))+'</div>';
@@ -369,6 +368,7 @@ async function envoyerMessage(){
   if(error){ console.warn('Envoi refusé', error); alert('Message non envoyé. Réessaie.'); return; }
   input.value=''; input.focus();
   await chargerMessages();
+  rendreGroupe();   /* le silence est rompu → le moteur d'animation se met à jour */
 }
 
 /* Signaler (modération a posteriori — passe en statut signale, G2) */
@@ -443,6 +443,7 @@ async function chargerVotes(){
   rendreListe();
   if(RNR_celebreEnCours){ RNR_celebreEnCours=false; }  /* on garde la célébration affichée, la liste/archive sont à jour */
   else { rendreVedette(); }
+  rendreGroupe();   /* bloc « Le groupe » + moteur d'animation, sur l'état réel (D-ECH-3) */
 }
 
 /* Calcul du résultat d'un vote selon son type */
@@ -537,7 +538,87 @@ function echeanceTexte(p){
   return 'ferme dans '+jours+' jours';
 }
 
-function mettreEnVedette(pid){ RNR_vedetteId=pid; rendreListe(); rendreVedette(); }
+function mettreEnVedette(pid){ RNR_vedetteId=pid; rendreListe(); rendreVedette(); rendreGroupe(); }
+
+/* ════════════════════════════════════════════════════════════════
+   BLOC « LE GROUPE » — version honnête NON-NOMINATIVE (v13+).
+   On n'invente aucun prénom (les vrais noms attendent la brique
+   « identité du membre », cf. cap §6). On affiche du RÉEL :
+   - une pastille par membre (RNR_nbMembres, count exact) ;
+   - allumée si ce membre a voté sur la question vedette, éteinte sinon ;
+   - le moteur d'animation (D-ECH-3) en dessous : la voix qui réveille.
+   ════════════════════════════════════════════════════════════════ */
+function rendreGroupe(){
+  const avts  = document.getElementById('grp-avts');
+  const pulse = document.getElementById('grp-pulse');
+  if(!avts||!pulse) return;
+
+  /* Pastilles : autant que de membres. Sur la vedette, on sait combien ont voté. */
+  const vedette = RNR_props.find(x=>x.id===RNR_vedetteId) || null;
+  const nbVote  = vedette ? nbVotants(vedette.id) : 0;
+  const total   = RNR_nbMembres || 1;
+  const MAX_PAST = 8;                       /* au-delà, on résume par +N */
+  const aMontrer = Math.min(total, MAX_PAST);
+  let av='';
+  for(let i=0;i<aMontrer;i++){
+    const aVote = i < nbVote;               /* allumées d'abord (non-nominatif : pas de qui-est-qui) */
+    av += '<div class="av2'+(aVote?'':' av2-off')+'" title="'+(aVote?'a voté':'pas encore voté')+'">'
+        + (aVote?'✓':'·')+'</div>';
+  }
+  if(total>MAX_PAST) av += '<div class="av2 av2-off">+'+(total-MAX_PAST)+'</div>';
+  avts.innerHTML = av;
+
+  pulse.innerHTML = moteurAnimation(vedette, nbVote, total);
+}
+
+/* ── Moteur d'animation (D-ECH-3) ────────────────────────────────
+   Pure logique d'affichage sur l'état réel — zéro table, zéro push.
+   Ton (validé) : chaleureux complice de base, pointe joueuse quand
+   ça dort vraiment ; jamais administratif (D-ECH-6). Une seule voix
+   cohérente qui hausse le ton selon l'endormissement du groupe.
+   Variation douce (pas d'aléatoire qui part dans tous les sens) :
+   on alterne sur le jour de l'année → stable dans une session.       */
+function moteurAnimation(vedette, nbVote, total){
+  const ligne = (em,txt)=>'<div class="grp-pulse-line"><span class="em">'+em+'</span><span>'+txt+'</span></div>';
+  const variante = arr => arr[ new Date().getDate() % arr.length ];
+
+  const nbOuverts = RNR_props.length;
+  const silenceJours = RNR_dernierMsg
+    ? Math.floor((Date.now()-new Date(RNR_dernierMsg).getTime())/86400000)
+    : 999;
+  const aActivite = nbOuverts>0 || silenceJours < 7;
+
+  /* État 1 — TOUT DORT : aucun vote ouvert ET silence ≥ 7 jours. Ton joueur. */
+  if(nbOuverts===0 && silenceJours>=7){
+    return variante([
+      ligne('🌙','C\'est calme par ici… Personne n\'a lancé d\'idée cette semaine. Et si tu ouvrais le bal ?'),
+      ligne('🌙','Le groupe fait la sieste. Un mot, une envie, une région — il suffit d\'une étincelle.')
+    ]);
+  }
+
+  /* État 2 — DES VOTES OUVERTS EN ATTENTE de voix. Ton chaleureux complice. */
+  if(nbOuverts>0){
+    const manque = vedette ? Math.max(0, total - nbVote) : 0;
+    if(manque>0){
+      const pillTxt = nbOuverts>1 ? nbOuverts+' votes attendent leur tour'
+                                  : 'La question est posée';
+      return ligne('🗳️', pillTxt+' — il manque encore quelques voix pour trancher.')
+           + '<span class="waiting-pill">'+nbVote+' / '+total+' ont voté</span>';
+    }
+    /* tout le monde a voté mais pas encore clos → on invite à conclure */
+    return ligne('✅','Tout le monde s\'est exprimé. Il ne reste qu\'à trancher !');
+  }
+
+  /* État 3 — ÇA VIT : pas de vote ouvert mais activité récente (< 7 j). Ton chaleureux. */
+  if(aActivite){
+    return variante([
+      ligne('✨','Ça bouge ! Le groupe est en pleine réflexion.'),
+      ligne('✨','Belle énergie en ce moment — lancez un vote pour avancer.')
+    ]);
+  }
+  /* filet (ne devrait pas tomber ici) */
+  return ligne('🧭','Prêts pour la prochaine aventure ? Lancez une idée.');
+}
 
 /* ── Rendu : vedette "Question à trancher" (selon type) ── */
 function rendreVedette(){
