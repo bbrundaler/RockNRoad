@@ -92,6 +92,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .share-btn{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;border:none;
   border-radius:10px;padding:0 13px;font-weight:700;cursor:pointer;font-size:15px;}
 .share-hint{font-size:10.5px;color:var(--ink-dim);font-style:italic;margin-top:6px;}
+.share-empty{font-size:12.5px;color:var(--ink-dim);font-style:italic;text-align:center;margin:auto 0;padding:14px 8px;line-height:1.6;}
+.share-time{font-size:10px;color:var(--ink-dim);margin-left:6px;font-weight:400;}
+.share-flag{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:11px;opacity:.55;padding:0 2px;margin-left:6px;line-height:1;}
+.share-flag:hover{opacity:1;color:var(--gold-text);}
+.share-row{display:flex;align-items:baseline;gap:2px;}
+.share-row .share-name{flex:0 0 auto;}
 
 /* ── CONTEXTE : fiche en rappel + infos voyage ── */
 .b-context{grid-area:context;}
@@ -175,24 +181,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk b-share">
     <div class="bh"><span class="ic">💬</span><h3>Partager au groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="share-feed">
-        <div class="share-item">
-          <div class="share-av" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
-          <div class="share-body"><div class="share-name">Paul</div><div class="share-text">Super spot repéré en Aquitaine, je vous montre 👇</div>
-            <div class="share-photo">🌊</div></div>
-        </div>
-        <div class="share-item">
-          <div class="share-av" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
-          <div class="share-body"><div class="share-name">Léa</div><div class="share-text">Bretagne à fond pour les dolmens, ça vous tente ?</div></div>
-        </div>
-        <div class="share-item">
-          <div class="share-av" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))">B</div>
-          <div class="share-body"><div class="share-name">Bruno</div><div class="share-text">Je lance le vote Mer/Montagne ce soir, votez !</div></div>
-        </div>
+      <div class="share-feed" id="share-feed">
+        <div class="share-empty" id="share-empty">Chargement…</div>
       </div>
       <div class="share-input">
-        <input type="text" placeholder="Un mot, une photo… sans créer de fiche">
-        <button class="share-btn" title="Envoyer">➤</button>
+        <input type="text" id="share-input" placeholder="Un mot pour le groupe… sans créer de fiche" maxlength="500">
+        <button class="share-btn" id="share-btn" title="Envoyer" onclick="envoyerMessage()">➤</button>
       </div>
       <div class="share-hint">Informel · pour nourrir débats et votes · ne crée pas de fiche</div>
     </div>
@@ -235,6 +229,122 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href="index.html";return;}
 })();
+/* ════════════════════════════════════════════════════════════════
+   COCKPIT — BLOC « PARTAGER AU GROUPE » branché au réel (table messages)
+   Cap : RockNRoad_Echanges_Cockpit_v1 — étape 2 (le plus simple d'abord).
+   Garde-fous : scope groupe (is_member_of via RLS), nom gelé (auteur_nom),
+   modération a posteriori (statut actif/signale/masque, G2).
+   ════════════════════════════════════════════════════════════════ */
+let RNR_groupeId = null;
+let RNR_userId   = null;
+let RNR_userNom  = null;
+
+/* Initiale + couleur stable dérivée du nom (mêmes pastilles que la maquette) */
+function initialeDe(nom){ return (nom||'?').trim().charAt(0).toUpperCase() || '?'; }
+function couleurAvatar(nom){
+  /* dégradé déterministe à partir du nom — palette maison sobre */
+  const palettes = [
+    ['#7a5a1f','var(--gold)'], ['#13384a','#3d8fb0'],
+    ['#6B3288','#c89be0'], ['#2C5016','#7DBB4F'], ['#7a3320','#d08a5a']
+  ];
+  let h=0; for(let i=0;i<(nom||'').length;i++) h=(h*31+nom.charCodeAt(i))>>>0;
+  const p = palettes[h % palettes.length];
+  return 'linear-gradient(135deg,'+p[0]+','+p[1]+')';
+}
+function heureCourte(iso){
+  try{ const d=new Date(iso); const now=new Date();
+    const sameDay=d.toDateString()===now.toDateString();
+    if(sameDay) return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  }catch(e){ return ''; }
+}
+function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+
+/* Charger le contexte (groupe + identité), réutilise le pattern éprouvé de home */
+async function chargerContexte(){
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session) return false;
+  RNR_userId  = session.user.id;
+  RNR_userNom = ((session.user.email||'').split('@')[0]||'Voyageur');
+  RNR_userNom = RNR_userNom.charAt(0).toUpperCase()+RNR_userNom.slice(1);
+  const {data:mem,error} = await sb.from('membres')
+    .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',RNR_userId).limit(1).single();
+  if(error||!mem){ console.warn('Cockpit: pas de groupe', error); return false; }
+  RNR_groupeId = mem.groupe_id;
+  if(window.rnrChrome){
+    if(mem.groupes&&mem.groupes.nom) rnrChrome.setGroupe(mem.groupes.nom);
+    if(mem.is_superadmin) rnrChrome.setSuperAdmin(true);
+  }
+  return true;
+}
+
+/* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
+async function chargerMessages(){
+  const feed = document.getElementById('share-feed');
+  if(!RNR_groupeId){ feed.innerHTML='<div class="share-empty">Groupe introuvable.</div>'; return; }
+  const {data:msgs,error} = await sb.from('messages')
+    .select('id,auteur_id,auteur_nom,texte,photo_url,statut,created_at')
+    .eq('groupe_id',RNR_groupeId).eq('statut','actif')
+    .order('created_at',{ascending:true}).limit(100);
+  if(error){ feed.innerHTML='<div class="share-empty">Impossible de charger les messages.</div>'; console.warn(error); return; }
+  if(!msgs||!msgs.length){
+    feed.innerHTML='<div class="share-empty">Rien de partagé pour l\'instant.<br>Lance la discussion : un mot, une idée, un coup de cœur 👇</div>';
+    return;
+  }
+  feed.innerHTML = msgs.map(m=>{
+    const nom = m.auteur_nom || 'Voyageur';
+    const av  = '<div class="share-av" style="background:'+couleurAvatar(nom)+'">'+escapeHtml(initialeDe(nom))+'</div>';
+    const photo = m.photo_url ? '<div class="share-photo">📷</div>' : '';
+    return '<div class="share-item">'+av+
+      '<div class="share-body">'+
+        '<div class="share-row"><div class="share-name">'+escapeHtml(nom)+'</div>'+
+          '<span class="share-time">'+heureCourte(m.created_at)+'</span>'+
+          '<button class="share-flag" title="Signaler ce message" onclick="signalerMessage(\''+m.id+'\')">⚐</button>'+
+        '</div>'+
+        '<div class="share-text">'+escapeHtml(m.texte)+'</div>'+photo+
+      '</div></div>';
+  }).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+/* Envoyer un message (auteur_id = lien RGPD, auteur_nom = étiquette gelée) */
+async function envoyerMessage(){
+  const input = document.getElementById('share-input');
+  const btn   = document.getElementById('share-btn');
+  const texte = (input.value||'').trim();
+  if(!texte || !RNR_groupeId) return;
+  btn.disabled = true; input.disabled = true;
+  const {error} = await sb.from('messages').insert({
+    groupe_id: RNR_groupeId, auteur_id: RNR_userId, auteur_nom: RNR_userNom,
+    texte: texte, statut: 'actif'
+  });
+  btn.disabled = false; input.disabled = false;
+  if(error){ console.warn('Envoi refusé', error); alert('Message non envoyé. Réessaie.'); return; }
+  input.value=''; input.focus();
+  await chargerMessages();
+}
+
+/* Signaler (modération a posteriori — passe en statut signale, G2) */
+async function signalerMessage(id){
+  if(!confirm('Signaler ce message au groupe ?')) return;
+  const {error} = await sb.from('messages').update({statut:'signale'}).eq('id',id);
+  if(error){ console.warn('Signalement refusé', error); return; }
+  await chargerMessages();
+}
+
+/* Entrée clavier */
+document.addEventListener('DOMContentLoaded',()=>{
+  const input=document.getElementById('share-input');
+  if(input) input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); envoyerMessage(); }});
+});
+
+/* Démarrage du bloc Partager */
+(async()=>{
+  const ok = await chargerContexte();
+  if(ok) await chargerMessages();
+  else document.getElementById('share-feed').innerHTML='<div class="share-empty">Connecte-toi pour voir les messages du groupe.</div>';
+})();
+
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 /* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
