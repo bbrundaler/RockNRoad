@@ -359,8 +359,15 @@ textarea{resize:vertical;min-height:80px;}
 
 .toast.show{transform:translateY(0);}
 
+/* ── Mise en page 2 colonnes (refonte présentation) ── */
+.onb-wrap{max-width:1100px;margin:0 auto;}
+.onb-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+.onb-col{display:flex;flex-direction:column;gap:20px;}
+.onb-foot{max-width:1100px;margin:24px auto 0;}
+
 @media(max-width:768px){
   .form-grid{grid-template-columns:1fr;}
+  .onb-grid{grid-template-columns:1fr;}
 }
 /* ── SIDEBAR ── */
 
@@ -379,93 +386,109 @@ textarea{resize:vertical;min-height:80px;}
 <div id="onboarding-main"> <!-- ex app-main : hors Template A legacy -->
   <!-- barre de navigation injectée par chrome.js -->
 
-  <div class="inner-narrow">
+  <div class="onb-wrap">
     <div class="page-header">
       <h1 class="page-title">Profil <em>Groupe</em></h1>
       <p class="page-sub">Configurez votre groupe de voyage — nom, point de départ, membres et préférences.</p>
     </div>
 
-    <!-- ── Identité du groupe ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>🏕️</span> Identité du groupe</div>
-      <div class="form-grid">
-        <div class="fg full">
-          <label for="g-nom">Nom du groupe *</label>
-          <input type="text" id="g-nom" placeholder="Famille Brundaler, Les Aventuriers…" maxlength="60">
-        </div>
-        <div class="fg full">
-          <label for="g-adresse">Adresse de départ * <span style="font-weight:400;color:var(--ink-dim);">(ville ou adresse précise)</span></label>
-          <input type="text" id="g-adresse" placeholder="Avenheim, France" oninput="scheduleGeocode()">
-          <div class="geo-status" id="geo-status"></div>
-        </div>
-        <div class="fg full">
-          <label for="g-description">Description <span style="font-weight:400;color:var(--ink-dim);">(optionnel)</span></label>
-          <textarea id="g-description" placeholder="Notre famille de voyageurs alsaciens…"></textarea>
-        </div>
-      </div>
-    </div>
+    <div class="onb-grid">
 
-    <!-- ── Avatar ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>🖼️</span> Photo du groupe</div>
-      <div class="avatar-zone">
-        <div class="avatar-preview" id="avatar-preview">🐾</div>
-        <div>
-          <label style="cursor:pointer;">
-            <div class="avatar-upload">📷 Choisir une photo (JPG, PNG, max 2 Mo)</div>
-            <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+      <!-- Colonne gauche -->
+      <div class="onb-col">
+
+        <!-- ── Identité du groupe ── -->
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>🏕️</span> Identité du groupe</div>
+          <div class="form-grid">
+            <div class="fg full">
+              <label for="g-nom">Nom du groupe *</label>
+              <input type="text" id="g-nom" placeholder="Famille Brundaler, Les Aventuriers…" maxlength="60">
+            </div>
+            <div class="fg full">
+              <label for="g-adresse">Adresse de départ * <span style="font-weight:400;color:var(--ink-dim);">(ville ou adresse précise)</span></label>
+              <input type="text" id="g-adresse" placeholder="Avenheim, France" oninput="scheduleGeocode()">
+              <div class="geo-status" id="geo-status"></div>
+            </div>
+            <div class="fg full">
+              <label for="g-description">Description <span style="font-weight:400;color:var(--ink-dim);">(optionnel)</span></label>
+              <textarea id="g-description" placeholder="Notre famille de voyageurs alsaciens…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Partage ── -->
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>🌐</span> Partage</div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);">
+            <input type="checkbox" id="g-partage" style="width:16px;height:16px;accent-color:var(--gold);">
+            Rendre le carnet accessible publiquement (lecture seule)
           </label>
-          <p style="font-size:11px;color:var(--ink-dim);margin-top:6px;">Stockée dans Supabase Storage.</p>
+          <p style="font-size:11px;color:var(--ink-dim);margin-top:8px;">
+            Si activé, un lien partageable sera généré pour visualiser vos fiches sans compte.
+          </p>
         </div>
+
       </div>
+
+      <!-- Colonne droite -->
+      <div class="onb-col">
+
+        <!-- ── Types de voyages ── -->
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>🗺️</span> Types de voyages préférés</div>
+          <div class="voyage-grid">
+            <div class="vtype" data-v="roadtrip">🚗 Roadtrip</div>
+            <div class="vtype" data-v="camping">⛺ Camping</div>
+            <div class="vtype" data-v="randonnee">🥾 Randonnée</div>
+            <div class="vtype" data-v="plage">🏖️ Plage</div>
+            <div class="vtype" data-v="culture">🏛️ Culture</div>
+            <div class="vtype" data-v="gastronomie">🍷 Gastronomie</div>
+            <div class="vtype" data-v="montagne">🏔️ Montagne</div>
+            <div class="vtype" data-v="famille">👨‍👩‍👧 Famille</div>
+          </div>
+        </div>
+
+        <!-- ── Membres ── -->
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>👥</span> Membres du groupe</div>
+          <div class="membres-list" id="membres-list"></div>
+          <button class="add-membre-btn" onclick="addMembre()">
+            <span style="font-size:16px;">+</span> Ajouter un membre
+          </button>
+          <p class="membre-limit-note">Les prénoms apparaissent dans le carnet de voyage et les statistiques.</p>
+        </div>
+
+        <!-- ── Avatar ── -->
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>🖼️</span> Photo du groupe</div>
+          <div class="avatar-zone">
+            <div class="avatar-preview" id="avatar-preview">🐾</div>
+            <div>
+              <label style="cursor:pointer;">
+                <div class="avatar-upload">📷 Choisir une photo (JPG, PNG, max 2 Mo)</div>
+                <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+              </label>
+              <p style="font-size:11px;color:var(--ink-dim);margin-top:6px;">Stockée dans Supabase Storage.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
-    <!-- ── Types de voyages ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>🗺️</span> Types de voyages préférés</div>
-      <div class="voyage-grid">
-        <div class="vtype" data-v="roadtrip">🚗 Roadtrip</div>
-        <div class="vtype" data-v="camping">⛺ Camping</div>
-        <div class="vtype" data-v="randonnee">🥾 Randonnée</div>
-        <div class="vtype" data-v="plage">🏖️ Plage</div>
-        <div class="vtype" data-v="culture">🏛️ Culture</div>
-        <div class="vtype" data-v="gastronomie">🍷 Gastronomie</div>
-        <div class="vtype" data-v="montagne">🏔️ Montagne</div>
-        <div class="vtype" data-v="famille">👨‍👩‍👧 Famille</div>
-      </div>
-    </div>
+    <div class="onb-foot">
+      <div class="error-msg" id="error-msg"></div>
 
-    <!-- ── Membres ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>👥</span> Membres du groupe</div>
-      <div class="membres-list" id="membres-list"></div>
-      <button class="add-membre-btn" onclick="addMembre()">
-        <span style="font-size:16px;">+</span> Ajouter un membre
+      <button class="save-btn" id="save-btn" onclick="saveGroupe()">
+        💾 Enregistrer le profil
       </button>
-      <p class="membre-limit-note">Les prénoms apparaissent dans le carnet de voyage et les statistiques.</p>
-    </div>
 
-    <!-- ── Partage ── -->
-    <div class="cfg-card">
-      <div class="cfg-card-title"><span>🌐</span> Partage</div>
-      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);">
-        <input type="checkbox" id="g-partage" style="width:16px;height:16px;accent-color:var(--gold);">
-        Rendre le carnet accessible publiquement (lecture seule)
-      </label>
-      <p style="font-size:11px;color:var(--ink-dim);margin-top:8px;">
-        Si activé, un lien partageable sera généré pour visualiser vos fiches sans compte.
+      <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--ink-dim);">
+        <a href="carnet.html" style="color:var(--gold);text-decoration:none;">← Retour au carnet</a>
       </p>
     </div>
-
-    <div class="error-msg" id="error-msg"></div>
-
-    <button class="save-btn" id="save-btn" onclick="saveGroupe()">
-      💾 Enregistrer le profil
-    </button>
-
-    <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--ink-dim);">
-      <a href="carnet.html" style="color:var(--gold);text-decoration:none;">← Retour au carnet</a>
-    </p>
 
   </div>
 </div><!-- /#onboarding-main -->
