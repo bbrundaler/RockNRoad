@@ -108,7 +108,22 @@ input::placeholder{color:#b8ad96;}
 }
 .loading.show{display:flex;}
 
+.link-oubli{
+  display:block;width:100%;margin-top:14px;
+  background:none;border:none;cursor:pointer;
+  font-family:var(--font-body);font-size:12.5px;color:#6B5F4A;
+  text-align:center;letter-spacing:.3px;
+  transition:color .25s;
+}
+.link-oubli:hover{color:var(--gold-deep);text-decoration:underline;}
 
+.info-oubli{
+  background:var(--gold-a10);border:1px solid var(--gold-a35);
+  border-radius:var(--r-sm);padding:11px 14px;
+  font-size:12.5px;color:#6B5F4A;line-height:1.5;margin-top:14px;
+  display:none;align-items:center;gap:8px;
+}
+.info-oubli.show{display:flex;}
 
 .footer-note{
   text-align:center;margin-top:24px;
@@ -127,7 +142,7 @@ input::placeholder{color:#b8ad96;}
     <div class="logo-badge">🐾 Family Road Trip App</div>
     <h1 style="font-size:38px;letter-spacing:-1px;">Rock<em>N</em>Road</h1>
     <p style="font-size:11px;letter-spacing:6px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:2px;">Aventures</p>
-    <p style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Accès privé · Famille</p>
+    <p id="sousTitre" style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Accès privé · Famille</p>
   </div>
 
   <div class="divider"></div>
@@ -144,6 +159,13 @@ input::placeholder{color:#b8ad96;}
   <button class="btn" id="loginBtn" onclick="login()">
     <span>Accéder au carnet →</span>
   </button>
+
+  <button class="link-oubli" id="oubliBtn" onclick="afficherOubli()">Mot de passe oublié ?</button>
+
+  <div class="info-oubli" id="infoOubli">
+    <span>✉️</span>
+    <span>Un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte mail (et les indésirables).</span>
+  </div>
 
   <div class="error" id="error">
     <span>⚠️</span>
@@ -177,6 +199,13 @@ async function redirectAfterLogin(userId) {
 // Détecter un lien d'invitation Supabase (hash contient type=invite ou type=recovery)
 (async () => {
   const hash = window.location.hash;
+
+  // Lien de réinitialisation de mot de passe → page dédiée (on transmet le hash/token)
+  if (hash && hash.includes('type=recovery')) {
+    window.location.href = 'nouveau-mot-de-passe.html' + hash;
+    return;
+  }
+
   if (hash && hash.includes('type=invite')) {
     // Laisser Supabase JS traiter le token — onAuthStateChange prend le relais
     sb.auth.onAuthStateChange(async (event, session) => {
@@ -191,6 +220,66 @@ async function redirectAfterLogin(userId) {
   const { data: { session } } = await sb.auth.getSession();
   if (session) await redirectAfterLogin(session.user.id);
 })();
+
+// ── Mot de passe oublié ───────────────────────────────────────────────────────
+let modeOubli = false;
+
+function afficherOubli() {
+  const btn   = document.getElementById('loginBtn');
+  const oubli = document.getElementById('oubliBtn');
+  const pwdGroup = document.getElementById('password').closest('.form-group');
+  const sousTitre = document.getElementById('sousTitre');
+
+  if (!modeOubli) {
+    // Passer en mode "recevoir un lien"
+    modeOubli = true;
+    pwdGroup.style.display = 'none';
+    btn.querySelector('span').textContent = 'Recevoir un lien →';
+    btn.setAttribute('onclick', 'resetMotDePasse()');
+    oubli.textContent = '← Retour à la connexion';
+    if (sousTitre) sousTitre.textContent = 'Réinitialisation du mot de passe';
+    document.getElementById('error').classList.remove('show');
+  } else {
+    // Revenir au login normal
+    modeOubli = false;
+    pwdGroup.style.display = '';
+    btn.querySelector('span').textContent = 'Accéder au carnet →';
+    btn.setAttribute('onclick', 'login()');
+    oubli.textContent = 'Mot de passe oublié ?';
+    if (sousTitre) sousTitre.textContent = 'Accès privé · Famille';
+    document.getElementById('error').classList.remove('show');
+    document.getElementById('infoOubli').classList.remove('show');
+  }
+}
+
+async function resetMotDePasse() {
+  const email   = document.getElementById('email').value.trim();
+  const btn     = document.getElementById('loginBtn');
+  const errorEl = document.getElementById('error');
+  const infoEl  = document.getElementById('infoOubli');
+
+  errorEl.classList.remove('show');
+  infoEl.classList.remove('show');
+
+  if (!email) {
+    document.getElementById('errorMsg').textContent = 'Saisissez votre adresse email.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bbrundaler.github.io/RockNRoad/nouveau-mot-de-passe.html'
+  });
+
+  btn.disabled = false;
+
+  // On affiche toujours le même message de confirmation (ne pas révéler si l'email existe)
+  infoEl.classList.add('show');
+  btn.querySelector('span').textContent = 'Lien envoyé ✓';
+  btn.disabled = true;
+}
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 async function login() {
@@ -234,7 +323,7 @@ async function login() {
 
 // Enter key
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') login();
+  if (e.key === 'Enter') { modeOubli ? resetMotDePasse() : login(); }
 });
 
 // ── Particules décoratives ────────────────────────────────────────────────────

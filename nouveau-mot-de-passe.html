@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad Aventures · Nouveau mot de passe</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+/* NOUVEAU MOT DE PASSE — même grammaire que la CONNEXION : couverture sombre + carte papier. */
+body{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--chrome-bg);
+  font-family:var(--font-body);
+  position:relative;
+  overflow:hidden;
+}
+body::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 70%,var(--gold-a10),transparent 55%),
+             radial-gradient(ellipse at 70% 30%,var(--gold-a10),transparent 60%);
+}
+.dots{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.dot{position:absolute;border-radius:50%;background:var(--gold-a20);animation:float linear infinite;}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{transform:translateY(-100px) rotate(720deg);opacity:0;}}
+
+.card{
+  position:relative;z-index:10;
+  background:var(--paper);
+  border-radius:var(--r-lg);
+  padding:48px 44px;
+  width:100%;max-width:420px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+  border:1px solid var(--gold-a35);
+}
+.logo{text-align:center;margin-bottom:32px;}
+.logo-icon{font-size:48px;display:block;margin-bottom:12px;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.logo-badge{
+  display:inline-block;background:var(--gold-a20);
+  border:1px solid var(--gold-a35);
+  color:var(--gold-deep);font-size:10.5px;letter-spacing:4px;
+  text-transform:uppercase;padding:5px 18px;border-radius:var(--r-pill);margin-bottom:14px;
+}
+.logo h1{
+  font-family:'Playfair Display',serif;
+  color:#1a1208;line-height:1.2;margin-bottom:4px;
+}
+.logo h1 em{color:var(--gold);font-style:italic;}
+.logo p{font-size:12.5px;color:#6B5F4A;letter-spacing:1.5px;}
+
+.divider{
+  width:50px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:20px auto 28px;
+}
+
+.form-group{margin-bottom:18px;}
+label{display:block;font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6B5F4A;margin-bottom:7px;}
+input{
+  width:100%;padding:13px 16px;
+  border:2px solid #E8DECE;border-radius:var(--r);
+  font-family:var(--font-body);font-size:14.5px;color:#1a1208;
+  background:white;transition:border-color .25s,box-shadow .25s;outline:none;
+}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a20);}
+input::placeholder{color:#b8ad96;}
+
+.regle{
+  font-size:11.5px;color:#6B5F4A;line-height:1.5;
+  margin:-8px 0 18px;padding-left:2px;
+}
+.regle.ok{color:var(--gold-deep);}
+
+.btn{
+  width:100%;padding:14px;margin-top:8px;
+  background:linear-gradient(135deg,#1A1208,#3a2a18);
+  color:var(--gold);font-family:var(--font-body);
+  font-size:13.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  border:none;border-radius:var(--r);cursor:pointer;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+  opacity:0;transition:opacity .3s;
+}
+.btn:hover::before{opacity:1;}
+.btn:hover{color:#1a1208;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.btn span{position:relative;z-index:1;}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+.error{
+  background:#fff0ee;border:1px solid #ffccc7;
+  border-radius:var(--r-sm);padding:11px 14px;
+  font-size:13px;color:#cc4400;margin-top:14px;
+  display:none;align-items:center;gap:8px;
+}
+.error.show{display:flex;}
+
+.success{
+  background:var(--gold-a10);border:1px solid var(--gold-a35);
+  border-radius:var(--r-sm);padding:11px 14px;
+  font-size:13px;color:#6B5F4A;margin-top:14px;line-height:1.5;
+  display:none;align-items:center;gap:8px;
+}
+.success.show{display:flex;}
+
+.loading{
+  display:none;align-items:center;justify-content:center;
+  gap:10px;margin-top:14px;font-size:13px;color:#6B5F4A;
+}
+.loading.show{display:flex;}
+.spinner{width:16px;height:16px;border:2px solid var(--gold-a35);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.footer-note{
+  text-align:center;margin-top:24px;
+  font-size:11.5px;color:#6B5F4A;line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="dots" id="dots"></div>
+
+<div class="card">
+  <div class="logo">
+    <span class="logo-icon">🔑</span>
+    <div class="logo-badge">🐾 Family Road Trip App</div>
+    <h1 style="font-size:30px;letter-spacing:-1px;">Nouveau mot de passe</h1>
+    <p style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Choisissez votre nouveau code d'accès</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div id="formZone">
+    <div class="form-group">
+      <label>Nouveau mot de passe</label>
+      <input type="password" id="pwd1" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+    <div class="form-group">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="pwd2" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+
+    <p class="regle" id="regle">8 caractères minimum, dont au moins une lettre et un chiffre.</p>
+
+    <button class="btn" id="saveBtn" onclick="enregistrer()">
+      <span>Enregistrer →</span>
+    </button>
+
+    <div class="error" id="error">
+      <span>⚠️</span>
+      <span id="errorMsg"></span>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <span>Enregistrement...</span>
+    </div>
+  </div>
+
+  <div class="success" id="success">
+    <span>✓</span>
+    <span>Mot de passe modifié. Redirection vers votre carnet...</span>
+  </div>
+
+  <div class="footer-note">
+    Accès réservé aux membres du groupe
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://cazqllstxhuecoqpktwm.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Le SDK lit automatiquement le token de récupération depuis le hash de l'URL
+// et ouvre une session temporaire (event PASSWORD_RECOVERY / SIGNED_IN).
+let sessionPrete = false;
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) sessionPrete = true;
+});
+
+// Validation : 8 caractères, au moins une lettre et un chiffre
+function motDePasseValide(pwd) {
+  return pwd.length >= 8 && /[a-zA-Z]/.test(pwd) && /[0-9]/.test(pwd);
+}
+
+// Indicateur visuel de la règle en direct
+document.getElementById('pwd1').addEventListener('input', e => {
+  const regle = document.getElementById('regle');
+  regle.classList.toggle('ok', motDePasseValide(e.target.value));
+});
+
+async function enregistrer() {
+  const pwd1    = document.getElementById('pwd1').value;
+  const pwd2    = document.getElementById('pwd2').value;
+  const btn     = document.getElementById('saveBtn');
+  const errorEl = document.getElementById('error');
+  const loadEl  = document.getElementById('loading');
+
+  errorEl.classList.remove('show');
+
+  if (!motDePasseValide(pwd1)) {
+    document.getElementById('errorMsg').textContent = '8 caractères minimum, dont une lettre et un chiffre.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (pwd1 !== pwd2) {
+    document.getElementById('errorMsg').textContent = 'Les deux mots de passe ne correspondent pas.';
+    errorEl.classList.add('show');
+    return;
+  }
+  if (!sessionPrete) {
+    document.getElementById('errorMsg').textContent = 'Lien expiré ou invalide. Refaites une demande depuis la page de connexion.';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  loadEl.classList.add('show');
+
+  const { error } = await sb.auth.updateUser({ password: pwd1 });
+
+  loadEl.classList.remove('show');
+
+  if (error) {
+    btn.disabled = false;
+    document.getElementById('errorMsg').textContent = 'Erreur : ' + error.message;
+    errorEl.classList.add('show');
+    return;
+  }
+
+  // Succès
+  document.getElementById('formZone').style.display = 'none';
+  document.getElementById('success').classList.add('show');
+  setTimeout(() => { window.location.href = 'home.html'; }, 2200);
+}
+
+// Enter valide
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') enregistrer();
+});
+
+// Particules décoratives
+const container = document.getElementById('dots');
+for (let i = 0; i < 12; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  const size = Math.random() * 8 + 4;
+  dot.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${Math.random() * 100}%;
+    animation-duration:${Math.random() * 15 + 10}s;
+    animation-delay:${Math.random() * 10}s;
+  `;
+  container.appendChild(dot);
+}
+</script>
+</body>
+</html>
