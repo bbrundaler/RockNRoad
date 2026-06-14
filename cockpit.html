@@ -260,13 +260,25 @@ function heureCourte(iso){
 }
 function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
 
+/* Prénom propre depuis l'email. On coupe au point/underscore/chiffre (séparateurs
+   email : "bruno.brundaler" -> "Bruno") mais on PRÉSERVE le tiret des prénoms
+   composés ("jean-pierre" -> "Jean-Pierre"). Majuscule sur chaque segment. */
+function prenomDepuisEmail(email){
+  let base = ((email||'').split('@')[0]||'');
+  base = base.split(/[._0-9]/)[0] || base;        // coupe prénom.nom, garde le tiret
+  if(!base) return 'Voyageur';
+  return base.split('-')
+    .map(seg => seg ? seg.charAt(0).toUpperCase()+seg.slice(1).toLowerCase() : '')
+    .filter(Boolean)
+    .join('-');
+}
+
 /* Charger le contexte (groupe + identité), réutilise le pattern éprouvé de home */
 async function chargerContexte(){
   const {data:{session}} = await sb.auth.getSession();
   if(!session) return false;
   RNR_userId  = session.user.id;
-  RNR_userNom = ((session.user.email||'').split('@')[0]||'Voyageur');
-  RNR_userNom = RNR_userNom.charAt(0).toUpperCase()+RNR_userNom.slice(1);
+  RNR_userNom = prenomDepuisEmail(session.user.email);
   const {data:mem,error} = await sb.from('membres')
     .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',RNR_userId).limit(1).single();
   if(error||!mem){ console.warn('Cockpit: pas de groupe', error); return false; }
