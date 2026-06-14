@@ -425,7 +425,8 @@ let RNR_clos = [];
 let RNR_celebreEnCours = false;      // propositions ouvertes du groupe
 let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
 let RNR_vedetteId = null;
-let RNR_fiches = [];     // fiches du carnet du groupe (cache) — alimente le vote « garder/écarter »
+let RNR_fiches = [];     // fiches du carnet du groupe (cache COMPLET) — résout les vignettes
+let RNR_fichesAimees = []; // fiches ayant ≥1 ❤️ — alimente le sélecteur de vote (entonnoir)
 let RNR_nbMembres = 1;
 
 function escH(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
@@ -434,13 +435,22 @@ function escH(t){ const d=document.createElement('div'); d.textContent=(t==null?
    Même accès que carnet.html (lieux scopés groupe via RLS). Chargé une fois en cache.
    Champs minimaux : id, nom, region, photo_url (titre = l.nom, confirmé sur le réel). */
 async function chargerFiches(){
-  if(!RNR_groupeId){ RNR_fiches=[]; return; }
+  if(!RNR_groupeId){ RNR_fiches=[]; RNR_fichesAimees=[]; return; }
   const {data,error}=await sb.from('lieux')
     .select('id,nom,region,photo_url')
     .eq('groupe_id',RNR_groupeId)
     .order('nom',{ascending:true});
-  if(error){ console.warn('fiches',error); RNR_fiches=[]; return; }
-  RNR_fiches = data||[];
+  if(error){ console.warn('fiches',error); RNR_fiches=[]; RNR_fichesAimees=[]; return; }
+  RNR_fiches = data||[];   /* cache COMPLET — sert à résoudre les vignettes des votes existants */
+  /* Cache des fiches AIMÉES (≥ 1 ❤️) — sert au sélecteur de création (entonnoir, Master 1.7).
+     Le ❤️ du carnet est la porte d'entrée dans la zone de vote. */
+  const {data:reacs} = await sb.from('reactions')
+    .select('cible_id,emoji').eq('cible_type','lieu').eq('emoji','❤️');
+  const coeurParFiche = {};
+  (reacs||[]).forEach(r=>{ coeurParFiche[r.cible_id]=(coeurParFiche[r.cible_id]||0)+1; });
+  RNR_fichesAimees = RNR_fiches
+    .filter(f=>coeurParFiche[f.id]>0)
+    .map(f=>({...f, coeurs:coeurParFiche[f.id]}));
 }
 /* Retrouve une fiche par id ; null si elle n'existe plus (supprimée du carnet) →
    le vote survit à la disparition de sa cible (parallèle G4 anonymisation). */
@@ -804,16 +814,18 @@ function choisirIntention(i){
 
   /* Cas spécial : vote sur une fiche du carnet (5ᵉ intention) */
   if(NV_intention.besoinFiche){
-    if(!RNR_fiches.length){
+    if(!RNR_fichesAimees.length){
       box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+
-        '<div class="vhint" style="margin-top:8px">Le carnet du groupe n\'a encore aucune fiche à départager. '+
-        'Crée d\'abord des lieux dans le carnet, puis reviens lancer ce vote.</div>'+
+        '<div class="vhint" style="margin-top:8px">Aucune fiche n\'a encore reçu de <b>❤️</b> dans le groupe. '+
+        'Passe d\'abord par le <b>carnet</b> : mets un cœur sur les lieux qui te font envie. '+
+        'Ce sont eux qu\'on pourra ensuite départager ici.</div>'+
         '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button></div>';
       return;
     }
     let opts='<option value="">— Choisis une fiche —</option>';
-    RNR_fiches.forEach(f=>{
-      const lbl = f.nom + (f.region ? ' · '+f.region : '');
+    RNR_fichesAimees.forEach(f=>{
+      const coeur = f.coeurs ? '  ❤️ '+f.coeurs : '';
+      const lbl = f.nom + (f.region ? ' · '+f.region : '') + coeur;
       opts+='<option value="'+escH(f.id)+'">'+escH(lbl)+'</option>';
     });
     box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+
