@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Console super-admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<script src="chrome.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ─── Écran de vérification ─── */
+#auth-check{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;z-index:9999;color:var(--ink);}
+#auth-check h2{font-family:var(--font-title);font-size:24px;}
+.spinner{width:26px;height:26px;border:3px solid var(--gold-a20);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ─── Refus d'accès (non super-admin) ─── */
+#deny{display:none;max-width:480px;margin:80px auto;text-align:center;padding:40px;}
+#deny h2{font-family:var(--font-title);font-size:24px;color:var(--ink);margin-bottom:10px;}
+#deny p{color:var(--ink-dim);font-size:14px;line-height:1.6;}
+#deny a{color:var(--gold-text);text-decoration:none;font-weight:600;}
+
+/* ─── Espace de travail plein écran ─── */
+#console-main{display:none;}
+.wrap{max-width:1600px;margin:0 auto;padding:36px 40px 80px;}
+
+.head{margin-bottom:20px;}
+.head .eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold-text);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.head .eyebrow::before{content:'';width:24px;height:1px;background:var(--gold);}
+.head h1{font-family:var(--font-title);font-size:34px;line-height:1.1;letter-spacing:-.5px;color:var(--ink);}
+.head h1 em{color:var(--gold);font-style:italic;}
+.head p{color:var(--ink-dim);font-size:13px;margin-top:6px;}
+
+/* ─── Bandeau d'indicateurs : 3 chiffres + jauge sentinelle ─── */
+.kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:32px;
+  padding-bottom:32px;border-bottom:1px solid var(--surface-line);}
+.kpi{background:var(--surface);border:1px solid var(--surface-line);
+  border-radius:var(--r-lg);padding:16px 22px;box-shadow:var(--shadow);min-width:120px;}
+.kpi-num{font-family:var(--font-title);font-size:34px;color:var(--gold);line-height:1;}
+.kpi-lbl{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);margin-top:6px;}
+
+.gauge{background:var(--surface);border:1px solid var(--surface-line);
+  border-radius:var(--r-lg);padding:16px 22px;box-shadow:var(--shadow);min-width:240px;flex:1;}
+.gauge-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.gauge-val{font-family:var(--font-title);font-size:22px;}
+.gauge-lbl{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);}
+.gauge-bar{height:7px;border-radius:var(--r-pill);background:var(--bg);overflow:hidden;border:1px solid var(--surface-line);}
+.gauge-fill{height:100%;width:0%;border-radius:var(--r-pill);transition:width .4s;}
+.gauge-foot{font-size:10.5px;color:var(--ink-dim);margin-top:8px;line-height:1.5;}
+
+/* ─── Grille de travail : gestion (large) | invitation (étroit) ─── */
+.grid{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start;}
+@media (max-width:1100px){.grid{grid-template-columns:1fr;}}
+
+.panel{background:var(--surface);border:1px solid var(--surface-line);
+  border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden;}
+.panel-head{padding:18px 24px;border-bottom:1px solid var(--surface-line);
+  display:flex;align-items:center;gap:10px;}
+.panel-head .ico{font-size:16px;}
+.panel-head h2{font-family:var(--font-title);font-size:18px;font-weight:700;color:var(--ink);}
+.panel-body{padding:22px 24px;}
+.refresh-btn{margin-top:14px;padding:9px 16px;border:1px solid var(--surface-line);border-radius:var(--r);
+  background:var(--bg);color:var(--ink-dim);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold-text);}
+
+/* ─── Invitation ─── */
+.admin-badge{display:inline-block;background:var(--gold-a20);border:1px solid var(--gold-a35);
+  color:var(--gold-deep);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  padding:3px 9px;border-radius:var(--r-pill);margin-left:auto;vertical-align:middle;}
+.fld{margin-bottom:16px;}
+.fld label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--ink-dim);margin-bottom:7px;}
+.fld input,.fld select{width:100%;padding:11px 13px;border-radius:var(--r-sm);
+  border:1px solid var(--surface-line);background:var(--bg);color:var(--ink);font-size:14px;font-family:var(--font-body);}
+.role-row{display:flex;gap:8px;}
+.send-btn{width:100%;margin-top:6px;padding:13px;border:none;border-radius:var(--r);
+  background:linear-gradient(135deg,#1A1208,#3a2a18);color:var(--gold);
+  font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;}
+.send-btn:hover{filter:brightness(1.15);}
+.inv-note{margin-top:14px;font-size:11.5px;color:var(--ink-dim);line-height:1.6;}
+#inv-feedback{font-size:12px;min-height:18px;margin-bottom:4px;}
+
+/* ─── Accordéon groupes (migré de config.html, intact) ─── */
+.admin-groupe-row{background:var(--bg);border-radius:10px;padding:16px;margin-bottom:12px;border:1px solid var(--surface-line);}
+.admin-groupe-row:last-child{margin-bottom:0;}
+.ag-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;}
+.ag-info{flex:1;}
+.ag-nom{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.ag-meta{font-size:10.5px;color:var(--ink-dim);}
+.ag-stats{text-align:center;flex-shrink:0;}
+.ag-stat-val{font-size:22px;font-weight:800;color:var(--ink);line-height:1;}
+.ag-stat-lbl{font-size:9px;color:var(--ink-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.ag-progress{height:4px;background:var(--surface);border-radius:2px;margin-bottom:12px;overflow:hidden;}
+.ag-progress-bar{height:100%;border-radius:2px;transition:width .3s;}
+.ag-controls label{display:block;}
+.ag-limit-btn{padding:6px 12px;border-radius:6px;border:1.5px solid var(--surface-line);background:var(--surface);
+  color:var(--ink-dim);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+.ag-limit-btn:hover{border-color:var(--gold);color:var(--gold-text);}
+.ag-limit-btn.active{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
+.ag-limit-btn.custom{border-style:dashed;}
+.ag-statut-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.ag-statut-dot.on{background:var(--green);}
+.ag-statut-dot.off{background:var(--st-bad-ink);}
+.ag-badge-mine{font-size:10px;font-weight:700;color:var(--gold);background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:10px;padding:2px 8px;margin-left:6px;vertical-align:middle;}
+.ag-badge-suspendu{font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--st-bad-ink);
+  background:var(--st-bad-bg);border:1px solid var(--st-bad-bg);border-radius:10px;padding:2px 8px;
+  margin-left:6px;vertical-align:middle;text-transform:uppercase;}
+.admin-groupe-row.ag-suspendu{opacity:.7;}
+.ag-chevron{font-size:14px;color:var(--ink-dim);flex-shrink:0;align-self:center;padding:0 4px;}
+.ag-details{margin-top:14px;padding-top:14px;border-top:1px solid var(--surface-line);
+  display:flex;flex-direction:column;gap:14px;}
+.ag-section-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold-text);margin-top:4px;}
+.ag-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink-dim);}
+.ag-btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center;}
+.ag-limit-btn.ag-danger{border-color:var(--st-bad-bg);color:var(--st-bad-ink);}
+.ag-limit-btn.ag-danger:hover{background:var(--st-bad-bg);}
+.ag-limit-btn.ag-success{border-color:var(--green);color:var(--green);}
+.ag-limit-btn.ag-success:hover{background:var(--green);color:var(--chrome-bg);}
+.ag-membres-list{display:flex;flex-direction:column;gap:6px;}
+.ag-membre-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 10px;border-radius:8px;background:var(--surface);border:1px solid var(--surface-line);flex-wrap:wrap;}
+.ag-membre-info{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);flex-wrap:wrap;}
+.ag-membre-email{font-weight:600;}
+.ag-membre-role{font-size:10px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px;}
+.ag-mini-btn{padding:4px 10px;border-radius:6px;border:1.5px solid var(--surface-line);background:var(--surface);
+  color:var(--ink-dim);font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+.ag-mini-btn.ag-danger{border-color:var(--st-bad-bg);color:var(--st-bad-ink);}
+.ag-mini-btn.ag-danger:hover{background:var(--st-bad-bg);}
+.ag-mini-btn.ag-success{border-color:var(--green);color:var(--green);}
+.ag-mini-btn.ag-success:hover{background:var(--green);color:var(--chrome-bg);}
+
+/* mois courant dans le détail groupe */
+.ag-mois{display:flex;align-items:baseline;gap:10px;}
+.ag-mois-num{font-family:var(--font-title);font-size:20px;color:var(--gold);}
+.ag-mois-txt{font-size:12px;color:var(--ink-dim);}
+
+/* ─── Toast ─── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,120px);
+  background:var(--chrome-bg);color:var(--chrome-ink);padding:13px 22px;border-radius:var(--r);
+  font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.4);z-index:9000;
+  border:1px solid var(--gold-a35);transition:transform .35s;max-width:90vw;}
+.toast.show{transform:translate(-50%,0);}
+.toast.error{border-color:var(--st-bad-ink);}
+.toast.success{border-color:var(--green);}
+</style>
+</head>
+<body>
+
+<div id="auth-check">
+  <div style="font-size:44px;">🛠️</div>
+  <h2>RockNRoad</h2>
+  <p style="font-size:11px;opacity:.5;letter-spacing:2px;">Vérification...</p>
+  <div class="spinner"></div>
+</div>
+
+<!-- Accès refusé : utilisateur connecté mais pas super-admin -->
+<div id="deny">
+  <div style="font-size:40px;margin-bottom:14px;">🔒</div>
+  <h2>Accès réservé</h2>
+  <p>Cette console est réservée à l'administration de la plateforme.<br>
+  <a href="home.html">← Retour au carnet</a></p>
+</div>
+
+<div id="console-main">
+  <!-- barre de navigation injectée par chrome.js -->
+
+  <div class="wrap">
+
+    <div class="head">
+      <div class="eyebrow">Console · Supervision plateforme</div>
+      <h1>Console <em>super-admin</em></h1>
+      <p>Pilotez les groupes, les accès et les invitations — et surveillez le volume d'imports.</p>
+    </div>
+
+    <!-- Bandeau d'indicateurs -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-num" id="kpi-groupes">—</div>
+        <div class="kpi-lbl">Groupes actifs</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num" id="kpi-membres">—</div>
+        <div class="kpi-lbl">Membres</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num" id="kpi-imports">—</div>
+        <div class="kpi-lbl">Imports ce mois</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-top">
+          <span class="gauge-val" id="gauge-val">—</span>
+          <span class="gauge-lbl">Sentinelle coût</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" id="gauge-fill"></div></div>
+        <div class="gauge-foot">Seuil de vigilance plateforme (<span id="gauge-seuil">500</span>/mois) · gratuit Google jusqu'à 10 000/mois</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- Colonne principale : gestion des groupes -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="ico">🛡️</span>
+          <h2>Groupes</h2>
+          <span class="admin-badge">Super admin</span>
+        </div>
+        <div class="panel-body">
+          <div id="admin-groupes">
+            <div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement des groupes…</div>
+          </div>
+          <button class="refresh-btn" onclick="loadAdminData()">🔄 Rafraîchir</button>
+        </div>
+      </div>
+
+      <!-- Colonne droite : invitation -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="ico">✉️</span>
+          <h2>Inviter</h2>
+          <span class="admin-badge">Super admin</span>
+        </div>
+        <div class="panel-body">
+          <div class="fld">
+            <label>Adresse email</label>
+            <input id="inv-email" type="email" placeholder="prenom@exemple.fr">
+          </div>
+          <div class="fld">
+            <label>Rattacher à</label>
+            <select id="inv-groupe">
+              <option value="">⏳ Chargement des groupes…</option>
+              <option value="__nouveau__">➕ Nouveau groupe (l'invité crée le sien)</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label>Rôle</label>
+            <div class="role-row">
+              <button class="ag-limit-btn active" id="inv-role-membre" onclick="setInvRole('membre',this)">👤 Membre</button>
+              <button class="ag-limit-btn" id="inv-role-admin" onclick="setInvRole('admin',this)">🔑 Admin du groupe</button>
+            </div>
+          </div>
+          <div id="inv-feedback"></div>
+          <button class="send-btn" onclick="sendInvitation()">✉️ Envoyer l'invitation</button>
+          <p class="inv-note">L'invité reçoit un email avec un lien de confirmation. Il choisit son mot de passe puis rejoint automatiquement le bon groupe.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+const {createClient}=supabase;
+const EDGE_FN=SURL+'/functions/v1/dynamic-action';
+const sb=createClient(SURL,SKEY);
+
+// Seuil de la sentinelle coût (imports/mois plateforme). Paramétrable ici.
+const SENTINELLE_SEUIL = 500;
+
+let isSuperAdmin = false;
+let invRole = 'membre';
+
+// ── Auth + garde super-admin ──────────────────────────────────────────────────
+async function checkAuth(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+
+  const {data}=await sb.from('membres').select('is_superadmin').eq('user_id',session.user.id).single();
+  isSuperAdmin = data?.is_superadmin === true;
+
+  document.getElementById('auth-check').style.display='none';
+
+  if(!isSuperAdmin){
+    document.getElementById('deny').style.display='block';
+    return;
+  }
+
+  if(window.rnrChrome) rnrChrome.setSuperAdmin(true);
+  document.getElementById('console-main').style.display='block';
+  loadAdminData();
+}
+window.addEventListener('load', checkAuth);
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── Invitation ────────────────────────────────────────────────────────────────
+function setInvRole(role, btn) {
+  invRole = role;
+  document.querySelectorAll('#inv-role-membre,#inv-role-admin').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function invFeedback(msg, ok) {
+  const el = document.getElementById('inv-feedback');
+  el.style.color = ok ? 'var(--green)' : 'var(--st-bad-ink)';
+  el.textContent = msg;
+}
+
+async function sendInvitation() {
+  const email = document.getElementById('inv-email').value.trim();
+  const groupeVal = document.getElementById('inv-groupe').value;
+  if (!email) { invFeedback('⚠️ Email requis.', false); return; }
+
+  invFeedback('⏳ Envoi en cours…', true);
+
+  const meta = { role: invRole };
+  if (groupeVal && groupeVal !== '__nouveau__') meta.groupe_id = groupeVal;
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch(EDGE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'invite_user', email, meta })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) { invFeedback('❌ ' + (json.error || 'Erreur serveur'), false); return; }
+    invFeedback('✅ Invitation envoyée à ' + email, true);
+    document.getElementById('inv-email').value = '';
+  } catch(e) { invFeedback('❌ ' + e.message, false); }
+}
+
+// ── Tableau de bord des groupes ────────────────────────────────────────────────
+async function loadAdminData() {
+  const container = document.getElementById('admin-groupes');
+  container.innerHTML = '<div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement...</div>';
+  try {
+    const { data: groupes } = await sb.from('groupes')
+      .select('id, nom, adresse_depart, import_limit, created_at, partage_public, niveau_photos, categorie, actif')
+      .order('created_at', { ascending: false });
+
+    if (!groupes?.length) {
+      container.innerHTML = '<p style="color:var(--ink-dim);font-size:12px;">Aucun groupe trouvé.</p>';
+      return;
+    }
+
+    // Peupler le select d'invitation
+    const sel = document.getElementById('inv-groupe');
+    if (sel) {
+      sel.innerHTML = groupes.map(g =>
+        `<option value="${g.id}">${g.nom || '—'}</option>`
+      ).join('') + '<option value="__nouveau__">➕ Nouveau groupe (l\'invité crée le sien)</option>';
+    }
+
+    // Début du mois courant (UTC) — même logique que l'Edge Function (quota mensuel)
+    const debutMois = new Date();
+    debutMois.setUTCDate(1);
+    debutMois.setUTCHours(0, 0, 0, 0);
+    const debutMoisISO = debutMois.toISOString();
+
+    // Par groupe : total fiches (contexte) + imports du mois (RISQUE coût)
+    const counts = {};
+    const moisCounts = {};
+    for (const g of groupes) {
+      const { count: total } = await sb.from('lieux')
+        .select('id', { count: 'exact', head: true })
+        .eq('groupe_id', g.id);
+      counts[g.id] = total || 0;
+
+      const { count: mois } = await sb.from('lieux')
+        .select('id', { count: 'exact', head: true })
+        .eq('groupe_id', g.id)
+        .gte('created_at', debutMoisISO);
+      moisCounts[g.id] = mois || 0;
+    }
+
+    // Membres + emails + statut ban via Edge Function
+    let membresParGroupe = {};
+    let totalMembres = 0;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(EDGE_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'list_members' })
+      });
+      const json = await res.json();
+      if (json.ok) {
+        (json.membres || []).forEach(m => {
+          if (!membresParGroupe[m.groupe_id]) membresParGroupe[m.groupe_id] = [];
+          membresParGroupe[m.groupe_id].push(m);
+          totalMembres++;
+        });
+      }
+    } catch(e) { console.warn('list_members:', e); }
+
+    // Groupe courant (badge "Votre groupe")
+    let monGroupeId = null;
+    try {
+      const cached = sessionStorage.getItem('rnr_groupe');
+      if (cached) monGroupeId = JSON.parse(cached).id;
+    } catch(e){}
+
+    // ── Bandeau d'indicateurs ──
+    const groupesActifs = groupes.filter(g => g.actif !== false).length;
+    const importsMois = Object.values(moisCounts).reduce((a,b) => a+b, 0);
+    document.getElementById('kpi-groupes').textContent = groupesActifs;
+    document.getElementById('kpi-membres').textContent = totalMembres;
+    document.getElementById('kpi-imports').textContent = importsMois;
+    majSentinelle(importsMois);
+
+    // ── Liste des groupes ──
+    container.innerHTML = groupes.map(g => {
+      const total = counts[g.id] || 0;
+      const mois = moisCounts[g.id] || 0;
+      const limit = g.import_limit || 30;
+      const pct = Math.min(100, Math.round(mois / limit * 100));
+      const barColor = pct >= 100 ? 'var(--st-bad-ink)' : pct >= 80 ? 'var(--st-warn-line)' : 'var(--green)';
+      const estMonGroupe = g.id === monGroupeId;
+      const membres = membresParGroupe[g.id] || [];
+      const estActif = g.actif !== false;
+
+      return `
+        <div class="admin-groupe-row ${estActif ? '' : 'ag-suspendu'}" id="ag-${g.id}">
+          <div class="ag-header" onclick="toggleGroupe('${g.id}')" style="cursor:pointer;">
+            <div class="ag-info">
+              <div class="ag-nom">
+                <span class="ag-statut-dot ${estActif ? 'on' : 'off'}" title="${estActif ? 'Actif' : 'Suspendu'}"></span>
+                ${g.nom || '—'}
+                ${estMonGroupe ? ' <span class="ag-badge-mine">🏠 Votre groupe</span>' : ''}
+                ${!estActif ? ' <span class="ag-badge-suspendu">SUSPENDU</span>' : ''}
+              </div>
+              <div class="ag-meta">${g.adresse_depart || ''} · ${membres.length || 1} membre(s) · créé le ${new Date(g.created_at).toLocaleDateString('fr-FR')} · ${({standard:'Standard',amis:'Amis',fidele:'Fidèle',admin:'Admin'})[g.categorie||'standard']} · ${g.niveau_photos ? '📸 Premium' : '📷 Standard'}</div>
+            </div>
+            <div class="ag-stats">
+              <div class="ag-stat-val">${total}</div>
+              <div class="ag-stat-lbl">fiches</div>
+            </div>
+            <div class="ag-chevron" id="ag-chevron-${g.id}">▾</div>
+          </div>
+          <div class="ag-progress" title="Imports du mois : ${mois}/${limit}">
+            <div class="ag-progress-bar" style="width:${pct}%;background:${barColor};"></div>
+          </div>
+
+          <div class="ag-details" id="ag-details-${g.id}" style="display:none;">
+
+            <div>
+              <div class="ag-section-title">Imports ce mois · ce groupe</div>
+              <div class="ag-mois">
+                <span class="ag-mois-num">${mois}</span>
+                <span class="ag-mois-txt">sur ${limit} autorisés ce mois-ci</span>
+              </div>
+            </div>
+
+            <div class="ag-section-title">Palier du groupe</div>
+            <div class="ag-controls">
+              <label class="ag-label">Limite d'imports</label>
+              <div class="ag-btn-row">
+                ${[30, 100, 500, 1000, 5000].map(v => `
+                  <button class="ag-limit-btn ${(g.import_limit||30)===v?'active':''}"
+                    onclick="setLimit('${g.id}', ${v}, this)">
+                    ${v === 5000 ? '∞ Max' : v}
+                  </button>
+                `).join('')}
+                <button class="ag-limit-btn custom" onclick="setCustomLimit('${g.id}')">✏️ Autre</button>
+              </div>
+            </div>
+            <div class="ag-controls">
+              <label class="ag-label">Photos</label>
+              <div class="ag-btn-row">
+                <button class="ag-limit-btn ${g.niveau_photos!==true?'active':''}"
+                  onclick="setNiveauPhotos('${g.id}', false, this)">📷 Standard (1)</button>
+                <button class="ag-limit-btn ${g.niveau_photos===true?'active':''}"
+                  onclick="setNiveauPhotos('${g.id}', true, this)">📸 Premium (5)</button>
+              </div>
+            </div>
+            <div class="ag-controls">
+              <label class="ag-label">Catégorie</label>
+              <div class="ag-btn-row">
+                ${['standard','amis','fidele','admin'].map(c => `
+                  <button class="ag-limit-btn ${(g.categorie||'standard')===c?'active':''}"
+                    onclick="setCategorie('${g.id}', '${c}', this)">
+                    ${({standard:'Standard',amis:'Amis',fidele:'Fidèle',admin:'Admin'})[c]}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="ag-section-title">Statut du groupe</div>
+            <div class="ag-controls">
+              <label class="ag-label">Accès aux données</label>
+              <div class="ag-btn-row">
+                <p style="font-size:11px;color:var(--ink-dim);margin:0 0 8px 0;">
+                  ${estActif ? 'Les membres de ce groupe accèdent normalement à leurs fiches et données.' : '⚠️ Les membres ne peuvent plus accéder à leurs fiches ni données — login toujours possible.'}
+                </p>
+                ${estActif
+                  ? `<button class="ag-limit-btn ag-danger" onclick="toggleGroupeActif('${g.id}', false)">🚫 Suspendre l'accès aux données</button>`
+                  : `<button class="ag-limit-btn ag-success" onclick="toggleGroupeActif('${g.id}', true)">✅ Réactiver l'accès</button>`
+                }
+              </div>
+            </div>
+
+            <div class="ag-section-title">Membres (${membres.length})</div>
+            <div class="ag-membres-list">
+              ${membres.length ? membres.map(m => `
+                <div class="ag-membre-row">
+                  <div class="ag-membre-info">
+                    <span class="ag-statut-dot ${m.banned ? 'off' : 'on'}" title="${m.banned ? 'Compte bloqué' : 'Compte actif'}"></span>
+                    <span class="ag-membre-email">${m.email || m.user_id}</span>
+                    <span class="ag-membre-role">${m.role || 'membre'}${m.is_superadmin ? ' · super-admin' : ''}</span>
+                  </div>
+                  <div class="ag-membre-actions">
+                    ${m.is_superadmin ? '' : `
+                      ${m.banned
+                        ? `<button class="ag-mini-btn ag-success" onclick="toggleUserBan('${m.user_id}', false, this)">✅ Débloquer</button>`
+                        : `<button class="ag-mini-btn ag-danger" onclick="toggleUserBan('${m.user_id}', true, this)">🚫 Bloquer ce compte</button>`
+                      }
+                    `}
+                  </div>
+                </div>
+              `).join('') : '<p style="font-size:12px;color:var(--ink-dim);">Aucun membre identifié.</p>'}
+            </div>
+
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch(e) {
+    container.innerHTML = `<p style="color:var(--st-bad-ink);font-size:12px;">Erreur : ${e.message}</p>`;
+  }
+}
+
+// ── Sentinelle coût : jauge selon imports/mois plateforme ──
+function majSentinelle(imports) {
+  const pct = Math.min(100, Math.round(imports / SENTINELLE_SEUIL * 100));
+  const val = document.getElementById('gauge-val');
+  const fill = document.getElementById('gauge-fill');
+  const seuil = document.getElementById('gauge-seuil');
+  if (seuil) seuil.textContent = SENTINELLE_SEUIL;
+  let couleur;
+  if (pct >= 100)      couleur = 'var(--st-bad-ink)';
+  else if (pct >= 70)  couleur = 'var(--st-warn-line)';
+  else                 couleur = 'var(--st-ok-vif)';
+  if (val)  { val.textContent = imports + ' / ' + SENTINELLE_SEUIL; val.style.color = couleur; }
+  if (fill) { fill.style.width = Math.max(2, pct) + '%'; fill.style.background = couleur; }
+}
+
+function toggleGroupe(groupeId) {
+  const details = document.getElementById('ag-details-' + groupeId);
+  const chevron = document.getElementById('ag-chevron-' + groupeId);
+  if (!details) return;
+  const isOpen = details.style.display !== 'none';
+  details.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.textContent = isOpen ? '▾' : '▴';
+}
+
+async function setLimit(groupeId, limit, btn) {
+  try {
+    const { error } = await sb.from('groupes').update({ import_limit: limit }).eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) row.querySelectorAll('.ag-controls')[0].querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    showToast('✅ Limite mise à jour : ' + (limit === 5000 ? '∞ Max' : limit) + ' fiches', 'success');
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function setCustomLimit(groupeId) {
+  const val = prompt('Entrez la limite personnalisée (nombre de fiches) :');
+  if (!val || isNaN(parseInt(val))) return;
+  const limit = Math.max(1, parseInt(val));
+  await setLimit(groupeId, limit, null);
+  loadAdminData();
+}
+
+async function setNiveauPhotos(groupeId, niveau, btn) {
+  try {
+    const { error } = await sb.from('groupes').update({ niveau_photos: niveau }).eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) row.querySelectorAll('.ag-controls')[1].querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    showToast('✅ Niveau photos : ' + (niveau ? 'Premium (5)' : 'Standard (1)'), 'success');
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function setCategorie(groupeId, categorie, btn) {
+  try {
+    const { error } = await sb.from('groupes').update({ categorie }).eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) row.querySelectorAll('.ag-controls')[2].querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    showToast('✅ Catégorie : ' + categorie, 'success');
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function toggleGroupeActif(groupeId, actif) {
+  if (!actif) {
+    const ok = confirm('Suspendre ce groupe ? Ses membres ne pourront plus accéder à leurs fiches ni données (mais pourront toujours se connecter).');
+    if (!ok) return;
+  }
+  try {
+    const { error } = await sb.from('groupes').update({ actif }).eq('id', groupeId);
+    if (error) throw error;
+    showToast(actif ? '✅ Groupe réactivé' : '🚫 Groupe suspendu', actif ? 'success' : 'error');
+    loadAdminData();
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+async function toggleUserBan(userId, ban, btn) {
+  if (ban) {
+    const ok = confirm('Bloquer ce compte ? Cette personne ne pourra plus se connecter du tout.');
+    if (!ok) return;
+  }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch(EDGE_FN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'toggle_user_ban', user_id: userId, ban })
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || 'Erreur serveur');
+    showToast(ban ? '🚫 Compte bloqué' : '✅ Compte débloqué', ban ? 'error' : 'success');
+    loadAdminData();
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+</script>
+<script src="boussole.js" defer></script>
+</body>
+</html>
