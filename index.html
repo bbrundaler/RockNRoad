@@ -239,10 +239,12 @@ function afficherOubli() {
     oubli.textContent = '← Retour à la connexion';
     if (sousTitre) sousTitre.textContent = 'Réinitialisation du mot de passe';
     document.getElementById('error').classList.remove('show');
+    document.getElementById('infoOubli').classList.remove('show');
   } else {
     // Revenir au login normal
     modeOubli = false;
     pwdGroup.style.display = '';
+    btn.disabled = false;
     btn.querySelector('span').textContent = 'Accéder au carnet →';
     btn.setAttribute('onclick', 'login()');
     oubli.textContent = 'Mot de passe oublié ?';
