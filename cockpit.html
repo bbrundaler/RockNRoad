@@ -103,6 +103,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .vbtn-go{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;}
 .vbtn-no{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}
 .vhint{font-size:11px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
+.int-cards{display:flex;flex-direction:column;gap:9px;margin-top:6px;}
+.int-card{padding:13px 15px;border:1.5px solid var(--surface-line);border-radius:11px;cursor:pointer;transition:all .15s;background:var(--paper);}
+.int-card:hover{border-color:var(--gold);background:var(--gold-a10);transform:translateX(2px);}
+.int-t{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
+.int-ex{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:3px;}
 
 /* ── GROUPE ── */
 .b-group{grid-area:group;}
@@ -539,58 +544,94 @@ async function cloreVote(pid){
   await chargerVotes();
 }
 
-/* ── Création d'un vote (modale) ── */
+/* ── Création d'un vote — par INTENTION (langage humain, pas de jargon) ──
+   4 intentions qui marchent à 100%. "Garder/écarter une fiche" viendra avec
+   le lien au carnet. Le type technique est déduit, jamais montré.
+   Étape 1 : choisir l'intention (cartes). Étape 2 : formulaire adapté → impossible de se contredire. */
+const INTENTIONS = [
+  { type:'choix',       titre:'Trancher entre des options', ex:'« Mer ou Montagne ? », « Quel camping ? »', besoinOptions:true },
+  { type:'pour_contre', titre:'Demander un oui ou un non',   ex:'« On part en août ? », « On garde 3 nuits ? »', besoinOptions:false },
+  { type:'note',        titre:'Faire noter une idée',        ex:'« Cette rando, vous la sentez comment ? » (note /5)', besoinOptions:false },
+  { type:'question',    titre:'Poser une question ouverte',  ex:'« Des idées pour les soirées ? »', besoinOptions:false }
+];
+let NV_intention = null;
+
 function ouvrirCreationVote(){
+  NV_intention = null;
   const bg=document.createElement('div');
   bg.className='vmodal-bg'; bg.id='vmodal-bg';
   bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
-  let typeOpts=Object.keys(TYPES_VOTE).map(k=>'<option value="'+k+'">'+TYPES_VOTE[k].label+'</option>').join('');
-  bg.innerHTML='<div class="vmodal">'+
-    '<h3>Lancer un vote</h3>'+
-    '<label>Question</label><input type="text" id="nv-titre" maxlength="120" placeholder="Mer ou Montagne ? Combien de nuits ?…">'+
-    '<label>Type de vote</label><select id="nv-type" onchange="majChampsType()">'+typeOpts+'</select>'+
-    '<div id="nv-opts-wrap"></div>'+
-    '<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
-    '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>'+
-    '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Annuler</button>'+
-    '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button></div></div>';
+  bg.innerHTML='<div class="vmodal" id="vmodal-inner"></div>';
   document.body.appendChild(bg);
-  majChampsType();
+  etapeIntention();
 }
 function fermerCreationVote(){ const b=document.getElementById('vmodal-bg'); if(b) b.remove(); }
-function majChampsType(){
-  const type=document.getElementById('nv-type').value;
-  const wrap=document.getElementById('nv-opts-wrap');
-  const def=TYPES_VOTE[type];
-  if(type==='note'||type==='question'||def.fixedOptions){
-    let info='';
-    if(def.fixedOptions) info='Options : '+def.fixedOptions.join(' / ');
-    else if(type==='note') info='Chaque membre donnera une note de 1 à 5.';
-    else info='Chaque membre répondra en texte libre.';
-    wrap.innerHTML='<div class="vhint" style="margin-top:8px">'+info+'</div>';
+
+/* Étape 1 : choisir l'intention via des cartes sobres */
+function etapeIntention(){
+  const box=document.getElementById('vmodal-inner');
+  box.innerHTML='<h3>Que veux-tu demander au groupe ?</h3>'+
+    '<div class="int-cards">'+
+    INTENTIONS.map((it,i)=>
+      '<div class="int-card" onclick="choisirIntention('+i+')">'+
+        '<div class="int-t">'+escH(it.titre)+'</div>'+
+        '<div class="int-ex">'+escH(it.ex)+'</div>'+
+      '</div>').join('')+
+    '</div>'+
+    '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Annuler</button></div>';
+}
+
+/* Étape 2 : formulaire adapté à l'intention choisie */
+function choisirIntention(i){
+  NV_intention = INTENTIONS[i];
+  const box=document.getElementById('vmodal-inner');
+  let champs='<label>Ta question</label><input type="text" id="nv-titre" maxlength="120" placeholder="'+escH(exemplePlaceholder())+'">';
+  if(NV_intention.besoinOptions){
+    champs+='<label>Les options à départager</label><div id="nv-opts">'+voptRow('')+voptRow('')+'</div>'+
+            '<button class="q-close-btn" onclick="ajouterOpt()" style="margin-top:4px">+ ajouter une option</button>';
   } else {
-    /* choix ou classement : options libres */
-    wrap.innerHTML='<label>Options</label><div id="nv-opts">'+
-      voptRow()+voptRow()+'</div>'+
-      '<button class="q-close-btn" onclick="ajouterOpt()" style="margin-top:4px">+ option</button>';
+    champs+='<div class="vhint" style="margin-top:8px">'+escH(aideIntention())+'</div>';
+  }
+  champs+='<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+          '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>';
+  box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+champs+
+    '<div class="vmodal-foot">'+
+      '<button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button>'+
+      '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button>'+
+    '</div>';
+  const t=document.getElementById('nv-titre'); if(t) t.focus();
+}
+function exemplePlaceholder(){
+  switch(NV_intention.type){
+    case 'choix': return 'Mer ou Montagne ?';
+    case 'pour_contre': return 'On part en août ?';
+    case 'note': return 'Cette idée de rando, vous en pensez quoi ?';
+    case 'question': return 'Des idées pour les soirées ?';
+    default: return 'Ta question…';
+  }
+}
+function aideIntention(){
+  switch(NV_intention.type){
+    case 'pour_contre': return 'Le groupe répondra simplement Pour ou Contre.';
+    case 'note': return 'Chacun donnera une note de 1 à 5. On affichera la moyenne.';
+    case 'question': return 'Chacun répondra librement, en texte.';
+    default: return '';
   }
 }
 function voptRow(val){ return '<div class="vopt-row"><input type="text" maxlength="60" placeholder="Une option…" value="'+(val||'')+'"><button class="vopt-del" onclick="this.parentNode.remove()">✕</button></div>'; }
-function ajouterOpt(){ const c=document.getElementById('nv-opts'); if(c) c.insertAdjacentHTML('beforeend',voptRow()); }
+function ajouterOpt(){ const c=document.getElementById('nv-opts'); if(c) c.insertAdjacentHTML('beforeend',voptRow('')); }
 
 async function creerVote(){
+  if(!NV_intention) return;
   const titre=(document.getElementById('nv-titre').value||'').trim();
-  const type=document.getElementById('nv-type').value;
-  const dateStr=document.getElementById('nv-date').value;
   if(!titre){ alert('Donne une question au vote.'); return; }
+  const dateStr=document.getElementById('nv-date').value;
   let options=[];
-  const def=TYPES_VOTE[type];
-  if(def.fixedOptions){ options=def.fixedOptions; }
-  else if(type==='choix'||type==='classement'){
+  if(NV_intention.besoinOptions){
     options=[...document.querySelectorAll('#nv-opts input')].map(i=>i.value.trim()).filter(Boolean);
-    if(options.length<2){ alert('Mets au moins 2 options.'); return; }
+    if(options.length<2){ alert('Mets au moins 2 options à départager.'); return; }
   }
-  const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:type, titre:titre, options:options };
+  const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:NV_intention.type, titre:titre, options:options };
   if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
   const {data,error}=await sb.from('propositions').insert(row).select().single();
   if(error){ console.warn('creer',error); alert('Vote non créé.'); return; }
