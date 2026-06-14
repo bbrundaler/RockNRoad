@@ -80,8 +80,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .q-meta{font-size:11.5px;color:var(--ink-dim);margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
 .q-close-btn:hover{background:var(--gold-a20);}
-.vote-new-btn{background:none;border:none;color:var(--gold-text);cursor:pointer;font-size:15px;padding:0 2px;line-height:1;opacity:.8;}
-.vote-new-btn:hover{opacity:1;}
+.vote-new-btn{display:inline-flex;align-items:center;gap:5px;background:var(--gold-a20);border:1.5px solid var(--gold-a35);color:var(--gold-text);cursor:pointer;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;line-height:1;transition:all .15s;}
+.vote-new-btn:hover{background:var(--gold-a35);border-color:var(--gold);}
 .vote-row{cursor:pointer;}
 .vote-row.is-active .vote-q{color:var(--gold-text);}
 /* Étoiles note /5 */
@@ -194,7 +194,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <!-- ── VOTES EN COURS ── -->
   <div class="blk b-votes">
     <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge" id="v-badge">0 ouvert</span>
-      <button class="vote-new-btn" id="vote-new-btn" onclick="ouvrirCreationVote()" title="Lancer un vote">➕</button></div>
+      <button class="vote-new-btn" id="vote-new-btn" onclick="ouvrirCreationVote()" title="Lancer un vote"><span>➕</span> Lancer un vote</button></div>
     <div class="bb" id="v-list">
       <div class="vote-empty">Chargement…</div>
     </div>
@@ -447,7 +447,7 @@ function rendreListe(){
   const badge=document.getElementById('v-badge');
   badge.textContent = RNR_props.length + ' ouvert' + (RNR_props.length>1?'s':'');
   if(!RNR_props.length){
-    box.innerHTML='<div class="vote-empty">Aucun vote en cours.<br>Lance le premier avec ➕ — une question, le groupe tranche.</div>';
+    box.innerHTML='<div class="vote-empty">Aucun vote en cours.<br>Clique « Lancer un vote » — une question, le groupe tranche.</div>';
     return;
   }
   box.innerHTML = RNR_props.map(p=>{
@@ -587,7 +587,7 @@ function choisirIntention(i){
   const box=document.getElementById('vmodal-inner');
   let champs='<label>Ta question</label><input type="text" id="nv-titre" maxlength="120" placeholder="'+escH(exemplePlaceholder())+'">';
   if(NV_intention.besoinOptions){
-    champs+='<label>Les options à départager</label><div id="nv-opts">'+voptRow('')+voptRow('')+'</div>'+
+    champs+='<label>Les réponses possibles</label><div id="nv-opts">'+voptRow('','Ex. : La mer')+voptRow('','Ex. : La montagne')+'</div>'+
             '<button class="q-close-btn" onclick="ajouterOpt()" style="margin-top:4px">+ ajouter une option</button>';
   } else {
     champs+='<div class="vhint" style="margin-top:8px">'+escH(aideIntention())+'</div>';
@@ -618,7 +618,7 @@ function aideIntention(){
     default: return '';
   }
 }
-function voptRow(val){ return '<div class="vopt-row"><input type="text" maxlength="60" placeholder="Une option…" value="'+(val||'')+'"><button class="vopt-del" onclick="this.parentNode.remove()">✕</button></div>'; }
+function voptRow(val, ph){ return '<div class="vopt-row"><input type="text" maxlength="60" placeholder="'+(ph||'Ex. : une réponse possible')+'" value="'+(val||'')+'"><button class="vopt-del" onclick="this.parentNode.remove()">✕</button></div>'; }
 function ajouterOpt(){ const c=document.getElementById('nv-opts'); if(c) c.insertAdjacentHTML('beforeend',voptRow('')); }
 
 async function creerVote(){
