@@ -67,6 +67,42 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .vote-bar{height:6px;border-radius:3px;background:var(--surface-line);width:90px;overflow:hidden;flex-shrink:0;}
 .vote-bar > span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:3px;}
 .vote-count{font-size:12px;font-weight:700;color:var(--gold-text);min-width:42px;text-align:right;flex-shrink:0;}
+/* ── Votes branchés : états, création, options ── */
+.q-empty,.vote-empty{font-size:12.5px;color:var(--ink-dim);font-style:italic;text-align:center;margin:auto 0;padding:14px 8px;line-height:1.6;}
+.q-opt.q-chosen{background:var(--gold-a20);border-color:var(--gold);}
+.q-opt .v{display:flex;align-items:center;gap:4px;}
+.q-arg-wrap{margin-top:14px;display:flex;flex-direction:column;gap:7px;}
+.q-arg-wrap textarea{width:100%;min-height:38px;max-height:80px;resize:vertical;padding:8px 11px;border:1.5px solid var(--surface-line);border-radius:9px;background:var(--paper);color:#1a1208;font-family:var(--font-body);font-size:12.5px;}
+.q-arg-wrap textarea:focus{border-color:var(--gold);outline:none;}
+.q-args{margin-top:12px;display:flex;flex-direction:column;gap:7px;}
+.q-arg{font-size:12px;color:var(--ink-dim);line-height:1.4;}
+.q-arg b{color:var(--gold-text);font-weight:600;}
+.q-meta{font-size:11.5px;color:var(--ink-dim);margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
+.q-close-btn:hover{background:var(--gold-a20);}
+.vote-new-btn{background:none;border:none;color:var(--gold-text);cursor:pointer;font-size:15px;padding:0 2px;line-height:1;opacity:.8;}
+.vote-new-btn:hover{opacity:1;}
+.vote-row{cursor:pointer;}
+.vote-row.is-active .vote-q{color:var(--gold-text);}
+/* Étoiles note /5 */
+.q-stars{display:flex;gap:6px;}
+.q-star{font-size:30px;cursor:pointer;line-height:1;color:var(--surface-line);transition:color .15s,transform .15s;}
+.q-star:hover,.q-star.on{color:var(--gold);transform:scale(1.12);}
+/* Modale création */
+.vmodal-bg{position:fixed;inset:0;background:rgba(10,7,3,.62);display:flex;align-items:center;justify-content:center;z-index:200;padding:18px;}
+.vmodal{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);box-shadow:var(--shadow);width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:20px;}
+.vmodal h3{font-family:var(--font-title);font-size:18px;color:var(--ink);margin-bottom:14px;}
+.vmodal label{display:block;font-size:12px;color:var(--gold-text);font-weight:700;margin:11px 0 5px;text-transform:uppercase;letter-spacing:.5px;}
+.vmodal input,.vmodal select,.vmodal textarea{width:100%;padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:9px;background:var(--paper);color:#1a1208;font-family:var(--font-body);font-size:13px;}
+.vmodal input:focus,.vmodal select:focus,.vmodal textarea:focus{border-color:var(--gold);outline:none;}
+.vopt-row{display:flex;gap:6px;margin-bottom:6px;}
+.vopt-row input{flex:1;}
+.vopt-del{width:34px;border:1.5px solid var(--surface-line);background:none;border-radius:8px;cursor:pointer;color:var(--ink-dim);font-size:14px;}
+.vmodal-foot{display:flex;gap:9px;margin-top:18px;}
+.vbtn{flex:1;padding:11px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:13px;font-family:var(--font-body);}
+.vbtn-go{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;}
+.vbtn-no{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}
+.vhint{font-size:11px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
 
 /* ── GROUPE ── */
 .b-group{grid-area:group;}
@@ -126,14 +162,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ── LA QUESTION À TRANCHER (mise en avant) ── -->
   <div class="blk b-question">
-    <div class="bh"><span class="ic">🎯</span><h3>La question à trancher</h3><span class="badge">à voter</span></div>
-    <div class="bb">
-      <div class="q-big">Mer ou Montagne pour l'été prochain ?</div>
-      <div class="q-sub">Un grand coup pour dégrossir avant d'affiner les régions.</div>
-      <div class="q-opts">
-        <div class="q-opt"><span class="e">🌊</span><span class="t">La mer</span><span class="v">3 voix</span></div>
-        <div class="q-opt"><span class="e">⛰️</span><span class="t">La montagne</span><span class="v">2 voix</span></div>
-      </div>
+    <div class="bh"><span class="ic">🎯</span><h3>La question à trancher</h3><span class="badge" id="q-badge">à voter</span></div>
+    <div class="bb" id="q-body">
+      <div class="q-empty">Chargement…</div>
     </div>
   </div>
 
@@ -157,23 +188,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ── VOTES EN COURS ── -->
   <div class="blk b-votes">
-    <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge">3 ouverts</span></div>
-    <div class="bb">
-      <div class="vote-row">
-        <div class="vote-info"><div class="vote-q">Mer ou Montagne ?</div><div class="vote-meta">5 votants · ferme dans 2 jours</div></div>
-        <div class="vote-bar"><span style="width:60%"></span></div>
-        <div class="vote-count">5/7</div>
-      </div>
-      <div class="vote-row">
-        <div class="vote-info"><div class="vote-q">Garder la fiche « Haut-Kœnigsbourg » ?</div><div class="vote-meta">élimination · 4 votants</div></div>
-        <div class="vote-bar"><span style="width:85%"></span></div>
-        <div class="vote-count">6/7</div>
-      </div>
-      <div class="vote-row">
-        <div class="vote-info"><div class="vote-q">Combien de nuits en Alsace ?</div><div class="vote-meta">note /5 · 3 votants</div></div>
-        <div class="vote-bar"><span style="width:43%"></span></div>
-        <div class="vote-count">3/7</div>
-      </div>
+    <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge" id="v-badge">0 ouvert</span>
+      <button class="vote-new-btn" id="vote-new-btn" onclick="ouvrirCreationVote()" title="Lancer un vote">➕</button></div>
+    <div class="bb" id="v-list">
+      <div class="vote-empty">Chargement…</div>
     </div>
   </div>
 
@@ -353,9 +371,233 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* Démarrage du bloc Partager */
 (async()=>{
   const ok = await chargerContexte();
-  if(ok) await chargerMessages();
+  if(ok){ await chargerMessages(); await chargerVotes(); }
   else document.getElementById('share-feed').innerHTML='<div class="share-empty">Connecte-toi pour voir les messages du groupe.</div>';
 })();
+
+
+/* ════════════════════════════════════════════════════════════════
+   COCKPIT — MOTEUR DE VOTES (propositions + votes), 6 types.
+   Cap : RockNRoad_Echanges_Cockpit_v1 — étape 3.
+   1 seul code paramétrable par `proposition.type`. Réutilise RNR_groupeId/userId/userNom.
+   Garde-fous : RLS scope groupe ; 1 voix/membre (UNIQUE en base, upsert) ; argument (D-ECH-4).
+   ════════════════════════════════════════════════════════════════ */
+const TYPES_VOTE = {
+  pour_contre:{label:'Pour ou contre',  fixedOptions:['Pour','Contre']},
+  choix:      {label:'Choix multiple',  fixedOptions:null},
+  note:       {label:'Note sur 5',      fixedOptions:null},
+  elimination:{label:'Garder / écarter',fixedOptions:['Garder','Écarter']},
+  classement: {label:'Classement',      fixedOptions:null},
+  question:   {label:'Question libre',  fixedOptions:null}
+};
+let RNR_props = [];      // propositions ouvertes du groupe
+let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
+let RNR_vedetteId = null;
+let RNR_nbMembres = 1;
+
+function escH(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
+
+/* ── Chargement ── */
+async function chargerVotes(){
+  if(!RNR_groupeId) return;
+  const {count} = await sb.from('membres').select('*',{count:'exact',head:true}).eq('groupe_id',RNR_groupeId);
+  RNR_nbMembres = count||1;
+
+  const {data:props,error:eP} = await sb.from('propositions')
+    .select('*').eq('groupe_id',RNR_groupeId).eq('statut','ouvert')
+    .order('created_at',{ascending:false});
+  if(eP){ console.warn('props',eP); return; }
+  RNR_props = props||[];
+
+  RNR_votes = {};
+  if(RNR_props.length){
+    const ids = RNR_props.map(p=>p.id);
+    const {data:vts} = await sb.from('votes').select('*').in('proposition_id',ids);
+    (vts||[]).forEach(v=>{ (RNR_votes[v.proposition_id]=RNR_votes[v.proposition_id]||[]).push(v); });
+  }
+  if(!RNR_vedetteId || !RNR_props.find(p=>p.id===RNR_vedetteId))
+    RNR_vedetteId = RNR_props.length ? RNR_props[0].id : null;
+
+  rendreListe();
+  rendreVedette();
+}
+
+/* ── Helpers d'agrégation ── */
+function votesDe(pid){ return RNR_votes[pid]||[]; }
+function monVote(pid){ return votesDe(pid).find(v=>v.votant_id===RNR_userId); }
+function nbVotants(pid){ return new Set(votesDe(pid).map(v=>v.votant_id)).size; }
+function compteParValeur(pid){
+  const c={}; votesDe(pid).forEach(v=>{ c[v.valeur]=(c[v.valeur]||0)+1; }); return c;
+}
+function optionsDe(p){
+  const t=TYPES_VOTE[p.type];
+  if(t && t.fixedOptions) return t.fixedOptions;
+  if(Array.isArray(p.options)) return p.options;
+  return [];
+}
+
+/* ── Rendu : liste "Votes en cours" ── */
+function rendreListe(){
+  const box=document.getElementById('v-list');
+  const badge=document.getElementById('v-badge');
+  badge.textContent = RNR_props.length + ' ouvert' + (RNR_props.length>1?'s':'');
+  if(!RNR_props.length){
+    box.innerHTML='<div class="vote-empty">Aucun vote en cours.<br>Lance le premier avec ➕ — une question, le groupe tranche.</div>';
+    return;
+  }
+  box.innerHTML = RNR_props.map(p=>{
+    const nv=nbVotants(p), pct=RNR_nbMembres?Math.round(nv/RNR_nbMembres*100):0;
+    const meta = TYPES_VOTE[p.type].label + ' · ' + echeanceTexte(p);
+    return '<div class="vote-row'+(p.id===RNR_vedetteId?' is-active':'')+'" onclick="mettreEnVedette(\''+p.id+'\')">'+
+      '<div class="vote-info"><div class="vote-q">'+escH(p.titre)+'</div><div class="vote-meta">'+escH(meta)+'</div></div>'+
+      '<div class="vote-bar"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="vote-count">'+nv+'/'+RNR_nbMembres+'</div></div>';
+  }).join('');
+}
+
+function echeanceTexte(p){
+  if(!p.ferme_le) return 'sans échéance';
+  const d=new Date(p.ferme_le), now=new Date();
+  const jours=Math.ceil((d-now)/86400000);
+  if(jours<0) return 'échéance passée';
+  if(jours===0) return 'ferme aujourd\'hui';
+  if(jours===1) return 'ferme demain';
+  return 'ferme dans '+jours+' jours';
+}
+
+function mettreEnVedette(pid){ RNR_vedetteId=pid; rendreListe(); rendreVedette(); }
+
+/* ── Rendu : vedette "Question à trancher" (selon type) ── */
+function rendreVedette(){
+  const body=document.getElementById('q-body');
+  const badge=document.getElementById('q-badge');
+  const p=RNR_props.find(x=>x.id===RNR_vedetteId);
+  if(!p){ badge.textContent='—'; body.innerHTML='<div class="q-empty">Aucun vote en cours.<br>Lance une question avec ➕ dans « Votes en cours ».</div>'; return; }
+  badge.textContent = nbVotants(p)+'/'+RNR_nbMembres+' ont voté';
+
+  let html='<div class="q-big">'+escH(p.titre)+'</div>';
+  const sub = TYPES_VOTE[p.type].label;
+  html+='<div class="q-sub">'+escH(sub)+'</div>';
+  const mien=monVote(p.id);
+
+  if(p.type==='note'){
+    const maVal = mien?parseInt(mien.valeur,10):0;
+    html+='<div class="q-stars">';
+    for(let i=1;i<=5;i++) html+='<span class="q-star'+(i<=maVal?' on':'')+'" onclick="voter(\''+p.id+'\',\''+i+'\')">★</span>';
+    html+='</div>';
+    const c=compteParValeur(p.id), tot=votesDe(p.id).length;
+    let somme=0; Object.keys(c).forEach(k=>somme+=parseInt(k,10)*c[k]);
+    if(tot) html+='<div class="q-meta"><span>Moyenne : <b>'+(somme/tot).toFixed(1)+'</b>/5 sur '+tot+' vote'+(tot>1?'s':'')+'</span></div>';
+  } else if(p.type==='question'){
+    html+='<div class="q-arg-wrap"><textarea id="q-libre" placeholder="Ta réponse…">'+(mien?escH(mien.valeur):'')+'</textarea>'+
+          '<button class="q-close-btn" onclick="voterLibre(\''+p.id+'\')">Répondre</button></div>';
+    const rep=votesDe(p.id).filter(v=>v.valeur);
+    if(rep.length){ html+='<div class="q-args">'+rep.map(v=>'<div class="q-arg">'+escH(v.valeur)+'</div>').join('')+'</div>'; }
+  } else {
+    const opts=optionsDe(p), c=compteParValeur(p.id);
+    html+='<div class="q-opts">'+opts.map(o=>{
+      const n=c[o]||0, chosen=(mien&&mien.valeur===o)?' q-chosen':'';
+      return '<div class="q-opt'+chosen+'" onclick="voter(\''+p.id+'\',\''+escH(o).replace(/'/g,"\\'")+'\')">'+
+        '<span class="t">'+escH(o)+'</span><span class="v">'+n+' voix'+(chosen?' ✓':'')+'</span></div>';
+    }).join('')+'</div>';
+  }
+
+  /* Argument optionnel (super vote argumenté D-ECH-4) sauf pour question */
+  if(p.type!=='question'){
+    html+='<div class="q-arg-wrap"><textarea id="q-arg" placeholder="Pourquoi ce choix ? (optionnel — ça aide le groupe)">'+(mien&&mien.argument?escH(mien.argument):'')+'</textarea></div>';
+    const args=votesDe(p.id).filter(v=>v.argument);
+    if(args.length) html+='<div class="q-args">'+args.map(v=>'<div class="q-arg"><b>'+escH(v.valeur)+'</b> — '+escH(v.argument)+'</div>').join('')+'</div>';
+  }
+
+  /* Échéance + clôture (tout membre peut clore — D-ECH-1) */
+  html+='<div class="q-meta"><span>'+escH(echeanceTexte(p))+'</span>'+
+        '<button class="q-close-btn" onclick="cloreVote(\''+p.id+'\')">Clôturer ce vote</button></div>';
+  body.innerHTML=html;
+}
+
+/* ── Actions ── */
+async function voter(pid, valeur){
+  if(!RNR_groupeId) return;
+  const argEl=document.getElementById('q-arg');
+  const argument=argEl?(argEl.value||'').trim():null;
+  const {error}=await sb.from('votes')
+    .upsert({proposition_id:pid, votant_id:RNR_userId, valeur:valeur, argument:argument||null},
+            {onConflict:'proposition_id,votant_id'});
+  if(error){ console.warn('vote',error); alert('Vote non enregistré.'); return; }
+  await chargerVotes();
+}
+async function voterLibre(pid){
+  const el=document.getElementById('q-libre'); if(!el) return;
+  const v=(el.value||'').trim(); if(!v) return;
+  await voter(pid, v);
+}
+async function cloreVote(pid){
+  if(!confirm('Clôturer ce vote ? Il n\'acceptera plus de voix.')) return;
+  const {error}=await sb.from('propositions').update({statut:'clos'}).eq('id',pid);
+  if(error){ console.warn('clore',error); return; }
+  RNR_vedetteId=null;
+  await chargerVotes();
+}
+
+/* ── Création d'un vote (modale) ── */
+function ouvrirCreationVote(){
+  const bg=document.createElement('div');
+  bg.className='vmodal-bg'; bg.id='vmodal-bg';
+  bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
+  let typeOpts=Object.keys(TYPES_VOTE).map(k=>'<option value="'+k+'">'+TYPES_VOTE[k].label+'</option>').join('');
+  bg.innerHTML='<div class="vmodal">'+
+    '<h3>Lancer un vote</h3>'+
+    '<label>Question</label><input type="text" id="nv-titre" maxlength="120" placeholder="Mer ou Montagne ? Combien de nuits ?…">'+
+    '<label>Type de vote</label><select id="nv-type" onchange="majChampsType()">'+typeOpts+'</select>'+
+    '<div id="nv-opts-wrap"></div>'+
+    '<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+    '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>'+
+    '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Annuler</button>'+
+    '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button></div></div>';
+  document.body.appendChild(bg);
+  majChampsType();
+}
+function fermerCreationVote(){ const b=document.getElementById('vmodal-bg'); if(b) b.remove(); }
+function majChampsType(){
+  const type=document.getElementById('nv-type').value;
+  const wrap=document.getElementById('nv-opts-wrap');
+  const def=TYPES_VOTE[type];
+  if(type==='note'||type==='question'||def.fixedOptions){
+    let info='';
+    if(def.fixedOptions) info='Options : '+def.fixedOptions.join(' / ');
+    else if(type==='note') info='Chaque membre donnera une note de 1 à 5.';
+    else info='Chaque membre répondra en texte libre.';
+    wrap.innerHTML='<div class="vhint" style="margin-top:8px">'+info+'</div>';
+  } else {
+    /* choix ou classement : options libres */
+    wrap.innerHTML='<label>Options</label><div id="nv-opts">'+
+      voptRow()+voptRow()+'</div>'+
+      '<button class="q-close-btn" onclick="ajouterOpt()" style="margin-top:4px">+ option</button>';
+  }
+}
+function voptRow(val){ return '<div class="vopt-row"><input type="text" maxlength="60" placeholder="Une option…" value="'+(val||'')+'"><button class="vopt-del" onclick="this.parentNode.remove()">✕</button></div>'; }
+function ajouterOpt(){ const c=document.getElementById('nv-opts'); if(c) c.insertAdjacentHTML('beforeend',voptRow()); }
+
+async function creerVote(){
+  const titre=(document.getElementById('nv-titre').value||'').trim();
+  const type=document.getElementById('nv-type').value;
+  const dateStr=document.getElementById('nv-date').value;
+  if(!titre){ alert('Donne une question au vote.'); return; }
+  let options=[];
+  const def=TYPES_VOTE[type];
+  if(def.fixedOptions){ options=def.fixedOptions; }
+  else if(type==='choix'||type==='classement'){
+    options=[...document.querySelectorAll('#nv-opts input')].map(i=>i.value.trim()).filter(Boolean);
+    if(options.length<2){ alert('Mets au moins 2 options.'); return; }
+  }
+  const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:type, titre:titre, options:options };
+  if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
+  const {data,error}=await sb.from('propositions').insert(row).select().single();
+  if(error){ console.warn('creer',error); alert('Vote non créé.'); return; }
+  fermerCreationVote();
+  RNR_vedetteId = data ? data.id : null;
+  await chargerVotes();
+}
 
 async function logout(){await sb.auth.signOut();window.location.href="index.html";}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
