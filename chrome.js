@@ -152,10 +152,10 @@
     /* Console plateforme — cachée par défaut, révélée par setSuperAdmin(true) */
     var cons = document.createElement('a');
     cons.className = 'rnrc-console';
-    cons.href = 'config.html';
+    cons.href = 'console.html';
     cons.title = 'Console plateforme';
     cons.textContent = '🛠️';
-    if(pageActive('config.html')) cons.style.color = 'var(--gold-light)';
+    if(pageActive('console.html')) cons.style.color = 'var(--gold-light)';
     right.appendChild(cons);
 
     var add = document.createElement('a');
