@@ -14,7 +14,6 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-body);background:var(--bg);min-height:100vh;color:var(--ink);}
 
-/* ── AUTH SPLASH ── */
 #auth-check{position:fixed;inset:0;z-index:9999;background:var(--chrome-bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gold);}
 #auth-check h2{font-family:var(--font-title);font-size:24px;margin:14px 0 4px;}
@@ -23,19 +22,17 @@ body{font-family:var(--font-body);background:var(--bg);min-height:100vh;color:va
   border-radius:50%;animation:spin .8s linear infinite;margin-top:16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── LAYOUT ── */
-.onb-wrap{max-width:1080px;margin:0 auto;padding:0 22px 60px;}
+.onb-wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px;}
 .onb-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;}
 .onb-col{display:flex;flex-direction:column;gap:22px;}
 .onb-foot{max-width:1080px;margin:26px auto 0;padding:0 22px;}
 
-/* ── FORM ── */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .fg{display:flex;flex-direction:column;gap:6px;}
 .fg.full{grid-column:1/-1;}
-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--ink-dim);}
-input[type=text],input[type=email],textarea{
+label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);}
+.lbl-soft{font-weight:400;color:var(--ink-dim);text-transform:none;letter-spacing:0;}
+input[type=text],textarea{
   width:100%;padding:12px 14px;border:2px solid var(--surface-line);border-radius:var(--r);
   font-family:var(--font-body);font-size:13px;color:var(--ink);background:var(--surface);
   transition:border-color .2s,box-shadow .2s;outline:none;}
@@ -43,66 +40,64 @@ input[type=text]:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 
 input::placeholder,textarea::placeholder{color:var(--ink-dim);opacity:.55;}
 textarea{resize:vertical;min-height:78px;}
 
-/* géo status */
 .geo-status{font-size:11px;margin-top:2px;min-height:16px;}
 .geo-status.ok{color:var(--green);}
 .geo-status.err{color:var(--gold-deep);}
 .geo-status.loading{color:var(--ink-dim);}
 
-/* types de voyages */
 .voyage-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px;}
 .vtype{padding:7px 13px;border:2px solid var(--surface-line);border-radius:var(--r-pill);
-  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;
-  color:var(--ink);background:var(--surface);user-select:none;}
+  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink);background:var(--surface);user-select:none;}
 .vtype.on{border-color:var(--gold);background:var(--gold-a10);color:var(--gold-text);}
 
-/* ── BLOC MOI : pseudo + avatar emoji ── */
 .moi-head{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
 .moi-avatar-big{width:66px;height:66px;border-radius:50%;background:var(--gold-a10);
-  border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;
-  font-size:32px;flex-shrink:0;line-height:1;}
+  border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;line-height:1;}
 .moi-head-txt{flex:1;}
 .moi-head-txt .hint{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
-.emoji-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--ink-dim);margin:14px 0 8px;}
+.emoji-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 8px;}
 .emoji-grid{display:flex;flex-wrap:wrap;gap:8px;}
 .emoji-pick{width:42px;height:42px;border-radius:var(--r);border:2px solid var(--surface-line);
-  background:var(--surface);font-size:21px;line-height:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+  background:var(--surface);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .emoji-pick:hover{border-color:var(--gold-a35);transform:translateY(-1px);}
 .emoji-pick.on{border-color:var(--gold);background:var(--gold-a10);box-shadow:0 0 0 3px var(--gold-a10);}
 
-/* note d'info (remplace la liste membres manuelle) */
+.posture-banner{font-size:12.5px;line-height:1.55;padding:13px 16px;border-radius:var(--r);
+  background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--ink);}
+.posture-banner strong{color:var(--gold-text);font-weight:600;}
+
 .info-note{font-size:12px;color:var(--ink-dim);line-height:1.6;
-  background:var(--gold-a10);border:1px solid var(--gold-a20);border-radius:var(--r);
-  padding:12px 14px;}
+  background:var(--gold-a10);border:1px solid var(--gold-a20);border-radius:var(--r);padding:12px 14px;}
 .info-note strong{color:var(--gold-text);font-weight:600;}
 
-/* avatar groupe (photo — conservé tel quel) */
+.group-readonly{display:flex;align-items:center;gap:14px;}
+.group-readonly .badge{width:54px;height:54px;border-radius:var(--r);background:var(--gold-a10);
+  border:2px solid var(--gold-a20);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;}
+.group-readonly .badge img{width:100%;height:100%;object-fit:cover;}
+.group-readonly .g-name{font-family:var(--font-title);font-size:19px;color:var(--ink);}
+.group-readonly .g-meta{font-size:11.5px;color:var(--ink-dim);margin-top:2px;}
+
 .avatar-zone{display:flex;align-items:center;gap:16px;}
 .avatar-preview{width:64px;height:64px;border-radius:var(--r);background:var(--gold-a10);
-  border:2px solid var(--gold-a20);display:flex;align-items:center;justify-content:center;
-  font-size:26px;flex-shrink:0;overflow:hidden;}
+  border:2px solid var(--gold-a20);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;}
 .avatar-preview img{width:100%;height:100%;object-fit:cover;}
-.avatar-upload{flex:1;padding:10px 14px;background:var(--surface);
-  border:1.5px dashed var(--surface-line);border-radius:var(--r);font-size:12px;
-  color:var(--ink-dim);cursor:pointer;text-align:center;transition:all .2s;}
+.avatar-upload{flex:1;padding:10px 14px;background:var(--surface);border:1.5px dashed var(--surface-line);
+  border-radius:var(--r);font-size:12px;color:var(--ink-dim);cursor:pointer;text-align:center;transition:all .2s;}
 .avatar-upload:hover{border-color:var(--gold);color:var(--gold-text);}
 
-/* checkbox partage */
 .chk-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--ink);}
 .chk-row input{width:16px;height:16px;accent-color:var(--gold);}
 
-/* save */
 .error-msg{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r);
   padding:11px 14px;font-size:12px;color:var(--gold-text);margin-bottom:12px;display:none;}
 .error-msg.show{display:block;}
 
-/* toast */
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);
   background:var(--chrome-bg);color:var(--gold);padding:12px 22px;border-radius:var(--r-pill);
   font-size:13px;font-weight:600;box-shadow:var(--shhov);z-index:9000;transition:transform .35s;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
+.hidden{display:none !important;}
 
 @media(max-width:768px){
   .form-grid{grid-template-columns:1fr;}
@@ -120,118 +115,121 @@ textarea{resize:vertical;min-height:78px;}
 </div>
 
 <div id="onboarding-main">
-  <!-- barre de navigation injectée par chrome.js -->
-
   <div class="onb-wrap">
     <div class="page-header">
       <h1 class="page-title">Mon <em>profil</em></h1>
-      <p class="page-sub">Votre identité et les réglages de votre groupe de voyage.</p>
+      <p class="page-sub" id="page-sub">Votre identité et votre groupe de voyage.</p>
     </div>
+
+    <div class="posture-banner" id="posture-banner" style="margin-bottom:22px;"></div>
 
     <div class="onb-grid">
 
-      <!-- ───────── COLONNE GAUCHE : MOI ───────── -->
       <div class="onb-col">
-
-        <!-- ── MOI ── -->
         <div class="cfg-card">
           <div class="cfg-card-title"><span>🙋</span> Moi</div>
-
           <div class="moi-head">
             <div class="moi-avatar-big" id="moi-avatar">🦊</div>
             <div class="moi-head-txt">
-              <div class="hint">Votre pseudo et votre avatar apparaissent partout
-                où vous participez — carnet, cockpit, votes.</div>
+              <div class="hint">Votre pseudo et votre avatar apparaissent partout où vous
+                participez — carnet, cockpit, votes.</div>
             </div>
           </div>
-
           <div class="fg full">
             <label for="m-pseudo">Mon pseudo *</label>
             <input type="text" id="m-pseudo" placeholder="Bruno, Capitaine, Mamie-Globe…" maxlength="40">
           </div>
-
           <div class="emoji-label">Mon avatar</div>
           <div class="emoji-grid" id="emoji-grid"></div>
         </div>
 
-        <!-- ── PARTAGE ── -->
-        <div class="cfg-card">
+        <div class="cfg-card hidden" id="card-partage">
           <div class="cfg-card-title"><span>🌐</span> Partage du carnet</div>
           <label class="chk-row">
             <input type="checkbox" id="g-partage">
             Rendre le carnet accessible publiquement (lecture seule)
           </label>
           <p style="font-size:11px;color:var(--ink-dim);margin-top:8px;">
-            Si activé, un lien partageable permet de visualiser vos fiches sans compte.
+            Si activé, un lien partageable permet de visualiser les fiches sans compte.
           </p>
         </div>
-
       </div>
 
-      <!-- ───────── COLONNE DROITE : MON GROUPE ───────── -->
       <div class="onb-col">
 
-        <!-- ── IDENTITÉ DU GROUPE ── -->
-        <div class="cfg-card">
-          <div class="cfg-card-title"><span>🏕️</span> Mon groupe</div>
-          <div class="form-grid">
-            <div class="fg full">
-              <label for="g-nom">Nom du groupe *</label>
-              <input type="text" id="g-nom" placeholder="Famille Brundaler, Les Aventuriers…" maxlength="60">
+        <div id="group-editable" class="hidden">
+          <div class="cfg-card">
+            <div class="cfg-card-title"><span>🏕️</span> <span id="group-edit-title">Mon groupe</span></div>
+            <div class="form-grid">
+              <div class="fg full">
+                <label for="g-nom">Nom du groupe *</label>
+                <input type="text" id="g-nom" placeholder="Famille Brundaler, Les Aventuriers…" maxlength="60">
+              </div>
+              <div class="fg full">
+                <label for="g-adresse">Adresse de départ * <span class="lbl-soft">(ville ou adresse)</span></label>
+                <input type="text" id="g-adresse" placeholder="Avenheim, France" oninput="scheduleGeocode()">
+                <div class="geo-status" id="geo-status"></div>
+              </div>
+              <div class="fg full">
+                <label for="g-description">Description <span class="lbl-soft">(optionnel)</span></label>
+                <textarea id="g-description" placeholder="Notre famille de voyageurs alsaciens…"></textarea>
+              </div>
             </div>
-            <div class="fg full">
-              <label for="g-adresse">Adresse de départ *
-                <span style="font-weight:400;color:var(--ink-dim);text-transform:none;letter-spacing:0;">(ville ou adresse)</span></label>
-              <input type="text" id="g-adresse" placeholder="Avenheim, France" oninput="scheduleGeocode()">
-              <div class="geo-status" id="geo-status"></div>
+          </div>
+
+          <div class="cfg-card">
+            <div class="cfg-card-title"><span>🗺️</span> Types de voyages préférés</div>
+            <div class="voyage-grid" id="voyage-grid">
+              <div class="vtype" data-v="roadtrip">🚗 Roadtrip</div>
+              <div class="vtype" data-v="camping">⛺ Camping</div>
+              <div class="vtype" data-v="randonnee">🥾 Randonnée</div>
+              <div class="vtype" data-v="plage">🏖️ Plage</div>
+              <div class="vtype" data-v="culture">🏛️ Culture</div>
+              <div class="vtype" data-v="gastronomie">🍷 Gastronomie</div>
+              <div class="vtype" data-v="montagne">🏔️ Montagne</div>
+              <div class="vtype" data-v="famille">👨‍👩‍👧 Famille</div>
             </div>
-            <div class="fg full">
-              <label for="g-description">Description
-                <span style="font-weight:400;color:var(--ink-dim);text-transform:none;letter-spacing:0;">(optionnel)</span></label>
-              <textarea id="g-description" placeholder="Notre famille de voyageurs alsaciens…"></textarea>
+          </div>
+
+          <div class="cfg-card">
+            <div class="cfg-card-title"><span>🖼️</span> Photo du groupe <span class="lbl-soft" style="font-size:11px;">(optionnel)</span></div>
+            <div class="avatar-zone">
+              <div class="avatar-preview" id="avatar-preview">🐾</div>
+              <div style="flex:1;">
+                <label style="cursor:pointer;">
+                  <div class="avatar-upload">📷 Choisir une image (JPG, PNG, max 2 Mo)</div>
+                  <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+                </label>
+                <p style="font-size:11px;color:var(--ink-dim);margin-top:6px;">
+                  Un paysage, un van, un logo — pas un portrait d'enfant.</p>
+              </div>
             </div>
+          </div>
+
+          <div class="cfg-card">
+            <div class="cfg-card-title"><span>👥</span> Les autres membres</div>
+            <p class="info-note">
+              Les autres voyageurs rejoignent le groupe <strong>par invitation</strong> :
+              chacun crée son propre compte avec son pseudo et son avatar.
+            </p>
           </div>
         </div>
 
-        <!-- ── TYPES DE VOYAGES ── -->
-        <div class="cfg-card">
-          <div class="cfg-card-title"><span>🗺️</span> Types de voyages préférés</div>
-          <div class="voyage-grid">
-            <div class="vtype" data-v="roadtrip">🚗 Roadtrip</div>
-            <div class="vtype" data-v="camping">⛺ Camping</div>
-            <div class="vtype" data-v="randonnee">🥾 Randonnée</div>
-            <div class="vtype" data-v="plage">🏖️ Plage</div>
-            <div class="vtype" data-v="culture">🏛️ Culture</div>
-            <div class="vtype" data-v="gastronomie">🍷 Gastronomie</div>
-            <div class="vtype" data-v="montagne">🏔️ Montagne</div>
-            <div class="vtype" data-v="famille">👨‍👩‍👧 Famille</div>
-          </div>
-        </div>
-
-        <!-- ── MEMBRES (info) ── -->
-        <div class="cfg-card">
-          <div class="cfg-card-title"><span>👥</span> Les autres membres</div>
-          <p class="info-note">
-            Les autres voyageurs rejoignent le groupe <strong>par invitation</strong> :
-            chacun crée son propre compte avec son pseudo et son avatar.
-            Plus besoin de saisir les prénoms à la main.
-          </p>
-        </div>
-
-        <!-- ── PHOTO DU GROUPE ── -->
-        <div class="cfg-card">
-          <div class="cfg-card-title"><span>🖼️</span> Photo du groupe
-            <span style="font-weight:400;font-size:11px;color:var(--ink-dim);text-transform:none;letter-spacing:0;">(optionnel)</span></div>
-          <div class="avatar-zone">
-            <div class="avatar-preview" id="avatar-preview">🐾</div>
-            <div style="flex:1;">
-              <label style="cursor:pointer;">
-                <div class="avatar-upload">📷 Choisir une image (JPG, PNG, max 2 Mo)</div>
-                <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
-              </label>
-              <p style="font-size:11px;color:var(--ink-dim);margin-top:6px;">
-                Un paysage, un van, un logo — pas un portrait d'enfant.</p>
+        <div id="group-readonly-card" class="hidden">
+          <div class="cfg-card">
+            <div class="cfg-card-title"><span>🏕️</span> Mon groupe</div>
+            <div class="group-readonly">
+              <div class="badge" id="ro-badge">🐾</div>
+              <div>
+                <div class="g-name" id="ro-name">—</div>
+                <div class="g-meta" id="ro-meta"></div>
+              </div>
             </div>
+            <p class="info-note" style="margin-top:14px;">
+              Vous faites partie de ce groupe en tant que <strong>membre</strong>.
+              Les réglages du groupe sont gérés par son organisateur.
+              Vous, vous gérez votre <strong>identité</strong> (à gauche).
+            </p>
           </div>
         </div>
 
@@ -242,15 +240,14 @@ textarea{resize:vertical;min-height:78px;}
       <div class="error-msg" id="error-msg"></div>
       <button class="rr-btn rr-btn-primary" id="save-btn" onclick="saveProfil()"
         style="width:100%;justify-content:center;padding:14px;">
-        💾 Enregistrer mon profil
+        💾 Enregistrer
       </button>
       <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--ink-dim);">
         <a href="carnet.html" style="color:var(--gold-text);text-decoration:none;">← Retour au carnet</a>
       </p>
     </div>
-
   </div>
-</div><!-- /#onboarding-main -->
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -260,17 +257,13 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
-let currentUser=null, existingGroupeId=null, membreId=null, avatarFile=null;
-let geoResult={lat:null,lng:null}, geoTimer=null;
-let selectedEmoji='🦊';
+let currentUser=null, membreId=null, myGroupeId=null, myRole=null, mode=null;
+let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊';
 
-const EMOJIS=['🦊','🐻','🦁','🐰','🦉','🐺','🐶','🐱','🦝','🐼','🐨','🐯',
-              '🚐','⛺','🏔️','🌍','🧭','⭐'];
+const EMOJIS=['🦊','🐻','🦁','🐰','🦉','🐺','🐶','🐱','🦝','🐼','🐨','🐯','🚐','⛺','🏔️','🌍','🧭','⭐'];
 
-// ── Avatar emoji : rendu de la grille ───────────────────────────────────────
 function renderEmojis(){
-  const grid=document.getElementById('emoji-grid');
-  grid.innerHTML=EMOJIS.map(e=>
+  document.getElementById('emoji-grid').innerHTML=EMOJIS.map(e=>
     `<button type="button" class="emoji-pick${e===selectedEmoji?' on':''}" data-e="${e}"
        onclick="pickEmoji('${e}')">${e}</button>`).join('');
 }
@@ -280,82 +273,111 @@ function pickEmoji(e){
   document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.toggle('on',b.dataset.e===e));
 }
 
-// ── Auth & chargement ───────────────────────────────────────────────────────
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
-  document.getElementById('auth-check').style.display='none';
-
   renderEmojis();
+  document.querySelectorAll('#voyage-grid .vtype').forEach(el=>
+    el.addEventListener('click',()=>{ if(mode!=='member') el.classList.toggle('on'); }));
 
-  // toggle types de voyages
-  document.querySelectorAll('.vtype').forEach(el=>
-    el.addEventListener('click',()=>el.classList.toggle('on')));
-
-  // ── Invitation : rattachement automatique si user_metadata.groupe_id ──
   const meta=currentUser.user_metadata||{};
   if(meta.groupe_id){
     try{
-      const {data:existingMembre}=await sb.from('membres')
-        .select('groupe_id').eq('user_id',currentUser.id).maybeSingle();
-      if(!existingMembre){
-        // is_superadmin forcé false par le trigger serveur — sûr.
-        await sb.from('membres').insert({
-          user_id:currentUser.id,
-          groupe_id:meta.groupe_id,
-          role:meta.role||'membre'
-        });
+      const {data:already}=await sb.from('membres').select('id').eq('user_id',currentUser.id).maybeSingle();
+      if(!already){
+        await sb.from('membres').insert({user_id:currentUser.id,groupe_id:meta.groupe_id,role:meta.role||'membre'});
       }
       await sb.auth.updateUser({data:{groupe_id:null,role:null}});
-      window.location.href='home.html';
-      return;
-    }catch(e){
-      console.warn('Rattachement invité échoué :',e);
-      // on laisse l'utilisateur passer par le formulaire
-    }
+    }catch(e){ console.warn('Rattachement invité :',e); }
   }
 
-  // ── Charger MON identité (membres) + MON groupe (groupes) ──
-  const {data:membre}=await sb.from('membres')
-    .select('id, groupe_id, pseudo, avatar, groupes(*)')
-    .eq('user_id',currentUser.id).maybeSingle();
-
-  if(membre){
-    membreId=membre.id;
-    if(membre.pseudo) document.getElementById('m-pseudo').value=membre.pseudo;
-    if(membre.avatar) pickEmoji(membre.avatar);
-    if(membre.groupes) fillGroupe(membre.groupes);
-  }
+  await loadProfile();
+  document.getElementById('auth-check').style.display='none';
 })();
 
-// ── Remplir le bloc GROUPE ──────────────────────────────────────────────────
-function fillGroupe(g){
-  existingGroupeId=g.id;
+async function loadProfile(){
+  const {data:membre,error:me}=await sb.from('membres')
+    .select('id, groupe_id, role, is_superadmin, pseudo, avatar')
+    .eq('user_id',currentUser.id).maybeSingle();
+  if(me) console.warn('lecture membres:',me);
+
+  if(membre){
+    membreId=membre.id; myGroupeId=membre.groupe_id; myRole=membre.role;
+    if(membre.pseudo) document.getElementById('m-pseudo').value=membre.pseudo;
+    if(membre.avatar) pickEmoji(membre.avatar);
+  }
+
+  if(!myGroupeId){ mode='create'; }
+  else if(myRole==='admin'||membre?.is_superadmin){ mode='admin'; }
+  else{ mode='member'; }
+
+  let groupe=null;
+  if(myGroupeId){
+    const {data:g}=await sb.from('groupes').select('*').eq('id',myGroupeId).maybeSingle();
+    groupe=g;
+    if(g?.nom && window.rnrChrome) rnrChrome.setGroupe(g.nom);
+  }
+  if(membre?.is_superadmin && window.rnrChrome) rnrChrome.setSuperAdmin(true);
+
+  applyMode(groupe);
+}
+
+function applyMode(groupe){
+  const editable=document.getElementById('group-editable');
+  const ro=document.getElementById('group-readonly-card');
+  const cardPartage=document.getElementById('card-partage');
+  const banner=document.getElementById('posture-banner');
+  const sub=document.getElementById('page-sub');
+
+  if(mode==='create'){
+    editable.classList.remove('hidden'); cardPartage.classList.remove('hidden'); ro.classList.add('hidden');
+    document.getElementById('group-edit-title').textContent='Mon nouveau groupe';
+    banner.innerHTML='✨ Vous créez votre <strong>groupe de voyage</strong>. Donnez-lui un nom et un point de départ — vous en serez l\'organisateur.';
+    sub.textContent='Créez votre identité et votre groupe.';
+    document.getElementById('save-btn').textContent='💾 Créer mon groupe';
+  }else if(mode==='admin'){
+    editable.classList.remove('hidden'); cardPartage.classList.remove('hidden'); ro.classList.add('hidden');
+    document.getElementById('group-edit-title').textContent='Mon groupe';
+    banner.innerHTML='🛠️ Vous êtes <strong>organisateur</strong> de ce groupe : vous gérez votre identité et les réglages du groupe.';
+    sub.textContent='Votre identité et les réglages de votre groupe.';
+    document.getElementById('save-btn').textContent='💾 Enregistrer';
+    if(groupe) fillGroupeEditable(groupe);
+  }else{
+    editable.classList.add('hidden'); cardPartage.classList.add('hidden'); ro.classList.remove('hidden');
+    banner.innerHTML='👋 Bienvenue ! Renseignez votre <strong>pseudo</strong> et votre <strong>avatar</strong> : c\'est ainsi que le groupe vous reconnaîtra.';
+    sub.textContent='Votre identité dans le groupe.';
+    document.getElementById('save-btn').textContent='💾 Enregistrer mon identité';
+    if(groupe) fillGroupeReadonly(groupe);
+  }
+}
+
+function fillGroupeEditable(g){
   document.getElementById('g-nom').value=g.nom||'';
   document.getElementById('g-adresse').value=g.adresse_depart||'';
   document.getElementById('g-description').value=g.description||'';
   document.getElementById('g-partage').checked=g.partage_public||false;
-  if(window.rnrChrome&&g.nom) rnrChrome.setGroupe(g.nom);
   if(g.lat_depart&&g.lng_depart){
     geoResult={lat:g.lat_depart,lng:g.lng_depart};
-    const gs=document.getElementById('geo-status');
-    gs.className='geo-status ok';
-    gs.textContent='✅ '+(g.adresse_depart||'');
+    const gs=document.getElementById('geo-status'); gs.className='geo-status ok'; gs.textContent='✅ '+(g.adresse_depart||'');
   }
-  if(g.type_voyages?.length){
-    document.querySelectorAll('.vtype').forEach(el=>
-      el.classList.toggle('on',g.type_voyages.includes(el.dataset.v)));
+  if(Array.isArray(g.type_voyages)){
+    document.querySelectorAll('#voyage-grid .vtype').forEach(el=>el.classList.toggle('on',g.type_voyages.includes(el.dataset.v)));
   }
-  if(g.avatar_url){
-    document.getElementById('avatar-preview').innerHTML=`<img src="${g.avatar_url}" alt="">`;
-  }
+  if(g.avatar_url) document.getElementById('avatar-preview').innerHTML=`<img src="${g.avatar_url}" alt="">`;
 }
 
-// ── Géocodage ───────────────────────────────────────────────────────────────
+function fillGroupeReadonly(g){
+  document.getElementById('ro-name').textContent=g.nom||'Mon groupe';
+  const parts=[];
+  if(g.adresse_depart) parts.push('📍 '+g.adresse_depart);
+  if(Array.isArray(g.type_voyages)&&g.type_voyages.length) parts.push(g.type_voyages.length+' type(s) de voyage');
+  document.getElementById('ro-meta').textContent=parts.join(' · ');
+  if(g.avatar_url) document.getElementById('ro-badge').innerHTML=`<img src="${g.avatar_url}" alt="">`;
+}
+
 function scheduleGeocode(){
-  clearTimeout(geoTimer);
-  geoResult={lat:null,lng:null};
+  clearTimeout(geoTimer); geoResult={lat:null,lng:null};
   const val=document.getElementById('g-adresse').value.trim();
   if(val.length<4){document.getElementById('geo-status').textContent='';return;}
   document.getElementById('geo-status').className='geo-status loading';
@@ -365,15 +387,12 @@ function scheduleGeocode(){
 async function geocodeAddress(addr){
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,{headers:{'Accept-Language':'fr'}});
-    const d=await r.json();
+    const d=await r.json(); const gs=document.getElementById('geo-status');
     if(d&&d.length>0){
       geoResult={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
-      document.getElementById('geo-status').className='geo-status ok';
-      document.getElementById('geo-status').textContent='✅ '+d[0].display_name.split(',').slice(0,3).join(', ');
+      gs.className='geo-status ok'; gs.textContent='✅ '+d[0].display_name.split(',').slice(0,3).join(', ');
     }else{
-      geoResult={lat:null,lng:null};
-      document.getElementById('geo-status').className='geo-status err';
-      document.getElementById('geo-status').textContent='⚠️ Adresse introuvable — essayez une ville proche';
+      geoResult={lat:null,lng:null}; gs.className='geo-status err'; gs.textContent='⚠️ Adresse introuvable — essayez une ville proche';
     }
   }catch(e){
     document.getElementById('geo-status').className='geo-status err';
@@ -381,96 +400,72 @@ async function geocodeAddress(addr){
   }
 }
 
-// ── Photo de groupe ─────────────────────────────────────────────────────────
 function previewAvatar(input){
   if(!input.files||!input.files[0])return;
   avatarFile=input.files[0];
   const reader=new FileReader();
-  reader.onload=e=>{
-    document.getElementById('avatar-preview').innerHTML=`<img src="${e.target.result}" alt="">`;
-  };
+  reader.onload=e=>document.getElementById('avatar-preview').innerHTML=`<img src="${e.target.result}" alt="">`;
   reader.readAsDataURL(avatarFile);
 }
 
-// ── Sauvegarde ──────────────────────────────────────────────────────────────
 async function saveProfil(){
   const btn=document.getElementById('save-btn');
   const pseudo=document.getElementById('m-pseudo').value.trim();
-  const nom=document.getElementById('g-nom').value.trim();
-  const adresse=document.getElementById('g-adresse').value.trim();
-
   if(!pseudo){ showError('Choisissez un pseudo — c\'est ainsi que le groupe vous reconnaîtra.'); return; }
-  if(!nom||!adresse){ showError('Le nom et l\'adresse de départ du groupe sont obligatoires.'); return; }
+
+  if(mode==='create'||mode==='admin'){
+    const nom=document.getElementById('g-nom').value.trim();
+    const adresse=document.getElementById('g-adresse').value.trim();
+    if(!nom||!adresse){ showError('Le nom et l\'adresse de départ du groupe sont obligatoires.'); return; }
+  }
   hideError();
-  btn.disabled=true; btn.textContent='⏳ Enregistrement…';
+  const oldLabel=btn.textContent; btn.disabled=true; btn.textContent='⏳ Enregistrement…';
 
   try{
-    const types=[...document.querySelectorAll('.vtype.on')].map(el=>el.dataset.v);
-    const partage=document.getElementById('g-partage').checked;
-    const desc=document.getElementById('g-description').value.trim();
-
-    // 1) Photo de groupe (optionnelle)
-    let avatar_url=undefined;
-    if(avatarFile){
-      const ext=avatarFile.name.split('.').pop();
-      const fname=`avatars/${currentUser.id}.${ext}`;
-      const {error:ue}=await sb.storage.from('photos-lieux')
-        .upload(fname,avatarFile,{contentType:avatarFile.type,upsert:true});
-      if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);avatar_url=publicUrl;}
+    if(mode==='create'||mode==='admin'){
+      const types=[...document.querySelectorAll('#voyage-grid .vtype.on')].map(el=>el.dataset.v);
+      const payload={
+        nom:document.getElementById('g-nom').value.trim(),
+        adresse_depart:document.getElementById('g-adresse').value.trim(),
+        lat_depart:geoResult.lat||null, lng_depart:geoResult.lng||null,
+        type_voyages:types.length?types:null,
+        description:document.getElementById('g-description').value.trim()||null,
+        partage_public:document.getElementById('g-partage').checked
+      };
+      if(avatarFile){
+        const ext=avatarFile.name.split('.').pop();
+        const fname=`avatars/${currentUser.id}.${ext}`;
+        const {error:ue}=await sb.storage.from('photos-lieux').upload(fname,avatarFile,{contentType:avatarFile.type,upsert:true});
+        if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);payload.avatar_url=publicUrl;}
+      }
+      if(myGroupeId){
+        const {error}=await sb.from('groupes').update(payload).eq('id',myGroupeId);
+        if(error)throw error;
+      }else{
+        const {data:g,error}=await sb.from('groupes').insert(payload).select().single();
+        if(error)throw error;
+        myGroupeId=g.id;
+        const {data:m,error:me}=await sb.from('membres').insert({user_id:currentUser.id,groupe_id:g.id,role:'admin'}).select('id').single();
+        if(me)throw me;
+        membreId=m.id;
+        if(window.rnrChrome) rnrChrome.setGroupe(g.nom);
+      }
     }
 
-    // 2) GROUPE → table groupes
-    const payload={
-      nom, adresse_depart:adresse,
-      lat_depart:geoResult.lat||null,
-      lng_depart:geoResult.lng||null,
-      type_voyages:types.length?types:null,
-      description:desc||null,
-      partage_public:partage,
-      ...(avatar_url!==undefined?{avatar_url}:{})
-    };
-
-    let groupe;
-    if(existingGroupeId){
-      const {data,error}=await sb.from('groupes').update(payload).eq('id',existingGroupeId).select().single();
-      if(error)throw error;
-      groupe=data;
-    }else{
-      const {data,error}=await sb.from('groupes').insert(payload).select().single();
-      if(error)throw error;
-      groupe=data;
-      // créateur = admin de SON groupe (is_superadmin forcé false par le trigger)
-      const {data:m,error:me}=await sb.from('membres')
-        .insert({user_id:currentUser.id,groupe_id:groupe.id,role:'admin'})
-        .select('id').single();
-      if(me)throw me;
-      membreId=m.id;
-      existingGroupeId=groupe.id;
-    }
-
-    // 3) IDENTITÉ → table membres (pseudo + avatar). UPDATE scopé user_id : le verrou
-    //    autorise pseudo/avatar, rejette toute tentative sur role/is_superadmin/groupe_id.
-    const {error:ie}=await sb.from('membres')
-      .update({pseudo,avatar:selectedEmoji})
-      .eq('user_id',currentUser.id);
+    const {error:ie}=await sb.from('membres').update({pseudo,avatar:selectedEmoji}).eq('user_id',currentUser.id);
     if(ie)throw ie;
 
-    showToast('✅ Profil enregistré !');
-    if(window.rnrChrome&&groupe.nom) rnrChrome.setGroupe(groupe.nom);
+    showToast('✅ Enregistré !');
   }catch(e){
     showError('Erreur : '+(e.message||e));
   }finally{
-    btn.disabled=false; btn.textContent='💾 Enregistrer mon profil';
+    btn.disabled=false; btn.textContent=oldLabel;
   }
 }
 
-function showError(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.classList.add('show');}
+function showError(m){const el=document.getElementById('error-msg');el.textContent=m;el.classList.add('show');}
 function hideError(){document.getElementById('error-msg').classList.remove('show');}
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 </script>
 <script src="boussole.js" defer></script>
