@@ -39,6 +39,10 @@ input[type=text],textarea{
 input[type=text]:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 input::placeholder,textarea::placeholder{color:var(--ink-dim);opacity:.55;}
 textarea{resize:vertical;min-height:78px;}
+select{width:100%;padding:12px 14px;border:2px solid var(--surface-line);border-radius:var(--r);
+  font-family:var(--font-body);font-size:13px;color:var(--ink);background:var(--surface);
+  outline:none;cursor:pointer;transition:border-color .2s,box-shadow .2s;}
+select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 
 .geo-status{font-size:11px;margin-top:2px;min-height:16px;}
 .geo-status.ok{color:var(--green);}
@@ -135,12 +139,46 @@ textarea{resize:vertical;min-height:78px;}
                 participez — carnet, cockpit, votes.</div>
             </div>
           </div>
-          <div class="fg full">
-            <label for="m-pseudo">Mon pseudo *</label>
-            <input type="text" id="m-pseudo" placeholder="Bruno, Capitaine, Mamie-Globe…" maxlength="40">
+          <div class="form-grid">
+            <div class="fg">
+              <label for="m-prenom">Prénom *</label>
+              <input type="text" id="m-prenom" placeholder="Bruno" maxlength="40">
+            </div>
+            <div class="fg">
+              <label for="m-nom">Nom *</label>
+              <input type="text" id="m-nom" placeholder="Brundaler" maxlength="40">
+            </div>
+            <div class="fg full">
+              <label for="m-pseudo">Pseudo * <span class="lbl-soft">(votre nom dans le groupe)</span></label>
+              <input type="text" id="m-pseudo" placeholder="Capitaine, Mamie-Globe…" maxlength="40">
+            </div>
+            <div class="fg">
+              <label for="m-naiss-mois">Mois de naissance *</label>
+              <select id="m-naiss-mois">
+                <option value="">—</option>
+                <option value="01">Janvier</option><option value="02">Février</option>
+                <option value="03">Mars</option><option value="04">Avril</option>
+                <option value="05">Mai</option><option value="06">Juin</option>
+                <option value="07">Juillet</option><option value="08">Août</option>
+                <option value="09">Septembre</option><option value="10">Octobre</option>
+                <option value="11">Novembre</option><option value="12">Décembre</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label for="m-naiss-annee">Année de naissance *</label>
+              <input type="text" id="m-naiss-annee" placeholder="1980" maxlength="4" inputmode="numeric">
+            </div>
           </div>
           <div class="emoji-label">Mon avatar</div>
           <div class="emoji-grid" id="emoji-grid"></div>
+
+          <label class="chk-row" style="margin-top:16px;align-items:flex-start;">
+            <input type="checkbox" id="m-consent" style="margin-top:2px;">
+            <span style="font-size:12px;color:var(--ink-dim);line-height:1.5;">
+              J'accepte de recevoir des communications de RockNRoad (actualités, offres).
+              <span class="lbl-soft">Optionnel — vous pouvez le retirer à tout moment.</span>
+            </span>
+          </label>
         </div>
 
         <div class="cfg-card hidden" id="card-partage">
@@ -298,13 +336,24 @@ function pickEmoji(e){
 
 async function loadProfile(){
   const {data:membre,error:me}=await sb.from('membres')
-    .select('id, groupe_id, role, is_superadmin, pseudo, avatar')
+    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, nom, prenom, naissance_mois_annee, consent_marketing')
     .eq('user_id',currentUser.id).maybeSingle();
   if(me) console.warn('lecture membres:',me);
 
   if(membre){
     membreId=membre.id; myGroupeId=membre.groupe_id; myRole=membre.role;
     if(membre.pseudo) document.getElementById('m-pseudo').value=membre.pseudo;
+    if(membre.prenom) document.getElementById('m-prenom').value=membre.prenom;
+    if(membre.nom) document.getElementById('m-nom').value=membre.nom;
+    if(membre.consent_marketing) document.getElementById('m-consent').checked=true;
+    if(membre.naissance_mois_annee){
+      // format stocké : 'MM/AAAA'
+      const parts=String(membre.naissance_mois_annee).split('/');
+      if(parts.length===2){
+        document.getElementById('m-naiss-mois').value=parts[0];
+        document.getElementById('m-naiss-annee').value=parts[1];
+      }
+    }
     if(membre.avatar) pickEmoji(membre.avatar);
   }
 
@@ -411,12 +460,21 @@ function previewAvatar(input){
 async function saveProfil(){
   const btn=document.getElementById('save-btn');
   const pseudo=document.getElementById('m-pseudo').value.trim();
+  const prenom=document.getElementById('m-prenom').value.trim();
+  const nom=document.getElementById('m-nom').value.trim();
+  const mois=document.getElementById('m-naiss-mois').value;
+  const annee=document.getElementById('m-naiss-annee').value.trim();
+
+  if(!prenom||!nom){ showError('Votre prénom et votre nom sont obligatoires.'); return; }
   if(!pseudo){ showError('Choisissez un pseudo — c\'est ainsi que le groupe vous reconnaîtra.'); return; }
+  if(!mois||!/^\d{4}$/.test(annee)){ showError('Indiquez votre mois et année de naissance (année sur 4 chiffres).'); return; }
+  const an=parseInt(annee,10);
+  if(an<1900||an>new Date().getFullYear()){ showError('Année de naissance invalide.'); return; }
 
   if(mode==='create'||mode==='admin'){
-    const nom=document.getElementById('g-nom').value.trim();
+    const gnom=document.getElementById('g-nom').value.trim();
     const adresse=document.getElementById('g-adresse').value.trim();
-    if(!nom||!adresse){ showError('Le nom et l\'adresse de départ du groupe sont obligatoires.'); return; }
+    if(!gnom||!adresse){ showError('Le nom et l\'adresse de départ du groupe sont obligatoires.'); return; }
   }
   hideError();
   const oldLabel=btn.textContent; btn.disabled=true; btn.textContent='⏳ Enregistrement…';
@@ -452,13 +510,22 @@ async function saveProfil(){
       }
     }
 
-    const {error:ie}=await sb.from('membres').update({pseudo,avatar:selectedEmoji}).eq('user_id',currentUser.id);
+    // ── IDENTITÉ (toujours) → membres. UPDATE scopé user_id : le verrou autorise
+    //    l'identité (pseudo/nom/prénom/naissance/consent), rejette les droits.
+    const identite={
+      pseudo, prenom, nom, avatar:selectedEmoji,
+      naissance_mois_annee: mois+'/'+annee,
+      consent_marketing: document.getElementById('m-consent').checked,
+      consent_marketing_date: document.getElementById('m-consent').checked ? new Date().toISOString() : null
+    };
+    const {error:ie}=await sb.from('membres').update(identite).eq('user_id',currentUser.id);
     if(ie)throw ie;
 
     showToast('✅ Enregistré !');
+    // On SORT de la page : retour au carnet (le bug « l'écran reste » est corrigé ici).
+    setTimeout(()=>{ window.location.href='carnet.html'; }, 900);
   }catch(e){
     showError('Erreur : '+(e.message||e));
-  }finally{
     btn.disabled=false; btn.textContent=oldLabel;
   }
 }
