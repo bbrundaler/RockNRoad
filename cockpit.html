@@ -14,20 +14,20 @@
    — plus AUCUNE variable locale : tout vient de tokens.css.
    — la barre du haut est injectée par chrome.js (la couverture).   */
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;}
+html,body{height:100%;overflow-x:hidden;overflow-y:auto;}
 body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
-/* ── SCÈNE : tableau de bord en blocs, sans scroll ── */
+/* ── SCÈNE : tableau de bord en blocs — 3 colonnes, plein écran au départ
+   mais la page peut grandir au scroll (Temps 2 : éviter la surcharge). ── */
 .stage{
-  height:calc(100vh - 56px);
+  min-height:calc(100vh - 56px);   /* plein écran au départ, mais peut grandir */
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:1fr 320px;
-  grid-template-rows:auto 1fr auto;
+  grid-template-columns:1.3fr 320px 320px;   /* action (large) · groupe+partage · coups de cœur */
+  grid-template-rows:auto auto 1fr;
   grid-template-areas:
-    "question  group"
-    "votes     share"
-    "context   share";
-  min-height:0;
+    "question  group   context"
+    "question  share   context"
+    "votes     votes   context";
 }
 
 /* ── BLOC générique ── */
@@ -40,7 +40,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .bh .pin{opacity:.5;font-size:12px;}
 .bh .badge{font-size:11px;font-weight:700;color:#1a1208;background:var(--gold-light);
   border-radius:20px;padding:2px 9px;letter-spacing:.5px;}
-.bb{padding:13px 14px;flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;scrollbar-width:thin;}
+.bb{padding:13px 14px;flex:1;min-height:0;display:flex;flex-direction:column;
+  overflow:auto;scrollbar-width:thin;max-height:72vh;}
 .bb::-webkit-scrollbar{width:6px;}
 .bb::-webkit-scrollbar-thumb{background:var(--gold-a35);border-radius:3px;}
 
