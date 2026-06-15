@@ -596,7 +596,7 @@ function requestIdleCallbackSafe(cb){
   RNR_PERF.start('3 fiches');
   loadDynamicFiches();
 })();
-async function logout(){await sb.auth.signOut();window.location.href="index.html";}
+async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 
 window.addEventListener('hashchange',function(){

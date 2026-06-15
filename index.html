@@ -207,13 +207,11 @@ async function redirectAfterLogin(userId) {
   }
 
   if (hash && hash.includes('type=invite')) {
-    // Laisser Supabase JS traiter le token — onAuthStateChange prend le relais
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        window.location.href = 'onboarding.html';
-      }
-    });
-    return; // Ne pas afficher le formulaire de login
+    // L'invité n'a pas encore de mot de passe : on l'envoie d'abord le définir
+    // (nouveau-mot-de-passe.html, qui le redirigera ensuite vers onboarding.html).
+    // On transmet le hash pour que le SDK ouvre la session depuis le token d'invitation.
+    window.location.href = 'nouveau-mot-de-passe.html' + hash;
+    return;
   }
 
   // Cas normal : vérifier si déjà connecté

@@ -135,8 +135,8 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           <div class="moi-head">
             <div class="moi-avatar-big" id="moi-avatar">🦊</div>
             <div class="moi-head-txt">
-              <div class="hint">Votre pseudo et votre avatar apparaissent partout où vous
-                participez — carnet, cockpit, votes.</div>
+              <div class="hint">Renseignez votre identité — prénom, nom, pseudo, naissance et avatar.
+                Votre pseudo et votre avatar apparaissent partout où vous participez (carnet, cockpit, votes).</div>
             </div>
           </div>
           <div class="form-grid">
@@ -394,7 +394,8 @@ function applyMode(groupe){
     if(groupe) fillGroupeEditable(groupe);
   }else{
     editable.classList.add('hidden'); cardPartage.classList.add('hidden'); ro.classList.remove('hidden');
-    banner.innerHTML='👋 Bienvenue ! Renseignez votre <strong>pseudo</strong> et votre <strong>avatar</strong> : c\'est ainsi que le groupe vous reconnaîtra.';
+    banner.innerHTML='👋 Bienvenue ! Renseignez votre <strong>identité</strong> pour rejoindre le groupe : '
+      +'prénom, nom, pseudo, mois et année de naissance, et votre avatar. C\'est ainsi que le groupe vous reconnaîtra.';
     sub.textContent='Votre identité dans le groupe.';
     document.getElementById('save-btn').textContent='💾 Enregistrer mon identité';
     if(groupe) fillGroupeReadonly(groupe);
@@ -533,7 +534,7 @@ async function saveProfil(){
 function showError(m){const el=document.getElementById('error-msg');el.textContent=m;el.classList.add('show');}
 function hideError(){document.getElementById('error-msg').classList.remove('show');}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-async function logout(){await sb.auth.signOut();window.location.href='index.html';}
+async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 </script>
 <script src="boussole.js" defer></script>
 </body>

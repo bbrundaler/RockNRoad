@@ -438,7 +438,7 @@ async function checkAuth(){
     if(data?.is_superadmin===true && window.rnrChrome) rnrChrome.setSuperAdmin(true);
   } catch(e){}
 }
-async function logout(){await sb.auth.signOut();window.location.href='index.html';}
+async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 window.addEventListener('load', checkAuth);
 
 function loadCurrentKey(){

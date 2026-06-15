@@ -317,7 +317,7 @@ async function loadHorizonData(userId){
     brancheSurvolCarte();
   }catch(err){ console.warn('Horizon load error',err); }
 }
-async function logout(){await sb.auth.signOut();window.location.href="index.html";}
+async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 /* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
 </script>

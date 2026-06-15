@@ -169,7 +169,7 @@ input::placeholder{color:#b8ad96;}
 
   <div class="success" id="success">
     <span>✓</span>
-    <span>Mot de passe modifié. Redirection vers votre carnet...</span>
+    <span>Mot de passe enregistré. Redirection…</span>
   </div>
 
   <div class="footer-note">
@@ -186,6 +186,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // Le SDK lit automatiquement le token de récupération depuis le hash de l'URL
 // et ouvre une session temporaire (event PASSWORD_RECOVERY / SIGNED_IN).
+// On distingue invitation (1re définition de mot de passe → ensuite onboarding)
+// de récupération classique (membre existant → ensuite home).
+const estInvitation = window.location.hash.includes('type=invite');
 let sessionPrete = false;
 sb.auth.onAuthStateChange((event, session) => {
   if (session) sessionPrete = true;
@@ -244,7 +247,10 @@ async function enregistrer() {
   // Succès
   document.getElementById('formZone').style.display = 'none';
   document.getElementById('success').classList.add('show');
-  setTimeout(() => { window.location.href = 'home.html'; }, 2200);
+  // Invité : il doit encore renseigner son identité → onboarding.
+  // Récupération classique : retour au carnet.
+  const dest = estInvitation ? 'onboarding.html' : 'home.html';
+  setTimeout(() => { window.location.href = dest; }, 2200);
 }
 
 // Enter valide
