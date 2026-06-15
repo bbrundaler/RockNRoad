@@ -265,6 +265,20 @@
         </div>
       </div>
 
+      <!-- Colonne droite (suite) : comptes sans groupe -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="ico">🧭</span>
+          <h2>Comptes sans groupe</h2>
+          <span class="admin-badge">Super admin</span>
+        </div>
+        <div class="panel-body">
+          <div id="orphan-list">
+            <div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement…</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -547,6 +561,9 @@ async function loadAdminData() {
       `;
     }).join('');
 
+    // Charger aussi les comptes sans groupe
+    loadOrphans();
+
   } catch(e) {
     container.innerHTML = `<p style="color:var(--st-bad-ink);font-size:12px;">Erreur : ${e.message}</p>`;
   }
@@ -758,6 +775,64 @@ async function createGroup(){
     loadAdminData();
   }catch(e){ showToast('Erreur : '+e.message, 'error'); }
 }
+
+// ── COMPTES SANS GROUPE (orphelins) ─────────────────────────────────────────
+async function loadOrphans(){
+  const box=document.getElementById('orphan-list');
+  if(!box) return;
+  try{
+    const json=await callEdge('list_orphan_accounts', {});
+    const orphans=json.orphans||[];
+    if(!orphans.length){
+      box.innerHTML='<p style="font-size:12px;color:var(--ink-dim);">Aucun compte sans groupe. 👍</p>';
+      return;
+    }
+    // options de groupes (réutilise le sélecteur d'invitation, déjà à jour)
+    const invSel=document.getElementById('inv-groupe');
+    const grpOptions=invSel
+      ? [...invSel.options].filter(o=>o.value && o.value!=='__nouveau__')
+          .map(o=>`<option value="${o.value}">${o.textContent}</option>`).join('')
+      : '';
+    box.innerHTML=orphans.map(o=>`
+      <div class="orphan-row">
+        <div class="orphan-mail">${o.banned?'🚫 ':''}${o.email||o.user_id}</div>
+        <div class="orphan-actions">
+          <select class="orphan-grp" id="og-${o.user_id}">${grpOptions||'<option value="">Aucun groupe</option>'}</select>
+          <select class="orphan-role" id="or-${o.user_id}">
+            <option value="membre">Membre</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button class="ag-mini-btn ag-success" onclick="attachOrphan('${o.user_id}')">↪️ Rattacher</button>
+          <button class="ag-mini-btn ag-danger" onclick="destroyOrphan('${o.user_id}','${(o.email||o.user_id).replace(/'/g,"\\'")}')">🗑️</button>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    box.innerHTML=`<p style="font-size:12px;color:var(--st-bad-ink);">Erreur : ${e.message}</p>`;
+  }
+}
+
+async function attachOrphan(userId){
+  const gsel=document.getElementById('og-'+userId);
+  const rsel=document.getElementById('or-'+userId);
+  const groupeId=gsel?gsel.value:'';
+  const role=rsel?rsel.value:'membre';
+  if(!groupeId){ showToast('Choisissez un groupe.', 'error'); return; }
+  try{
+    await callEdge('attach_member', { user_id:userId, groupe_id:groupeId, role });
+    showToast('↪️ Compte rattaché au groupe');
+    loadAdminData();
+  }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
+
+async function destroyOrphan(userId, label){
+  if(!confirm(`DÉTRUIRE définitivement le compte ${label} ?\n\nCette action est IRRÉVERSIBLE.`)) return;
+  if(!confirm('Dernière confirmation : effacement TOTAL du compte ?')) return;
+  try{
+    await callEdge('delete_member', { user_id:userId, hard:true });
+    showToast('🗑️ Compte détruit', 'error');
+    loadAdminData();
+  }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
 </script>
 <script src="boussole.js" defer></script>
 <!-- ── MODAL FICHE MEMBRE ────────────────────────────────────────────────── -->
@@ -797,6 +872,13 @@ async function createGroup(){
 .mm-btn-soft{background:var(--surface);color:var(--ink);border-color:var(--surface-line);}
 .mm-btn-danger{background:transparent;color:var(--gold-deep);border-color:var(--gold-a35);}
 .mm-sep{height:1px;background:var(--surface-line);margin:16px 0;}
+.orphan-row{padding:12px 0;border-bottom:1px solid var(--surface-line);}
+.orphan-row:last-child{border-bottom:none;}
+.orphan-mail{font-size:13px;color:var(--ink);font-weight:500;margin-bottom:8px;}
+.orphan-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.orphan-grp,.orphan-role{padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:var(--r);
+  font-family:var(--font-body);font-size:12px;color:var(--ink);background:var(--surface);cursor:pointer;}
+.orphan-grp{min-width:120px;}
 </style>
 </body>
 </html>
