@@ -168,6 +168,14 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .share-time{font-size:10px;color:var(--ink-dim);margin-left:6px;font-weight:400;}
 .share-flag{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:11px;opacity:.55;padding:0 2px;margin-left:6px;line-height:1;}
 .share-flag:hover{opacity:1;color:var(--gold-text);}
+/* Réactions emoji (style A : barre toujours visible) — table reactions, cible_type='message' */
+.react-bar{display:flex;gap:6px;margin-top:8px;}
+.react-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid var(--paper-line);
+  border-radius:var(--r-pill,999px);background:transparent;font-size:13px;cursor:pointer;line-height:1;transition:all .12s;}
+.react-btn:hover{border-color:var(--gold-a35);background:var(--gold-a10);}
+.react-btn.mine{border-color:var(--gold);background:var(--gold-a20);}
+.react-btn .rc{font-size:11px;font-weight:700;color:var(--ink-dim);min-width:7px;text-align:center;}
+.react-btn.mine .rc{color:var(--gold-text);}
 .share-row{display:flex;align-items:baseline;gap:2px;}
 .share-row .share-name{flex:0 0 auto;}
 
@@ -271,6 +279,7 @@ let RNR_groupeId = null;
 let RNR_userId   = null;
 let RNR_userNom  = null;
 let RNR_dernierMsg = null;   /* date ISO du dernier message — alimente le moteur d'animation (D-ECH-3) */
+let RNR_reactions = {};      /* cache des réactions du fil : {msgId:{emoji:{count,mine}}} */
 
 /* Initiale + couleur stable dérivée du nom (mêmes pastilles que la maquette) */
 function initialeDe(nom){ return (nom||'?').trim().charAt(0).toUpperCase() || '?'; }
@@ -339,6 +348,24 @@ async function chargerMessages(){
     return;
   }
   RNR_dernierMsg = msgs[msgs.length-1].created_at;
+
+  /* Réactions du fil : une seule requête, scopée message. RLS reactions déjà prévue
+     pour cible_type='message' (prouvée en base). membre_id = user_id auth (convention
+     existante du carnet). On agrège par message → {emoji:{count, mine}}. */
+  const ids = msgs.map(m=>m.id);
+  RNR_reactions = {};
+  if(ids.length){
+    const {data:reacs} = await sb.from('reactions')
+      .select('cible_id,membre_id,emoji')
+      .eq('cible_type','message').in('cible_id',ids);
+    (reacs||[]).forEach(r=>{
+      const slot = RNR_reactions[r.cible_id] || (RNR_reactions[r.cible_id]={});
+      const e = slot[r.emoji] || (slot[r.emoji]={count:0,mine:false});
+      e.count++;
+      if(r.membre_id && r.membre_id===RNR_userId) e.mine=true;
+    });
+  }
+
   feed.innerHTML = msgs.map(m=>{
     const nom = m.auteur_nom || 'Voyageur';
     const av  = '<div class="share-av" style="background:'+couleurAvatar(nom)+'">'+escapeHtml(initialeDe(nom))+'</div>';
@@ -350,9 +377,44 @@ async function chargerMessages(){
           '<button class="share-flag" title="Signaler ce message" onclick="signalerMessage(\''+m.id+'\')">⚐</button>'+
         '</div>'+
         '<div class="share-text">'+escapeHtml(m.texte)+'</div>'+photo+
+        barreReactions(m.id)+
       '</div></div>';
   }).join('');
   feed.scrollTop = feed.scrollHeight;
+}
+
+/* Barre de réactions (style A) pour un message : 👍 ❤️ 😂 toujours visibles. */
+const REACT_EMOJIS = ['👍','❤️','😂'];
+function barreReactions(msgId){
+  const slot = RNR_reactions[msgId] || {};
+  const btns = REACT_EMOJIS.map(e=>{
+    const d = slot[e] || {count:0,mine:false};
+    const cls = 'react-btn'+(d.mine?' mine':'');
+    const cnt = d.count>0 ? '<span class="rc">'+d.count+'</span>' : '<span class="rc"></span>';
+    return '<button class="'+cls+'" onclick="toggleReaction(\''+msgId+'\',\''+e+'\')">'
+      +'<span>'+e+'</span>'+cnt+'</button>';
+  }).join('');
+  return '<div class="react-bar">'+btns+'</div>';
+}
+
+/* Toggle d'une réaction → table reactions (insert, ou delete si déjà mise).
+   Calqué sur toggleCoeur du carnet. Unicité (cible_type,cible_id,membre_id,emoji). */
+async function toggleReaction(msgId, emoji){
+  if(!RNR_userId) return;
+  const slot = RNR_reactions[msgId] || {};
+  const mine = slot[emoji] && slot[emoji].mine;
+  if(mine){
+    const {error} = await sb.from('reactions').delete()
+      .eq('cible_type','message').eq('cible_id',msgId)
+      .eq('membre_id',RNR_userId).eq('emoji',emoji);
+    if(error){ console.warn('Réaction non retirée', error); return; }
+  }else{
+    const {error} = await sb.from('reactions').insert({
+      cible_type:'message', cible_id:msgId, membre_id:RNR_userId, emoji:emoji
+    });
+    if(error){ console.warn('Réaction non ajoutée', error); return; }
+  }
+  await chargerMessages();
 }
 
 /* Envoyer un message (auteur_id = lien RGPD, auteur_nom = étiquette gelée) */
