@@ -252,6 +252,16 @@
           <div id="inv-feedback"></div>
           <button class="send-btn" onclick="sendInvitation()">✉️ Envoyer l'invitation</button>
           <p class="inv-note">L'invité reçoit un email avec un lien de confirmation. Il choisit son mot de passe puis rejoint automatiquement le bon groupe.</p>
+
+          <div style="height:1px;background:var(--surface-line);margin:18px 0;"></div>
+
+          <div class="ag-section-title" style="margin-bottom:10px;">➕ Créer un groupe</div>
+          <div class="ag-field">
+            <label>Nom du nouveau groupe</label>
+            <input type="text" id="newg-nom" placeholder="Groupe de test, Amis du Sud…" maxlength="60">
+          </div>
+          <button class="send-btn" style="margin-top:10px;" onclick="createGroup()">🏕️ Créer le groupe</button>
+          <p class="inv-note">Crée un groupe vide (sans membre). Utile pour les tests ou pour préparer un groupe avant d'inviter.</p>
         </div>
       </div>
 
@@ -516,14 +526,15 @@ async function loadAdminData() {
                 <div class="ag-membre-row">
                   <div class="ag-membre-info">
                     <span class="ag-statut-dot ${m.banned ? 'off' : 'on'}" title="${m.banned ? 'Compte bloqué' : 'Compte actif'}"></span>
-                    <span class="ag-membre-email">${m.email || m.user_id}</span>
+                    <span class="ag-membre-email">${m.avatar ? m.avatar+' ' : ''}${m.pseudo || m.prenom || m.email || m.user_id}${m.type==='enfant' ? ' 🧒' : ''}</span>
                     <span class="ag-membre-role">${m.role || 'membre'}${m.is_superadmin ? ' · super-admin' : ''}</span>
                   </div>
                   <div class="ag-membre-actions">
+                    <button class="ag-mini-btn" onclick='openMemberCard(${JSON.stringify(m).replace(/'/g,"&#39;")})'>👁️ Fiche</button>
                     ${m.is_superadmin ? '' : `
                       ${m.banned
                         ? `<button class="ag-mini-btn ag-success" onclick="toggleUserBan('${m.user_id}', false, this)">✅ Débloquer</button>`
-                        : `<button class="ag-mini-btn ag-danger" onclick="toggleUserBan('${m.user_id}', true, this)">🚫 Bloquer ce compte</button>`
+                        : `<button class="ag-mini-btn ag-danger" onclick="toggleUserBan('${m.user_id}', true, this)">🚫 Bloquer</button>`
                       }
                     `}
                   </div>
@@ -638,7 +649,154 @@ async function toggleUserBan(userId, ban, btn) {
     loadAdminData();
   } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
 }
+
+// ── FICHE MEMBRE (voir / modifier / retirer / détruire) ─────────────────────
+let currentMember=null;
+
+function openMemberCard(m){
+  currentMember=m;
+  document.getElementById('mm-title').textContent=
+    (m.avatar?m.avatar+' ':'')+(m.pseudo||m.prenom||'Membre')+(m.type==='enfant'?' (enfant)':'');
+
+  const naiss=m.naissance_mois_annee||'';
+  const isChild=m.type==='enfant';
+  const consentDate=m.consent_marketing_date
+    ? new Date(m.consent_marketing_date).toLocaleDateString('fr-FR') : '';
+
+  document.getElementById('mm-body').innerHTML=`
+    <div class="mm-fg"><label>Compte</label>
+      <div class="mm-readonly">${m.email || (isChild?'Enfant — pas de compte (profil porté par un parent)':'—')}</div>
+    </div>
+    <div class="mm-fg"><label>Prénom</label><input id="mm-prenom" value="${(m.prenom||'').replace(/"/g,'&quot;')}"></div>
+    <div class="mm-fg"><label>Nom</label><input id="mm-nom" value="${(m.nom||'').replace(/"/g,'&quot;')}"></div>
+    <div class="mm-fg"><label>Pseudo (nom affiché dans le groupe)</label><input id="mm-pseudo" value="${(m.pseudo||'').replace(/"/g,'&quot;')}"></div>
+    <div class="mm-fg"><label>Naissance (MM/AAAA)</label><input id="mm-naiss" value="${naiss}" placeholder="01/1980"></div>
+    <div class="mm-fg"><label>Rôle dans le groupe</label>
+      <select id="mm-role" ${m.is_superadmin?'disabled':''}>
+        <option value="membre" ${m.role==='membre'?'selected':''}>Membre</option>
+        <option value="admin" ${m.role==='admin'?'selected':''}>Admin du groupe</option>
+      </select>
+      ${m.is_superadmin?'<div class="mm-readonly" style="margin-top:6px;">Super-admin — rôle non modifiable ici.</div>':''}
+    </div>
+    <div class="mm-fg">
+      <label class="mm-consent"><input type="checkbox" id="mm-consent" ${m.consent_marketing?'checked':''}>
+        Accepte les communications${consentDate?` (depuis le ${consentDate})`:''}</label>
+    </div>
+    <div class="mm-actions">
+      <button class="mm-btn mm-btn-save" onclick="saveMemberCard()">💾 Enregistrer</button>
+    </div>
+    <div class="mm-sep"></div>
+    <div class="mm-actions" style="border-top:none;padding-top:0;">
+      <button class="mm-btn mm-btn-soft" onclick="deleteMember(false)">↩️ Retirer du groupe</button>
+      <button class="mm-btn mm-btn-danger" onclick="deleteMember(true)">🗑️ Détruire définitivement</button>
+    </div>
+    <p style="font-size:11px;color:var(--ink-dim);margin-top:12px;line-height:1.5;">
+      <strong>Retirer</strong> : enlève la personne du groupe, son compte est conservé.<br>
+      <strong>Détruire</strong> : efface la fiche ET le compte. Irréversible (droit à l'effacement).
+    </p>`;
+  document.getElementById('member-modal').style.display='flex';
+}
+function closeMemberCard(){ document.getElementById('member-modal').style.display='none'; currentMember=null; }
+
+async function callEdge(action, payload){
+  const { data:{ session } } = await sb.auth.getSession();
+  const token = session?.access_token;
+  const res = await fetch(EDGE_FN, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+    body: JSON.stringify({ action, ...payload })
+  });
+  const json = await res.json();
+  if(!res.ok || json.error) throw new Error(json.error || 'Erreur serveur');
+  return json;
+}
+
+async function saveMemberCard(){
+  if(!currentMember) return;
+  const naiss=document.getElementById('mm-naiss').value.trim();
+  if(naiss && !/^\d{2}\/\d{4}$/.test(naiss)){ showToast('Format naissance : MM/AAAA', 'error'); return; }
+  const fields={
+    prenom:document.getElementById('mm-prenom').value.trim(),
+    nom:document.getElementById('mm-nom').value.trim(),
+    pseudo:document.getElementById('mm-pseudo').value.trim(),
+    naissance_mois_annee:naiss||null,
+    consent_marketing:document.getElementById('mm-consent').checked
+  };
+  if(!currentMember.is_superadmin) fields.role=document.getElementById('mm-role').value;
+  try{
+    await callEdge('update_member', { member_id:currentMember.id, fields });
+    showToast('✅ Fiche enregistrée');
+    closeMemberCard();
+    loadAdminData();
+  }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
+
+async function deleteMember(hard){
+  if(!currentMember) return;
+  const who=currentMember.pseudo||currentMember.prenom||currentMember.email||'cette personne';
+  const msg=hard
+    ? `DÉTRUIRE définitivement ${who} ?\n\nLa fiche ET le compte seront effacés. Cette action est IRRÉVERSIBLE.`
+    : `Retirer ${who} du groupe ?\n\nSon compte sera conservé, elle pourra être réinvitée.`;
+  if(!confirm(msg)) return;
+  if(hard && !confirm('Dernière confirmation : effacement TOTAL et définitif ?')) return;
+  try{
+    const r=await callEdge('delete_member', { member_id:currentMember.id, hard });
+    showToast(hard ? (r.authDeleted?'🗑️ Personne détruite':'🗑️ Fiche détruite (compte non trouvé)') : '↩️ Retiré du groupe',
+              hard?'error':'success');
+    closeMemberCard();
+    loadAdminData();
+  }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
+
+async function createGroup(){
+  const nom=document.getElementById('newg-nom').value.trim();
+  if(!nom){ showToast('Nom du groupe requis.', 'error'); return; }
+  try{
+    await callEdge('create_group', { nom });
+    showToast('🏕️ Groupe « '+nom+' » créé');
+    document.getElementById('newg-nom').value='';
+    loadAdminData();
+  }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
 </script>
 <script src="boussole.js" defer></script>
+<!-- ── MODAL FICHE MEMBRE ────────────────────────────────────────────────── -->
+<div id="member-modal" class="mm-overlay" style="display:none;" onclick="if(event.target===this)closeMemberCard()">
+  <div class="mm-card">
+    <div class="mm-head">
+      <span id="mm-title">Fiche membre</span>
+      <button class="mm-close" onclick="closeMemberCard()">✕</button>
+    </div>
+    <div class="mm-body" id="mm-body"><!-- rempli par JS --></div>
+  </div>
+</div>
+
+<style>
+.mm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;
+  display:flex;align-items:center;justify-content:center;padding:20px;}
+.mm-card{background:var(--surface);border-radius:var(--r-lg,16px);max-width:460px;width:100%;
+  max-height:88vh;overflow:auto;box-shadow:var(--shhov);border:1px solid var(--surface-line);}
+.mm-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;
+  border-bottom:1px solid var(--surface-line);font-family:var(--font-title);font-size:18px;color:var(--ink);
+  position:sticky;top:0;background:var(--surface);}
+.mm-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-dim);}
+.mm-body{padding:20px;}
+.mm-fg{margin-bottom:14px;}
+.mm-fg label{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--ink-dim);margin-bottom:5px;}
+.mm-fg input,.mm-fg select{width:100%;padding:10px 12px;border:2px solid var(--surface-line);
+  border-radius:var(--r);font-family:var(--font-body);font-size:13px;color:var(--ink);background:var(--surface);outline:none;}
+.mm-fg input:focus,.mm-fg select:focus{border-color:var(--gold);}
+.mm-readonly{font-size:12px;color:var(--ink-dim);background:var(--gold-a10);
+  border:1px solid var(--gold-a20);border-radius:var(--r);padding:8px 12px;}
+.mm-consent{font-size:12px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.mm-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding-top:16px;border-top:1px solid var(--surface-line);}
+.mm-btn{flex:1;min-width:120px;padding:11px;border-radius:var(--r);font-size:12px;font-weight:600;
+  cursor:pointer;border:2px solid transparent;}
+.mm-btn-save{background:var(--gold);color:var(--gold-text,#1a1208);border-color:var(--gold);}
+.mm-btn-soft{background:var(--surface);color:var(--ink);border-color:var(--surface-line);}
+.mm-btn-danger{background:transparent;color:var(--gold-deep);border-color:var(--gold-a35);}
+.mm-sep{height:1px;background:var(--surface-line);margin:16px 0;}
+</style>
 </body>
 </html>
