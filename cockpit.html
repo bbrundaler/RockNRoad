@@ -311,10 +311,11 @@ async function chargerContexte(){
   const {data:{session}} = await sb.auth.getSession();
   if(!session) return false;
   RNR_userId  = session.user.id;
-  RNR_userNom = prenomDepuisEmail(session.user.email);
   const {data:mem,error} = await sb.from('membres')
-    .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',RNR_userId).limit(1).single();
+    .select('groupe_id, is_superadmin, pseudo, groupes(*)').eq('user_id',RNR_userId).limit(1).single();
   if(error||!mem){ console.warn('Cockpit: pas de groupe', error); return false; }
+  // Nom affiché : le pseudo réel (identité v15) ; repli sur l'email si pas encore renseigné.
+  RNR_userNom = (mem.pseudo && mem.pseudo.trim()) ? mem.pseudo.trim() : prenomDepuisEmail(session.user.email);
   RNR_groupeId = mem.groupe_id;
   if(window.rnrChrome){
     if(mem.groupes&&mem.groupes.nom) rnrChrome.setGroupe(mem.groupes.nom);
