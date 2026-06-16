@@ -66,6 +66,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-reve-mots{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:0;}
 .hz-reve-mots .rmot{font-size:12px;padding:4px 11px;border:1px solid var(--gold-a35);
   border-radius:var(--r-pill,999px);color:var(--ink);background:var(--gold-a10);}
+.hz-reve-cta{margin-top:12px;width:100%;font-family:var(--font-body);font-size:13px;font-weight:600;
+  color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);
+  border-radius:var(--r);padding:9px;cursor:pointer;transition:background .15s,color .15s;}
+.hz-reve-cta:hover{background:var(--gold);color:var(--chrome-bg);}
 
 /* vote */
 .cq{font-family:var(--font-title);font-size:17px;font-weight:600;margin-bottom:2px;color:var(--ink);}
@@ -166,6 +170,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <div class="mt" id="hz-fiche-mt">La fiche la mieux notée du groupe</div>
       <div class="chips" id="hz-fiche-chips"><span class="rr-badge">⭐ coup de cœur</span></div>
       <div class="hz-reve-mots" id="hz-reve-mots"></div>
+      <button class="hz-reve-cta" id="hz-reve-cta" style="display:none">→ Voir les fiches de cette région</button>
     </div>
   </div>
   <div class="blk write b-write">
@@ -277,10 +282,32 @@ function afficheReve(dataR, fiche){
   // NOS mots d'amorce
   const wz=document.getElementById('hz-reve-mots');
   if(wz) wz.innerHTML = amorce ? amorce.mots.map(m=>'<span class="rmot">'+m+'</span>').join('') : '';
+  // Bouton « Voir les fiches » (Brique 3 — la porte)
+  const cta=document.getElementById('hz-reve-cta');
+  if(cta){ cta.style.display='block'; cta.onclick=()=>ouvrirFichesRegion(dataR); }
 }
 
 // Garde la dernière fiche affichée par survol pour pouvoir restaurer la vedette
 let HZ_FICHE_VEDETTE=null;
+let HZ_REGION_ACTIVE=null;   // région « ouverte » sur mobile (1er tap = rêve, 2e = fiches)
+
+// Régions de référence du carnet (mêmes clés) → navigation par #rk ; sinon #dyn-rk
+const CARNET_REF_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
+
+// BRIQUE 3 — la porte : ouvrir le chemin des fiches d'une région.
+// On vise la région RÉELLE des fiches de la zone (ex. survol « grand-est » → fiche « Alsace »
+// → onglet du carnet 'alsace'). Si aucune fiche, on emmène vers la carte du carnet (invite à créer).
+function ouvrirFichesRegion(dataR){
+  const matches=fichesPourRegionCarte(dataR);
+  if(matches.length){
+    const rk=normalizeRegionKey(matches[0].region||'');
+    const tab=CARNET_REF_REGIONS.includes(rk)?rk:('dyn-'+rk);
+    window.location.href='carnet.html#'+tab;
+  }else{
+    // zone encore vide : on ouvre la carte du carnet pour inviter à créer une fiche
+    window.location.href='carnet.html#carte';
+  }
+}
 
 function afficheFicheDansCadre(f, contexteRegionLabel){
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
@@ -314,15 +341,21 @@ function brancheSurvolCarte(){
     reg.addEventListener('mouseleave',()=>{
       // au départ de la souris, on restaure la fiche vedette du groupe
       const wz=document.getElementById('hz-reve-mots'); if(wz) wz.innerHTML='';
+      const cta=document.getElementById('hz-reve-cta'); if(cta) cta.style.display='none';
       const ph=document.getElementById('hz-fiche-ph'); const fl=ph?ph.querySelector('.fl'):null;
       if(fl) fl.textContent='🏰';
       afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
     });
-    // mobile : un tap fait rêver aussi
+    // mobile : un tap fait rêver ; un 2e tap (région déjà active) ouvre les fiches
     reg.addEventListener('click',()=>{
       const matches=fichesPourRegionCarte(dataR);
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-      afficheReve(dataR, best);
+      if(HZ_REGION_ACTIVE===dataR){
+        ouvrirFichesRegion(dataR);          // 2e tap → la porte
+      }else{
+        HZ_REGION_ACTIVE=dataR;
+        afficheReve(dataR, best);           // 1er tap → le rêve
+      }
     });
   });
 }
