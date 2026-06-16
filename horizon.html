@@ -289,7 +289,6 @@ function afficheReve(dataR, fiche){
 
 // Garde la dernière fiche affichée par survol pour pouvoir restaurer la vedette
 let HZ_FICHE_VEDETTE=null;
-let HZ_REGION_ACTIVE=null;   // région « ouverte » sur mobile (1er tap = rêve, 2e = fiches)
 
 // Régions de référence du carnet (mêmes clés) → navigation par #rk ; sinon #dyn-rk
 const CARNET_REF_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
@@ -346,16 +345,12 @@ function brancheSurvolCarte(){
       if(fl) fl.textContent='🏰';
       afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
     });
-    // mobile : un tap fait rêver ; un 2e tap (région déjà active) ouvre les fiches
+    // clic sur une région → on affiche le rêve PUIS on ouvre ses fiches (un seul clic)
     reg.addEventListener('click',()=>{
       const matches=fichesPourRegionCarte(dataR);
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-      if(HZ_REGION_ACTIVE===dataR){
-        ouvrirFichesRegion(dataR);          // 2e tap → la porte
-      }else{
-        HZ_REGION_ACTIVE=dataR;
-        afficheReve(dataR, best);           // 1er tap → le rêve
-      }
+      afficheReve(dataR, best);     // au cas où le survol n'a pas eu lieu (mobile/tactile)
+      ouvrirFichesRegion(dataR);    // la porte, directement
     });
   });
 }
