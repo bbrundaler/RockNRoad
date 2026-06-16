@@ -312,7 +312,21 @@ function pickEmoji(e){
 }
 
 (async()=>{
-  const {data:{session}}=await sb.auth.getSession();
+  /* Attente TOLÉRANTE de session : un invité arrive parfois ici alors que le SDK
+     n'a pas encore fini de consommer le token du lien (race condition). On ne l'éjecte
+     pas au premier getSession vide : on attend brièvement que la session s'établisse
+     (sinon l'INSERT groupes échouait sur la RLS, auth.uid() étant null). */
+  async function attendreSession(maxMs){
+    let {data:{session}} = await sb.auth.getSession();
+    if(session) return session;
+    return await new Promise(resolve=>{
+      let fini=false;
+      const term=(s)=>{ if(fini) return; fini=true; try{sub&&sub.subscription&&sub.subscription.unsubscribe();}catch(e){} resolve(s); };
+      const {data:sub} = sb.auth.onAuthStateChange((_e, s)=>{ if(s) term(s); });
+      setTimeout(async()=>{ const {data:{session:s2}} = await sb.auth.getSession(); term(s2||null); }, maxMs);
+    });
+  }
+  const session = await attendreSession(3000);
   if(!session){window.location.href='index.html';return;}
   currentUser=session.user;
   renderEmojis();
@@ -501,6 +515,11 @@ async function saveProfil(){
         const {error}=await sb.from('groupes').update(payload).eq('id',myGroupeId);
         if(error)throw error;
       }else{
+        /* Garde : la création de groupe exige une session active (la RLS grp_insert
+           vérifie auth.uid() IS NOT NULL). Si elle a expiré, message clair plutôt que
+           l'erreur RLS brute. */
+        const {data:{session:sChk}} = await sb.auth.getSession();
+        if(!sChk){ throw new Error('Session expirée — reconnecte-toi via le lien reçu par email avant de créer ton groupe.'); }
         const {data:g,error}=await sb.from('groupes').insert(payload).select().single();
         if(error)throw error;
         myGroupeId=g.id;
