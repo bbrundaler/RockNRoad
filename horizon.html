@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <script src="chrome.js"></script>
+<script src="carto.js"></script>
+<script src="carto-cascade.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
    — plus AUCUNE variable locale : tout vient de tokens.css.
@@ -254,12 +256,42 @@ let HZ_FICHES=[];
 
 // Renvoie les fiches correspondant à une région administrative de la carte
 function fichesPourRegionCarte(dataR){
+  // Vérité GPS d'abord (carto.js) : _regionSvg posé au chargement.
+  if(HZ_DECOUPAGE_OK){
+    return HZ_FICHES.filter(f=>f._regionSvg===dataR);
+  }
+  // Repli (découpage non chargé) : ancien matching flou par mots-clés.
   const keys=CARTE_TO_FICHES[dataR]||[];
   return HZ_FICHES.filter(f=>{
     const rk=normalizeRegionKey(f.region);
-    // match si la clé de la fiche est listée, ou contient/est contenue dans un mot-clé
     return keys.some(k=>rk===k || rk.includes(k) || k.includes(rk));
   });
+}
+
+// Moteur de découpage chargé ? (sinon repli matching flou)
+let HZ_DECOUPAGE_OK=false;
+let HZ_DECOUPAGE=null;   // instance carto.js
+let HZ_REGIONS_SVG=[];   // slugs des régions présentes sur la carte
+
+// Charge le fichier de découpage et rattache chaque fiche à sa région SVG réelle.
+async function chargeDecoupageEtRattache(fiches){
+  try{
+    if(!window.RNR_CARTO_MOTEUR){ console.warn('Horizon: carto.js absent'); return; }
+    const rep=await fetch('decoupage-france-regions.json',{cache:'force-cache'});
+    if(!rep.ok){ console.warn('Horizon: découpage introuvable',rep.status); return; }
+    const geo=await rep.json();
+    // index code → slug (pour traduire le verdict du moteur en slug SVG)
+    const codeToSlug={};
+    geo.features.forEach(f=>{ codeToSlug[f.properties.code]=f.properties.slug; });
+    HZ_DECOUPAGE=window.RNR_CARTO_MOTEUR.creerDecoupage(geo);
+    HZ_REGIONS_SVG=HZ_DECOUPAGE.zones.map(z=>codeToSlug[z.code]).filter(Boolean);
+    // pose _regionSvg sur chaque fiche
+    for(const f of fiches){
+      const z=(f.lat!=null&&f.lng!=null)?HZ_DECOUPAGE.zoneDe(+f.lat,+f.lng):null;
+      f._regionSvg = z ? codeToSlug[z.code] : null;
+    }
+    HZ_DECOUPAGE_OK=true;
+  }catch(e){ console.warn('Horizon: rattachement GPS échoué',e); }
 }
 
 // Affiche l'amorce « rêve » d'une région au survol (Brique 1).
@@ -332,8 +364,32 @@ function afficheFicheDansCadre(f, contexteRegionLabel){
 // Branche le survol des régions de la carte SVG
 // ───────── Brique 2 : le tri qui éteint la carte ─────────
 // Réversible (estompe, jamais supprime). Garde-fou : toujours ≥2 régions allumées.
+// Routé via le MOTEUR DE CASCADE (carto-cascade.js) : le mode tri est une COUCHE
+// « tri-perso ». L'état du SVG REFLÈTE la cascade ; il n'en est plus la source.
 let HZ_MODE_TRI=false;
 const HZ_MIN_ALLUMEES=2;
+const HZ_COUCHE_TRI='tri-perso';
+let HZ_TRI_ESTOMPEES=new Set();   // régions écartées par le tri perso (slugs SVG)
+
+// Liste des régions de la carte (slugs présents dans le SVG).
+function regionsSvgPresentes(){
+  return [...document.querySelectorAll('.region[data-r]')].map(r=>r.getAttribute('data-r'));
+}
+
+// (Re)pose la couche de tri dans la cascade, puis applique le verdict au SVG.
+function appliqueCascade(){
+  if(!window.RNR_CARTO){ return; } // moteur absent → on ne casse rien
+  RNR_CARTO.coucheListe({
+    id:HZ_COUCHE_TRI, source:'perso', titre:'Ton tri',
+    estompees:[...HZ_TRI_ESTOMPEES]
+  });
+  const verdict=RNR_CARTO.resoudre(regionsSvgPresentes());
+  // reflet sur le SVG : .eteinte = verdict 'estompee'
+  document.querySelectorAll('.region[data-r]').forEach(reg=>{
+    const code=reg.getAttribute('data-r');
+    reg.classList.toggle('eteinte', verdict[code]==='estompee');
+  });
+}
 
 function nbAllumees(){
   return document.querySelectorAll('.region[data-r]:not(.eteinte)').length;
@@ -350,15 +406,19 @@ function majInfoTri(){
   }
 }
 function basculeRegion(reg){
-  if(reg.classList.contains('eteinte')){
-    reg.classList.remove('eteinte');           // rallumer : toujours permis
+  const code=reg.getAttribute('data-r');
+  if(HZ_TRI_ESTOMPEES.has(code)){
+    HZ_TRI_ESTOMPEES.delete(code);            // rallumer : toujours permis
+    appliqueCascade();
   }else{
-    if(nbAllumees()<=HZ_MIN_ALLUMEES){          // garde-fou : ne jamais descendre sous 2
+    // garde-fou : le moteur refusera d'éteindre sous le seuil → on anticipe le message
+    if(nbAllumees()<=HZ_MIN_ALLUMEES){
       const info=document.getElementById('hz-tri-info');
       if(info) info.textContent='On garde au moins '+HZ_MIN_ALLUMEES+' régions en lice 🙂';
       return;
     }
-    reg.classList.add('eteinte');               // éteindre : estompe, réversible
+    HZ_TRI_ESTOMPEES.add(code);                // éteindre : estompe, réversible
+    appliqueCascade();
   }
   majInfoTri();
 }
@@ -374,6 +434,7 @@ function brancheModeTri(){
     majInfoTri();
   });
 }
+
 
 function brancheSurvolCarte(){
   const regions=document.querySelectorAll('.region[data-r]');
@@ -482,6 +543,11 @@ async function loadHorizonData(userId){
     if(eLieux){ console.warn('Horizon: lecture lieux',eLieux); return; }
     const fiches=lieux||[];
     HZ_FICHES=fiches;   // accessible au survol de la carte
+
+    // 2bis) Rattachement RÉEL par GPS (carto.js, cap Archi_Chaine : point-dans-polygone,
+    // la vérité est lat/lng, pas la colonne region en ancien découpage). Chaque fiche
+    // reçoit _regionSvg = slug de sa région réelle sur la carte 13 régions.
+    await chargeDecoupageEtRattache(fiches);
 
     // 3) Calculer les vrais compteurs
     const nFiches=fiches.length;
