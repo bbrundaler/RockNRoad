@@ -139,7 +139,7 @@ let voyage = [];
   initListEvents();
   loadVoyage();
 })();
-async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
+async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 
 // ── Carte ─────────────────────────────────────────────────────────────────────
 function initMap(){

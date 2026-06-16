@@ -589,7 +589,7 @@ async function checkAuth(){
     document.getElementById('main').style.display='contents';
   }
 }
-async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
+async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
 
 // ── Chargement profil groupe ──────────────────────────────────────────────
