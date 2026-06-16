@@ -62,6 +62,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .fiche .nm{font-family:var(--font-title);font-size:16.5px;font-weight:600;color:var(--ink);}
 .fiche .mt{font-size:12.5px;color:var(--ink-dim);margin:2px 0 7px;}
 .chips{display:flex;flex-wrap:wrap;gap:5px;}
+/* mots-amorce « rêve » au survol d'une région (Brique 1) */
+.hz-reve-mots{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:0;}
+.hz-reve-mots .rmot{font-size:12px;padding:4px 11px;border:1px solid var(--gold-a35);
+  border-radius:var(--r-pill,999px);color:var(--ink);background:var(--gold-a10);}
 
 /* vote */
 .cq{font-family:var(--font-title);font-size:17px;font-weight:600;margin-bottom:2px;color:var(--ink);}
@@ -161,6 +165,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <div class="nm" id="hz-fiche-nom">Chargement…</div>
       <div class="mt" id="hz-fiche-mt">La fiche la mieux notée du groupe</div>
       <div class="chips" id="hz-fiche-chips"><span class="rr-badge">⭐ coup de cœur</span></div>
+      <div class="hz-reve-mots" id="hz-reve-mots"></div>
     </div>
   </div>
   <div class="blk write b-write">
@@ -215,6 +220,25 @@ const CARTE_TO_FICHES = {
   'corse':                    ['corse']
 };
 
+// AMORCES « rêve » par région administrative (Brique 1 — anti-page-blanche).
+// Nos quelques idées pour lancer la danse ; le groupe complète ensuite.
+// emoji = ambiance (placeholder image), mots = étincelles évocatrices.
+const AMORCES = {
+  'ile-de-france':            { emoji:'🏛️', mots:['Versailles','les bords de Seine','la lumière de Paris'] },
+  'centre-val-de-loire':      { emoji:'🏰', mots:['châteaux de la Loire','troglodytes','vignes'] },
+  'bourgogne-franche-comte':  { emoji:'🍷', mots:['grands crus','abbayes','cascades du Jura'] },
+  'normandie':                { emoji:'🌊', mots:["falaises d'Étretat",'plages du Débarquement','Mont-Saint-Michel'] },
+  'hauts-de-france':          { emoji:'🏖️', mots:['baie de Somme','beffrois','plages du Nord'] },
+  'grand-est':                { emoji:'🍇', mots:['vignoble','village typique','Haut-Kœnigsbourg'] },
+  'pays-de-la-loire':         { emoji:'🧂', mots:['marais salants','châteaux',"l'Atlantique"] },
+  'bretagne':                 { emoji:'🌊', mots:["l'océan",'les dolmens'] },
+  'nouvelle-aquitaine':       { emoji:'🏄', mots:['dunes et pins','surf','bastides'] },
+  'occitanie':                { emoji:'🏰', mots:['Canal du Midi','cité de Carcassonne','Pyrénées'] },
+  'auvergne-rhone-alpes':     { emoji:'🏔️', mots:['volcans','sommets alpins','lacs'] },
+  'provence-alpes-cote-d-azur':{ emoji:'🛶', mots:['canoë dans les gorges','lavande','calanques'] },
+  'corse':                    { emoji:'🏝️', mots:['criques','montagne dans la mer','sentiers sauvages'] }
+};
+
 // Stockage des fiches chargées (rempli par loadHorizonData)
 let HZ_FICHES=[];
 
@@ -226,6 +250,33 @@ function fichesPourRegionCarte(dataR){
     // match si la clé de la fiche est listée, ou contient/est contenue dans un mot-clé
     return keys.some(k=>rk===k || rk.includes(k) || k.includes(rk));
   });
+}
+
+// Affiche l'amorce « rêve » d'une région au survol (Brique 1).
+// L'image (emoji d'ambiance) et NOS mots portent le rêve, même sans fiche.
+// Si une fiche existe pour la région, on la nomme en complément.
+function afficheReve(dataR, fiche){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  const amorce = AMORCES[dataR];
+  const label = dataR.replace(/-/g,' ');
+  const ph = document.getElementById('hz-fiche-ph');
+  const fl = ph ? ph.querySelector('.fl') : null;
+  // ambiance : l'emoji de la région en grand filigrane
+  if(fl && amorce) fl.textContent = amorce.emoji;
+  set('hz-fiche-region', label.toUpperCase());
+  // nom : la fiche si elle existe, sinon l'invitation à rêver
+  if(fiche){
+    set('hz-fiche-nom', fiche.nom||'Sans nom');
+    const mt=document.getElementById('hz-fiche-mt');
+    if(mt) mt.textContent = (fiche.note_famille?('noté '+fiche.note_famille+'/5 · '):'')+'on part ici ?';
+  }else{
+    set('hz-fiche-nom', 'Alors, on part ici ?');
+    const mt=document.getElementById('hz-fiche-mt');
+    if(mt) mt.textContent = 'Nos quelques idées pour lancer la danse';
+  }
+  // NOS mots d'amorce
+  const wz=document.getElementById('hz-reve-mots');
+  if(wz) wz.innerHTML = amorce ? amorce.mots.map(m=>'<span class="rmot">'+m+'</span>').join('') : '';
 }
 
 // Garde la dernière fiche affichée par survol pour pouvoir restaurer la vedette
@@ -256,14 +307,22 @@ function brancheSurvolCarte(){
     reg.style.cursor='pointer';
     reg.addEventListener('mouseenter',()=>{
       const matches=fichesPourRegionCarte(dataR);
-      const label=dataR.replace(/-/g,' ');
-      // on prend la mieux notée de la région survolée
+      // la mieux notée de la région survolée (ou null si aucune fiche encore)
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-      afficheFicheDansCadre(best,label);
+      afficheReve(dataR, best);          // Brique 1 : le rêve (image + nos mots)
     });
     reg.addEventListener('mouseleave',()=>{
       // au départ de la souris, on restaure la fiche vedette du groupe
+      const wz=document.getElementById('hz-reve-mots'); if(wz) wz.innerHTML='';
+      const ph=document.getElementById('hz-fiche-ph'); const fl=ph?ph.querySelector('.fl'):null;
+      if(fl) fl.textContent='🏰';
       afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
+    });
+    // mobile : un tap fait rêver aussi
+    reg.addEventListener('click',()=>{
+      const matches=fichesPourRegionCarte(dataR);
+      const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+      afficheReve(dataR, best);
     });
   });
 }
