@@ -91,6 +91,16 @@
   +'transition:all .15s;}'
   +'.rnrc-quit:hover{color:var(--chrome-ink);border-color:rgba(245,239,224,.35);}'
   +'.rnrc-tabbar{display:none;}'
+  +'.rnrc-cgu-link{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
+  +'white-space:nowrap;font-family:var(--font-body);opacity:.8;}'
+  +'.rnrc-cgu-link:hover{color:var(--gold-light);opacity:1;}'
+  +'@media(max-width:700px){.rnrc-cgu-link{display:none;}}'  /* sur mobile : seulement dans le pied */
+  +'.rnrc-footer{text-align:center;padding:22px 16px calc(22px + env(safe-area-inset-bottom));'
+  +'border-top:1px solid var(--gold-a20);margin-top:40px;}'
+  +'.rnrc-footer a{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
+  +'font-family:var(--font-body);}'
+  +'.rnrc-footer a:hover{color:var(--gold-light);text-decoration:underline;}'
+  +'@media(max-width:700px){.rnrc-footer{margin-bottom:70px;}}'  /* au-dessus de la tabbar */
   +'@media(max-width:700px){'
   +'.rnrc-links,.rnrc-groupe{display:none;}'
   +'.rnrc-nav{gap:12px;justify-content:space-between;}'
@@ -165,6 +175,14 @@
     add.innerHTML = '+ <span class="rnrc-add-label">Fiche</span>';
     right.appendChild(add);
 
+    var cgu = document.createElement('a');
+    cgu.className = 'rnrc-cgu-link';
+    cgu.href = 'cgu.html';
+    cgu.title = "Conditions d'utilisation";
+    cgu.textContent = 'Conditions';
+    if(pageActive('cgu.html')) cgu.style.color = 'var(--gold-light)';
+    right.appendChild(cgu);
+
     var th = document.createElement('button');
     th.className = 'rnrc-theme';
     th.title = 'Basculer clair / sombre';
@@ -195,6 +213,17 @@
     tab.className = 'rnrc-tabbar';
     LINKS.forEach(function(l){ tab.appendChild(lien(l, true)); });
     document.body.appendChild(tab);
+
+    /* pied de page partagé — lien CGU présent sur toutes les pages */
+    if(pageActive('cgu.html') === false){
+      var footer = document.createElement('footer');
+      footer.className = 'rnrc-footer';
+      var fcgu = document.createElement('a');
+      fcgu.href = 'cgu.html';
+      fcgu.textContent = "Conditions d'utilisation";
+      footer.appendChild(fcgu);
+      document.body.appendChild(footer);
+    }
 
     /* API minimale pour les pages */
     window.rnrChrome = {
