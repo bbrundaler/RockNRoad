@@ -116,15 +116,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk crew b-crew">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="avts">
-        <div class="av2" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))">B</div>
-        <div class="av2" style="background:linear-gradient(135deg,#13384a,#3d8fb0)">M</div>
-        <div class="av2" style="background:linear-gradient(135deg,#6B3288,#c89be0)">P</div>
-        <div class="av2" style="background:linear-gradient(135deg,#2C5016,#7DBB4F)">L</div>
-        <div class="av2" style="background:var(--gold-a20);color:var(--ink)">+2</div>
-      </div>
-      <div class="msg"><span class="w">Paul</span> : super spot en Aquitaine, je crée la fiche !</div>
-      <div class="msg"><span class="w">Léa</span> : Bretagne à fond pour les dolmens 🌊</div>
+      <div class="avts" id="hz-crew-avts"></div>
+      <div id="hz-crew-msgs"></div>
     </div>
   </div>
   <div class="blk voteq b-vote">
@@ -355,6 +348,62 @@ function brancheSurvolCarte(){
   });
 }
 
+// Helpers avatar (repris de cockpit.html pour cohérence visuelle)
+function initialeDe(nom){ return (nom||'?').trim().charAt(0).toUpperCase() || '?'; }
+function couleurAvatar(nom){
+  const palettes = [
+    ['#7a5a1f','var(--gold)'], ['#13384a','#3d8fb0'],
+    ['#6B3288','#c89be0'], ['#2C5016','#7DBB4F'], ['#7a3320','#d08a5a']
+  ];
+  let h=0; for(let i=0;i<(nom||'').length;i++) h=(h*31+nom.charCodeAt(i))>>>0;
+  const p = palettes[h % palettes.length];
+  return 'linear-gradient(135deg,'+p[0]+','+p[1]+')';
+}
+
+// Bloc « Le groupe » — vrais membres (avatar/pseudo) + derniers messages du cockpit.
+async function chargerBlocGroupe(groupeId){
+  const avEl=document.getElementById('hz-crew-avts');
+  const msgEl=document.getElementById('hz-crew-msgs');
+  try{
+    // Membres du groupe : avatar emoji si présent, sinon initiale colorée
+    const {data:membres}=await sb.from('membres')
+      .select('pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(20);
+    if(avEl && membres){
+      const max=5;
+      let html=membres.slice(0,max).map(m=>{
+        const nom=m.pseudo||m.prenom||'?';
+        if(m.avatar){
+          return '<div class="av2" style="background:var(--gold-a20);font-size:16px">'+m.avatar+'</div>';
+        }
+        return '<div class="av2" style="background:'+couleurAvatar(nom)+'">'+escapeHtmlHz(initialeDe(nom))+'</div>';
+      }).join('');
+      if(membres.length>max){
+        html+='<div class="av2" style="background:var(--gold-a20);color:var(--ink)">+'+(membres.length-max)+'</div>';
+      }
+      avEl.innerHTML=html;
+    }
+    // Derniers messages du cockpit (table messages)
+    const {data:msgs}=await sb.from('messages')
+      .select('auteur_nom,texte,created_at').eq('groupe_id',groupeId)
+      .order('created_at',{ascending:false}).limit(2);
+    if(msgEl){
+      if(msgs && msgs.length){
+        msgEl.innerHTML=msgs.reverse().map(m=>
+          '<div class="msg"><span class="w">'+escapeHtmlHz(m.auteur_nom||'Voyageur')+'</span> : '
+          +escapeHtmlHz(m.texte||'')+'</div>'
+        ).join('');
+      }else{
+        msgEl.innerHTML='<div class="msg" style="opacity:.7">Pas encore de message — lancez la conversation au Cockpit 🗳️</div>';
+      }
+    }
+  }catch(e){ console.warn('Horizon bloc groupe',e); }
+}
+
+// échappement HTML local (le cockpit a le sien ; horizon n'en avait pas)
+function escapeHtmlHz(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 async function loadHorizonData(userId){
   try{
     // 1) Trouver le groupe de l'utilisateur (même logique que carnet.html)
@@ -402,6 +451,9 @@ async function loadHorizonData(userId){
 
     // 5) Rendre la carte vivante : survol région → fiche correspondante à droite
     brancheSurvolCarte();
+
+    // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
+    chargerBlocGroupe(groupeId);
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
