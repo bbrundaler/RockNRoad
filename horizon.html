@@ -17,19 +17,19 @@
    — plus AUCUNE variable locale : tout vient de tokens.css.
    — la barre du haut est injectée par chrome.js (la couverture).   */
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;overflow:hidden;}            /* << pas de scroll : tout tient à l'écran */
+html,body{height:100%;overflow-x:hidden;overflow-y:auto;}  /* peut grandir si beaucoup d'infos (logique Cockpit) */
 body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
-  height:calc(100vh - 56px);
+  min-height:calc(100vh - 56px);   /* plein écran au départ, mais peut grandir (logique Cockpit) */
   padding:12px;display:grid;gap:11px;
   grid-template-columns:340px 1fr 400px;
   grid-template-rows:auto 1fr auto;
   grid-template-areas:
     "ind   map   crew"
     "vote  map   fiche"
-    "write write write";
+    "vote  write fiche";
   min-height:0;
 }
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
@@ -38,7 +38,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .bh .ic{width:23px;height:23px;border-radius:var(--r-sm);background:var(--gold-a20);display:grid;place-items:center;font-size:12px;}
 .bh h3{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
 .bh .pin{margin-left:auto;color:var(--ink-dim);opacity:.5;font-size:12px;cursor:pointer;}
-.bb{padding:9px 13px 12px;flex:1;display:flex;flex-direction:column;min-height:0;}
+.bb{padding:9px 13px 12px;flex:1;display:flex;flex-direction:column;min-height:0;
+  overflow:auto;scrollbar-width:thin;max-height:74vh;}
+.bb::-webkit-scrollbar{width:6px;}
+.bb::-webkit-scrollbar-thumb{background:var(--gold-a35);border-radius:3px;}
 
 .b-ind{grid-area:ind;} .b-crew{grid-area:crew;} .b-vote{grid-area:vote;}
 .b-map{grid-area:map;} .b-fiche{grid-area:fiche;} .b-write{grid-area:write;}
@@ -117,12 +120,18 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border:1px solid var(--gold-a35);background:var(--gold-a10);color:var(--gold-text);cursor:pointer;}
 .hz-lentille-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
 
-/* écriture en bandeau bas */
-.b-write .bb{flex-direction:row;gap:11px;align-items:stretch;}
-.write-l{flex:1;display:flex;flex-direction:column;}
-.write textarea{flex:1;resize:none;min-height:64px;font-size:14px;}   /* le style des champs vient d'app.css */
-.write-r{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:230px;}
+/* écriture : compact, vertical (le bloc est sous la carte, plus pleine largeur) */
+.b-write .bb{flex-direction:column;gap:8px;align-items:stretch;}
+.write-l{display:flex;flex-direction:column;}
+.write textarea{resize:none;min-height:46px;font-size:13.5px;}   /* le style des champs vient d'app.css */
+.write-r{display:flex;flex-direction:column;gap:6px;}
 .write-r .lbl{font-size:11px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.write-create{display:flex;gap:10px;align-items:flex-start;flex-shrink:0;}
+.write-create textarea{flex:1;}
+.write-create .write-r{min-width:200px;}
+.write-create .vt{display:flex;flex-wrap:wrap;gap:5px;}
+.write-create .rr-filtre{cursor:pointer;}
+@media(max-width:600px){.write-create{flex-direction:column;}.write-create .write-r{min-width:0;}}
 .hz-vm-detail{display:flex;flex-direction:column;gap:5px;margin:6px 0;}
 .hz-vm-detail .rr-filtre.on{background:var(--gold);color:var(--chrome-bg);}
 .hz-vm-liste{display:flex;flex-direction:column;gap:8px;margin-top:9px;}
@@ -226,18 +235,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk write b-write">
     <div class="bh"><span class="ic">✍️</span><h3>Prendre la main &amp; lancer un vote</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="write-l">
-        <textarea id="hz-vote-titre" placeholder="C'est à vous : « Et si on partait vers le Sud cette année ? »"></textarea>
-        <div id="hz-vote-macro-liste" class="hz-vm-liste"></div>
-      </div>
-      <div class="write-r"><span class="lbl">+ attacher un choix</span>
-        <div class="vt" id="hz-vote-attache">
-          <span class="rr-filtre" data-vm="lentille">🧭 Une lentille</span>
-          <span class="rr-filtre" data-vm="regions">🗺️ Des régions</span>
+      <div class="write-create">
+        <textarea id="hz-vote-titre" placeholder="C'est à vous : « On part plutôt vers le Sud cette année ? »"></textarea>
+        <div class="write-r">
+          <span class="lbl">+ attacher un choix</span>
+          <div class="vt" id="hz-vote-attache">
+            <span class="rr-filtre" data-vm="lentille">🧭 Une lentille</span>
+            <span class="rr-filtre" data-vm="regions">🗺️ Des régions</span>
+          </div>
+          <div id="hz-vote-detail" class="hz-vm-detail"></div>
+          <button id="hz-vote-lancer" class="hz-tri-btn" type="button" style="display:none">🚀 Lancer le vote</button>
         </div>
-        <div id="hz-vote-detail" class="hz-vm-detail"></div>
-        <button id="hz-vote-lancer" class="hz-tri-btn" type="button" style="display:none">🚀 Lancer le vote</button>
       </div>
+      <div id="hz-vote-macro-liste" class="hz-vm-liste"></div>
     </div>
   </div>
 </div>
