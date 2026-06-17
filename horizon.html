@@ -123,6 +123,20 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .write textarea{flex:1;resize:none;min-height:64px;font-size:14px;}   /* le style des champs vient d'app.css */
 .write-r{display:flex;flex-direction:column;gap:6px;justify-content:center;min-width:230px;}
 .write-r .lbl{font-size:11px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.hz-vm-detail{display:flex;flex-direction:column;gap:5px;margin:6px 0;}
+.hz-vm-detail .rr-filtre.on{background:var(--gold);color:var(--chrome-bg);}
+.hz-vm-liste{display:flex;flex-direction:column;gap:8px;margin-top:9px;}
+.hz-vm{border:1px solid var(--gold-a35);border-radius:var(--r-sm);padding:9px 10px;background:var(--gold-a10);}
+.hz-vm-q{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.hz-vm-opts{display:flex;flex-wrap:wrap;gap:5px;}
+.hz-vm-opt{border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);padding:3px 11px;font-size:12px;
+  cursor:pointer;color:var(--gold-text);background:transparent;transition:.15s;display:inline-flex;align-items:center;gap:5px;}
+.hz-vm-opt:hover{border-color:var(--gold);}
+.hz-vm-opt.gagne{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
+.hz-vm-opt .n{opacity:.6;font-size:11px;}
+.hz-vm-meta{font-size:10.5px;color:var(--ink-dim);margin-top:6px;display:flex;gap:8px;align-items:center;}
+.hz-vm-appliquer{font-size:11px;cursor:pointer;color:var(--gold-text);border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);padding:2px 9px;}
+.hz-vm-appliquer:hover{background:var(--gold);color:var(--chrome-bg);}
 .vt{display:flex;flex-wrap:wrap;gap:5px;}
 
 /* groupe */
@@ -212,9 +226,17 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk write b-write">
     <div class="bh"><span class="ic">✍️</span><h3>Prendre la main &amp; lancer un vote</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="write-l"><textarea placeholder="Leader, c'est à vous : « Et si on partait vers le Sud cette année ? »"></textarea></div>
+      <div class="write-l">
+        <textarea id="hz-vote-titre" placeholder="C'est à vous : « Et si on partait vers le Sud cette année ? »"></textarea>
+        <div id="hz-vote-macro-liste" class="hz-vm-liste"></div>
+      </div>
       <div class="write-r"><span class="lbl">+ attacher un choix</span>
-        <div class="vt"><span class="rr-filtre">Pour / Contre</span><span class="rr-filtre">Choix A/B</span><span class="rr-filtre">Note /5</span><span class="rr-filtre">Élimination</span><span class="rr-filtre">Question libre</span></div>
+        <div class="vt" id="hz-vote-attache">
+          <span class="rr-filtre" data-vm="lentille">🧭 Une lentille</span>
+          <span class="rr-filtre" data-vm="regions">🗺️ Des régions</span>
+        </div>
+        <div id="hz-vote-detail" class="hz-vm-detail"></div>
+        <button id="hz-vote-lancer" class="hz-tri-btn" type="button" style="display:none">🚀 Lancer le vote</button>
       </div>
     </div>
   </div>
@@ -282,6 +304,12 @@ const AMORCES = {
 
 // Stockage des fiches chargées (rempli par loadHorizonData)
 let HZ_FICHES=[];
+let HZ_USER_ID=null;     // votant_id pour le vote macro
+let HZ_GROUPE_ID=null;   // groupe_id pour le vote macro
+let HZ_VOTES_MACRO=[];   // propositions niveau=macro du groupe
+let HZ_VOTES_PAR_PROP={};// {proposition_id:[votes]}
+let HZ_VM_ATTACHE=null;  // 'lentille' | 'regions' en cours de création
+const HZ_COUCHE_VOTE='vote-macro'; // couche cascade dérivée du vote gagnant appliqué
 
 // Renvoie les fiches correspondant à une région administrative de la carte
 function fichesPourRegionCarte(dataR){
@@ -596,7 +624,173 @@ function rendBlocLentille(){
   }
 }
 
-function sauveTri(){ sauveEnvies(); }
+// ════════════════════════════════════════════════════════════════
+//  VOTE MACRO PARTAGÉ (groupe) — réutilise propositions/votes + RLS
+//  existantes (is_member_of). niveau='macro'. Tout le monde peut lancer
+//  (décision Bruno : simple pour tester). La carte se DÉRIVE du vote
+//  gagnant quand on l'applique (D-ECH-7).
+//  options jsonb porte : {kind:'lentille', lentille, cotes:[..]} OU
+//                        {kind:'regions', regions:[slugs]}.
+// ════════════════════════════════════════════════════════════════
+
+// charge les votes macro du groupe + les voix
+async function chargeVotesMacro(){
+  if(!HZ_GROUPE_ID) return;
+  const {data:props,error}=await sb.from('propositions')
+    .select('*').eq('groupe_id',HZ_GROUPE_ID).eq('niveau','macro')
+    .order('created_at',{ascending:false});
+  if(error){ console.warn('Horizon: votes macro',error); return; }
+  HZ_VOTES_MACRO=(props||[]).filter(p=>p.statut==='ouvert');
+  HZ_VOTES_PAR_PROP={};
+  if(HZ_VOTES_MACRO.length){
+    const ids=HZ_VOTES_MACRO.map(p=>p.id);
+    const {data:vts}=await sb.from('votes').select('*').in('proposition_id',ids);
+    (vts||[]).forEach(v=>{ (HZ_VOTES_PAR_PROP[v.proposition_id]=HZ_VOTES_PAR_PROP[v.proposition_id]||[]).push(v); });
+  }
+  rendVotesMacro();
+}
+
+// le leader choisit ce qu'il attache (lentille ou régions)
+function choisitAttache(kind){
+  HZ_VM_ATTACHE=kind;
+  const det=document.getElementById('hz-vote-detail');
+  const btn=document.getElementById('hz-vote-lancer');
+  document.querySelectorAll('#hz-vote-attache .rr-filtre').forEach(s=>{
+    s.classList.toggle('on', s.getAttribute('data-vm')===kind);
+  });
+  if(!det) return;
+  det.innerHTML='';
+  if(kind==='lentille'){
+    // un menu des lentilles disponibles
+    const sel=document.createElement('select');
+    sel.id='hz-vm-lentille-sel'; sel.className='rr-filtre';
+    RNR_LENTILLES.LENTILLES.forEach(l=>{ const o=document.createElement('option'); o.value=l.id; o.textContent=l.libelle; sel.appendChild(o); });
+    det.appendChild(sel);
+  }else if(kind==='regions'){
+    // les régions encore vivantes deviennent les options du vote
+    const vivantes=document.querySelectorAll('.region[data-r]:not(.eteinte)');
+    const info=document.createElement('div'); info.className='hz-vm-meta';
+    info.textContent=vivantes.length+' régions en lice seront proposées au vote';
+    det.appendChild(info);
+  }
+  if(btn) btn.style.display='inline-flex';
+}
+
+// crée la proposition macro
+async function lanceVoteMacro(){
+  if(!HZ_GROUPE_ID||!HZ_USER_ID){ alert('Groupe non chargé.'); return; }
+  const titreEl=document.getElementById('hz-vote-titre');
+  const titre=(titreEl?titreEl.value:'').trim();
+  if(!titre){ alert('Écris ta question d\'abord.'); return; }
+  if(!HZ_VM_ATTACHE){ alert('Choisis ce qu\'on fait voter (lentille ou régions).'); return; }
+
+  let options;
+  if(HZ_VM_ATTACHE==='lentille'){
+    const sel=document.getElementById('hz-vm-lentille-sel');
+    const l=RNR_LENTILLES.lentille(sel?sel.value:'');
+    if(!l){ alert('Choisis une lentille.'); return; }
+    options={ kind:'lentille', lentille:l.id, cotes:l.cotes.map(c=>({cle:c.cle,libelle:c.libelle,emoji:c.emoji})) };
+  }else{
+    const vivantes=[...document.querySelectorAll('.region[data-r]:not(.eteinte)')].map(r=>r.getAttribute('data-r'));
+    if(vivantes.length<2){ alert('Il faut au moins 2 régions en lice.'); return; }
+    options={ kind:'regions', regions:vivantes };
+  }
+  const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'choix', titre:titre, options:options, niveau:'macro' };
+  const {error}=await sb.from('propositions').insert(row);
+  if(error){ console.warn('Horizon: création vote',error); alert('Vote non créé.'); return; }
+  // reset du formulaire
+  if(titreEl) titreEl.value='';
+  HZ_VM_ATTACHE=null;
+  document.querySelectorAll('#hz-vote-attache .rr-filtre').forEach(s=>s.classList.remove('on'));
+  const det=document.getElementById('hz-vote-detail'); if(det) det.innerHTML='';
+  const btn=document.getElementById('hz-vote-lancer'); if(btn) btn.style.display='none';
+  await chargeVotesMacro();
+}
+
+// voter sur une option d'un vote macro
+async function voterMacro(propId, valeur){
+  if(!HZ_USER_ID) return;
+  const {error}=await sb.from('votes')
+    .upsert({proposition_id:propId, votant_id:HZ_USER_ID, valeur:valeur, argument:null},
+            {onConflict:'proposition_id,votant_id'});
+  if(error){ console.warn('Horizon: vote',error); alert('Vote non enregistré.'); return; }
+  await chargeVotesMacro();
+}
+
+// applique le résultat gagnant d'un vote macro à la carte (couche partagée)
+function appliqueVoteMacro(prop){
+  const opts=prop.options||{};
+  const voix=HZ_VOTES_PAR_PROP[prop.id]||[];
+  // compter par valeur
+  const compte={}; voix.forEach(v=>{ compte[v.valeur]=(compte[v.valeur]||0)+1; });
+  if(opts.kind==='lentille'){
+    // le côté gagnant devient la lentille active de l'envie courante
+    let gagnant=null,max=-1; (opts.cotes||[]).forEach(c=>{ const n=compte[c.cle]||0; if(n>max){max=n;gagnant=c.cle;} });
+    const e=envieActive();
+    if(e && gagnant){ e.lentille=opts.lentille; e.cote=gagnant; sauveEnvies(); appliqueCascade(); rendBlocLentille(); }
+  }else if(opts.kind==='regions'){
+    // les régions perdantes (moins de voix) s'estompent via la couche vote
+    const regions=opts.regions||[];
+    let max=-1; regions.forEach(r=>{ const n=compte[r]||0; if(n>max)max=n; });
+    const gagnantes=new Set(regions.filter(r=>(compte[r]||0)===max && max>0));
+    const estompees=gagnantes.size ? regions.filter(r=>!gagnantes.has(r)) : [];
+    RNR_CARTO.coucheListe({id:HZ_COUCHE_VOTE, source:'groupe', titre:'Vote du groupe', estompees});
+    const verdict=RNR_CARTO.resoudre(regionsSvgPresentes());
+    document.querySelectorAll('.region[data-r]').forEach(reg=>{
+      reg.classList.toggle('eteinte', verdict[reg.getAttribute('data-r')]==='estompee');
+    });
+  }
+}
+
+// dessine la liste des votes macro en cours + boutons voter/appliquer
+function rendVotesMacro(){
+  const box=document.getElementById('hz-vote-macro-liste');
+  if(!box) return;
+  box.innerHTML='';
+  if(!HZ_VOTES_MACRO.length){ return; }
+  HZ_VOTES_MACRO.forEach(prop=>{
+    const opts=prop.options||{};
+    const voix=HZ_VOTES_PAR_PROP[prop.id]||[];
+    const compte={}; voix.forEach(v=>{ compte[v.valeur]=(compte[v.valeur]||0)+1; });
+    const monVote=voix.find(v=>v.votant_id===HZ_USER_ID);
+    const card=document.createElement('div'); card.className='hz-vm';
+    const q=document.createElement('div'); q.className='hz-vm-q'; q.textContent=prop.titre; card.appendChild(q);
+    const optsBox=document.createElement('div'); optsBox.className='hz-vm-opts';
+
+    // construire les options selon le type
+    let liste=[];
+    if(opts.kind==='lentille'){ liste=(opts.cotes||[]).map(c=>({cle:c.cle,libelle:(c.emoji||'')+' '+c.libelle})); }
+    else if(opts.kind==='regions'){ liste=(opts.regions||[]).map(r=>({cle:r,libelle:r.replace(/-/g,' ')})); }
+
+    let max=-1; liste.forEach(o=>{ const n=compte[o.cle]||0; if(n>max)max=n; });
+    liste.forEach(o=>{
+      const n=compte[o.cle]||0;
+      const b=document.createElement('span');
+      b.className='hz-vm-opt'+(monVote&&monVote.valeur===o.cle?' gagne':'');
+      b.innerHTML=o.libelle+(n?' <span class="n">'+n+'</span>':'');
+      b.addEventListener('click',()=>voterMacro(prop.id,o.cle));
+      optsBox.appendChild(b);
+    });
+    card.appendChild(optsBox);
+
+    const meta=document.createElement('div'); meta.className='hz-vm-meta';
+    meta.textContent=voix.length+' voix'+(monVote?' · tu as voté':'');
+    const appl=document.createElement('span'); appl.className='hz-vm-appliquer';
+    appl.textContent='Appliquer à la carte';
+    appl.addEventListener('click',()=>appliqueVoteMacro(prop));
+    meta.appendChild(appl);
+    card.appendChild(meta);
+    box.appendChild(card);
+  });
+}
+
+function brancheVoteMacro(){
+  document.querySelectorAll('#hz-vote-attache .rr-filtre').forEach(s=>{
+    s.addEventListener('click',()=>choisitAttache(s.getAttribute('data-vm')));
+  });
+  const btn=document.getElementById('hz-vote-lancer');
+  if(btn) btn.addEventListener('click', lanceVoteMacro);
+}
 function restaureTri(){ restaureEnvies(); }
 function resetTri(){
   // reset = vider l'envie ACTIVE (pas toutes les envies)
@@ -777,11 +971,13 @@ function escapeHtmlHz(s){
 
 async function loadHorizonData(userId){
   try{
+    HZ_USER_ID=userId;   // pour le vote macro (votant_id)
     // 1) Trouver le groupe de l'utilisateur (même logique que carnet.html)
     const {data:mem,error:eMem}=await sb.from('membres')
       .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).limit(1).single();
     if(eMem||!mem){ console.warn('Horizon: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
+    HZ_GROUPE_ID=groupeId;   // pour le vote macro (groupe_id)
     try {
       var gCache = Object.assign({}, mem.groupes||{}, {is_superadmin: mem.is_superadmin===true});
       sessionStorage.setItem('rnr_groupe', JSON.stringify(gCache));
@@ -836,6 +1032,8 @@ async function loadHorizonData(userId){
     majInfoTri();
     rendBarreEnvies();
     rendBlocLentille();
+    brancheVoteMacro();
+    chargeVotesMacro();
 
     // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
     chargerBlocGroupe(groupeId);
