@@ -139,6 +139,29 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border:1px dashed var(--gold-a35);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:10px;}
 .hz-invite-tag{font-style:normal;font-weight:700;color:var(--gold-text);font-size:10.5px;
   display:inline-block;margin-right:4px;}
+.hz-leader{border:1.5px solid var(--gold);border-radius:var(--r);background:var(--gold-a20);
+  padding:12px;margin-bottom:11px;animation:ldPulse 2.4s ease-in-out infinite;}
+@keyframes ldPulse{0%,100%{box-shadow:0 0 0 0 var(--gold-a35);}50%{box-shadow:0 0 0 6px transparent;}}
+.hz-ld-tt{font-family:var(--font-title);font-size:15px;color:var(--gold-text);font-weight:700;
+  display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.hz-ld-sub{font-size:11.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.4;}
+.hz-ld-cand{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--gold-a35);
+  border-radius:var(--r-sm);margin-bottom:6px;background:var(--surface);}
+.hz-ld-cand .av{width:26px;height:26px;border-radius:50%;background:var(--gold-a20);display:flex;
+  align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.hz-ld-cand .nm{flex:1;font-size:13px;color:var(--ink);}
+.hz-ld-cand .vx{font-weight:700;color:var(--gold-text);font-size:13px;min-width:18px;text-align:right;}
+.hz-ld-vote{cursor:pointer;font-size:11px;border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);
+  padding:3px 10px;color:var(--gold-text);background:transparent;transition:.15s;}
+.hz-ld-vote:hover{background:var(--gold);color:var(--chrome-bg);}
+.hz-ld-vote.mien{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
+.hz-ld-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;}
+.hz-ld-btn{flex:1;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:700;
+  padding:9px;border-radius:var(--r-sm);border:none;background:var(--gold);color:var(--chrome-bg);transition:.15s;}
+.hz-ld-btn:hover{background:var(--gold-light);}
+.hz-ld-btn.sec{background:transparent;border:1px solid var(--gold-a35);color:var(--gold-text);}
+.hz-ld-empty{font-size:12px;color:var(--ink-dim);font-style:italic;text-align:center;padding:6px 0;}
+.hz-ld-done{border-color:var(--gold-a35);background:var(--gold-a10);animation:none;}
 .hz-thermo{font-size:12px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);
   border:1px solid var(--gold-a35);border-radius:var(--r-sm);padding:6px 10px;margin-bottom:9px;}
 
@@ -199,6 +222,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk crew b-crew">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
+      <div id="hz-leader" class="hz-leader" style="display:none"></div>
       <div id="hz-thermo" class="hz-thermo" style="display:none"></div>
       <div class="avts" id="hz-crew-avts"></div>
       <div id="hz-crew-msgs"></div>
@@ -1088,6 +1112,127 @@ function couleurAvatar(nom){
   return 'linear-gradient(135deg,'+p[0]+','+p[1]+')';
 }
 
+// ════════════════════════════════════════════════════════════════
+//  VOTE FONDATEUR DES LEADERS (par voyage) — propositions/votes + voyage_leaders
+//  options.kind='leader', candidats dynamiques. Clôture manuelle. Élus posés
+//  dans voyage_leaders. Bandeau TRÈS visible tant que non clos.
+// ════════════════════════════════════════════════════════════════
+let HZ_MEMBRES=[];
+let HZ_VOTE_LEADER=null;
+let HZ_VOTES_LEADER=[];
+let HZ_LEADERS_ELUS=[];
+
+function nomMembre(id){ const m=HZ_MEMBRES.find(x=>x.id===id); return m?(m.pseudo||m.prenom||'?'):'?'; }
+function avatarMembre(id){ const m=HZ_MEMBRES.find(x=>x.id===id); return (m&&m.avatar)?m.avatar:'👤'; }
+function monMembreIdReel(){ const me=HZ_MEMBRES.find(x=>x.user_id===HZ_USER_ID); return me?me.id:null; }
+
+async function chargeVoteLeader(){
+  if(!HZ_GROUPE_ID||!HZ_VOYAGE_ID) return;
+  try{
+    const {data:vl}=await sb.from('voyage_leaders').select('membre_id').eq('voyage_id',HZ_VOYAGE_ID);
+    HZ_LEADERS_ELUS=(vl||[]).map(r=>r.membre_id);
+    const {data:props}=await sb.from('propositions').select('*')
+      .eq('voyage_id',HZ_VOYAGE_ID).eq('niveau','macro').order('created_at',{ascending:false});
+    HZ_VOTE_LEADER=(props||[]).find(p=>p.options&&p.options.kind==='leader'&&p.statut==='ouvert')||null;
+    HZ_VOTES_LEADER=[];
+    if(HZ_VOTE_LEADER){
+      const {data:vts}=await sb.from('votes').select('*').eq('proposition_id',HZ_VOTE_LEADER.id);
+      HZ_VOTES_LEADER=vts||[];
+    }
+    rendBandeauLeader();
+  }catch(e){ console.warn('Horizon: vote leader',e); }
+}
+
+async function lanceVoteLeader(){
+  if(!HZ_GROUPE_ID||!HZ_VOYAGE_ID||!HZ_USER_ID) return;
+  const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'choix',
+    titre:'Qui anime ce voyage ?', options:{kind:'leader',candidats:[]}, niveau:'macro', voyage_id:HZ_VOYAGE_ID };
+  const {error}=await sb.from('propositions').insert(row);
+  if(error){ console.warn('Horizon: lance vote leader',error); alert('Impossible de lancer le vote.'); return; }
+  await chargeVoteLeader();
+}
+
+async function seProposerLeader(){
+  if(!HZ_VOTE_LEADER) return;
+  const moi=monMembreIdReel();
+  if(!moi){ alert('Profil membre introuvable.'); return; }
+  const opts=HZ_VOTE_LEADER.options||{};
+  const cands=Array.isArray(opts.candidats)?opts.candidats.slice():[];
+  if(cands.some(c=>c.membre_id===moi)) return;
+  cands.push({membre_id:moi,nom:nomMembre(moi)});
+  const {error}=await sb.from('propositions').update({options:Object.assign({},opts,{candidats:cands})}).eq('id',HZ_VOTE_LEADER.id);
+  if(error){ console.warn('Horizon: se proposer',error); return; }
+  await chargeVoteLeader();
+}
+
+async function voterLeader(candId){
+  if(!HZ_VOTE_LEADER||!HZ_USER_ID) return;
+  const {error}=await sb.from('votes')
+    .upsert({proposition_id:HZ_VOTE_LEADER.id,votant_id:HZ_USER_ID,valeur:candId},{onConflict:'proposition_id,votant_id'});
+  if(error){ console.warn('Horizon: voter leader',error); return; }
+  await chargeVoteLeader();
+}
+
+async function cloreVoteLeader(){
+  if(!HZ_VOTE_LEADER) return;
+  const opts=HZ_VOTE_LEADER.options||{};
+  const cands=Array.isArray(opts.candidats)?opts.candidats:[];
+  if(!cands.length){ alert('Personne ne s\'est proposé. Proposez-vous d\'abord 🙂'); return; }
+  const compte={}; HZ_VOTES_LEADER.forEach(v=>compte[v.valeur]=(compte[v.valeur]||0)+1);
+  let max=-1; cands.forEach(c=>{const n=compte[c.membre_id]||0; if(n>max)max=n;});
+  const gagnants=cands.filter(c=>(compte[c.membre_id]||0)===max);
+  if(max<=0){ if(!confirm('Aucune voix encore. Valider quand même les candidats comme leaders ?')) return; }
+  try{
+    for(const g of gagnants){
+      await sb.from('voyage_leaders').upsert({voyage_id:HZ_VOYAGE_ID,membre_id:g.membre_id},{onConflict:'voyage_id,membre_id'});
+    }
+    await sb.from('propositions').update({statut:'clos'}).eq('id',HZ_VOTE_LEADER.id);
+    await chargeVoteLeader();
+  }catch(e){ console.warn('Horizon: clore vote leader',e); alert('Clôture impossible.'); }
+}
+
+function rendBandeauLeader(){
+  const box=document.getElementById('hz-leader');
+  if(!box) return;
+  if(HZ_LEADERS_ELUS.length && !HZ_VOTE_LEADER){
+    box.className='hz-leader hz-ld-done';
+    const noms=HZ_LEADERS_ELUS.map(id=>avatarMembre(id)+' '+nomMembre(id)).join(', ');
+    box.innerHTML='<div class="hz-ld-tt">👑 Aux commandes</div><div class="hz-ld-sub">'+noms+' anime'+(HZ_LEADERS_ELUS.length>1?'nt':'')+' ce voyage.</div>';
+    box.style.display='block'; return;
+  }
+  if(!HZ_VOTE_LEADER){
+    box.className='hz-leader';
+    box.innerHTML='<div class="hz-ld-tt">👑 Qui anime ce voyage ?</div>'+
+      '<div class="hz-ld-sub">C\'est le premier grand choix du groupe&nbsp;: désignez celui ou celle qui donnera le rythme. On peut être plusieurs.</div>'+
+      '<div class="hz-ld-actions"><button class="hz-ld-btn" id="hz-ld-lancer" type="button">Lancer le vote des leaders</button></div>';
+    box.style.display='block';
+    const b=document.getElementById('hz-ld-lancer'); if(b) b.addEventListener('click',lanceVoteLeader);
+    return;
+  }
+  box.className='hz-leader';
+  const opts=HZ_VOTE_LEADER.options||{};
+  const cands=Array.isArray(opts.candidats)?opts.candidats:[];
+  const compte={}; HZ_VOTES_LEADER.forEach(v=>compte[v.valeur]=(compte[v.valeur]||0)+1);
+  const monVote=HZ_VOTES_LEADER.find(v=>v.votant_id===HZ_USER_ID);
+  const moi=monMembreIdReel();
+  const dejaCandidat=moi&&cands.some(c=>c.membre_id===moi);
+  let html='<div class="hz-ld-tt">👑 Qui anime ce voyage ?</div>'+
+    '<div class="hz-ld-sub">Proposez-vous, votez pour qui vous voulez. On clôt quand c\'est mûr.</div>';
+  if(!cands.length){ html+='<div class="hz-ld-empty">Personne ne s\'est encore proposé…</div>'; }
+  else{ cands.forEach(c=>{ const n=compte[c.membre_id]||0; const mien=monVote&&monVote.valeur===c.membre_id;
+    html+='<div class="hz-ld-cand"><span class="av">'+avatarMembre(c.membre_id)+'</span>'+
+      '<span class="nm">'+escapeHtmlHz(c.nom||nomMembre(c.membre_id))+'</span>'+
+      '<button class="hz-ld-vote'+(mien?' mien':'')+'" data-cand="'+c.membre_id+'">'+(mien?'✓ ma voix':'voter')+'</button>'+
+      '<span class="vx">'+n+'</span></div>'; }); }
+  html+='<div class="hz-ld-actions">';
+  if(!dejaCandidat){ html+='<button class="hz-ld-btn" id="hz-ld-propose" type="button">Je me propose</button>'; }
+  html+='<button class="hz-ld-btn sec" id="hz-ld-clore" type="button">Clôturer</button></div>';
+  box.innerHTML=html; box.style.display='block';
+  box.querySelectorAll('.hz-ld-vote').forEach(b=>b.addEventListener('click',()=>voterLeader(b.getAttribute('data-cand'))));
+  const pp=document.getElementById('hz-ld-propose'); if(pp) pp.addEventListener('click',seProposerLeader);
+  const cl=document.getElementById('hz-ld-clore'); if(cl) cl.addEventListener('click',cloreVoteLeader);
+}
+
 // Bloc « Le groupe » — vrais membres (avatar/pseudo) + derniers messages du cockpit.
 async function chargerBlocGroupe(groupeId){
   const avEl=document.getElementById('hz-crew-avts');
@@ -1095,7 +1240,8 @@ async function chargerBlocGroupe(groupeId){
   try{
     // Membres du groupe : avatar emoji si présent, sinon initiale colorée
     const {data:membres}=await sb.from('membres')
-      .select('pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(20);
+      .select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(20);
+    if(membres){ HZ_MEMBRES=membres; }
     if(avEl && membres){
       const max=5;
       let html=membres.slice(0,max).map(m=>{
@@ -1237,7 +1383,10 @@ async function loadHorizonData(userId){
     chargeVotesMacro();
 
     // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
-    chargerBlocGroupe(groupeId);
+    await chargerBlocGroupe(groupeId);
+
+    // 7) Vote fondateur des leaders (a besoin de HZ_MEMBRES, donc après le bloc groupe)
+    chargeVoteLeader();
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
