@@ -119,6 +119,28 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-lentille-pick select{flex:1;font-family:var(--font-body);font-size:13px;padding:5px 8px;border-radius:var(--r-sm);
   border:1px solid var(--gold-a35);background:var(--gold-a10);color:var(--gold-text);cursor:pointer;}
 .hz-lentille-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
+/* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
+.hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
+  border-radius:var(--r-pill,999px);padding:3px 11px;display:inline-block;margin-bottom:9px;}
+.hz-vote-opt{display:flex;align-items:center;gap:9px;text-align:left;padding:11px 13px;}
+.hz-vo-lbl{flex:1;font-size:14px;}
+.hz-vo-bar{width:70px;height:6px;border-radius:3px;background:var(--gold-a20);overflow:hidden;flex-shrink:0;}
+.hz-vo-bar>span{display:block;height:100%;background:var(--gold);border-radius:3px;transition:width .3s;}
+.hz-vo-n{font-weight:700;font-size:13px;min-width:16px;text-align:right;color:var(--gold-text);}
+.hz-vote-opt.mene{border-color:var(--gold);}
+.hz-vote-pied{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;
+  font-size:11.5px;color:var(--ink-dim);flex-wrap:wrap;}
+.hz-pied-btn{font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;
+  padding:5px 12px;border-radius:var(--r-pill,999px);border:1px solid var(--gold-a35);
+  background:var(--gold-a10);color:var(--gold-text);transition:.15s;}
+.hz-pied-btn:hover{background:var(--gold);color:var(--chrome-bg);}
+/* ── Bloc gauche : INVITE / SUGGESTION du site (distincte d'un vrai vote) ── */
+.hz-invite{font-size:12px;color:var(--ink-dim);font-style:italic;line-height:1.5;
+  border:1px dashed var(--gold-a35);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:10px;}
+.hz-invite-tag{font-style:normal;font-weight:700;color:var(--gold-text);font-size:10.5px;
+  display:inline-block;margin-right:4px;}
+.hz-thermo{font-size:12px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:var(--r-sm);padding:6px 10px;margin-bottom:9px;}
 
 /* écriture : compact, vertical (le bloc est sous la carte, plus pleine largeur) */
 .b-write .bb{flex-direction:column;gap:8px;align-items:stretch;}
@@ -177,20 +199,26 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk crew b-crew">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
+      <div id="hz-thermo" class="hz-thermo" style="display:none"></div>
       <div class="avts" id="hz-crew-avts"></div>
       <div id="hz-crew-msgs"></div>
     </div>
   </div>
   <div class="blk voteq b-vote">
-    <div class="bh"><span class="ic">🎯</span><h3>On élimine en jouant</h3><span class="pin">📌</span></div>
+    <div class="bh"><span class="ic" id="hz-gauche-ic">🎯</span><h3 id="hz-gauche-titre">On élimine en jouant</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="hz-lentille-pick">
-        <label for="hz-lentille-sel">Grand coup :</label>
-        <select id="hz-lentille-sel"></select>
+      <!-- VISAGE 1 : le vrai vote du groupe (si un vote macro est ouvert) -->
+      <div id="hz-gauche-vote" style="display:none"></div>
+      <!-- VISAGE 2 : notre terrain (si vide) — élagage perso + animation -->
+      <div id="hz-gauche-perso">
+        <div class="hz-lentille-pick">
+          <label for="hz-lentille-sel">Grand coup :</label>
+          <select id="hz-lentille-sel"></select>
+        </div>
+        <div class="ch" id="hz-lentille-sous">Un grand coup pour dégrossir.</div>
+        <div class="opts" id="hz-lentille-duel"></div>
+        <div class="hz-lentille-info" id="hz-lentille-info"></div>
       </div>
-      <div class="ch" id="hz-lentille-sous">Un grand coup pour dégrossir.</div>
-      <div class="opts" id="hz-lentille-duel"></div>
-      <div class="hz-lentille-info" id="hz-lentille-info"></div>
     </div>
   </div>
   <div class="blk mapblk b-map">
@@ -658,6 +686,7 @@ async function chargeVotesMacro(){
     (vts||[]).forEach(v=>{ (HZ_VOTES_PAR_PROP[v.proposition_id]=HZ_VOTES_PAR_PROP[v.proposition_id]||[]).push(v); });
   }
   rendVotesMacro();
+  majBlocGauche();
 }
 
 // le leader choisit ce qu'il attache (lentille ou régions)
@@ -801,7 +830,129 @@ function brancheVoteMacro(){
   const btn=document.getElementById('hz-vote-lancer');
   if(btn) btn.addEventListener('click', lanceVoteMacro);
 }
-function restaureTri(){ restaureEnvies(); }
+
+// ════════════════════════════════════════════════════════════════
+//  LE BLOC GAUCHE À DEUX VISAGES (décision Bruno)
+//  - Groupe ACTIF (≥1 vote macro ouvert) → on montre LE VRAI VOTE en grand,
+//    notre élagage perso s'efface. L'humain passe avant la machine.
+//  - VIDE (aucun vote) → notre TERRAIN : l'élagage perso (lentille) + une
+//    invite douce. Si on propose un vote, il est SIGNÉ « suggestion du site »
+//    (règle anti-confusion : jamais le confondre avec un vrai vote du groupe).
+// ════════════════════════════════════════════════════════════════
+
+// messages d'animation qui tournent quand le groupe dort (état vide)
+const HZ_ANIM_MSGS = [
+  'Cette partie attend que vous l\'animiez. Lancez une envie ci-dessous 👇',
+  'Personne n\'a encore lancé de grand coup. Mer ou montagne, à vous de jouer.',
+  'Envie de trancher ? Proposez un vote au groupe et regardez la carte vivre.'
+];
+
+function majBlocGauche(){
+  const vote=document.getElementById('hz-gauche-vote');
+  const perso=document.getElementById('hz-gauche-perso');
+  const titre=document.getElementById('hz-gauche-titre');
+  const ic=document.getElementById('hz-gauche-ic');
+  if(!vote||!perso) return;
+
+  const actif = HZ_VOTES_MACRO && HZ_VOTES_MACRO.length>0;
+
+  if(actif){
+    // VISAGE 1 — le vrai vote du groupe prend la place d'honneur
+    perso.style.display='none';
+    vote.style.display='block';
+    if(titre) titre.textContent='Le vote du groupe';
+    if(ic) ic.textContent='🗳️';
+    rendVoteGroupeGrand(vote);
+    majThermometre(true);
+  }else{
+    // VISAGE 2 — notre terrain : élagage perso + invite douce
+    vote.style.display='none';
+    perso.style.display='block';
+    if(titre) titre.textContent='On élimine en jouant';
+    if(ic) ic.textContent='🎯';
+    // une invite douce au-dessus de l'élagage (état vide, pas un vrai vote)
+    let invite=document.getElementById('hz-gauche-invite');
+    if(!invite){
+      invite=document.createElement('div');
+      invite.id='hz-gauche-invite'; invite.className='hz-invite';
+      perso.insertBefore(invite, perso.firstChild);
+    }
+    const msg=HZ_ANIM_MSGS[Math.floor(Date.now()/8000)%HZ_ANIM_MSGS.length];
+    invite.innerHTML='<span class="hz-invite-tag">💡 suggestion du site</span> '+msg;
+    majThermometre(false);
+  }
+}
+
+// thermomètre du vote dans l'encart groupe : « on attend X votants » ou « Mer mène 2-1 »
+function majThermometre(actif){
+  const th=document.getElementById('hz-thermo');
+  if(!th) return;
+  if(!actif || !HZ_VOTES_MACRO.length){ th.style.display='none'; return; }
+  const prop=HZ_VOTES_MACRO[0];
+  const opts=prop.options||{};
+  const voix=HZ_VOTES_PAR_PROP[prop.id]||[];
+  const compte={}; voix.forEach(v=>{ compte[v.valeur]=(compte[v.valeur]||0)+1; });
+  // libellés lisibles
+  const lib={};
+  if(opts.kind==='lentille'){ (opts.cotes||[]).forEach(c=>lib[c.cle]=c.libelle); }
+  else if(opts.kind==='regions'){ (opts.regions||[]).forEach(r=>lib[r]=r.replace(/-/g,' ')); }
+  // tête de course
+  let tete=null,max=-1,ex=false;
+  Object.keys(lib).forEach(k=>{ const n=compte[k]||0; if(n>max){max=n;tete=k;ex=false;} else if(n===max&&max>0){ex=true;} });
+  let txt;
+  if(max<=0){ txt='🗳️ Vote en cours — personne n\'a encore voté'; }
+  else if(ex){ txt='🗳️ Égalité pour l\'instant ('+max+' voix)'; }
+  else { txt='🗳️ '+(lib[tete]||'')+' mène ('+max+' voix)'; }
+  th.textContent=txt;
+  th.style.display='block';
+}
+
+// rend LE vote du groupe le plus récent, en grand, avec décompte vivant
+function rendVoteGroupeGrand(box){
+  box.innerHTML='';
+  const prop=HZ_VOTES_MACRO[0]; // le plus récent (déjà trié desc)
+  if(!prop){ return; }
+  const opts=prop.options||{};
+  const voix=HZ_VOTES_PAR_PROP[prop.id]||[];
+  const compte={}; voix.forEach(v=>{ compte[v.valeur]=(compte[v.valeur]||0)+1; });
+  const monVote=voix.find(v=>v.votant_id===HZ_USER_ID);
+
+  // bandeau « vrai vote du groupe » (couleur/label distincts des suggestions)
+  const sig=document.createElement('div'); sig.className='hz-vote-sig';
+  sig.innerHTML='👥 Vote lancé par le groupe';
+  box.appendChild(sig);
+
+  const q=document.createElement('div'); q.className='cq'; q.textContent=prop.titre; box.appendChild(q);
+
+  // options
+  let liste=[];
+  if(opts.kind==='lentille'){ liste=(opts.cotes||[]).map(c=>({cle:c.cle,libelle:(c.emoji||'')+' '+c.libelle})); }
+  else if(opts.kind==='regions'){ liste=(opts.regions||[]).map(r=>({cle:r,libelle:r.replace(/-/g,' ')})); }
+  let total=voix.length, max=-1; liste.forEach(o=>{ const n=compte[o.cle]||0; if(n>max)max=n; });
+
+  const optsBox=document.createElement('div'); optsBox.className='opts'; optsBox.style.marginTop='8px';
+  liste.forEach(o=>{
+    const n=compte[o.cle]||0;
+    const pct=total?Math.round(n/total*100):0;
+    const d=document.createElement('div');
+    d.className='opt hz-vote-opt'+(monVote&&monVote.valeur===o.cle?' choisi':'')+(n===max&&max>0?' mene':'');
+    d.innerHTML='<span class="hz-vo-lbl">'+o.libelle+'</span>'+
+                '<span class="hz-vo-bar"><span style="width:'+pct+'%"></span></span>'+
+                '<span class="hz-vo-n">'+n+'</span>';
+    d.addEventListener('click',()=>voterMacro(prop.id,o.cle));
+    optsBox.appendChild(d);
+  });
+  box.appendChild(optsBox);
+
+  // pied : thermomètre + appliquer + → cockpit
+  const meta=document.createElement('div'); meta.className='hz-vote-pied';
+  meta.innerHTML='<span>'+total+' voix'+(monVote?' · tu as voté ✓':' · à toi de voter')+'</span>';
+  const appl=document.createElement('button'); appl.type='button'; appl.className='hz-pied-btn';
+  appl.textContent='Appliquer à la carte';
+  appl.addEventListener('click',()=>appliqueVoteMacro(prop));
+  meta.appendChild(appl);
+  box.appendChild(meta);
+}
 function resetTri(){
   // reset = vider l'envie ACTIVE (pas toutes les envies)
   HZ_TRI_ESTOMPEES=new Set();
