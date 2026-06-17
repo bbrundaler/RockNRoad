@@ -51,6 +51,32 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 }
 .fil-now-line b{font-family:var(--font-title);font-size:17px;}
 
+/* ── Modal création du premier voyage ── */
+.vy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;}
+.vy-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
+  box-shadow:var(--shadow);max-width:440px;width:100%;padding:26px 24px;text-align:center;
+  animation:vyPop .25s ease;}
+@keyframes vyPop{from{transform:scale(.95);opacity:0;}to{transform:scale(1);opacity:1;}}
+.vy-emoji{font-size:38px;margin-bottom:4px;}
+.vy-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 6px;}
+.vy-sous{font-size:13.5px;color:var(--ink-dim);line-height:1.5;margin:0 0 18px;}
+.vy-lbl{display:block;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--gold-text);font-weight:600;margin:0 0 5px;}
+.vy-input{width:100%;font-family:var(--font-body);font-size:14.5px;padding:11px 13px;
+  border:1.5px solid var(--surface-line);border-radius:var(--r);background:var(--bg);color:var(--ink);
+  margin-bottom:14px;box-sizing:border-box;}
+.vy-input:focus{outline:none;border-color:var(--gold);}
+.vy-row{display:flex;gap:12px;}
+.vy-col{flex:1;text-align:left;}
+.vy-col-petit{max-width:120px;}
+.vy-btn{width:100%;font-family:var(--font-body);font-size:15px;font-weight:700;cursor:pointer;
+  padding:13px;border-radius:var(--r);border:none;background:var(--gold);color:var(--bg);
+  transition:background .15s;margin-top:4px;}
+.vy-btn:hover{background:var(--gold-light);}
+.vy-btn:disabled{opacity:.6;cursor:wait;}
+.vy-err{font-size:12.5px;color:var(--ink-dim);margin-top:9px;min-height:16px;}
+
 /* ── Grille du Hub ── */
 .hub-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;padding-bottom:90px;margin-top:6px;}
 @media(max-width:860px){.hub-grid{grid-template-columns:1fr;}}
@@ -191,6 +217,50 @@ async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace(
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 /* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
 
+/* ════ PREMIER VOYAGE — la scène de création (1ère connexion, aucun voyage) ════ */
+let VY_GROUPE_ID=null, VY_MEMBRE_ID=null;
+async function verifierPremierVoyage(groupeId, userId){
+  VY_GROUPE_ID=groupeId;
+  try{
+    const {data:moi}=await sb.from('membres').select('id').eq('user_id',userId).limit(1).single();
+    VY_MEMBRE_ID = moi ? moi.id : null;
+    const {count}=await sb.from('voyages')
+      .select('*',{count:'exact',head:true}).eq('groupe_id',groupeId);
+    if(!count || count===0){
+      const m=document.getElementById('vy-modal');
+      if(m){ m.style.display='flex';
+        const btn=document.getElementById('vy-creer');
+        if(btn && !btn._lie){ btn.addEventListener('click', creerPremierVoyage); btn._lie=true; }
+      }
+    }
+  }catch(e){ console.warn('Hub: vérif voyage',e); }
+}
+
+async function creerPremierVoyage(){
+  const nom=(document.getElementById('vy-nom').value||'').trim();
+  const date=(document.getElementById('vy-date').value||'').trim();
+  const nbRaw=(document.getElementById('vy-nb').value||'').trim();
+  const err=document.getElementById('vy-err');
+  const btn=document.getElementById('vy-creer');
+  if(!nom){ if(err) err.textContent='Donnez au moins un nom à votre voyage 🙂'; return; }
+  const nb = nbRaw ? parseInt(nbRaw,10) : null;
+  if(btn){ btn.disabled=true; btn.textContent='Création…'; }
+  try{
+    const row={ groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:true };
+    if(date) row.date_envisagee=date;
+    if(nb && !isNaN(nb)) row.nb_participants=nb;
+    if(VY_MEMBRE_ID) row.cree_par=VY_MEMBRE_ID;
+    const {error}=await sb.from('voyages').insert(row);
+    if(error){ console.warn('Hub: création voyage',error); if(err) err.textContent='Création impossible, réessayez.'; if(btn){btn.disabled=false;btn.textContent='Créer ce voyage →';} return; }
+    const m=document.getElementById('vy-modal'); if(m) m.style.display='none';
+    window.location.href='horizon.html';
+  }catch(e){
+    console.warn('Hub: création voyage',e);
+    if(err) err.textContent='Création impossible, réessayez.';
+    if(btn){ btn.disabled=false; btn.textContent='Créer ce voyage →'; }
+  }
+}
+
 async function loadHubData(userId){
   try{
     /* Groupe de l'utilisateur (même requête éprouvée qu'Horizon) */
@@ -247,9 +317,35 @@ async function loadHubData(userId){
       if(urls.length){ ph.style.background="linear-gradient(to top,rgba(0,0,0,.35),transparent 60%),url('"+urls[0]+"')"; }
       /* hash fixe vs #dyn-xxx indécidable d'ici : lien simple, robuste */
     }
+
+    /* ── Premier voyage ? Si le groupe n'en a aucun, on ouvre la scène de création ── */
+    await verifierPremierVoyage(groupeId, userId);
   }catch(err){ console.warn('Hub: chargement',err); }
 }
 </script>
 <script src="boussole.js" defer></script>
+
+<!-- ════ MODAL : créer le premier voyage (1ère connexion, aucun voyage) ════ -->
+<div id="vy-modal" class="vy-overlay" style="display:none">
+  <div class="vy-modal">
+    <div class="vy-emoji">🧭</div>
+    <h2 class="vy-titre">Votre premier voyage</h2>
+    <p class="vy-sous">Avant de rêver, donnez vie à votre aventure. C'est le point de départ de tout&nbsp;: un nom, une saison, et l'envie de partir ensemble.</p>
+    <label class="vy-lbl">Le nom de ce voyage</label>
+    <input id="vy-nom" class="vy-input" type="text" placeholder="Été 2026, Notre Bretagne, La grande boucle…" maxlength="60">
+    <div class="vy-row">
+      <div class="vy-col">
+        <label class="vy-lbl">Une idée de quand&nbsp;?</label>
+        <input id="vy-date" class="vy-input" type="text" placeholder="Juillet 2026, la Toussaint…" maxlength="40">
+      </div>
+      <div class="vy-col vy-col-petit">
+        <label class="vy-lbl">Combien à bord&nbsp;?</label>
+        <input id="vy-nb" class="vy-input" type="number" min="1" max="50" placeholder="6">
+      </div>
+    </div>
+    <button id="vy-creer" class="vy-btn" type="button">Créer ce voyage →</button>
+    <div id="vy-err" class="vy-err"></div>
+  </div>
+</div>
 </body>
 </html>
