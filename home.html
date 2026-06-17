@@ -231,7 +231,9 @@ async function verifierPremierVoyage(groupeId, userId){
     VY_MEMBRE_ID = moi ? moi.id : null;
     const {count}=await sb.from('voyages')
       .select('*',{count:'exact',head:true}).eq('groupe_id',groupeId);
-    if(!count || count===0){
+    // on ouvre le modal si AUCUN voyage, OU si l'URL demande explicitement un nouveau (?nouveau=1)
+    const forceNouveau = /[?&]nouveau=1/.test(location.search);
+    if(!count || count===0 || forceNouveau){
       const m=document.getElementById('vy-modal');
       if(m){ m.style.display='flex';
         const btn=document.getElementById('vy-creer');
@@ -251,14 +253,21 @@ async function creerPremierVoyage(){
   const nb = nbRaw ? parseInt(nbRaw,10) : null;
   if(btn){ btn.disabled=true; btn.textContent='Création…'; }
   try{
-    const row={ groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:true };
+    // est_principal seulement si c'est le tout premier voyage du groupe
+    const {count}=await sb.from('voyages').select('*',{count:'exact',head:true}).eq('groupe_id',VY_GROUPE_ID);
+    const premier = (!count || count===0);
+    const row={ groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:premier };
     if(date) row.date_envisagee=date;
     if(nb && !isNaN(nb)) row.nb_participants=nb;
     const anim=document.getElementById('vy-anim');
     row.animaux_a_bord = !!(anim && anim.checked);
     if(VY_MEMBRE_ID) row.cree_par=VY_MEMBRE_ID;
-    const {error}=await sb.from('voyages').insert(row);
+    const {data:cree,error}=await sb.from('voyages').insert(row).select('id,nom').single();
     if(error){ console.warn('Hub: création voyage',error); if(err) err.textContent='Création impossible, réessayez.'; if(btn){btn.disabled=false;btn.textContent='Créer ce voyage →';} return; }
+    // le nouveau voyage devient l'actif → Horizon s'ouvrira dessus (vierge)
+    try{
+      if(cree){ sessionStorage.setItem('rnr_voyage_id',cree.id); sessionStorage.setItem('rnr_voyage_nom',cree.nom); }
+    }catch(e){}
     const m=document.getElementById('vy-modal'); if(m) m.style.display='none';
     window.location.href='horizon.html';
   }catch(e){

@@ -72,6 +72,22 @@
 +'transition:background .15s,color .15s;font-family:var(--font-body);}'
 +'.rnrc-add:hover{background:var(--gold);color:var(--chrome-bg);}'
 +'@media(max-width:700px){.rnrc-add span.rnrc-add-label{display:none;}}'
+  +'.rnrc-voyage-wrap{position:relative;display:flex;align-items:center;margin-right:6px;}'
+  +'.rnrc-voyage{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--gold-light);'
+  +'background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:8px;}'
+  +'.rnrc-voyage:hover{background:var(--gold-a10);}'
+  +'.rnrc-voyage .rnrc-vy-caret{font-size:10px;opacity:.7;}'
+  +'.rnrc-vy-menu{position:absolute;top:100%;left:0;margin-top:4px;background:var(--chrome-bg);'
+  +'border:1px solid var(--gold-a35);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.4);'
+  +'min-width:210px;padding:5px;z-index:1000;display:none;}'
+  +'.rnrc-vy-menu.open{display:block;}'
+  +'.rnrc-vy-item{display:block;width:100%;text-align:left;font-size:13.5px;color:var(--chrome-ink);'
+  +'background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-family:var(--font-body);}'
+  +'.rnrc-vy-item:hover{background:var(--gold-a10);}'
+  +'.rnrc-vy-item.actif{color:var(--gold-light);font-weight:600;}'
+  +'.rnrc-vy-sep{height:1px;background:var(--gold-a20);margin:5px 0;}'
+  +'.rnrc-vy-new{color:var(--gold-light);font-weight:600;}'
+  +'@media(max-width:700px){.rnrc-voyage{font-size:14px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}'
   +'.rnrc-groupe{font-size:13.5px;color:var(--chrome-ink-dim);text-decoration:none;'
   +'white-space:nowrap;font-family:var(--font-body);}'
   +'.rnrc-groupe:hover{color:var(--gold-light);}'
@@ -153,6 +169,24 @@
     var right = document.createElement('div');
     right.className = 'rnrc-right';
 
+    /* Titre du voyage en cours + menu déroulant (à gauche du groupe) */
+    var vyWrap = document.createElement('div');
+    vyWrap.className = 'rnrc-voyage-wrap';
+    var vyBtn = document.createElement('button');
+    vyBtn.className = 'rnrc-voyage';
+    vyBtn.innerHTML = '<span class="rnrc-vy-nom">—</span><span class="rnrc-vy-caret">▾</span>';
+    var vyMenu = document.createElement('div');
+    vyMenu.className = 'rnrc-vy-menu';
+    vyWrap.appendChild(vyBtn);
+    vyWrap.appendChild(vyMenu);
+    vyBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      vyMenu.classList.toggle('open');
+    });
+    document.addEventListener('click', function(){ vyMenu.classList.remove('open'); });
+    vyWrap.style.display = 'none'; // caché tant qu'aucun voyage n'est posé
+    right.appendChild(vyWrap);
+
     var grp = document.createElement('a');
     grp.className = 'rnrc-groupe';
     grp.href = 'onboarding.html';
@@ -228,7 +262,33 @@
     /* API minimale pour les pages */
     window.rnrChrome = {
       setGroupe:     function(nom){ if(nom){ grp.textContent = nom + ' ⚙️'; } },
-      setSuperAdmin: function(ok){ if(ok){ cons.classList.add('rnrc-sa-visible'); } }
+      setSuperAdmin: function(ok){ if(ok){ cons.classList.add('rnrc-sa-visible'); } },
+      /* setVoyage(actifNom, liste[{id,nom}], onChange(id|'__new__')) */
+      setVoyage: function(actifNom, liste, onChange){
+        if(!actifNom){ vyWrap.style.display = 'none'; return; }
+        vyWrap.style.display = 'flex';
+        vyBtn.querySelector('.rnrc-vy-nom').textContent = actifNom;
+        vyMenu.innerHTML = '';
+        (liste||[]).forEach(function(v){
+          var it = document.createElement('button');
+          it.className = 'rnrc-vy-item' + (v.nom===actifNom ? ' actif' : '');
+          it.textContent = v.nom;
+          it.addEventListener('click', function(e){
+            e.stopPropagation(); vyMenu.classList.remove('open');
+            if(typeof onChange==='function') onChange(v.id);
+          });
+          vyMenu.appendChild(it);
+        });
+        var sep = document.createElement('div'); sep.className='rnrc-vy-sep'; vyMenu.appendChild(sep);
+        var nw = document.createElement('button');
+        nw.className = 'rnrc-vy-item rnrc-vy-new';
+        nw.textContent = '+ Nouveau voyage';
+        nw.addEventListener('click', function(e){
+          e.stopPropagation(); vyMenu.classList.remove('open');
+          if(typeof onChange==='function') onChange('__new__');
+        });
+        vyMenu.appendChild(nw);
+      }
     };
 
     /* Lecture immédiate du cache sessionStorage — évite d'attendre la page */
@@ -239,6 +299,8 @@
         if(g.nom) grp.textContent = g.nom + ' ⚙️';
         if(g.is_superadmin) cons.classList.add('rnrc-sa-visible');
       }
+      var cv = sessionStorage.getItem('rnr_voyage_nom');
+      if(cv){ vyWrap.style.display='flex'; vyBtn.querySelector('.rnrc-vy-nom').textContent = cv; }
     } catch(e){}
   }
 

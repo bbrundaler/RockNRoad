@@ -344,6 +344,8 @@ const AMORCES = {
 let HZ_FICHES=[];
 let HZ_USER_ID=null;     // votant_id pour le vote macro
 let HZ_GROUPE_ID=null;   // groupe_id pour le vote macro
+let HZ_VOYAGE_ID=null;   // voyage actif : isole le travail de conception (votes, envies)
+let HZ_VOYAGES=[];       // liste des voyages du groupe (pour le menu déroulant)
 let HZ_VOTES_MACRO=[];   // propositions niveau=macro du groupe
 let HZ_VOTES_PAR_PROP={};// {proposition_id:[votes]}
 let HZ_VM_ATTACHE=null;  // 'lentille' | 'regions' en cours de création
@@ -481,7 +483,7 @@ let HZ_ENVIES=[];                 // [{id,nom,emoji,estompees}]
 let HZ_ENVIE_ACTIVE=null;         // id de l'envie courante
 const HZ_EMOJIS=['🧭','🏖️','🏛️','🌲','🎡','🍷','🏔️','🚲']; // pour nommer vite
 
-function cleEnvies(){ return 'rnr_horizon_envies_'+(HZ_TRI_GROUPE_ID||'anon'); }
+function cleEnvies(){ return 'rnr_horizon_envies_'+(HZ_VOYAGE_ID||HZ_TRI_GROUPE_ID||'anon'); }
 function cleTri(){ return 'rnr_horizon_tri_'+(HZ_TRI_GROUPE_ID||'anon'); } // ancienne (migration)
 
 function nouvelleEnvie(nom){
@@ -671,11 +673,11 @@ function rendBlocLentille(){
 //                        {kind:'regions', regions:[slugs]}.
 // ════════════════════════════════════════════════════════════════
 
-// charge les votes macro du groupe + les voix
+// charge les votes macro DU VOYAGE ACTIF + les voix
 async function chargeVotesMacro(){
-  if(!HZ_GROUPE_ID) return;
+  if(!HZ_GROUPE_ID || !HZ_VOYAGE_ID) return;
   const {data:props,error}=await sb.from('propositions')
-    .select('*').eq('groupe_id',HZ_GROUPE_ID).eq('niveau','macro')
+    .select('*').eq('groupe_id',HZ_GROUPE_ID).eq('niveau','macro').eq('voyage_id',HZ_VOYAGE_ID)
     .order('created_at',{ascending:false});
   if(error){ console.warn('Horizon: votes macro',error); return; }
   HZ_VOTES_MACRO=(props||[]).filter(p=>p.statut==='ouvert');
@@ -734,7 +736,7 @@ async function lanceVoteMacro(){
     if(vivantes.length<2){ alert('Il faut au moins 2 régions en lice.'); return; }
     options={ kind:'regions', regions:vivantes };
   }
-  const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'choix', titre:titre, options:options, niveau:'macro' };
+  const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'choix', titre:titre, options:options, niveau:'macro', voyage_id:HZ_VOYAGE_ID };
   const {error}=await sb.from('propositions').insert(row);
   if(error){ console.warn('Horizon: création vote',error); alert('Vote non créé.'); return; }
   // reset du formulaire
@@ -1130,6 +1132,40 @@ function escapeHtmlHz(s){
   return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// Charge les voyages du groupe, détermine l'actif (session > principal > 1er),
+// et alimente le menu déroulant du chrome. Pose HZ_VOYAGE_ID.
+async function chargeVoyageActif(groupeId){
+  try{
+    const {data:vs,error}=await sb.from('voyages')
+      .select('id,nom,est_principal,created_at').eq('groupe_id',groupeId)
+      .order('created_at',{ascending:true});
+    if(error){ console.warn('Horizon: voyages',error); return; }
+    HZ_VOYAGES = vs||[];
+    if(!HZ_VOYAGES.length){ HZ_VOYAGE_ID=null; return; }
+    // actif = celui mémorisé en session, sinon le principal, sinon le 1er
+    let actifId=null;
+    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    let actif = HZ_VOYAGES.find(v=>v.id===actifId)
+             || HZ_VOYAGES.find(v=>v.est_principal)
+             || HZ_VOYAGES[0];
+    HZ_VOYAGE_ID = actif.id;
+    try{
+      sessionStorage.setItem('rnr_voyage_id', actif.id);
+      sessionStorage.setItem('rnr_voyage_nom', actif.nom);
+    }catch(e){}
+    // alimente le titre + menu déroulant du chrome
+    if(window.rnrChrome && rnrChrome.setVoyage){
+      rnrChrome.setVoyage(actif.nom, HZ_VOYAGES, function(id){
+        if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
+        try{ sessionStorage.setItem('rnr_voyage_id', id); }catch(e){}
+        const v=HZ_VOYAGES.find(x=>x.id===id);
+        if(v){ try{ sessionStorage.setItem('rnr_voyage_nom', v.nom); }catch(e){} }
+        window.location.reload(); // recharge Horizon sur le nouveau voyage (tout se re-filtre)
+      });
+    }
+  }catch(e){ console.warn('Horizon: chargeVoyageActif',e); }
+}
+
 async function loadHorizonData(userId){
   try{
     HZ_USER_ID=userId;   // pour le vote macro (votant_id)
@@ -1144,6 +1180,10 @@ async function loadHorizonData(userId){
       sessionStorage.setItem('rnr_groupe', JSON.stringify(gCache));
     } catch(e){}
     if(window.rnrChrome && mem.groupes && mem.groupes.nom){ rnrChrome.setGroupe(mem.groupes.nom); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
+
+    // 1bis) Charger le VOYAGE ACTIF (isole votes + envies). Sans voyage → retour au HUB.
+    await chargeVoyageActif(groupeId);
+    if(!HZ_VOYAGE_ID){ window.location.href='home.html'; return; }
 
     // 2) Charger les fiches du groupe (table lieux)
     const {data:lieux,error:eLieux}=await sb.from('lieux')
