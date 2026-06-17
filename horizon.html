@@ -11,6 +11,7 @@
 <script src="chrome.js"></script>
 <script src="carto.js"></script>
 <script src="carto-cascade.js"></script>
+<script src="carto-lentilles.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
    — plus AUCUNE variable locale : tout vient de tokens.css.
@@ -107,6 +108,14 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .opt{background:transparent;border:1.5px solid var(--gold-a35);border-radius:var(--r);padding:14px 8px;text-align:center;font-weight:600;font-size:14.5px;cursor:pointer;transition:.2s;color:var(--ink);}
 .opt:hover{background:var(--gold-a20);border-color:var(--gold);transform:translateY(-2px);}
 .opt .i{font-size:18px;display:block;margin-bottom:3px;}
+.opt.choisi{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
+.opt .ct{display:block;font-size:11px;font-weight:600;opacity:.65;margin-top:3px;}
+.opt.choisi .ct{opacity:.85;}
+.hz-lentille-pick{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.hz-lentille-pick label{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;}
+.hz-lentille-pick select{flex:1;font-family:var(--font-body);font-size:13px;padding:5px 8px;border-radius:var(--r-sm);
+  border:1px solid var(--gold-a35);background:var(--gold-a10);color:var(--gold-text);cursor:pointer;}
+.hz-lentille-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
 
 /* écriture en bandeau bas */
 .b-write .bb{flex-direction:row;gap:11px;align-items:stretch;}
@@ -152,8 +161,13 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk voteq b-vote">
     <div class="bh"><span class="ic">🎯</span><h3>On élimine en jouant</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="cq">Mer ou Montagne ?</div><div class="ch">Un grand coup pour dégrossir.</div>
-      <div class="opts"><div class="opt"><span class="i">🌊</span>La mer</div><div class="opt"><span class="i">⛰️</span>La montagne</div></div>
+      <div class="hz-lentille-pick">
+        <label for="hz-lentille-sel">Grand coup :</label>
+        <select id="hz-lentille-sel"></select>
+      </div>
+      <div class="ch" id="hz-lentille-sous">Un grand coup pour dégrossir.</div>
+      <div class="opts" id="hz-lentille-duel"></div>
+      <div class="hz-lentille-info" id="hz-lentille-info"></div>
     </div>
   </div>
   <div class="blk mapblk b-map">
@@ -384,6 +398,7 @@ function afficheFicheDansCadre(f, contexteRegionLabel){
 let HZ_MODE_TRI=false;
 const HZ_MIN_ALLUMEES=2;
 const HZ_COUCHE_TRI='tri-perso';
+const HZ_COUCHE_LENTILLE='lentille';
 let HZ_TRI_ESTOMPEES=new Set();   // vue : régions écartées de l'ENVIE ACTIVE (slugs SVG)
 
 // ════════════════════════════════════════════════════════════════
@@ -458,6 +473,7 @@ function activeEnvie(id){
   appliqueCascade();             // la carte reflète la nouvelle envie
   majInfoTri();
   rendBarreEnvies();
+  rendBlocLentille();
   sauveEnvies();
 }
 function ajouteEnvie(){
@@ -495,7 +511,91 @@ function rendBarreEnvies(){
   bar.appendChild(add);
 }
 
-// compat : les anciens noms appelés ailleurs pointent vers les envies
+// ════════════════════════════════════════════════════════════════
+//  BLOC GROS ÉLAGAGE — les LENTILLES (façons de lire les fiches)
+//  Une lentille + un côté choisi → on GARDE les fiches qui passent, on
+//  estompe les régions sans fiche gardée. C'est une couche de cascade
+//  qui s'empile sur le tri perso (multi-couches « façon CSS »).
+//  Le choix de lentille est porté par l'ENVIE active (chaque envie peut
+//  élaguer différemment). Stocké dans l'envie : {lentille, cote}.
+// ════════════════════════════════════════════════════════════════
+
+function lentilleActive(){
+  const e=envieActive();
+  return e && e.lentille ? {lentille:e.lentille, cote:e.cote} : null;
+}
+// régions estompées par la lentille active (celles sans fiche gardée)
+function regionsEstompeesParLentille(){
+  const sel=lentilleActive();
+  if(!sel || !sel.cote || !window.RNR_LENTILLES) return [];
+  const {gardees}=RNR_LENTILLES.filtre(HZ_FICHES, sel.lentille, sel.cote);
+  const regionsVivantes=new Set(gardees.map(f=>f._regionSvg).filter(Boolean));
+  // toute région présente sur la carte SANS fiche gardée → estompée
+  return regionsSvgPresentes().filter(code=>!regionsVivantes.has(code));
+}
+
+// choisit un côté de la lentille active (toggle : re-cliquer annule)
+function choisitCoteLentille(coteCle){
+  const e=envieActive(); if(!e) return;
+  if(e.cote===coteCle){ e.cote=null; }      // re-clic = on relâche ce grand coup
+  else { e.cote=coteCle; }
+  sauveEnvies();
+  appliqueCascade();
+  rendBlocLentille();
+}
+// change la lentille (le « grand coup » courant) de l'envie active
+function changeLentille(lentilleId){
+  const e=envieActive(); if(!e) return;
+  e.lentille=lentilleId; e.cote=null;       // nouvelle lentille → choix remis à zéro
+  sauveEnvies();
+  appliqueCascade();
+  rendBlocLentille();
+}
+
+// dessine le sélecteur + le duel avec compteurs d'aperçu
+function rendBlocLentille(){
+  if(!window.RNR_LENTILLES) return;
+  const sel=document.getElementById('hz-lentille-sel');
+  const duel=document.getElementById('hz-lentille-duel');
+  const sous=document.getElementById('hz-lentille-sous');
+  const info=document.getElementById('hz-lentille-info');
+  if(!sel||!duel) return;
+  const e=envieActive();
+  const lentilleId = (e && e.lentille) || RNR_LENTILLES.LENTILLES[0].id;
+  if(e && !e.lentille){ e.lentille=lentilleId; }
+  // remplir le menu une fois
+  if(!sel.options.length){
+    RNR_LENTILLES.LENTILLES.forEach(l=>{
+      const o=document.createElement('option'); o.value=l.id; o.textContent=l.libelle; sel.appendChild(o);
+    });
+    sel.addEventListener('change', ()=>changeLentille(sel.value));
+  }
+  sel.value=lentilleId;
+  const lentille=RNR_LENTILLES.lentille(lentilleId);
+  if(sous) sous.textContent='Un grand coup pour dégrossir.';
+  // aperçu chiffré par côté
+  const ap=RNR_LENTILLES.apercu(HZ_FICHES, lentilleId);
+  duel.innerHTML='';
+  lentille.cotes.forEach(c=>{
+    const d=document.createElement('div');
+    const choisi=(e && e.cote===c.cle);
+    d.className='opt'+(choisi?' choisi':'');
+    d.innerHTML='<span class="i">'+c.emoji+'</span>'+c.libelle+
+                '<span class="ct">'+(ap[c.cle]||0)+' fiche'+((ap[c.cle]||0)>1?'s':'')+'</span>';
+    d.addEventListener('click', ()=>choisitCoteLentille(c.cle));
+    duel.appendChild(d);
+  });
+  if(info){
+    const sel2=lentilleActive();
+    if(sel2 && sel2.cote){
+      const nbVivantes=regionsSvgPresentes().length - regionsEstompeesParLentille().length;
+      info.textContent='Il reste '+nbVivantes+' région'+(nbVivantes>1?'s':'')+' en lice avec ce choix.';
+    }else{
+      info.textContent='Choisissez un côté pour élaguer la carte (réversible).';
+    }
+  }
+}
+
 function sauveTri(){ sauveEnvies(); }
 function restaureTri(){ restaureEnvies(); }
 function resetTri(){
@@ -515,9 +615,17 @@ function regionsSvgPresentes(){
 // (Re)pose la couche de tri dans la cascade, puis applique le verdict au SVG.
 function appliqueCascade(){
   if(!window.RNR_CARTO){ return; } // moteur absent → on ne casse rien
+  // Couche 1 : le tri perso (régions écartées à la main)
   RNR_CARTO.coucheListe({
     id:HZ_COUCHE_TRI, source:'perso', titre:'Ton tri',
     estompees:[...HZ_TRI_ESTOMPEES]
+  });
+  // Couche 2 : le gros élagage (lentille) — estompe les régions sans fiche gardée.
+  // S'empile sur le tri : c'est le multi-couches « façon CSS ».
+  const estLentille = (typeof regionsEstompeesParLentille==='function') ? regionsEstompeesParLentille() : [];
+  RNR_CARTO.coucheListe({
+    id:HZ_COUCHE_LENTILLE, source:'perso', titre:'Grand coup',
+    estompees:estLentille
   });
   const verdict=RNR_CARTO.resoudre(regionsSvgPresentes());
   // reflet sur le SVG : .eteinte = verdict 'estompee'
@@ -727,6 +835,7 @@ async function loadHorizonData(userId){
     appliqueCascade();
     majInfoTri();
     rendBarreEnvies();
+    rendBlocLentille();
 
     // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
     chargerBlocGroupe(groupeId);
