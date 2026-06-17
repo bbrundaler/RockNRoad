@@ -76,6 +76,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .vy-btn:hover{background:var(--gold-light);}
 .vy-btn:disabled{opacity:.6;cursor:wait;}
 .vy-err{font-size:12.5px;color:var(--ink-dim);margin-top:9px;min-height:16px;}
+.vy-anim{display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;
+  font-size:14px;color:var(--ink);background:var(--bg);border:1.5px solid var(--surface-line);
+  border-radius:var(--r);padding:11px 13px;margin-bottom:14px;}
+.vy-anim:hover{border-color:var(--gold-a35);}
+.vy-anim input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
 
 /* ── Grille du Hub ── */
 .hub-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;padding-bottom:90px;margin-top:6px;}
@@ -249,6 +254,8 @@ async function creerPremierVoyage(){
     const row={ groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:true };
     if(date) row.date_envisagee=date;
     if(nb && !isNaN(nb)) row.nb_participants=nb;
+    const anim=document.getElementById('vy-anim');
+    row.animaux_a_bord = !!(anim && anim.checked);
     if(VY_MEMBRE_ID) row.cree_par=VY_MEMBRE_ID;
     const {error}=await sb.from('voyages').insert(row);
     if(error){ console.warn('Hub: création voyage',error); if(err) err.textContent='Création impossible, réessayez.'; if(btn){btn.disabled=false;btn.textContent='Créer ce voyage →';} return; }
@@ -343,6 +350,10 @@ async function loadHubData(userId){
         <input id="vy-nb" class="vy-input" type="number" min="1" max="50" placeholder="6">
       </div>
     </div>
+    <label class="vy-anim">
+      <input id="vy-anim" type="checkbox">
+      <span>🐾 On emmène un animal de compagnie</span>
+    </label>
     <button id="vy-creer" class="vy-btn" type="button">Créer ce voyage →</button>
     <div id="vy-err" class="vy-err"></div>
   </div>
