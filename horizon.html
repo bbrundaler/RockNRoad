@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <script src="chrome.js"></script>
+<script src="discussion.js"></script>
 <script src="carto.js"></script>
 <script src="carto-cascade.js"></script>
 <script src="carto-lentilles.js"></script>
@@ -1145,6 +1146,10 @@ async function chargeVoteLeader(){
 
 async function lanceVoteLeader(){
   if(!HZ_GROUPE_ID||!HZ_VOYAGE_ID||!HZ_USER_ID) return;
+  // Garde-fou anti-doublon : on recharge l'état, et si un vote leader est déjà
+  // ouvert pour ce voyage, on ne crée rien (on réaffiche juste l'existant).
+  await chargeVoteLeader();
+  if(HZ_VOTE_LEADER){ rendBandeauLeader(); return; }
   const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'choix',
     titre:'Qui anime ce voyage ?', options:{kind:'leader',candidats:[]}, niveau:'macro', voyage_id:HZ_VOYAGE_ID };
   const {error}=await sb.from('propositions').insert(row);
@@ -1256,19 +1261,16 @@ async function chargerBlocGroupe(groupeId){
       }
       avEl.innerHTML=html;
     }
-    // Derniers messages du cockpit (table messages)
-    const {data:msgs}=await sb.from('messages')
-      .select('auteur_nom,texte,created_at').eq('groupe_id',groupeId)
-      .order('created_at',{ascending:false}).limit(2);
-    if(msgEl){
-      if(msgs && msgs.length){
-        msgEl.innerHTML=msgs.reverse().map(m=>
-          '<div class="msg"><span class="w">'+escapeHtmlHz(m.auteur_nom||'Voyageur')+'</span> : '
-          +escapeHtmlHz(m.texte||'')+'</div>'
-        ).join('');
-      }else{
-        msgEl.innerHTML='<div class="msg" style="opacity:.7">Pas encore de message — lancez la conversation au Cockpit 🗳️</div>';
-      }
+    // Fil de discussion : le MÊME composant unifié que Cockpit (commun au groupe)
+    if(window.RNRDiscussion && msgEl){
+      // on a besoin du nom d'affichage du membre courant
+      let monNom='Voyageur';
+      const moi=(HZ_MEMBRES||[]).find(x=>x.user_id===HZ_USER_ID);
+      if(moi){ monNom=moi.pseudo||moi.prenom||'Voyageur'; }
+      RNRDiscussion.monter('hz-crew-msgs', {
+        sb, groupeId, userId:HZ_USER_ID, userNom:monNom,
+        membres:HZ_MEMBRES, hauteur:'240px'
+      });
     }
   }catch(e){ console.warn('Horizon bloc groupe',e); }
 }

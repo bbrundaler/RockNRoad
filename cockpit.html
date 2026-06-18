@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <script src="chrome.js"></script>
+<script src="discussion.js"></script>
 <style>
 /* COCKPIT converti grammaire v2 (Charte Design v1, recette de la pilote horizon)
    — plus AUCUNE variable locale : tout vient de tokens.css.
@@ -235,18 +236,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
     </div>
   </div>
 
-  <!-- ── PARTAGER AU GROUPE (sans créer de fiche) ── -->
+  <!-- ── PARTAGER AU GROUPE (fil unifié, composant discussion.js) ── -->
   <div class="blk b-share">
     <div class="bh"><span class="ic">💬</span><h3>Partager au groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
-      <div class="share-feed" id="share-feed">
-        <div class="share-empty" id="share-empty">Chargement…</div>
-      </div>
-      <div class="share-input">
-        <input type="text" id="share-input" placeholder="Un mot pour le groupe… sans créer de fiche" maxlength="500">
-        <button class="share-btn" id="share-btn" title="Envoyer" onclick="envoyerMessage()">➤</button>
-      </div>
-      <div class="share-hint">Informel · pour nourrir débats et votes · ne crée pas de fiche</div>
+      <div id="ck-discussion" style="flex:1;min-height:0;display:flex;"></div>
+      <div class="share-hint">Informel · commun à tous les voyages · ne crée pas de fiche</div>
     </div>
   </div>
 
@@ -362,8 +357,13 @@ async function CK_chargeVoyageActif(){
 
 /* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
 async function chargerMessages(){
+  // Le fil est désormais géré par le composant unifié (discussion.js).
+  if(window.RNRDiscussion){ RNRDiscussion.recharger('ck-discussion'); }
+  return;
+}
+async function _ancien_chargerMessages_inutilise(){
   const feed = document.getElementById('share-feed');
-  if(!RNR_groupeId){ feed.innerHTML='<div class="share-empty">Groupe introuvable.</div>'; return; }
+  if(!RNR_groupeId){ if(feed) feed.innerHTML='<div class="share-empty">Groupe introuvable.</div>'; return; }
   const {data:msgs,error} = await sb.from('messages')
     .select('id,auteur_id,auteur_nom,texte,photo_url,statut,created_at')
     .eq('groupe_id',RNR_groupeId).eq('statut','actif')
@@ -479,8 +479,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* Démarrage du bloc Partager */
 (async()=>{
   const ok = await chargerContexte();
-  if(ok){ await chargerMessages(); await chargerFiches(); await chargerVotes(); }
-  else document.getElementById('share-feed').innerHTML='<div class="share-empty">Connecte-toi pour voir les messages du groupe.</div>';
+  if(ok){
+    // charge les membres pour les avatars emoji du fil
+    let membres=[];
+    try{ const r=await sb.from('membres').select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',RNR_groupeId).limit(40); membres=r.data||[]; }catch(e){}
+    // monte le fil unifié (commun au groupe, pas par-voyage)
+    if(window.RNRDiscussion){
+      RNRDiscussion.monter('ck-discussion', {
+        sb, groupeId:RNR_groupeId, userId:RNR_userId, userNom:RNR_userNom,
+        membres, hauteur:'100%',
+        onEnvoi:function(){ if(typeof rendreGroupe==='function') rendreGroupe(); }
+      });
+    }
+    await chargerFiches(); await chargerVotes();
+  }
+  else { const d=document.getElementById('ck-discussion'); if(d) d.innerHTML='<div style="color:var(--ink-dim);font-size:13px;padding:18px;text-align:center;">Connecte-toi pour voir les messages du groupe.</div>'; }
 })();
 
 
