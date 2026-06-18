@@ -122,7 +122,7 @@
     var sb=cfg.sb;
     if(!cfg.groupeId){ feed.innerHTML='<div class="rnrd-empty">Groupe introuvable.</div>'; return; }
     var res = await sb.from('messages')
-      .select('id,auteur_id,auteur_nom,texte,photo_url,event,statut,created_at')
+      .select('id,auteur_id,auteur_nom,texte,photo_url,statut,created_at')
       .eq('groupe_id',cfg.groupeId).eq('statut','actif')
       .order('created_at',{ascending:true}).limit(200);
     if(res.error){ feed.innerHTML='<div class="rnrd-empty">Impossible de charger les messages.</div>'; return; }
@@ -147,11 +147,6 @@
     var html='', dernierJour=null, dernierAuteur=null, dernierTs=0;
     var FENETRE=5*60*1000; // 5 min : au-delà, on refait un en-tête même si même auteur
     msgs.forEach(function(m){
-      // message système (event non vide) → bulle neutre centrée
-      if(m.event){
-        html+='<div class="rnrd-sys">'+esc(m.texte||m.event)+'</div>';
-        dernierAuteur=null; return;
-      }
       var jour=new Date(m.created_at).toDateString();
       if(jour!==dernierJour){
         html+='<div class="rnrd-date">'+esc(libelleJour(m.created_at))+'</div>';
