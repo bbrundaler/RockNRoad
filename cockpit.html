@@ -330,7 +330,34 @@ async function chargerContexte(){
     if(mem.groupes&&mem.groupes.nom) rnrChrome.setGroupe(mem.groupes.nom);
     if(mem.is_superadmin) rnrChrome.setSuperAdmin(true);
   }
+  // Voyage actif (les VOTES suivent le voyage ; messages + groupe restent communs)
+  await CK_chargeVoyageActif();
   return true;
+}
+
+/* Voyage actif partagé entre les pages (même logique qu'Horizon, via sessionStorage). */
+let RNR_voyageId = null;
+async function CK_chargeVoyageActif(){
+  if(!RNR_groupeId) return;
+  try{
+    const {data:vs}=await sb.from('voyages')
+      .select('id,nom,est_principal,created_at').eq('groupe_id',RNR_groupeId)
+      .order('created_at',{ascending:true});
+    const liste=vs||[];
+    if(!liste.length){ RNR_voyageId=null; return; }
+    let actifId=null;
+    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    const actif = liste.find(v=>v.id===actifId) || liste.find(v=>v.est_principal) || liste[0];
+    RNR_voyageId = actif.id;
+    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    if(window.rnrChrome && rnrChrome.setVoyage){
+      rnrChrome.setVoyage(actif.nom, liste, function(id){
+        if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        window.location.reload();
+      });
+    }
+  }catch(e){ console.warn('Cockpit: voyage actif',e); }
 }
 
 /* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
@@ -513,10 +540,10 @@ async function chargerVotes(){
   const {count} = await sb.from('membres').select('*',{count:'exact',head:true}).eq('groupe_id',RNR_groupeId);
   RNR_nbMembres = count||1;
 
-  /* Tous les votes du groupe (ouverts ET clos), on trie ensuite */
-  const {data:props,error:eP} = await sb.from('propositions')
-    .select('*').eq('groupe_id',RNR_groupeId)
-    .order('created_at',{ascending:false});
+  /* Les votes SUIVENT le voyage actif (messages + groupe restent communs) */
+  let q = sb.from('propositions').select('*').eq('groupe_id',RNR_groupeId);
+  if(RNR_voyageId) q = q.eq('voyage_id',RNR_voyageId);
+  const {data:props,error:eP} = await q.order('created_at',{ascending:false});
   if(eP){ console.warn('props',eP); return; }
   const tous = props||[];
   RNR_props = tous.filter(p=>p.statut==='ouvert');
@@ -1014,7 +1041,7 @@ async function creerVote(){
     options=[...document.querySelectorAll('#nv-opts input')].map(i=>i.value.trim()).filter(Boolean);
     if(options.length<2){ alert('Mets au moins 2 options à départager.'); return; }
   }
-  const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:NV_intention.type, titre:titre, options:options };
+  const row={ groupe_id:RNR_groupeId, auteur_id:RNR_userId, type:NV_intention.type, titre:titre, options:options, voyage_id:RNR_voyageId };
   if(lieuId) row.lieu_id=lieuId;
   if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
   const {data,error}=await sb.from('propositions').insert(row).select().single();

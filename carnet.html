@@ -812,6 +812,7 @@ async function loadGroupeProfil(userId) {
       }
       if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
       if (window.rnrChrome && sessionStorage.getItem('rnr_sa') === '1') rnrChrome.setSuperAdmin(true);
+      CR_chargeVoyageActif(currentGroupeId);
       updateDepartLabel();
       return;
     }
@@ -829,14 +830,37 @@ async function loadGroupeProfil(userId) {
     if (membre.is_superadmin) { try { sessionStorage.setItem('rnr_sa','1'); } catch(e){} }
     if (window.rnrChrome && g.nom) rnrChrome.setGroupe(g.nom);
     if (window.rnrChrome && membre.is_superadmin) rnrChrome.setSuperAdmin(true);
+    CR_chargeVoyageActif(currentGroupeId);
     updateDepartLabel();
   } catch(e) {
     console.warn('Profil groupe non chargé, utilisation valeur par défaut', e);
   }
 }
 
+/* Voyage actif dans le chrome — les FICHES restent COMMUNES (pas de filtre voyage). */
+async function CR_chargeVoyageActif(groupeId){
+  if(!groupeId) return;
+  try{
+    const {data:vs}=await sb.from('voyages')
+      .select('id,nom,est_principal,created_at').eq('groupe_id',groupeId)
+      .order('created_at',{ascending:true});
+    const liste=vs||[];
+    if(!liste.length) return;
+    let actifId=null;
+    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    const actif = liste.find(v=>v.id===actifId) || liste.find(v=>v.est_principal) || liste[0];
+    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    if(window.rnrChrome && rnrChrome.setVoyage){
+      rnrChrome.setVoyage(actif.nom, liste, function(id){
+        if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        window.location.reload();
+      });
+    }
+  }catch(e){ console.warn('Carnet: voyage actif',e); }
+}
+
 function updateDepartLabel() {
-  // Mettre à jour le label dans le panneau info carte
   const el = document.getElementById('cip-depart-label');
   if (el) el.textContent = (DEPART.nom || 'Votre départ').toUpperCase().slice(0, 20) + ' →';
   // Mettre à jour le texte dans le panneau idle carte
