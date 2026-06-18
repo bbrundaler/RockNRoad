@@ -124,7 +124,7 @@
     var res = await sb.from('messages')
       .select('id,auteur_id,auteur_nom,texte,photo_url,statut,created_at')
       .eq('groupe_id',cfg.groupeId).eq('statut','actif')
-      .order('created_at',{ascending:true}).limit(200);
+      .order('created_at',{ascending:false}).limit(200);
     if(res.error){ feed.innerHTML='<div class="rnrd-empty">Impossible de charger les messages.</div>'; return; }
     var msgs=res.data||[];
     if(!msgs.length){
@@ -173,7 +173,7 @@
       dernierAuteur=m.auteur_id; dernierTs=ts;
     });
     feed.innerHTML=html;
-    feed.scrollTop=feed.scrollHeight; // auto-scroll en bas (pratique pro)
+    feed.scrollTop=0; // calé en haut : le message le plus récent, lecture directe. Scroller vers le bas = remonter le temps.
   }
 
   var EMOJIS=['👍','❤️','😂'];
@@ -232,7 +232,12 @@
     if(!host){ console.warn('RNRDiscussion: conteneur introuvable',idConteneur); return; }
     opts=opts||{};
     INSTANCES[idConteneur]=opts;
-    var hauteur=opts.hauteur||'320px';
+    /* Hauteur : une valeur explicite (ex '240px') est respectée. Mais '100%' ou rien
+       n'a de sens que si le parent est lui-même borné — sinon le feed se déploie sans
+       fin (bug vécu sur Cockpit). On se rabat donc sur une hauteur sûre auto-bornée,
+       pour que le bloc soit IDENTIQUE et stable partout (Cockpit, Horizon, HUB). */
+    var h=opts.hauteur;
+    var hauteur=(!h || h==='100%' || h==='auto') ? 'clamp(220px,40vh,420px)' : h;
     host.innerHTML=''
       +'<div class="rnrd-wrap" style="height:'+hauteur+'">'
       + (opts.titre?'<div class="rnrd-head">💬 '+esc(opts.titre)+'</div>':'')
