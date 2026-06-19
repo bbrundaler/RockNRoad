@@ -148,6 +148,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* pastille membre « en attente de vote » : éteinte, sobre (non-nominatif) */
 .av2-off{background:var(--gold-a20)!important;color:var(--ink-dim)!important;}
 /* ligne d'animation du moteur (D-ECH-3) : la voix qui réveille le groupe */
+.grp-leader{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:7px 11px;
+  border:1.5px solid var(--gold);border-radius:var(--r);background:var(--gold-a20);
+  font-size:13px;color:var(--ink);}
+.grp-leader .crown{font-size:15px;flex-shrink:0;}
+.grp-leader b{color:var(--gold-text);font-weight:700;}
 .grp-pulse-line{display:flex;gap:8px;align-items:flex-start;}
 .grp-pulse-line .em{flex-shrink:0;font-size:15px;line-height:1.5;}
 
@@ -222,6 +227,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk b-group">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
     <div class="bb">
+      <div id="grp-leader" class="grp-leader" style="display:none"></div>
       <div class="avts" id="grp-avts"></div>
       <div class="waiting" id="grp-pulse">Chargement…</div>
     </div>
@@ -353,6 +359,30 @@ async function CK_chargeVoyageActif(){
       });
     }
   }catch(e){ console.warn('Cockpit: voyage actif',e); }
+}
+
+/* ── Leaders du voyage actif (Master 4.17 : le leader, une fois élu, EXISTE) ──
+   RNR_leaders = Set de membre_id ; RNR_membresMap = id→{pseudo,prenom,...} pour le nom. */
+let RNR_leaders = new Set();
+let RNR_membresMap = {};
+async function chargerLeaders(){
+  RNR_leaders = new Set();
+  if(!RNR_voyageId) { rendreGroupe(); return; }
+  try{
+    const { data:vl } = await sb.from('voyage_leaders').select('membre_id').eq('voyage_id', RNR_voyageId);
+    (vl||[]).forEach(r=>{ if(r.membre_id) RNR_leaders.add(r.membre_id); });
+    /* table id→membre pour afficher le nom du/des leader(s) */
+    if(!Object.keys(RNR_membresMap).length){
+      const { data:ms } = await sb.from('membres').select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',RNR_groupeId).limit(60);
+      (ms||[]).forEach(m=>{ RNR_membresMap[m.id]=m; });
+    }
+  }catch(e){ console.warn('chargerLeaders',e); }
+  rendreGroupe();
+}
+/* Nom affiché d'un leader via l'identité canonique (chrome.js) */
+function nomLeader(membreId){
+  const m = RNR_membresMap[membreId] || null;
+  return (window.rnrNomMembre ? window.rnrNomMembre(m, '') : (m && (m.pseudo||m.prenom))) || 'Leader';
 }
 
 /* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
@@ -492,6 +522,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       });
     }
     await chargerFiches(); await chargerVotes();
+    await chargerLeaders();
   }
   else { const d=document.getElementById('ck-discussion'); if(d) d.innerHTML='<div style="color:var(--ink-dim);font-size:13px;padding:18px;text-align:center;">Connecte-toi pour voir les messages du groupe.</div>'; }
 })();
@@ -684,6 +715,22 @@ function rendreGroupe(){
   const avts  = document.getElementById('grp-avts');
   const pulse = document.getElementById('grp-pulse');
   if(!avts||!pulse) return;
+
+  /* Leader(s) du voyage (Master 4.17) : nominatif, affiché en tête. */
+  const leadBox = document.getElementById('grp-leader');
+  if(leadBox){
+    const ids = Array.from(RNR_leaders||[]);
+    if(ids.length){
+      const noms = ids.map(nomLeader);
+      const libelle = noms.length===1
+        ? '<b>'+escH(noms[0])+'</b> anime ce voyage'
+        : '<b>'+noms.map(escH).join('</b>, <b>')+'</b> animent ce voyage';
+      leadBox.innerHTML = '<span class="crown">👑</span><span>'+libelle+'</span>';
+      leadBox.style.display='flex';
+    } else {
+      leadBox.style.display='none';
+    }
+  }
 
   /* Pastilles : autant que de membres. Sur la vedette, on sait combien ont voté. */
   const vedette = RNR_props.find(x=>x.id===RNR_vedetteId) || null;
@@ -900,18 +947,45 @@ async function cloreVote(pid){
   const p=RNR_props.find(x=>x.id===pid);
   const {error}=await sb.from('propositions').update({statut:'clos'}).eq('id',pid);
   if(error){ console.warn('clore',error); return; }
+  /* La clôture a une CONSÉQUENCE : on propage le verdict là où il doit vivre
+     (leader → voyage_leaders, fiche gardée/écartée → voyage_fiches). */
+  if(p){ try{ await propagerVerdict(p); }catch(e){ console.warn('propagerVerdict',e); } }
   /* Célébration immédiate (D-ECH-3) */
   if(p){
     const g=gagnantDe(p);
     let mot;
     if(p.type==='question') mot='Discussion close — '+g.texte+' recueillies.';
     else if(p.type==='note') mot='Verdict du groupe : '+g.texte+'.';
+    else if(p.options && p.options.kind==='leader') mot='👑 '+g.texte+' anime ce voyage !';
     else mot='C\'est décidé : '+g.texte+' ! 🎉';
     RNR_celebreEnCours=true;
     celebrer(mot);
   }
   RNR_vedetteId=null;
   await chargerVotes();
+  if(typeof chargerLeaders==='function') await chargerLeaders();
+}
+
+/* ── Propagation du verdict d'un vote clos vers sa table-cible ──
+   Le vote n'est pas qu'un sondage : sa clôture FAIT quelque chose (Master 4.0/4.17).
+   - élection leader (options.kind==='leader') → écrit le(s) gagnant(s) dans voyage_leaders
+   - garder/écarter (type==='elimination')     → upsert voyage_fiches (retenue/ecartee)  [étape suivante]
+*/
+async function propagerVerdict(p){
+  const vts = votesDe(p.id);
+  if(!vts.length) return;
+
+  /* Élection de leader : tout candidat ayant au moins une voix devient leader
+     (plusieurs leaders possibles — décision Bruno 19/06). La valeur du vote = membre_id du candidat. */
+  if(p.options && p.options.kind==='leader' && p.voyage_id){
+    const elus = Array.from(new Set(vts.map(v=>v.valeur).filter(Boolean)));
+    if(elus.length){
+      const rows = elus.map(mid=>({ voyage_id:p.voyage_id, membre_id:mid }));
+      const { error } = await sb.from('voyage_leaders').upsert(rows, { onConflict:'voyage_id,membre_id', ignoreDuplicates:true });
+      if(error) console.warn('voyage_leaders upsert', error);
+    }
+    return;
+  }
 }
 
 /* Petit moment de célébration dans le bloc vedette */
