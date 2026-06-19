@@ -23,12 +23,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .stage{
   min-height:calc(100vh - 56px);   /* plein écran au départ, mais peut grandir */
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:1.3fr 320px 320px;   /* action (large) · coups de cœur · groupe+partage (duo à droite, Master 4.18) */
-  grid-template-rows:auto auto 1fr;
+  grid-template-columns:1fr 340px 340px;   /* votes (flux) · coups de cœur (agrandi) · groupe+partage (agrandi) */
+  grid-template-rows:auto auto auto;
   grid-template-areas:
-    "question  context  group"
-    "question  context  share"
-    "votes     votes     votes";
+    "votes  context  group"
+    "votes  context  share"
+    "retenues retenues retenues";
 }
 
 /* ── BLOC générique ── */
@@ -59,8 +59,42 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .q-opt .t{font-family:var(--font-title);font-size:17px;font-weight:600;color:var(--ink);}
 .q-opt .v{margin-left:auto;font-size:12px;color:var(--gold-text);font-weight:700;}
 
+/* ── CARTE DE VOTE dans le flux ── */
+.q-carte{border:1px solid var(--surface-line);border-radius:var(--r-lg);padding:14px;margin-bottom:12px;background:var(--surface);}
+.q-carte:last-child{margin-bottom:0;}
+.q-carte-head{display:flex;align-items:flex-start;gap:8px;}
+.q-carte-head .q-big{flex:1;}
+.q-badge-mini{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
+  border:1px solid var(--gold);border-radius:999px;padding:1px 8px;flex-shrink:0;}
+.q-compteur-wrap{margin:8px 0;}
+.q-flash{animation:qflash 1.2s ease;}
+@keyframes qflash{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 3px var(--gold-a20)}}
+/* ── TOAST de verdict ── */
+.ck-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--surface);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:600;
+  box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .3s,transform .3s;z-index:9999;}
+.ck-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 /* ── VOTES EN COURS ── */
 .b-votes{grid-area:votes;}
+.b-votes .bb{max-height:62vh;overflow-y:auto;}   /* flux scrollable : la page ne s'allonge plus */
+/* ── BANDE RETENUES (butin du voyage, pleine largeur) ── */
+.b-retenues .bb{overflow-x:auto;overflow-y:hidden;}
+.ret-bande{display:flex;gap:10px;align-items:stretch;min-height:96px;}
+.ret-fiche{width:84px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;
+  border:1px solid var(--surface-line);border-radius:var(--r);padding:6px;background:var(--surface);}
+.ret-fiche .rf-ph{width:100%;height:54px;border-radius:6px;background-size:cover;background-position:center;
+  display:grid;place-items:center;background-color:var(--gold-a20);font-size:20px;}
+.ret-fiche .rf-nm{font-size:11px;font-weight:600;color:var(--ink);line-height:1.25;text-align:center;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ret-empty{font-size:13px;color:var(--ink-dim);line-height:1.6;padding:6px 4px;align-self:center;}
+/* ── COMPTEUR D'ÉCHÉANCE (la vraie vie du site) ── */
+.q-compteur{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;
+  padding:2px 8px;border-radius:999px;border:1px solid var(--gold);color:var(--gold-text);background:var(--gold-a20);}
+.q-compteur.urgent{border-color:var(--danger,#c0392b);color:var(--danger,#c0392b);
+  background:color-mix(in srgb, var(--danger,#c0392b) 12%, transparent);}
+.q-compteur .pulse{width:6px;height:6px;border-radius:50%;background:currentColor;animation:cpulse 1s ease-in-out infinite;}
+@keyframes cpulse{0%,100%{opacity:1}50%{opacity:.3}}
 .vote-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--surface-line);}
 .vote-row:last-child{border-bottom:none;}
 .vote-info{flex:1;min-width:0;}
@@ -208,7 +242,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 @media(max-width:820px){
   html,body{overflow:auto;}
-  .stage{grid-template-columns:1fr;grid-template-areas:"question" "votes" "context" "group" "share";height:auto;}
+  .stage{grid-template-columns:1fr;grid-template-areas:"votes" "context" "group" "share" "retenues";height:auto;}
+  .b-votes .bb{max-height:none;}
 }
 </style>
 </head>
@@ -216,8 +251,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 <div class="stage">
 
   <!-- ── LA QUESTION À TRANCHER (mise en avant) ── -->
-  <div class="blk b-question">
-    <div class="bh"><span class="ic">🎯</span><h3>La question à trancher</h3><span class="badge" id="q-badge">à voter</span></div>
+  <div class="blk b-votes" style="grid-area:votes;">
+    <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge" id="q-badge">0 ouvert</span>
+      <button class="vote-new-btn" id="vote-new-btn" onclick="ouvrirCreationVote()" title="Lancer un vote"><span>➕</span> Lancer un vote</button></div>
     <div class="bb" id="q-body">
       <div class="q-empty">Chargement…</div>
     </div>
@@ -234,14 +270,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   </div>
 
   <!-- ── VOTES EN COURS ── -->
-  <div class="blk b-votes">
-    <div class="bh"><span class="ic">🗳️</span><h3>Votes en cours</h3><span class="badge" id="v-badge">0 ouvert</span>
-      <button class="vote-new-btn" id="vote-new-btn" onclick="ouvrirCreationVote()" title="Lancer un vote"><span>➕</span> Lancer un vote</button></div>
-    <div class="bb" id="v-list">
-      <div class="vote-empty">Chargement…</div>
-    </div>
-  </div>
-
   <!-- ── PARTAGER AU GROUPE (fil unifié, composant discussion.js) ── -->
   <div class="blk b-share">
     <div class="bh"><span class="ic">💬</span><h3>Partager au groupe</h3><span class="pin">📌</span></div>
@@ -251,15 +279,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
     </div>
   </div>
 
-  <!-- ── CONTEXTE : fiche en rappel + régions retenues ── -->
+  <!-- ── CONTEXTE : coups de cœur du groupe ── -->
   <div class="blk b-context">
     <div class="bh"><span class="ic">❤️</span><h3>Les coups de cœur du groupe</h3><span class="badge" id="cc-badge">0</span></div>
     <div class="bb">
       <div id="cc-list" class="cc-list">Chargement…</div>
     </div>
-    <div class="bh" style="margin-top:16px;"><span class="ic">🎒</span><h3>Retenues pour ce voyage</h3><span class="badge" id="ret-badge">0</span></div>
+  </div>
+
+  <!-- ── RETENUES : le butin du voyage, bande pleine largeur (Master 4.15/4.18) ── -->
+  <div class="blk b-retenues" style="grid-area:retenues;">
+    <div class="bh"><span class="ic">🎒</span><h3>Retenues pour ce voyage</h3><span class="badge" id="ret-badge">0</span></div>
     <div class="bb">
-      <div id="ret-list" class="cc-list">Chargement…</div>
+      <div id="ret-list" class="ret-bande">Chargement…</div>
     </div>
   </div>
 
@@ -410,21 +442,17 @@ function rendreRetenues(){
   if(!box) return;
   if(badge) badge.textContent=RNR_retenues.length;
   if(!RNR_retenues.length){
-    box.innerHTML='<div class="cc-empty">Aucune fiche retenue pour l\'instant.<br>'+
-      'Quand un vote <b>Garder / écarter</b> se clôt sur « Garder », la fiche arrive ici, '+
-      'transférée depuis Horizon, prête à construire le voyage.</div>';
+    box.innerHTML='<div class="ret-empty">Aucune fiche retenue.<br>'+
+      'Quand un vote <b>Garder / écarter</b> se clôt sur « Garder », la fiche arrive ici.</div>';
     return;
   }
   box.innerHTML = RNR_retenues.map(id=>{
     const f=ficheParId(id);
-    if(!f) return '<div class="cc-item"><div class="cc-ph">🗺️</div><div class="cc-in"><div class="cc-nm">Fiche retirée</div></div></div>';
+    if(!f) return '<div class="ret-fiche"><div class="rf-ph">🗺️</div><div class="rf-nm">Fiche retirée</div></div>';
     const ph = f.photo_url
-      ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
-      : '<div class="cc-ph">🗺️</div>';
-    const meta = (f.region?escH(f.region):'')+' · 🎒 retenue';
-    return '<div class="cc-item">'+ph+
-      '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+'</div>'+
-      '<div class="cc-mt">'+meta+'</div></div></div>';
+      ? '<div class="rf-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
+      : '<div class="rf-ph">🗺️</div>';
+    return '<div class="ret-fiche">'+ph+'<div class="rf-nm">'+escH(f.nom)+'</div></div>';
   }).join('');
 }
 
@@ -588,7 +616,7 @@ const TYPES_VOTE = {
 };
 let RNR_props = [];
 let RNR_clos = [];
-let RNR_celebreEnCours = false;      // propositions ouvertes du groupe
+let RNR_celebreEnCours = false;      // (conservé, inoffensif)
 let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
 let RNR_vedetteId = null;
 let RNR_fiches = [];     // fiches du carnet du groupe (cache COMPLET) — résout les vignettes
@@ -643,12 +671,8 @@ async function chargerVotes(){
     const {data:vts} = await sb.from('votes').select('*').in('proposition_id',ids);
     (vts||[]).forEach(v=>{ (RNR_votes[v.proposition_id]=RNR_votes[v.proposition_id]||[]).push(v); });
   }
-  if(!RNR_vedetteId || !RNR_props.find(p=>p.id===RNR_vedetteId))
-    RNR_vedetteId = RNR_props.length ? RNR_props[0].id : null;
-
-  rendreListe();
-  if(RNR_celebreEnCours){ RNR_celebreEnCours=false; }  /* on garde la célébration affichée, la liste/archive sont à jour */
-  else { rendreVedette(); }
+  rendreFlux();
+  rendreArchive();
   rendreGroupe();   /* bloc « Le groupe » + moteur d'animation, sur l'état réel (D-ECH-3) */
   rendreCoeurs();   /* bloc « Les coups de cœur du groupe » (D-ECH-10) */
 }
@@ -686,38 +710,19 @@ function optionsDe(p){
 }
 
 /* ── Rendu : liste "Votes en cours" ── */
-function rendreListe(){
-  const box=document.getElementById('v-list');
-  const badge=document.getElementById('v-badge');
-  badge.textContent = RNR_props.length + ' ouvert' + (RNR_props.length>1?'s':'');
-
-  let html='';
-  if(!RNR_props.length){
-    html+='<div class="vote-empty">Aucun vote en cours.<br>Clique « Lancer un vote » — une question, le groupe tranche.</div>';
-  } else {
-    html += RNR_props.map(p=>{
-      const nv=nbVotants(p), pct=RNR_nbMembres?Math.round(nv/RNR_nbMembres*100):0;
-      const meta = TYPES_VOTE[p.type].label + ' · ' + echeanceTexte(p);
-      return '<div class="vote-row'+(p.id===RNR_vedetteId?' is-active':'')+'" onclick="mettreEnVedette(\''+p.id+'\')">'+
-        '<div class="vote-info"><div class="vote-q">'+escH(p.titre)+'</div><div class="vote-meta">'+escH(meta)+'</div></div>'+
-        '<div class="vote-bar"><span style="width:'+pct+'%"></span></div>'+
-        '<div class="vote-count">'+nv+'/'+RNR_nbMembres+'</div></div>';
-    }).join('');
-  }
-
-  /* Archive « Déjà tranché » */
-  if(RNR_clos.length){
-    html+='<div class="arch-titre">Déjà tranché ('+RNR_clos.length+')</div>';
-    html+=RNR_clos.map(p=>{
-      const g=gagnantDe(p);
-      return '<div class="arch-row" onclick="basculerArch(\''+p.id+'\')">'+
-        '<div class="arch-info"><div class="arch-q">'+escH(p.titre)+'</div>'+
-          '<div class="arch-res">→ <b>'+escH(g.texte)+'</b>'+(g.detail?' <span class="arch-detail">('+escH(g.detail)+')</span>':'')+'</div></div>'+
-        '<div class="arch-chev" id="chev-'+p.id+'">▾</div></div>'+
-        '<div class="arch-args" id="args-'+p.id+'" style="display:none"></div>';
-    }).join('');
-  }
-  box.innerHTML=html;
+function rendreArchive(){
+  const body=document.getElementById('q-body');
+  if(!body || !RNR_clos.length) return;
+  let html='<div class="arch-titre">Déjà tranché ('+RNR_clos.length+')</div>';
+  html+=RNR_clos.map(p=>{
+    const g=gagnantDe(p);
+    return '<div class="arch-row" onclick="basculerArch(\''+p.id+'\')">'+
+      '<div class="arch-info"><div class="arch-q">'+escH(p.titre)+'</div>'+
+        '<div class="arch-res">→ <b>'+escH(g.texte)+'</b>'+(g.detail?' <span class="arch-detail">('+escH(g.detail)+')</span>':'')+'</div></div>'+
+      '<div class="arch-chev" id="chev-'+p.id+'">▾</div></div>'+
+      '<div class="arch-args" id="args-'+p.id+'" style="display:none"></div>';
+  }).join('');
+  body.insertAdjacentHTML('beforeend', html);
 }
 
 /* Déplier les arguments d'un vote clos */
@@ -745,7 +750,11 @@ function echeanceTexte(p){
   return 'ferme dans '+jours+' jours';
 }
 
-function mettreEnVedette(pid){ RNR_vedetteId=pid; rendreListe(); rendreVedette(); rendreGroupe(); rendreCoeurs(); }
+/* « Au vote → » : on scrolle vers la carte du vote dans le flux (plus de vedette unique). */
+function mettreEnVedette(pid){
+  const carte=document.querySelector('.q-carte[data-pid="'+pid+'"]');
+  if(carte){ carte.scrollIntoView({behavior:'smooth',block:'center'}); carte.classList.add('q-flash'); setTimeout(()=>carte.classList.remove('q-flash'),1200); }
+}
 
 /* ════════════════════════════════════════════════════════════════
    BLOC « LE GROUPE » — version honnête NON-NOMINATIVE (v13+).
@@ -776,8 +785,8 @@ function rendreGroupe(){
     }
   }
 
-  /* Pastilles : autant que de membres. Sur la vedette, on sait combien ont voté. */
-  const vedette = RNR_props.find(x=>x.id===RNR_vedetteId) || null;
+  /* Pastilles : sur le vote le plus récent (tête du flux), on sait combien ont voté. */
+  const vedette = [...RNR_props].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0] || null;
   const nbVote  = vedette ? nbVotants(vedette.id) : 0;
   const total   = RNR_nbMembres || 1;
   const MAX_PAST = 8;                       /* au-delà, on résume par +N */
@@ -922,18 +931,33 @@ function vignetteFiche(lieuId){
 }
 
 /* ── Rendu : vedette "Question à trancher" (selon type) ── */
-function rendreVedette(){
+/* ── FLUX DE VOTES : tous les votes ouverts empilés, récent en haut (comme le fil),
+   chacun daté avec compteur d'échéance animé. Plus de navigation : on scrolle. ── */
+function rendreFlux(){
   const body=document.getElementById('q-body');
   const badge=document.getElementById('q-badge');
-  const p=RNR_props.find(x=>x.id===RNR_vedetteId);
-  if(!p){ badge.textContent='—'; body.innerHTML='<div class="q-empty">Aucun vote en cours.<br>Lance une question avec ➕ dans « Votes en cours ».</div>'; return; }
-  badge.textContent = nbVotants(p)+'/'+RNR_nbMembres+' ont voté';
+  if(!body) return;
+  const ouverts=[...RNR_props].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  if(badge) badge.textContent = ouverts.length+' ouvert'+(ouverts.length>1?'s':'');
+  if(!ouverts.length){
+    body.innerHTML='<div class="q-empty">Aucun vote en cours.<br>Lance une question avec ➕ « Lancer un vote ».</div>';
+    return;
+  }
+  body.innerHTML = ouverts.map(carteVote).join('');
+  demarrerCompteurs();
+}
 
-  let html='<div class="q-big">'+escH(p.titre)+'</div>';
-  const sub = TYPES_VOTE[p.type].label;
-  html+='<div class="q-sub">'+escH(sub)+'</div>';
-  if(p.lieu_id) html+=vignetteFiche(p.lieu_id);
+/* HTML d'UNE carte de vote (titre, date+compteur, options, argument, clôture) */
+function carteVote(p){
   const mien=monVote(p.id);
+  let html='<div class="q-carte" data-pid="'+p.id+'">';
+  html+='<div class="q-carte-head"><div class="q-big">'+escH(p.titre)+'</div>'
+      + '<span class="q-badge-mini">'+nbVotants(p)+'/'+RNR_nbMembres+'</span></div>';
+  const sub = TYPES_VOTE[p.type] ? TYPES_VOTE[p.type].label : '';
+  html+='<div class="q-sub">'+escH(sub)+' · créé le '+dateCreation(p)+'</div>';
+  /* compteur d'échéance animé */
+  if(p.ferme_le) html+='<div class="q-compteur-wrap" data-ferme="'+escH(p.ferme_le)+'"></div>';
+  if(p.lieu_id) html+=vignetteFiche(p.lieu_id);
 
   if(p.type==='note'){
     const maVal = mien?parseInt(mien.valeur,10):0;
@@ -942,9 +966,9 @@ function rendreVedette(){
     html+='</div>';
     const c=compteParValeur(p.id), tot=votesDe(p.id).length;
     let somme=0; Object.keys(c).forEach(k=>somme+=parseInt(k,10)*c[k]);
-    if(tot) html+='<div class="q-meta"><span>Moyenne : <b>'+(somme/tot).toFixed(1)+'</b>/5 sur '+tot+' vote'+(tot>1?'s':'')+'</span></div>';
+    if(tot) html+='<div class="q-meta"><span>Moyenne : <b>'+(somme/tot).toFixed(1)+'</b>/5 sur '+tot+'</span></div>';
   } else if(p.type==='question'){
-    html+='<div class="q-arg-wrap"><textarea id="q-libre" placeholder="Ta réponse…">'+(mien?escH(mien.valeur):'')+'</textarea>'+
+    html+='<div class="q-arg-wrap"><textarea id="q-libre-'+p.id+'" placeholder="Ta réponse…">'+(mien?escH(mien.valeur):'')+'</textarea>'+
           '<button class="q-close-btn" onclick="voterLibre(\''+p.id+'\')">Répondre</button></div>';
     const rep=votesDe(p.id).filter(v=>v.valeur);
     if(rep.length){ html+='<div class="q-args">'+rep.map(v=>'<div class="q-arg">'+escH(v.valeur)+'</div>').join('')+'</div>'; }
@@ -957,23 +981,47 @@ function rendreVedette(){
     }).join('')+'</div>';
   }
 
-  /* Argument optionnel (super vote argumenté D-ECH-4) sauf pour question */
   if(p.type!=='question'){
-    html+='<div class="q-arg-wrap"><textarea id="q-arg" placeholder="Pourquoi ce choix ? (optionnel — ça aide le groupe)">'+(mien&&mien.argument?escH(mien.argument):'')+'</textarea></div>';
+    html+='<div class="q-arg-wrap"><textarea id="q-arg-'+p.id+'" placeholder="Pourquoi ce choix ? (optionnel)">'+(mien&&mien.argument?escH(mien.argument):'')+'</textarea></div>';
     const args=votesDe(p.id).filter(v=>v.argument);
     if(args.length) html+='<div class="q-args">'+args.map(v=>'<div class="q-arg"><b>'+escH(v.valeur)+'</b> — '+escH(v.argument)+'</div>').join('')+'</div>';
   }
 
-  /* Échéance + clôture (tout membre peut clore — D-ECH-1) */
   html+='<div class="q-meta"><span>'+escH(echeanceTexte(p))+'</span>'+
-        '<button class="q-close-btn" onclick="cloreVote(\''+p.id+'\')">Clôturer ce vote</button></div>';
-  body.innerHTML=html;
+        '<button class="q-close-btn" onclick="cloreVote(\''+p.id+'\')">Clôturer</button></div>';
+  html+='</div>';
+  return html;
+}
+
+function dateCreation(p){
+  if(!p.created_at) return '—';
+  const d=new Date(p.created_at);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+}
+
+/* Compteur d'échéance animé : se met à jour chaque seconde (la vraie vie du site). */
+let RNR_compteurTimer=null;
+function demarrerCompteurs(){
+  if(RNR_compteurTimer){ clearInterval(RNR_compteurTimer); RNR_compteurTimer=null; }
+  const maj=()=>{
+    document.querySelectorAll('.q-compteur-wrap[data-ferme]').forEach(w=>{
+      const fin=new Date(w.getAttribute('data-ferme')).getTime();
+      const reste=fin-Date.now();
+      if(reste<=0){ w.innerHTML='<span class="q-compteur urgent"><span class="pulse"></span>échéance atteinte</span>'; return; }
+      const h=Math.floor(reste/3600000), m=Math.floor((reste%3600000)/60000), s=Math.floor((reste%60000)/1000);
+      const urgent = reste < 6*3600000;   // moins de 6h → rouge pulsé
+      const txt = h>=24 ? Math.floor(h/24)+'j '+(h%24)+'h' : (h>0? h+'h '+String(m).padStart(2,'0')+'m' : m+'m '+String(s).padStart(2,'0')+'s');
+      w.innerHTML='<span class="q-compteur'+(urgent?' urgent':'')+'">'+(urgent?'<span class="pulse"></span>':'⏳ ')+'ferme dans '+txt+'</span>';
+    });
+  };
+  maj();
+  RNR_compteurTimer=setInterval(maj,1000);
 }
 
 /* ── Actions ── */
 async function voter(pid, valeur){
   if(!RNR_groupeId) return;
-  const argEl=document.getElementById('q-arg');
+  const argEl=document.getElementById('q-arg-'+pid);
   const argument=argEl?(argEl.value||'').trim():null;
   const {error}=await sb.from('votes')
     .upsert({proposition_id:pid, votant_id:RNR_userId, valeur:valeur, argument:argument||null},
@@ -982,7 +1030,7 @@ async function voter(pid, valeur){
   await chargerVotes();
 }
 async function voterLibre(pid){
-  const el=document.getElementById('q-libre'); if(!el) return;
+  const el=document.getElementById('q-libre-'+pid); if(!el) return;
   const v=(el.value||'').trim(); if(!v) return;
   await voter(pid, v);
 }
@@ -994,7 +1042,7 @@ async function cloreVote(pid){
   /* La clôture a une CONSÉQUENCE : on propage le verdict là où il doit vivre
      (leader → voyage_leaders, fiche gardée/écartée → voyage_fiches). */
   if(p){ try{ await propagerVerdict(p); }catch(e){ console.warn('propagerVerdict',e); } }
-  /* Célébration immédiate (D-ECH-3) */
+  /* Petit mot de verdict en toast (ne casse plus le flux) */
   if(p){
     const g=gagnantDe(p);
     let mot;
@@ -1002,10 +1050,8 @@ async function cloreVote(pid){
     else if(p.type==='note') mot='Verdict du groupe : '+g.texte+'.';
     else if(p.options && p.options.kind==='leader') mot='👑 '+g.texte+' anime ce voyage !';
     else mot='C\'est décidé : '+g.texte+' ! 🎉';
-    RNR_celebreEnCours=true;
     celebrer(mot);
   }
-  RNR_vedetteId=null;
   await chargerVotes();
   if(typeof chargerLeaders==='function') await chargerLeaders();
   if(typeof chargerRetenues==='function') await chargerRetenues();
@@ -1048,12 +1094,14 @@ async function propagerVerdict(p){
   }
 }
 
-/* Petit moment de célébration dans le bloc vedette */
+/* Petit toast de verdict, non destructif (n'écrase plus le flux) */
 function celebrer(mot){
-  const body=document.getElementById('q-body');
-  const badge=document.getElementById('q-badge');
-  if(badge) badge.textContent='tranché';
-  if(body) body.innerHTML='<div class="q-celebr">'+escH(mot)+'</div>';
+  const t=document.createElement('div');
+  t.className='ck-toast';
+  t.textContent=mot;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.classList.add('show'); },10);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 3200);
 }
 
 /* ── Création d'un vote — par INTENTION (langage humain, pas de jargon) ──
@@ -1194,7 +1242,6 @@ async function creerVote(){
   const {data,error}=await sb.from('propositions').insert(row).select().single();
   if(error){ console.warn('creer',error); alert('Vote non créé.'); return; }
   fermerCreationVote();
-  RNR_vedetteId = data ? data.id : null;
   await chargerVotes();
 }
 
