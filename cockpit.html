@@ -257,6 +257,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
     <div class="bb">
       <div id="cc-list" class="cc-list">Chargement…</div>
     </div>
+    <div class="bh" style="margin-top:16px;"><span class="ic">🎒</span><h3>Retenues pour ce voyage</h3><span class="badge" id="ret-badge">0</span></div>
+    <div class="bb">
+      <div id="ret-list" class="cc-list">Chargement…</div>
+    </div>
   </div>
 
 </div>
@@ -383,6 +387,45 @@ async function chargerLeaders(){
 function nomLeader(membreId){
   const m = RNR_membresMap[membreId] || null;
   return (window.rnrNomMembre ? window.rnrNomMembre(m, '') : (m && (m.pseudo||m.prenom))) || 'Leader';
+}
+
+/* ── Étape 2 de la respiration : les fiches RETENUES pour ce voyage (convergence).
+   Lit voyage_fiches (statut='retenue') du voyage actif → la matière prête à affiner/ordonner. ── */
+let RNR_retenues = [];   // lieu_id retenus pour le voyage actif
+async function chargerRetenues(){
+  RNR_retenues = [];
+  if(RNR_voyageId){
+    try{
+      const { data } = await sb.from('voyage_fiches')
+        .select('lieu_id,maj_le').eq('voyage_id',RNR_voyageId).eq('statut','retenue')
+        .order('maj_le',{ascending:false});
+      RNR_retenues = (data||[]).map(r=>r.lieu_id);
+    }catch(e){ console.warn('chargerRetenues',e); }
+  }
+  rendreRetenues();
+}
+function rendreRetenues(){
+  const box=document.getElementById('ret-list');
+  const badge=document.getElementById('ret-badge');
+  if(!box) return;
+  if(badge) badge.textContent=RNR_retenues.length;
+  if(!RNR_retenues.length){
+    box.innerHTML='<div class="cc-empty">Aucune fiche retenue pour l\'instant.<br>'+
+      'Quand un vote <b>Garder / écarter</b> se clôt sur « Garder », la fiche arrive ici, '+
+      'transférée depuis Horizon, prête à construire le voyage.</div>';
+    return;
+  }
+  box.innerHTML = RNR_retenues.map(id=>{
+    const f=ficheParId(id);
+    if(!f) return '<div class="cc-item"><div class="cc-ph">🗺️</div><div class="cc-in"><div class="cc-nm">Fiche retirée</div></div></div>';
+    const ph = f.photo_url
+      ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
+      : '<div class="cc-ph">🗺️</div>';
+    const meta = (f.region?escH(f.region):'')+' · 🎒 retenue';
+    return '<div class="cc-item">'+ph+
+      '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+'</div>'+
+      '<div class="cc-mt">'+meta+'</div></div></div>';
+  }).join('');
 }
 
 /* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
@@ -523,6 +566,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     await chargerFiches(); await chargerVotes();
     await chargerLeaders();
+    await chargerRetenues();
   }
   else { const d=document.getElementById('ck-discussion'); if(d) d.innerHTML='<div style="color:var(--ink-dim);font-size:13px;padding:18px;text-align:center;">Connecte-toi pour voir les messages du groupe.</div>'; }
 })();
@@ -964,6 +1008,7 @@ async function cloreVote(pid){
   RNR_vedetteId=null;
   await chargerVotes();
   if(typeof chargerLeaders==='function') await chargerLeaders();
+  if(typeof chargerRetenues==='function') await chargerRetenues();
 }
 
 /* ── Propagation du verdict d'un vote clos vers sa table-cible ──
