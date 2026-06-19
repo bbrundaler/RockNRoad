@@ -107,6 +107,15 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   .form-grid{grid-template-columns:1fr;}
   .onb-grid{grid-template-columns:1fr;}
 }
+.membres-liste{display:flex;flex-direction:column;gap:8px;}
+.mbr-row{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid var(--surface-line);
+  border-radius:var(--r);background:var(--surface);}
+.mbr-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#1a1208;}
+.mbr-info{flex:1;min-width:0;}
+.mbr-nom{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mbr-nom .moi{font-size:11px;color:var(--ink-dim);font-weight:500;margin-left:5px;}
+.mbr-crown{font-size:11px;color:var(--gold-text);font-weight:700;margin-top:1px;}
 </style>
 </head>
 <body>
@@ -245,10 +254,11 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           </div>
 
           <div class="cfg-card">
-            <div class="cfg-card-title"><span>👥</span> Les autres membres</div>
-            <p class="info-note">
-              Les autres voyageurs rejoignent le groupe <strong>par invitation</strong> :
-              chacun crée son propre compte avec son pseudo et son avatar.
+            <div class="cfg-card-title"><span>👥</span> Les membres du groupe</div>
+            <div id="membres-liste" class="membres-liste">Chargement…</div>
+            <p class="info-note" style="margin-top:12px;">
+              Les voyageurs rejoignent le groupe <strong>par invitation</strong> :
+              chacun crée son compte avec son pseudo et son avatar.
             </p>
           </div>
         </div>
@@ -384,7 +394,56 @@ async function loadProfile(){
   if(membre?.is_superadmin && window.rnrChrome) rnrChrome.setSuperAdmin(true);
 
   applyMode(groupe);
+  if(myGroupeId) chargerMembres();
 }
+
+/* ── Brique 1 : la liste réelle des membres du groupe (fondation gestion de groupe).
+   Affiche avatar + nom (identité canonique) + 👑 leader du voyage actif.
+   Lecture seule ici ; les actions (leader 1-clic, mail) viennent ensuite. ── */
+async function chargerMembres(){
+  const box=document.getElementById('membres-liste');
+  if(!box) return;
+  try{
+    const {data:ms,error}=await sb.from('membres')
+      .select('id,user_id,pseudo,prenom,avatar')
+      .eq('groupe_id',myGroupeId);
+    if(error){ box.textContent='Liste indisponible.'; return; }
+    const membres=ms||[];
+
+    /* Voyage actif : sessionStorage (posé par les autres pages), sinon le principal. */
+    let voyageId=null;
+    try{ voyageId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    if(!voyageId){
+      const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
+        .eq('groupe_id',myGroupeId).order('created_at',{ascending:true});
+      const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
+      voyageId=actif?actif.id:null;
+    }
+    /* Leaders de ce voyage */
+    let leaders=new Set();
+    if(voyageId){
+      const {data:vl}=await sb.from('voyage_leaders').select('membre_id').eq('voyage_id',voyageId);
+      (vl||[]).forEach(r=>{ if(r.membre_id) leaders.add(r.membre_id); });
+    }
+
+    if(!membres.length){ box.textContent='Aucun membre.'; return; }
+    box.innerHTML = membres.map(m=>{
+      const nom = (window.rnrNomMembre? window.rnrNomMembre(m,'') : (m.pseudo||m.prenom||'Voyageur'));
+      const av  = (window.rnrAvatarMembre? window.rnrAvatarMembre(m,'') : {initiale:(nom[0]||'?')});
+      const avHtml = av.emoji
+        ? '<div class="mbr-av" style="background:var(--gold-a20)">'+escMbr(av.emoji)+'</div>'
+        : '<div class="mbr-av" style="background:var(--gold)">'+escMbr(av.initiale||(nom[0]||'?').toUpperCase())+'</div>';
+      const estMoi = (m.user_id===currentUser.id);
+      const estLeader = leaders.has(m.id);
+      return '<div class="mbr-row">'+avHtml
+        + '<div class="mbr-info"><div class="mbr-nom">'+escMbr(nom)
+        + (estMoi?'<span class="moi">(moi)</span>':'')+'</div>'
+        + (estLeader?'<div class="mbr-crown">👑 anime ce voyage</div>':'')
+        + '</div></div>';
+    }).join('');
+  }catch(e){ console.warn('chargerMembres',e); box.textContent='Liste indisponible.'; }
+}
+function escMbr(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 
 function applyMode(groupe){
   const editable=document.getElementById('group-editable');
