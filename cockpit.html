@@ -986,6 +986,21 @@ async function propagerVerdict(p){
     }
     return;
   }
+
+  /* Garder / écarter une fiche : la clôture DÉPLACE la fiche dans le parcours du voyage.
+     « Garder » (ou égalité — décision Bruno 19/06 : le doute passe au Cockpit pour affinage)
+     → statut 'retenue' (converge vers le Cockpit, quitte Horizon).
+     « Écarter » → statut 'ecartee' (retourne au matériau commun, hors de ce voyage). */
+  if(p.type==='elimination' && p.lieu_id && p.voyage_id){
+    let g=0, e=0;
+    vts.forEach(v=>{ if(v.valeur==='Garder') g++; else if(v.valeur==='Écarter') e++; });
+    const statut = (g>=e) ? 'retenue' : 'ecartee';   // égalité → retenue
+    const { error } = await sb.from('voyage_fiches').upsert(
+      [{ voyage_id:p.voyage_id, lieu_id:p.lieu_id, statut, maj_le:new Date().toISOString() }],
+      { onConflict:'voyage_id,lieu_id' });
+    if(error) console.warn('voyage_fiches upsert', error);
+    return;
+  }
 }
 
 /* Petit moment de célébration dans le bloc vedette */
