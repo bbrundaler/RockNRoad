@@ -265,10 +265,32 @@
       if(fl){ signaler(idConteneur, fl.getAttribute('data-flag')); return; }
     });
     charger(idConteneur);
+    abonnerRealtime(idConteneur);
+  }
+
+  /* ── Temps réel : à chaque message inséré dans CE groupe, on rafraîchit le fil.
+     La RLS de `messages` s'applique aux events Realtime → un membre ne reçoit que
+     les messages de son groupe (zéro fuite inter-groupes). Debounce pour ne pas
+     recharger en rafale si plusieurs messages arrivent groupés. ── */
+  function abonnerRealtime(idConteneur){
+    var cfg=INSTANCES[idConteneur]; if(!cfg||!cfg.sb||!cfg.groupeId) return;
+    if(cfg._canal){ try{ cfg.sb.removeChannel(cfg._canal); }catch(e){} cfg._canal=null; }
+    var t=null;
+    var canal=cfg.sb.channel('msg:'+idConteneur+':'+cfg.groupeId)
+      .on('postgres_changes',
+        { event:'INSERT', schema:'public', table:'messages', filter:'groupe_id=eq.'+cfg.groupeId },
+        function(){ if(t) clearTimeout(t); t=setTimeout(function(){ if(INSTANCES[idConteneur]) charger(idConteneur); }, 150); })
+      .subscribe();
+    cfg._canal=canal;
   }
 
   function recharger(idConteneur){ charger(idConteneur); }
-  function demonter(idConteneur){ delete INSTANCES[idConteneur]; var h=document.getElementById(idConteneur); if(h) h.innerHTML=''; }
+  function demonter(idConteneur){
+    var cfg=INSTANCES[idConteneur];
+    if(cfg && cfg._canal){ try{ cfg.sb.removeChannel(cfg._canal); }catch(e){} cfg._canal=null; }
+    delete INSTANCES[idConteneur];
+    var h=document.getElementById(idConteneur); if(h) h.innerHTML='';
+  }
 
   window.RNRDiscussion = { monter: monter, recharger: recharger, demonter: demonter };
 })();
