@@ -309,4 +309,38 @@
   } else {
     inject();
   }
+
+  /* ════════════════════════════════════════════════════════════════════
+     IDENTITÉ CANONIQUE — une seule maison pour le nom affiché d'un membre.
+     Règle officielle (Master, identité v15) :  pseudo → prenom → dérivé
+     propre de l'email → 'Voyageur'.  Toutes les pages (Hub, Cockpit,
+     Horizon, Carnet) doivent passer par ici pour éviter qu'un même membre
+     apparaisse sous deux noms selon la page. Fonction PURE, sans DOM :
+     disponible dès que chrome.js est parsé.
+     ──────────────────────────────────────────────────────────────────── */
+  function _depuisEmail(email){
+    var base = ((email||'').split('@')[0] || '');
+    base = base.split(/[._0-9]/)[0] || base;        // coupe prenom.nom / chiffres, garde le tiret
+    if(!base) return 'Voyageur';
+    return base.split('-')
+      .map(function(seg){ return seg ? seg.charAt(0).toUpperCase()+seg.slice(1).toLowerCase() : ''; })
+      .filter(Boolean)
+      .join('-');
+  }
+  /* nomMembre(membre, email) — membre = ligne `membres` (ou null), email = repli */
+  window.rnrNomMembre = function(membre, email){
+    if(membre){
+      if(membre.pseudo && String(membre.pseudo).trim()) return String(membre.pseudo).trim();
+      if(membre.prenom && String(membre.prenom).trim()) return String(membre.prenom).trim();
+    }
+    return _depuisEmail(email);
+  };
+  /* avatarMembre(membre, email) — {emoji} si avatar défini, sinon {initiale} du nom.
+     La couleur de fond reste gérée côté composant (discussion.js, etc.). */
+  window.rnrAvatarMembre = function(membre, email){
+    var av = membre && membre.avatar ? String(membre.avatar).trim() : '';
+    if(av) return { emoji: av };
+    var nom = window.rnrNomMembre(membre, email);
+    return { initiale: (nom.charAt(0)||'?').toUpperCase() };
+  };
 })();

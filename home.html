@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <script src="chrome.js"></script>
+<script src="discussion.js"></script>
 <style>
 /* HUB reconstruit grammaire v2 (Charte Design v1) — remplace le prototype d'ambiance.
    La barre vient de chrome.js ; les composants communs d'app.css (rr-*) ;
@@ -186,6 +187,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
         <div class="gr-nom">🧑‍🤝‍🧑 <a href="onboarding.html" id="gr-lien" title="Régler mon groupe (nom, départ, membres)">Mon groupe ⚙️</a></div>
         <div class="gr-compte" id="gr-compte">Chargement…</div>
       </div>
+
+      <!-- ── Partager au groupe (fil unifié, discussion.js — invariant colonne droite, Master 4.18) ── -->
+      <div class="rr-surface" style="margin-top:18px;">
+        <h3>Partager au groupe</h3>
+        <div id="hub-discussion"></div>
+        <div class="gr-compte" style="margin-top:8px;">Informel · commun à tous les voyages · ne crée pas de fiche</div>
+      </div>
     </div>
 
   </div>
@@ -281,7 +289,7 @@ async function loadHubData(userId){
   try{
     /* Groupe de l'utilisateur (même requête éprouvée qu'Horizon) */
     const {data:mem,error:eMem}=await sb.from('membres')
-      .select('groupe_id, is_superadmin, groupes(*)').eq('user_id',userId).limit(1).single();
+      .select('id, groupe_id, is_superadmin, pseudo, prenom, groupes(*)').eq('user_id',userId).limit(1).single();
     if(eMem||!mem){ console.warn('Hub: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
     const nomGroupe=(mem.groupes&&mem.groupes.nom)?mem.groupes.nom:'Mon groupe';
@@ -292,6 +300,19 @@ async function loadHubData(userId){
     } catch(e){}
     if(window.rnrChrome){ rnrChrome.setGroupe(nomGroupe); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
     document.getElementById('gr-lien').textContent=nomGroupe+' ⚙️';
+
+    /* ── Fil « Partager au groupe » : MÊME composant unifié que Cockpit/Horizon (Master 4.18).
+       Identité via la règle canonique rnrNomMembre (chrome.js) → nom cohérent partout. ── */
+    if(window.RNRDiscussion){
+      const session2 = (await sb.auth.getSession()).data.session;
+      const email = session2 ? session2.user.email : '';
+      const userNom = (window.rnrNomMembre ? window.rnrNomMembre(mem, email) : (mem.pseudo||mem.prenom||'Voyageur'));
+      let membres=[];
+      try{ const r=await sb.from('membres').select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(40); membres=r.data||[]; }catch(e){}
+      RNRDiscussion.monter('hub-discussion', {
+        sb, groupeId, userId, userNom, membres, hauteur:'100%'
+      });
+    }
 
     /* Nombre de membres */
     const {count:nbMembres}=await sb.from('membres')
