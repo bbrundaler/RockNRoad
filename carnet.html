@@ -267,6 +267,8 @@
 .vote-btn.later.active{background:var(--gold-a20);border-color:var(--gold-a35);}
 .vote-btn.save{border-color:rgba(44,80,160,.2);color:var(--st-save);}
 .vote-btn.save.active{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
+.vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
+.vote-btn.ecartee.active{background:var(--surface-line);border-color:var(--ink-dim);opacity:.8;}
 /* 📌 Retenu = indicateur DÉRIVÉ (verdict d'un vote), pas un bouton : non cliquable, atténué tant qu'inactif */
 .vote-btn.derived{cursor:default;opacity:.5;}
 .vote-btn.derived.active{opacity:1;background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
@@ -661,14 +663,15 @@ const EMOJI_LATER = '✨';
 let RNR_userId = null;
 /* coeurs[lieu_id] = { love:{count,mine}, later:{count,mine} }  (compteurs collectifs) */
 let coeurs = {};
-/* retenus = Set des lieu_id qu'un vote clos a « gardés » (📌 dérivé) */
+/* retenus = Set des lieu_id retenus pour le voyage actif (📌) ; ecartees = écartés (frère D-ECH-12) */
 let retenus = new Set();
+let ecartees = new Set();
 let activeVoteFilter = null; // null=tous, 'love', 'later', 'save'
 
 /* Charge l'état collectif : réactions ❤️/✨ du groupe + fiches retenues par vote.
    Une seule passe au chargement ; rafraîchi après chaque toggle. */
 async function chargerCoeurs(){
-  coeurs = {}; retenus = new Set();
+  coeurs = {}; retenus = new Set(); ecartees = new Set();
   if(!currentGroupeId) return;
   /* (1) réactions ❤️/✨ sur les lieux — RLS limite déjà au groupe (scope via lieux) */
   const {data:reacs,error:eR} = await sb.from('reactions')
@@ -682,24 +685,19 @@ async function chargerCoeurs(){
     slot[k].count++;
     if(r.membre_id && r.membre_id===RNR_userId) slot[k].mine=true;
   });
-  /* (2) 📌 dérivé : votes « elimination » clos dont le résultat majoritaire = « Garder » */
-  const {data:propLieu,error:eP} = await sb.from('propositions')
-    .select('id,lieu_id').eq('groupe_id',currentGroupeId)
-    .eq('type','elimination').eq('statut','clos').not('lieu_id','is',null);
-  if(eP){ console.warn('retenus',eP); return; }
-  if(propLieu && propLieu.length){
-    const lieuDe = {}; propLieu.forEach(p=>lieuDe[p.id]=p.lieu_id);
-    const propIds = propLieu.map(p=>p.id);
-    const {data:votes} = await sb.from('votes').select('proposition_id,valeur').in('proposition_id',propIds);
-    const agg = {}; /* lieu_id -> {Garder:n, Écarter:n} */
-    (votes||[]).forEach(v=>{
-      const lid = lieuDe[v.proposition_id]; if(!lid) return;
-      const a = agg[lid] || (agg[lid]={});
-      a[v.valeur] = (a[v.valeur]||0)+1;
-    });
-    Object.keys(agg).forEach(lid=>{
-      const g=agg[lid]['Garder']||0, e=agg[lid]['Écarter']||0;
-      if(g>0 && g>=e) retenus.add(lid);   /* gardée si Garder majoritaire ou égalité */
+  /* (2) Statut par voyage : on lit voyage_fiches (source de vérité, maj D-ECH-12 du 19/06)
+     FILTRÉ par le voyage actif — fini le recalcul global qui mélangeait les voyages. */
+  retenus = new Set();
+  ecartees = new Set();
+  let voyageActif=null;
+  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  if(voyageActif){
+    const {data:vf,error:eV} = await sb.from('voyage_fiches')
+      .select('lieu_id,statut').eq('voyage_id',voyageActif);
+    if(eV){ console.warn('voyage_fiches',eV); }
+    (vf||[]).forEach(r=>{
+      if(r.statut==='retenue') retenus.add(r.lieu_id);
+      else if(r.statut==='ecartee') ecartees.add(r.lieu_id);
     });
   }
 }
@@ -778,6 +776,7 @@ function refreshVoteBtns(lieuId){
 function makeVoteBar(l){
   const c = coeursDe(l.id);
   const estRetenu = retenus.has(l.id);
+  const estEcartee = ecartees.has(l.id);
   const loveLbl = c.love.count>0 ? 'J\'adore · '+c.love.count : 'J\'adore';
   const laterLbl = c.later.count>0 ? 'Une prochaine fois · '+c.later.count : 'Une prochaine fois';
   return `<div class="vote-bar">
@@ -790,9 +789,13 @@ function makeVoteBar(l){
       ✨ <span class="vote-count">${laterLbl}</span>
     </button>
     <span class="vote-btn save derived ${estRetenu?'active':''}" id="vote-save-${l.id}"
-      title="${estRetenu?'Retenue par un vote du groupe':'Sera allumé quand un vote la retient'}">
+      title="${estRetenu?'Retenue par un vote du groupe pour ce voyage':'Sera allumé quand un vote la retient'}">
       📌 <span class="vote-count">Retenu</span>
-    </span>
+    </span>${estEcartee?`
+    <span class="vote-btn ecartee derived active" id="vote-eca-${l.id}"
+      title="Écartée par un vote du groupe pour ce voyage (la fiche reste dans le carnet)">
+      🚫 <span class="vote-count">Écartée</span>
+    </span>`:''}
   </div>`;
 }
 let currentGroupeId = null; // groupe de l'utilisateur connecté

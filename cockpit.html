@@ -626,6 +626,7 @@ const TYPES_VOTE = {
 let RNR_props = [];
 let RNR_clos = [];
 let RNR_celebreEnCours = false;      // (conservé, inoffensif)
+let RNR_autoCloture = false;         // garde anti-boucle pour la clôture automatique
 let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
 let RNR_vedetteId = null;
 let RNR_fiches = [];     // fiches du carnet du groupe (cache COMPLET) — résout les vignettes
@@ -685,6 +686,23 @@ async function chargerVotes(){
     const {data:vts} = await sb.from('votes').select('*').in('proposition_id',ids);
     (vts||[]).forEach(v=>{ (RNR_votes[v.proposition_id]=RNR_votes[v.proposition_id]||[]).push(v); });
   }
+
+  /* ── Clôture AUTOMATIQUE à l'échéance (sans serveur : au premier passage après ferme_le).
+     Donne tout son sens au compteur. On clôt + propage le verdict, puis on recharge une fois. ── */
+  const now=Date.now();
+  const expires = RNR_props.filter(p=>p.ferme_le && new Date(p.ferme_le).getTime()<=now);
+  if(expires.length && !RNR_autoCloture){
+    RNR_autoCloture=true;   /* garde anti-boucle */
+    for(const p of expires){
+      try{
+        await sb.from('propositions').update({statut:'clos'}).eq('id',p.id);
+        await propagerVerdict(p);
+      }catch(e){ console.warn('clôture auto',e); }
+    }
+    RNR_autoCloture=false;
+    return chargerVotes();   /* recharge sur l'état à jour */
+  }
+
   rendreFlux();
   rendreGroupe();   /* bloc « Le groupe » + moteur d'animation, sur l'état réel (D-ECH-3) */
   rendreCoeurs();   /* bloc « Les coups de cœur du groupe » (D-ECH-10) */
@@ -1034,15 +1052,21 @@ let RNR_compteurTimer=null;
 function demarrerCompteurs(){
   if(RNR_compteurTimer){ clearInterval(RNR_compteurTimer); RNR_compteurTimer=null; }
   const maj=()=>{
+    let expireEnDirect=false;
     document.querySelectorAll('.q-compteur-wrap[data-ferme]').forEach(w=>{
       const fin=new Date(w.getAttribute('data-ferme')).getTime();
       const reste=fin-Date.now();
-      if(reste<=0){ w.innerHTML='<span class="q-compteur urgent"><span class="pulse"></span>échéance atteinte</span>'; return; }
+      if(reste<=0){ w.innerHTML='<span class="q-compteur urgent"><span class="pulse"></span>échéance atteinte</span>'; expireEnDirect=true; return; }
       const h=Math.floor(reste/3600000), m=Math.floor((reste%3600000)/60000), s=Math.floor((reste%60000)/1000);
       const urgent = reste < 6*3600000;   // moins de 6h → rouge pulsé
       const txt = h>=24 ? Math.floor(h/24)+'j '+(h%24)+'h' : (h>0? h+'h '+String(m).padStart(2,'0')+'m' : m+'m '+String(s).padStart(2,'0')+'s');
       w.innerHTML='<span class="q-compteur'+(urgent?' urgent':'')+'">'+(urgent?'<span class="pulse"></span>':'⏳ ')+'ferme dans '+txt+'</span>';
     });
+    /* Un vote vient d'atteindre l'échéance sous nos yeux → on recharge (clôture auto). */
+    if(expireEnDirect && !RNR_autoCloture){
+      if(RNR_compteurTimer){ clearInterval(RNR_compteurTimer); RNR_compteurTimer=null; }
+      chargerVotes();
+    }
   };
   maj();
   RNR_compteurTimer=setInterval(maj,1000);
