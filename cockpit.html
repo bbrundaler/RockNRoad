@@ -23,7 +23,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .stage{
   min-height:calc(100vh - 56px);   /* plein écran au départ, mais peut grandir */
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:1fr 340px 340px;   /* votes (flux) · coups de cœur (agrandi) · groupe+partage (agrandi) */
+  grid-template-columns:1fr 0.5fr 0.5fr;   /* votes = moitié · coups de cœur + groupe = l'autre moitié (agrandis) */
   grid-template-rows:auto auto auto;
   grid-template-areas:
     "votes  context  group"
@@ -648,12 +648,17 @@ async function chargerFiches(){
   /* Cache des fiches AIMÉES (≥ 1 ❤️) — sert au sélecteur de création (entonnoir, Master 1.7).
      Le ❤️ du carnet est la porte d'entrée dans la zone de vote. */
   const {data:reacs} = await sb.from('reactions')
-    .select('cible_id,emoji').eq('cible_type','lieu').eq('emoji','❤️');
+    .select('cible_id,emoji,created_at').eq('cible_type','lieu').eq('emoji','❤️');
   const coeurParFiche = {};
-  (reacs||[]).forEach(r=>{ coeurParFiche[r.cible_id]=(coeurParFiche[r.cible_id]||0)+1; });
+  const dernierCoeur = {};
+  (reacs||[]).forEach(r=>{
+    coeurParFiche[r.cible_id]=(coeurParFiche[r.cible_id]||0)+1;
+    const t=r.created_at?new Date(r.created_at).getTime():0;
+    if(!dernierCoeur[r.cible_id] || t>dernierCoeur[r.cible_id]) dernierCoeur[r.cible_id]=t;
+  });
   RNR_fichesAimees = RNR_fiches
     .filter(f=>coeurParFiche[f.id]>0)
-    .map(f=>({...f, coeurs:coeurParFiche[f.id]}));
+    .map(f=>({...f, coeurs:coeurParFiche[f.id], dernierCoeur:dernierCoeur[f.id]||0}));
 }
 /* Retrouve une fiche par id ; null si elle n'existe plus (supprimée du carnet) →
    le vote survit à la disparition de sa cible (parallèle G4 anonymisation). */
@@ -681,7 +686,6 @@ async function chargerVotes(){
     (vts||[]).forEach(v=>{ (RNR_votes[v.proposition_id]=RNR_votes[v.proposition_id]||[]).push(v); });
   }
   rendreFlux();
-  rendreArchive();
   rendreGroupe();   /* bloc « Le groupe » + moteur d'animation, sur l'état réel (D-ECH-3) */
   rendreCoeurs();   /* bloc « Les coups de cœur du groupe » (D-ECH-10) */
 }
@@ -833,7 +837,7 @@ function rendreCoeurs(){
   const badge=document.getElementById('cc-badge');
   if(!box) return;
 
-  const aimees=[...RNR_fichesAimees].sort((a,b)=>(b.coeurs||0)-(a.coeurs||0));
+  const aimees=[...RNR_fichesAimees].sort((a,b)=>(b.dernierCoeur||0)-(a.dernierCoeur||0));
   if(badge) badge.textContent=aimees.length;
 
   if(!aimees.length){
