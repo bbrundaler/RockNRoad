@@ -235,6 +235,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border-radius:var(--r-pill);padding:1px 7px;vertical-align:middle;}
 .cc-tag-vote{color:#1a1208;background:var(--gold-light);}
 .cc-tag-cand{color:var(--ink-dim);background:var(--gold-a20);}
+.cc-tag-ret{color:#1a1208;background:var(--gold);}
+.cc-tag-eca{color:var(--ink-dim);background:var(--surface-line);}
+.cc-tranchee{opacity:.6;}
 .cc-act{flex-shrink:0;font-size:12px;font-weight:600;border-radius:var(--r-pill);
   padding:6px 12px;cursor:pointer;border:1px solid var(--gold-a35);}
 .cc-act-go{background:var(--gold-light);color:#1a1208;border-color:transparent;}
@@ -424,17 +427,23 @@ function nomLeader(membreId){
 /* ── Étape 2 de la respiration : les fiches RETENUES pour ce voyage (convergence).
    Lit voyage_fiches (statut='retenue') du voyage actif → la matière prête à affiner/ordonner. ── */
 let RNR_retenues = [];   // lieu_id retenus pour le voyage actif
+let RNR_statutFiche = {};   // lieu_id -> 'retenue' | 'ecartee' (statut tranché pour ce voyage)
 async function chargerRetenues(){
   RNR_retenues = [];
+  RNR_statutFiche = {};
   if(RNR_voyageId){
     try{
       const { data } = await sb.from('voyage_fiches')
-        .select('lieu_id,maj_le').eq('voyage_id',RNR_voyageId).eq('statut','retenue')
+        .select('lieu_id,statut,maj_le').eq('voyage_id',RNR_voyageId)
         .order('maj_le',{ascending:false});
-      RNR_retenues = (data||[]).map(r=>r.lieu_id);
+      (data||[]).forEach(r=>{
+        RNR_statutFiche[r.lieu_id]=r.statut;
+        if(r.statut==='retenue') RNR_retenues.push(r.lieu_id);
+      });
     }catch(e){ console.warn('chargerRetenues',e); }
   }
   rendreRetenues();
+  if(typeof rendreCoeurs==='function') rendreCoeurs();   /* le statut tranché change l'affichage des coups de cœur */
 }
 function rendreRetenues(){
   const box=document.getElementById('ret-list');
@@ -840,10 +849,23 @@ function rendreCoeurs(){
 
   box.innerHTML = aimees.map(f=>{
     const enVote = voteDe[f.id];
+    const statut = RNR_statutFiche[f.id];   // 'retenue' | 'ecartee' | undefined
     const ph = f.photo_url
       ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
       : '<div class="cc-ph">🗺️</div>';
     const meta = (f.region?escH(f.region)+' · ':'')+'❤️ '+(f.coeurs||0);
+
+    /* Fiche DÉJÀ TRANCHÉE pour ce voyage → sortie du cycle (D-ECH-10 l.105 + maj D-ECH-12).
+       Plus de re-vote possible : ni bouton, ni relance. */
+    if(statut){
+      const tag = statut==='retenue'
+        ? '<span class="cc-tag cc-tag-ret">📌 retenue</span>'
+        : '<span class="cc-tag cc-tag-eca">écartée</span>';
+      return '<div class="cc-item cc-tranchee">'+ph+
+        '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+' '+tag+'</div>'+
+        '<div class="cc-mt">'+meta+' · déjà tranchée pour ce voyage</div></div></div>';
+    }
+
     const action = enVote
       ? '<button class="cc-act cc-act-vote" onclick="mettreEnVedette(\''+enVote+'\')">Au vote →</button>'
       : '<button class="cc-act cc-act-go" onclick="lancerVoteSurFiche(\''+f.id+'\')">Lancer le vote</button>';
@@ -858,6 +880,10 @@ function rendreCoeurs(){
 
 /* Raccourci : lancer un vote « garder/écarter » pré-rempli sur une fiche candidate. */
 function lancerVoteSurFiche(lieuId){
+  if(RNR_statutFiche && RNR_statutFiche[lieuId]){
+    alert('Cette fiche est déjà tranchée pour ce voyage. Elle est sortie du cycle de vote.');
+    return;
+  }
   const f=ficheParId(lieuId); if(!f) return;
   ouvrirCreationVote();
   // index de l'intention « besoinFiche » (garder/écarter)

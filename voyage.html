@@ -64,6 +64,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .empty-voyage p{font-size:13px;color:var(--ink-dim);line-height:1.6;max-width:220px;}
 
 #map{flex:1;height:100%;}
+/* ── BANDE RETENUES (invariant partagé avec le Cockpit) ── */
+#voyage-retenues{flex-shrink:0;border-top:1px solid var(--surface-line);background:var(--surface);
+  padding:10px 14px;max-height:170px;display:flex;flex-direction:column;gap:8px;}
+.vr-head{font-family:var(--font-title);font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:7px;}
+.vr-badge{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
+  border:1px solid var(--gold);border-radius:999px;padding:0 8px;}
+.vr-bande{display:flex;gap:10px;align-items:stretch;overflow-x:auto;overflow-y:hidden;min-height:96px;}
+.vr-fiche{width:84px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;
+  border:1px solid var(--surface-line);border-radius:var(--r);padding:6px;background:var(--paper);}
+.vr-fiche .vrf-ph{width:100%;height:54px;border-radius:6px;background-size:cover;background-position:center;
+  display:grid;place-items:center;background-color:var(--gold-a20);font-size:20px;}
+.vr-fiche .vrf-nm{font-size:11px;font-weight:600;color:var(--ink);line-height:1.25;text-align:center;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.vr-empty{font-size:12px;color:var(--ink-dim);align-self:center;line-height:1.5;}
 
 /* MOBILE : carte en haut (contexte visuel), panneau Itinéraire en dessous.
    Sans cette règle, le panneau 320px fixe écrasait la carte sur téléphone. */
@@ -118,6 +132,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     </div>
     <div id="map"></div>
   </div>
+
+  <!-- ── BANDE RETENUES : même invariant que le Cockpit (Master 4.18) ── -->
+  <div id="voyage-retenues">
+    <div class="vr-head"><span>🎒</span> Retenues pour ce voyage <span class="vr-badge" id="vr-badge">0</span></div>
+    <div id="vr-list" class="vr-bande">Chargement…</div>
+  </div>
 </div>
 
 <script>
@@ -138,7 +158,52 @@ let voyage = [];
   initMap();
   initListEvents();
   loadVoyage();
+  chargerRetenuesVoyage(session.user.id);
 })();
+
+/* ── Bande « Retenues pour ce voyage » : même invariant que le Cockpit (Master 4.18).
+   Lit voyage_fiches (statut='retenue') du voyage actif + les infos des fiches. ── */
+async function chargerRetenuesVoyage(userId){
+  const box=document.getElementById('vr-list');
+  const badge=document.getElementById('vr-badge');
+  if(!box) return;
+  try{
+    /* groupe du membre */
+    const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+    if(!mem){ box.innerHTML='<div class="vr-empty">—</div>'; return; }
+    /* voyage actif : sessionStorage, sinon principal */
+    let voyageId=null;
+    try{ voyageId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    if(!voyageId){
+      const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
+        .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
+      const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
+      voyageId=actif?actif.id:null;
+    }
+    if(!voyageId){ box.innerHTML='<div class="vr-empty">Aucun voyage actif.</div>'; return; }
+
+    const {data:vf}=await sb.from('voyage_fiches')
+      .select('lieu_id,maj_le').eq('voyage_id',voyageId).eq('statut','retenue')
+      .order('maj_le',{ascending:false});
+    const ids=(vf||[]).map(r=>r.lieu_id);
+    if(badge) badge.textContent=ids.length;
+    if(!ids.length){
+      box.innerHTML='<div class="vr-empty">Aucune fiche retenue. Les fiches gardées au Cockpit arrivent ici.</div>';
+      return;
+    }
+    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url').in('id',ids);
+    const map2={}; (fs||[]).forEach(f=>{ map2[f.id]=f; });
+    box.innerHTML = ids.map(id=>{
+      const f=map2[id];
+      if(!f) return '<div class="vr-fiche"><div class="vrf-ph">🗺️</div><div class="vrf-nm">—</div></div>';
+      const ph=f.photo_url
+        ? '<div class="vrf-ph" style="background-image:url(\''+escVr(f.photo_url)+'\')"></div>'
+        : '<div class="vrf-ph">🗺️</div>';
+      return '<div class="vr-fiche">'+ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div></div>';
+    }).join('');
+  }catch(e){ console.warn('chargerRetenuesVoyage',e); box.innerHTML='<div class="vr-empty">Indisponible.</div>'; }
+}
+function escVr(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 
 // ── Carte ─────────────────────────────────────────────────────────────────────
