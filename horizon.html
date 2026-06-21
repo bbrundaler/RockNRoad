@@ -141,6 +141,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
 .hz-lieu-tag .x{cursor:pointer;opacity:.8;font-weight:700;}
 .hz-geste-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
+.hz-en-avant{width:100%;margin-top:12px;padding:11px;border:none;border-radius:var(--r);
+  background:var(--gold);color:var(--chrome-bg);font-family:var(--font-body);font-size:14px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .15s;}
+.hz-en-avant:hover{opacity:.88;}
+.hz-en-avant span{font-size:16px;}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
@@ -337,6 +343,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
         <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
+        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">En avant pour la sélection <span>→</span></button>
       </div>
     </div>
   </div>
@@ -1667,23 +1674,35 @@ function construitCoin(){
     if(titre) titre.textContent='Le Carnet du coin';
     if(vide) vide.style.display='block';
     if(corps) corps.style.display='none';
+    majEnAvant(null);
     return null;
   }
   const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, HZ_THEME, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME});
   HZ_COIN_PAQUET=paquet;
   rendCarnetCoin(paquet);
-  // SEUIL : s'ouvre quand un coin DEVIENT prêt (passage vide → des fiches),
-  // pas à chaque micro-ajustement de région. Anti-répétition par signature.
-  const prets=(paquet.coeur.length+paquet.limitrophes.length)>0;
-  if(prets){
-    const sig=HZ_THEME; // un seuil par envie : changer d'envie le rouvre
-    if(HZ_SEUIL_VU_SIG!==sig){ ouvreSeuil(); HZ_SEUIL_VU_SIG=sig; }
-  }
+  // NB : le seuil ne s'ouvre PLUS automatiquement ici (sinon il surgit dès la
+  // 1re région et empêche d'en choisir une 2e). Il est déclenché par le bouton
+  // « En avant pour la sélection » quand l'utilisateur a fini de composer.
+  majEnAvant(paquet);
   return paquet;
 }
 
 // ── SEUIL (passage de relais geste → swipe) ──
 let HZ_SEUIL_VU_SIG=null;   // signature de la dernière envie pour qui le seuil s'est ouvert
+
+// Le bouton « En avant » n'apparaît que lorsqu'un coin a des fiches à parcourir.
+// C'est LUI qui ouvre le seuil (et plus le clic région), pour qu'on puisse
+// poser tranquillement 1 OU 2 régions avant de lancer.
+function majEnAvant(paquet){
+  const b=document.getElementById('hz-en-avant');
+  if(!b) return;
+  const n=paquet ? (paquet.coeur.length+paquet.limitrophes.length) : 0;
+  b.style.display = n>0 ? 'flex' : 'none';
+}
+function lanceSeuil(){
+  ouvreSeuil();
+  HZ_SEUIL_VU_SIG=HZ_THEME;
+}
 
 // Regroupe les fiches du coin par région (cœur + limitrophes) pour le récap.
 function coinsParRegion(paquet){
@@ -1728,6 +1747,9 @@ function brancheSeuil(){
   // bouton Recommencer
   const rec=document.getElementById('hz-recommencer');
   if(rec) rec.addEventListener('click', recommenceGeste);
+  // bouton En avant → ouvre le seuil quand l'utilisateur a fini de composer
+  const av=document.getElementById('hz-en-avant');
+  if(av) av.addEventListener('click', lanceSeuil);
 }
 
 // Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
@@ -1837,7 +1859,7 @@ function recommenceGeste(){
   rendThemesChips();
   rendLieuxChoisis();
   peintLieuxSurCarte();
-  construitCoin();              // vide la bande
+  construitCoin();              // vide la bande (et masque « En avant »)
   majGesteInfo();
   majRecommencer();
   fermeSeuil();
