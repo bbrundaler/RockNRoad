@@ -165,6 +165,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-carte{height:46%;min-height:200px;background:var(--bg);}
 .hz-explo-carte .leaflet-container{height:100%;width:100%;background:var(--bg);}
 .hz-explo-bas{flex:1;overflow:auto;padding:14px 16px;scrollbar-width:thin;}
+.hz-explo-bas #hz-coin-swipe{grid-template-columns:1.3fr .7fr;}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
@@ -2029,6 +2030,7 @@ function ouvreExplo(){
 function fermeExplo(){
   const ov=document.getElementById('hz-explo');
   if(ov) ov.style.display='none';
+  demonteSwipeVersBande();
 }
 
 function initExploCarte(){
@@ -2061,11 +2063,44 @@ function exploHighlight(lieuId){
   if(m){ HZ_EXPLO_MAP.panTo(m.getLatLng(),{animate:true,duration:.4}); m.openPopup(); }
 }
 
+// Déplace le conteneur swipe (un seul exemplaire) dans le popup à l'ouverture.
+function monteSwipeDansExplo(){
+  const swipe=document.getElementById('hz-coin-swipe');
+  const bas=document.getElementById('hz-explo-bas');
+  if(swipe && bas && swipe.parentNode!==bas){ bas.appendChild(swipe); }
+  // forcer un rendu propre de la carte courante + surligner son point
+  rendSwipeCarte();
+  majSwipeProgres();
+  syncCarteSurFiche();
+}
+// Ramène le swipe dans la bande du bas à la fermeture.
+function demonteSwipeVersBande(){
+  const swipe=document.getElementById('hz-coin-swipe');
+  const corps=document.getElementById('hz-coin-corps');
+  const liste=document.getElementById('hz-coin-liste');
+  if(swipe && corps && liste && swipe.parentNode!==corps){
+    corps.insertBefore(swipe, liste);  // avant la grille liste
+  }
+}
+
+// La carte suit la fiche courante du swipe (effet wahoo : point mis en avant).
+function syncCarteSurFiche(){
+  const f=ficheCourante();
+  if(f && f.id) exploHighlight(f.id);
+}
+
 function brancheExplo(){
   const f=document.getElementById('hz-explo-fermer');
   if(f && !f._cable){ f._cable=true; f.addEventListener('click',fermeExplo); }
   const ov=document.getElementById('hz-explo');
   if(ov && !ov._cable){ ov._cable=true; ov.addEventListener('click',e=>{ if(e.target===ov) fermeExplo(); }); }
+  const li=document.getElementById('hz-explo-liste');
+  if(li && !li._cable){ li._cable=true; li.addEventListener('click',()=>{
+    fermeExplo();
+    HZ_SWIPE_MODE='liste'; appliqueModeBande();
+    const corps=document.getElementById('hz-coin-corps');
+    if(corps) corps.scrollIntoView({behavior:'smooth',block:'center'});
+  }); }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2163,6 +2198,8 @@ function rendSwipeCarte(){
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+'</div>';
   deck.appendChild(card);
+  // dialogue carte↔swipe : si le popup est ouvert, la carte met ce point en avant
+  if(f.id) exploHighlight(f.id);
 }
 
 // avance d'un cran dans la séquence (avec animation)
@@ -2211,13 +2248,18 @@ function brancheSwipeActions(){
 
 // barre de progression (combien parcouru sur le total de fiches)
 function majSwipeProgres(){
-  const el=document.getElementById('hz-coin-coins');
-  if(!el) return;
   const fiches=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').length;
   const vues=HZ_SWIPE_SEQ.slice(0,HZ_SWIPE_I).filter(e=>e.kind==='fiche').length;
-  el.innerHTML='<div class="hz-swipe-progres"><div class="hz-swipe-progres-barre" style="width:'+
-    (fiches?Math.round(100*Math.min(vues,fiches)/fiches):0)+'%"></div></div>'+
-    '<span class="hz-swipe-progres-txt">'+Math.min(vues,fiches)+' / '+fiches+' fiches parcourues</span>';
+  const pct=fiches?Math.round(100*Math.min(vues,fiches)/fiches):0;
+  // barre dans la bande (si swipe en bas)
+  const el=document.getElementById('hz-coin-coins');
+  if(el){
+    el.innerHTML='<div class="hz-swipe-progres"><div class="hz-swipe-progres-barre" style="width:'+pct+'%"></div></div>'+
+      '<span class="hz-swipe-progres-txt">'+Math.min(vues,fiches)+' / '+fiches+' fiches parcourues</span>';
+  }
+  // barre dans le popup
+  const pop=document.getElementById('hz-explo-progres');
+  if(pop) pop.style.width=pct+'%';
 }
 
 // liste des fiches aimées (tout le coin, lecture des cœurs)
