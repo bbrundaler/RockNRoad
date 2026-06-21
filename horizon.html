@@ -148,6 +148,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   transition:opacity .15s;}
 .hz-en-avant:hover{opacity:.88;}
 .hz-en-avant span{font-size:16px;}
+/* ── GRAND POPUP D'EXPLORATION (3d) ── */
+.hz-explo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
+  z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;}
+.hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
+  box-shadow:var(--shadow);width:min(960px,96vw);height:min(88vh,820px);display:flex;flex-direction:column;
+  overflow:hidden;animation:hzSeuilPop .28s ease;}
+.hz-explo-tete{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--surface-line);}
+.hz-explo-tete h3{font-family:var(--font-title);font-size:17px;color:var(--gold-text);margin:0;flex-shrink:0;}
+.hz-explo-progres-wrap{flex:1;height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;min-width:60px;}
+.hz-explo-progres{height:100%;width:0;background:var(--gold);transition:width .3s;}
+.hz-explo-liste{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);}
+.hz-explo-liste:hover{background:var(--gold-a10);}
+.hz-explo-fermer{width:32px;height:32px;border-radius:50%;border:1px solid var(--surface-line);background:var(--bg);color:var(--ink);cursor:pointer;font-size:15px;flex-shrink:0;}
+.hz-explo-fermer:hover{border-color:var(--gold);}
+.hz-explo-carte{height:46%;min-height:200px;background:var(--bg);}
+.hz-explo-carte .leaflet-container{height:100%;width:100%;background:var(--bg);}
+.hz-explo-bas{flex:1;overflow:auto;padding:14px 16px;scrollbar-width:thin;}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
@@ -359,6 +376,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   .b-write .bb{flex-direction:column;}
 }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div class="stage">
@@ -400,7 +419,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
         <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
-        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">En avant pour la sélection <span>→</span></button>
+        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">C'est parti <span>→</span></button>
       </div>
     </div>
   </div>
@@ -524,6 +543,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <span>C'est un <b>premier tri, pas la décision finale</b>. On dégrossit : ce que vous aimez remonte au groupe, le reste n'est pas perdu. Le vrai choix se fera ensemble, plus tard.</span>
     </div>
     <button class="hz-seuil-go" id="hz-seuil-go" type="button">En avant <span>→</span></button>
+  </div>
+</div>
+
+<!-- GRAND POPUP D'EXPLORATION (incrément 3d) : carte Leaflet zoomée en haut,
+     swipe en bas. La carte et le swipe se parlent (point mis en avant). -->
+<div class="hz-explo-overlay" id="hz-explo" style="display:none">
+  <div class="hz-explo-modal">
+    <div class="hz-explo-tete">
+      <h3 id="hz-explo-titre">Exploration</h3>
+      <div class="hz-explo-progres-wrap"><div class="hz-explo-progres" id="hz-explo-progres"></div></div>
+      <button class="hz-explo-liste" id="hz-explo-liste" type="button">▦ Liste</button>
+      <button class="hz-explo-fermer" id="hz-explo-fermer" type="button" title="fermer">✕</button>
+    </div>
+    <div class="hz-explo-carte" id="hz-explo-carte"></div>
+    <div class="hz-explo-bas" id="hz-explo-bas">
+      <!-- le swipe sera monté ici en 3d-2 -->
+    </div>
   </div>
 </div>
 
@@ -1890,9 +1926,10 @@ function brancheSeuil(){
   // bouton Recommencer
   const rec=document.getElementById('hz-recommencer');
   if(rec) rec.addEventListener('click', recommenceGeste);
-  // bouton En avant → ouvre le seuil quand l'utilisateur a fini de composer
+  // bouton « C'est parti » → ouvre le GRAND POPUP d'exploration (carte + swipe)
   const av=document.getElementById('hz-en-avant');
-  if(av) av.addEventListener('click', lanceSeuil);
+  if(av) av.addEventListener('click', ouvreExplo);
+  brancheExplo();
 }
 
 // Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
@@ -1958,6 +1995,77 @@ function rendCarnetCoin(paquet){
 
   // initialiser le SWIPE (mode par défaut de la bande)
   initSwipe(paquet);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GRAND POPUP D'EXPLORATION (3d) — carte Leaflet zoomée + swipe.
+//  Helpers carte portés de Carnet (marqueurs colorés par type).
+// ════════════════════════════════════════════════════════════════
+const HZ_TYPE_COLORS={
+  'Camping':'#2C5016','Halte':'#3a7a3a','Restaurant':'#e8540a','Brasserie':'#e8540a',
+  'Site':'#1a5a7a','Randonnee':'#1a5a7a','Plage':'#00a0c0','Lac':'#00a0c0',
+  'Musee':'#6B3288','Culture':'#6B3288','Chateau':'#C8A84B','Monument':'#C8A84B',
+  'Cave':'#7B2020','Degustation':'#7B2020','default':'#888'
+};
+function hzTypeColor(t){ return HZ_TYPE_COLORS[t]||HZ_TYPE_COLORS['default']; }
+function hzColoredIcon(color){
+  return L.divIcon({className:'',
+    html:'<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>',
+    iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-8]});
+}
+
+let HZ_EXPLO_MAP=null;
+let HZ_EXPLO_MARQUEURS={};
+
+function ouvreExplo(){
+  if(!HZ_COIN_PAQUET) return;
+  const ov=document.getElementById('hz-explo');
+  if(!ov) return;
+  const titre=document.getElementById('hz-explo-titre');
+  if(titre) titre.textContent=themeLibelle(HZ_THEME)+' — '+HZ_LIEUX.map(labelRegionSvg).join(' & ');
+  ov.style.display='flex';
+  setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); }, 60);
+}
+function fermeExplo(){
+  const ov=document.getElementById('hz-explo');
+  if(ov) ov.style.display='none';
+}
+
+function initExploCarte(){
+  const el=document.getElementById('hz-explo-carte');
+  if(!el || !window.L || !HZ_COIN_PAQUET) return;
+  if(HZ_EXPLO_MAP){ HZ_EXPLO_MAP.remove(); HZ_EXPLO_MAP=null; }
+  HZ_EXPLO_MARQUEURS={};
+  el.innerHTML='';
+  HZ_EXPLO_MAP=L.map(el,{zoomControl:true,attributionControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(HZ_EXPLO_MAP);
+  const toutes=[...HZ_COIN_PAQUET.coeur, ...HZ_COIN_PAQUET.limitrophes].filter(l=>l.lat&&l.lng);
+  const bounds=[];
+  toutes.forEach(l=>{
+    const col=hzTypeColor(l.type);
+    const popup='<div style="font-family:sans-serif;min-width:150px;"><strong style="font-size:13px;">'+
+      escapeHtmlHz(l.nom||'—')+'</strong><br><span style="font-size:10px;color:#888;">'+
+      escapeHtmlHz((l.type||'Lieu')+(l.sous_region?(' · '+l.sous_region):''))+'</span></div>';
+    const m=L.marker([l.lat,l.lng],{icon:hzColoredIcon(col)}).addTo(HZ_EXPLO_MAP).bindPopup(popup);
+    HZ_EXPLO_MARQUEURS[l.id]=m;
+    bounds.push([l.lat,l.lng]);
+  });
+  if(bounds.length) HZ_EXPLO_MAP.fitBounds(bounds,{padding:[30,30],maxZoom:11});
+  else HZ_EXPLO_MAP.setView([46.6,2.5],5);
+  setTimeout(()=>{ if(HZ_EXPLO_MAP) HZ_EXPLO_MAP.invalidateSize(); }, 80);
+}
+
+function exploHighlight(lieuId){
+  if(!HZ_EXPLO_MAP) return;
+  const m=HZ_EXPLO_MARQUEURS[lieuId];
+  if(m){ HZ_EXPLO_MAP.panTo(m.getLatLng(),{animate:true,duration:.4}); m.openPopup(); }
+}
+
+function brancheExplo(){
+  const f=document.getElementById('hz-explo-fermer');
+  if(f && !f._cable){ f._cable=true; f.addEventListener('click',fermeExplo); }
+  const ov=document.getElementById('hz-explo');
+  if(ov && !ov._cable){ ov._cable=true; ov.addEventListener('click',e=>{ if(e.target===ov) fermeExplo(); }); }
 }
 
 // ════════════════════════════════════════════════════════════════
