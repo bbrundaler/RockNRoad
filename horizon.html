@@ -166,6 +166,44 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-cf-tags{display:flex;gap:3px;flex-wrap:wrap;}
 .hz-cf-tags span{font-size:9px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
 .hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
+/* ── Bande : en-tête (bascule coins + mode) ── */
+.hz-coin-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.hz-coin-coins{display:flex;gap:4px;background:var(--bg);border:1px solid var(--surface-line);border-radius:var(--r-sm);padding:3px;}
+.hz-coin-coin-onglet{font-family:var(--font-body);font-size:12.5px;padding:6px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;gap:5px;transition:.15s;}
+.hz-coin-coin-onglet.on{background:var(--gold);color:var(--chrome-bg);font-weight:600;}
+.hz-coin-coin-onglet .n{font-size:10.5px;opacity:.7;}
+.hz-coin-modebtn{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);}
+.hz-coin-modebtn:hover{background:var(--gold-a10);}
+/* ── Mode swipe ── */
+#hz-coin-swipe{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.hz-swipe-zone{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.hz-swipe-deck{position:relative;width:100%;min-height:230px;}
+.hz-swipe-card{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .32s ease,opacity .32s ease;}
+.hz-swipe-card .ph{height:130px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;padding:8px;}
+.hz-swipe-card .ph .type{font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.55);padding:2px 9px;border-radius:11px;}
+.hz-swipe-card .body{padding:11px 13px;flex:1;display:flex;flex-direction:column;gap:5px;}
+.hz-swipe-card .notes{font-size:11px;color:var(--gold-text);}
+.hz-swipe-card .nom{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--ink);line-height:1.25;}
+.hz-swipe-card .tags{display:flex;gap:4px;flex-wrap:wrap;}
+.hz-swipe-card .tags span{font-size:9.5px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 7px;border-radius:11px;}
+.hz-swipe-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--ink-dim);font-size:13px;padding:20px;}
+.hz-swipe-empty-ic{font-size:30px;}
+.hz-swipe-rejouer{font-family:var(--font-body);font-size:12.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:6px 13px;border-radius:var(--r-sm);}
+.hz-swipe-actions{display:flex;align-items:center;justify-content:center;gap:16px;}
+.hz-swipe-act{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);cursor:pointer;font-size:21px;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.hz-swipe-act:active{transform:scale(.88);}
+.hz-swipe-act.love{border-color:rgba(216,69,110,.4);}
+.hz-swipe-act.later{border-color:var(--gold-a35);}
+.hz-swipe-act:disabled{opacity:.35;cursor:default;}
+.hz-swipe-aimees{min-width:0;}
+.hz-swipe-aimees-tt{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.hz-swipe-aimees-liste{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow:auto;scrollbar-width:thin;}
+.hz-aimee{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-sm);}
+.hz-aimee .mini{width:30px;height:30px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
+.hz-aimee .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hz-aimee .ic{font-size:13px;}
+.hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
+@media(max-width:760px){#hz-coin-swipe{grid-template-columns:1fr;}}
 .hz-coin-pied{display:flex;align-items:center;margin-top:10px;}
 .hz-coin-compte{font-size:12px;color:var(--ink-dim);}
 /* barre de vote — portée fidèlement du Carnet (même geste, même apparence) */
@@ -397,9 +435,41 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
     <div class="bb">
       <div id="hz-coin-vide" class="hz-coin-vide">Choisissez une envie puis une région : les fiches du coin s'afficheront ici.</div>
       <div id="hz-coin-corps" style="display:none">
-        <div class="hz-coin-grille" id="hz-coin-coeur"></div>
-        <div class="hz-coin-soustitre" id="hz-coin-soustitre-limit" style="display:none">À côté, juste de l'autre côté de la frontière</div>
-        <div class="hz-coin-grille" id="hz-coin-limit"></div>
+        <!-- en-tête : bascule entre coins (si 2 régions) + bascule swipe/liste -->
+        <div class="hz-coin-tete">
+          <div class="hz-coin-coins" id="hz-coin-coins"></div>
+          <button class="hz-coin-modebtn" id="hz-coin-modebtn" type="button">▦ Voir en liste</button>
+        </div>
+
+        <!-- MODE SWIPE (défaut) : une fiche à la fois -->
+        <div id="hz-coin-swipe">
+          <div class="hz-swipe-zone">
+            <div class="hz-swipe-deck" id="hz-swipe-deck">
+              <div class="hz-swipe-empty" id="hz-swipe-empty" style="display:none">
+                <span class="hz-swipe-empty-ic">✓</span>
+                <div>Vous avez parcouru tout ce coin&nbsp;!</div>
+                <button class="hz-swipe-rejouer" id="hz-swipe-rejouer" type="button">↺ Revoir ce coin</button>
+              </div>
+            </div>
+            <div class="hz-swipe-actions" id="hz-swipe-actions">
+              <button class="hz-swipe-act pass" id="hz-swipe-pass" type="button" title="passer">✕</button>
+              <button class="hz-swipe-act later" id="hz-swipe-later" type="button" title="une prochaine fois">✨</button>
+              <button class="hz-swipe-act love" id="hz-swipe-love" type="button" title="j'adore">❤️</button>
+            </div>
+          </div>
+          <div class="hz-swipe-aimees">
+            <div class="hz-swipe-aimees-tt">Aimées dans ce coin</div>
+            <div id="hz-swipe-aimees-liste" class="hz-swipe-aimees-liste"></div>
+          </div>
+        </div>
+
+        <!-- MODE LISTE (optionnel) : la grille de vignettes -->
+        <div id="hz-coin-liste" style="display:none">
+          <div class="hz-coin-grille" id="hz-coin-coeur"></div>
+          <div class="hz-coin-soustitre" id="hz-coin-soustitre-limit" style="display:none">À côté, juste de l'autre côté de la frontière</div>
+          <div class="hz-coin-grille" id="hz-coin-limit"></div>
+        </div>
+
         <div class="hz-coin-pied">
           <span class="hz-coin-compte" id="hz-coin-compte"></span>
           <button class="hz-coin-revoir" id="hz-coin-revoir" type="button">💡 Revoir l'explication</button>
@@ -1871,6 +1941,175 @@ function rendCarnetCoin(paquet){
   if(compte) compte.textContent=nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'')+' — aimez celles qui vous tentent ❤️';
   const revoir=document.getElementById('hz-coin-revoir');
   if(revoir) revoir.onclick=ouvreSeuil;   // rouvrir le seuil à la demande
+
+  // initialiser le SWIPE (mode par défaut de la bande)
+  initSwipe(paquet);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SWIPE (incrément 3b) — une fiche à la fois, le pouce décide.
+//  Travaille coin par coin (région) : bascule en haut si 2 régions.
+//  ❤️/✨ écrivent dans reactions (tuyau existant) ; ✕ passe sans rien.
+// ════════════════════════════════════════════════════════════════
+let HZ_SWIPE_COINS=[];      // [{slug,label,fiches:[...]}]
+let HZ_SWIPE_COIN=0;        // index du coin actif
+let HZ_SWIPE_POS={};        // position dans chaque coin {slugCoin: index}
+let HZ_SWIPE_MODE='swipe';  // 'swipe' | 'liste'
+
+function initSwipe(paquet){
+  // regrouper les fiches par région (choisies d'abord, puis limitrophes)
+  const parReg={};
+  const ajoute=(f)=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); };
+  paquet.coeur.forEach(ajoute); paquet.limitrophes.forEach(ajoute);
+  const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+  HZ_SWIPE_COINS=ordre.filter(r=>parReg[r]).map(r=>({slug:r, label:labelRegionSvg(r), fiches:parReg[r]}));
+  HZ_SWIPE_COIN=0;
+  HZ_SWIPE_POS={};
+  HZ_SWIPE_COINS.forEach(c=>HZ_SWIPE_POS[c.slug]=0);
+  rendOngletsCoins();
+  brancheSwipeActions();
+  appliqueModeBande();
+  rendSwipeCarte();
+  rendAimees();
+}
+
+// onglets de bascule entre coins (si plusieurs régions)
+function rendOngletsCoins(){
+  const box=document.getElementById('hz-coin-coins');
+  if(!box) return;
+  box.innerHTML='';
+  if(HZ_SWIPE_COINS.length<=1){ box.style.display='none'; return; }
+  box.style.display='flex';
+  HZ_SWIPE_COINS.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='hz-coin-coin-onglet'+(i===HZ_SWIPE_COIN?' on':'');
+    b.innerHTML='📍 '+escapeHtmlHz(c.label)+' <span class="n">'+c.fiches.length+'</span>';
+    b.addEventListener('click',()=>{ HZ_SWIPE_COIN=i; rendOngletsCoins(); rendSwipeCarte(); rendAimees(); });
+    box.appendChild(b);
+  });
+}
+
+function coinActif(){ return HZ_SWIPE_COINS[HZ_SWIPE_COIN]||null; }
+function ficheCourante(){
+  const c=coinActif(); if(!c) return null;
+  const pos=HZ_SWIPE_POS[c.slug]||0;
+  return c.fiches[pos]||null;
+}
+
+// rend la carte du dessus (et une carte fantôme dessous pour la profondeur)
+function rendSwipeCarte(){
+  const deck=document.getElementById('hz-swipe-deck');
+  const vide=document.getElementById('hz-swipe-empty');
+  const actions=document.getElementById('hz-swipe-actions');
+  if(!deck) return;
+  // retirer les anciennes cartes (garder le bloc vide)
+  Array.from(deck.querySelectorAll('.hz-swipe-card')).forEach(el=>el.remove());
+  const f=ficheCourante();
+  if(!f){
+    if(vide) vide.style.display='flex';
+    if(actions) actions.style.display='none';
+    return;
+  }
+  if(vide) vide.style.display='none';
+  if(actions) actions.style.display='flex';
+  const card=document.createElement('div');
+  card.className='hz-swipe-card';
+  const ph=f.photo_url?'url(\''+f.photo_url+'\')':'linear-gradient(135deg,#88888844,#88888822)';
+  const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'');
+  const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
+  const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
+  card.innerHTML=
+    '<div class="ph" style="background-image:'+ph+'"><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
+    '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+'</div>';
+  deck.appendChild(card);
+}
+
+// passe à la fiche suivante avec animation d'envol
+function swipeSuivante(direction){
+  const deck=document.getElementById('hz-swipe-deck');
+  const card=deck?deck.querySelector('.hz-swipe-card'):null;
+  const c=coinActif(); if(!c) return;
+  if(card){
+    const dx=direction==='pass'?-380:380;
+    const rot=direction==='pass'?-9:9;
+    card.style.transform='translateX('+dx+'px) rotate('+rot+'deg)';
+    card.style.opacity='0';
+  }
+  setTimeout(()=>{
+    HZ_SWIPE_POS[c.slug]=(HZ_SWIPE_POS[c.slug]||0)+1;
+    rendSwipeCarte();
+    rendOngletsCoins();
+  },280);
+}
+
+// les 3 gestes
+async function swipeGeste(type){
+  const f=ficheCourante(); if(!f){ return; }
+  if(type==='pass'){ swipeSuivante('pass'); return; }
+  // ❤️/✨ → écrit dans reactions (réutilise hzToggleVote, mais en mode "ajoute")
+  if(type==='love' || type==='later'){
+    const slot=hzCoeursDe(f.id);
+    const deja=(type==='love')?slot.love.mine:slot.later.mine;
+    if(!deja){ await hzToggleVote(f.id, type); }   // ajoute le cœur si pas déjà mis
+    rendAimees();
+    swipeSuivante('like');
+  }
+}
+
+function brancheSwipeActions(){
+  const map={'hz-swipe-pass':'pass','hz-swipe-later':'later','hz-swipe-love':'love'};
+  Object.keys(map).forEach(id=>{
+    const b=document.getElementById(id);
+    if(b && !b._cable){ b._cable=true; b.addEventListener('click',()=>swipeGeste(map[id])); }
+  });
+  const rejouer=document.getElementById('hz-swipe-rejouer');
+  if(rejouer && !rejouer._cable){ rejouer._cable=true; rejouer.addEventListener('click',()=>{
+    const c=coinActif(); if(c){ HZ_SWIPE_POS[c.slug]=0; rendSwipeCarte(); }
+  }); }
+  const modebtn=document.getElementById('hz-coin-modebtn');
+  if(modebtn && !modebtn._cable){ modebtn._cable=true; modebtn.addEventListener('click',basculeModeBande); }
+}
+
+// liste des fiches aimées dans le coin actif (lecture des cœurs)
+function rendAimees(){
+  const box=document.getElementById('hz-swipe-aimees-liste');
+  const c=coinActif();
+  if(!box) return;
+  box.innerHTML='';
+  if(!c){ return; }
+  const aimees=c.fiches.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine||s.love.count>0; });
+  if(!aimees.length){
+    const d=document.createElement('div'); d.className='hz-aimee-vide';
+    d.textContent='Aucune fiche aimée pour l\'instant — swipez ❤️ ce qui vous tente.';
+    box.appendChild(d); return;
+  }
+  aimees.forEach(f=>{
+    const s=hzCoeursDe(f.id);
+    const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
+    const d=document.createElement('div'); d.className='hz-aimee';
+    d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
+      '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
+      '<div class="ic">❤️ '+s.love.count+'</div>';
+    box.appendChild(d);
+  });
+}
+
+// bascule swipe ↔ liste
+function basculeModeBande(){
+  HZ_SWIPE_MODE = (HZ_SWIPE_MODE==='swipe') ? 'liste' : 'swipe';
+  appliqueModeBande();
+}
+function appliqueModeBande(){
+  const sw=document.getElementById('hz-coin-swipe');
+  const li=document.getElementById('hz-coin-liste');
+  const btn=document.getElementById('hz-coin-modebtn');
+  const teteCoins=document.getElementById('hz-coin-coins');
+  const enSwipe=HZ_SWIPE_MODE==='swipe';
+  if(sw) sw.style.display=enSwipe?'grid':'none';
+  if(li) li.style.display=enSwipe?'none':'block';
+  if(btn) btn.textContent=enSwipe?'▦ Voir en liste':'🃏 Revenir au swipe';
+  if(teteCoins) teteCoins.style.visibility=enSwipe?'visible':'hidden';
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
