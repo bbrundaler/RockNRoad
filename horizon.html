@@ -173,8 +173,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-bas .hz-swipe-zone{height:100%;justify-content:flex-start;gap:14px;}
 .hz-explo-bas .hz-swipe-deck{min-height:0;flex:1;}
 .hz-explo-bas .hz-swipe-card{display:flex;flex-direction:column;}
-.hz-explo-bas .hz-swipe-card .ph{height:55%;min-height:150px;flex-shrink:0;}
-.hz-explo-bas .hz-swipe-card .body{flex:1;justify-content:center;gap:8px;}
+.hz-explo-bas .hz-swipe-card .ph{height:72%;min-height:200px;flex-shrink:0;background-position:center;}
+.hz-explo-bas .hz-swipe-card .body{flex:1;justify-content:flex-start;gap:6px;padding:12px 15px;}
+.hz-explo-bas .hz-swipe-card .nom{font-size:18px;}
+.hz-explo-bas .hz-swipe-actions{gap:14px;padding:0;}
+.hz-explo-bas .hz-swipe-act{width:46px;height:46px;font-size:20px;}
 .hz-explo-bas .hz-swipe-aimees{display:flex;flex-direction:column;height:100%;min-height:0;}
 .hz-explo-bas .hz-swipe-aimees-liste{max-height:none;flex:1;}
 /* la carte invite au clic quand on attend un lieu */
@@ -195,6 +198,24 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-cf-tags{display:flex;gap:3px;flex-wrap:wrap;}
 .hz-cf-tags span{font-size:9px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
 .hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
+/* ── PANIER DE VALIDATION (bande du bas) ── */
+.hz-panier{display:flex;gap:18px;align-items:stretch;flex-wrap:wrap;}
+.hz-panier-gauche,.hz-panier-droite{flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px;}
+.hz-panier-droite{border-left:1px solid var(--surface-line);padding-left:18px;}
+.hz-panier-tt{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--gold-text);}
+.hz-panier-recap{display:flex;flex-wrap:wrap;gap:8px;}
+.hz-panier-reg{font-size:13px;background:var(--gold-a10);color:var(--gold-deep);padding:6px 12px;border-radius:14px;border:1px solid var(--gold-a20);}
+.hz-panier-reg b{font-weight:700;}
+.hz-panier-reg.limit{background:var(--bg);color:var(--ink-dim);border-color:var(--surface-line);}
+.hz-panier-vide{font-size:13px;color:var(--ink-dim);line-height:1.5;}
+.hz-panier-explik{font-size:13px;color:var(--ink-dim);line-height:1.6;}
+.hz-panier-explik b{color:var(--gold-text);font-weight:600;}
+.hz-panier-rouvrir{align-self:flex-start;font-family:var(--font-body);font-size:12.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:7px 14px;border-radius:var(--r-sm);margin-top:auto;}
+.hz-panier-rouvrir:hover{background:var(--gold-a10);}
+.hz-panier-valider{font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;background:var(--gold);border:none;color:var(--chrome-bg);padding:12px 16px;border-radius:var(--r);margin-top:auto;transition:.15s;}
+.hz-panier-valider:hover{opacity:.9;}
+.hz-panier-valider:disabled{opacity:.45;cursor:default;}
+@media(max-width:680px){.hz-panier-droite{border-left:none;padding-left:0;border-top:1px solid var(--surface-line);padding-top:14px;}}
 /* ── Bande : en-tête (bascule coins + mode) ── */
 .hz-coin-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
 .hz-coin-coins{display:flex;gap:4px;background:var(--bg);border:1px solid var(--surface-line);border-radius:var(--r-sm);padding:3px;}
@@ -533,6 +554,22 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-coin-grille" id="hz-coin-coeur"></div>
           <div class="hz-coin-soustitre" id="hz-coin-soustitre-limit" style="display:none">À côté, juste de l'autre côté de la frontière</div>
           <div class="hz-coin-grille" id="hz-coin-limit"></div>
+        </div>
+
+        <!-- PANIER DE VALIDATION : visible dans la bande du bas (hors popup).
+             Récap par région + explication de la suite + bouton valider. -->
+        <div id="hz-coin-panier" class="hz-panier">
+          <div class="hz-panier-gauche">
+            <div class="hz-panier-tt">Vos coups de cœur</div>
+            <div id="hz-panier-recap" class="hz-panier-recap"></div>
+            <button class="hz-panier-rouvrir" id="hz-panier-rouvrir" type="button">🃏 Continuer à explorer</button>
+          </div>
+          <div class="hz-panier-droite">
+            <div class="hz-panier-explik">
+              <b>Et après&nbsp;?</b> Validez vos coups de cœur : ils partent au <b>Cockpit</b>, où le groupe affine ensemble. Puis on construit le voyage dans <b>Voyage</b>. Rien n'est figé — on avance, tranquille&nbsp;!
+            </div>
+            <button class="hz-panier-valider" id="hz-panier-valider" type="button">✓ Valider et envoyer au Cockpit</button>
+          </div>
         </div>
 
         <div class="hz-coin-pied">
@@ -2025,8 +2062,52 @@ function rendCarnetCoin(paquet){
   const revoir=document.getElementById('hz-coin-revoir');
   if(revoir) revoir.onclick=ouvreSeuil;   // rouvrir le seuil à la demande
 
-  // initialiser le SWIPE (mode par défaut de la bande)
+  // préparer le SWIPE (vit dans le POPUP), masquer son conteneur dans la bande,
+  // et afficher le PANIER de validation à la place (récap + bouton valider).
   initSwipe(paquet);
+  const swipe=document.getElementById('hz-coin-swipe');
+  const liste=document.getElementById('hz-coin-liste');
+  const tete=document.querySelector('.hz-coin-tete');
+  if(swipe && swipe.parentNode && swipe.parentNode.id==='hz-coin-corps'){ swipe.style.display='none'; }
+  if(liste) liste.style.display='none';
+  if(tete) tete.style.display='none';
+  branchePanier();
+  rendPanier();
+}
+
+// PANIER (bande du bas) : récap des coups de cœur par région + explication
+// de la suite + bouton valider. Pousse à clôturer, avec bonne humeur.
+function rendPanier(){
+  const panier=document.getElementById('hz-coin-panier');
+  const recap=document.getElementById('hz-panier-recap');
+  const valider=document.getElementById('hz-panier-valider');
+  if(!panier || !HZ_SWIPE_PAQUET) return;
+  panier.style.display='flex';
+  // récap des aimées par région
+  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
+  const parReg={};
+  aimees.forEach(f=>{ const r=f._regionSvg||f.region||'?'; parReg[r]=(parReg[r]||0)+1; });
+  if(recap){
+    if(!aimees.length){
+      recap.innerHTML='<span class="hz-panier-vide">Aucun coup de cœur encore. Cliquez « Continuer à explorer » et swipez ❤️ ce qui vous tente.</span>';
+    }else{
+      const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+      recap.innerHTML=ordre.filter(r=>parReg[r]).map(slug=>{
+        const choisie=HZ_LIEUX.indexOf(slug)!==-1;
+        return '<span class="hz-panier-reg'+(choisie?'':' limit')+'">📍 '+escapeHtmlHz(labelRegionSvg(slug))+
+          ' <b>'+parReg[slug]+'</b></span>';
+      }).join('');
+    }
+  }
+  if(valider) valider.disabled=!aimees.length;
+}
+
+function branchePanier(){
+  const rouvrir=document.getElementById('hz-panier-rouvrir');
+  if(rouvrir && !rouvrir._cable){ rouvrir._cable=true; rouvrir.addEventListener('click',ouvreExplo); }
+  const valider=document.getElementById('hz-panier-valider');
+  if(valider && !valider._cable){ valider._cable=true; valider.addEventListener('click',envoyerAimeesAuCockpit); }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2075,6 +2156,10 @@ function fermeExplo(){
   if(ov) ov.style.display='none';
   clearTimeout(HZ_TR_TIMER);
   demonteSwipeVersBande();
+  // le swipe reste masqué dans la bande ; on rafraîchit le PANIER (récap à jour)
+  const swipe=document.getElementById('hz-coin-swipe');
+  if(swipe && swipe.parentNode && swipe.parentNode.id==='hz-coin-corps'){ swipe.style.display='none'; }
+  rendPanier();
 }
 
 function initExploCarte(){
@@ -2134,7 +2219,7 @@ function monteSwipeDansExplo(){
   const swipe=document.getElementById('hz-coin-swipe');
   const bas=document.getElementById('hz-explo-bas');
   if(swipe && bas && swipe.parentNode!==bas){ bas.appendChild(swipe); }
-  // forcer un rendu propre de la carte courante + surligner son point
+  if(swipe) swipe.style.display='';   // réafficher (il est masqué dans la bande)
   rendSwipeCarte();
   majSwipeProgres();
   syncCarteSurFiche();
@@ -2415,19 +2500,20 @@ async function envoyerAimeesAuCockpit(){
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
   const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; }).filter(f=>f.id);
   if(!aimees.length){ alert('Aucune fiche aimée à envoyer.'); return; }
-  const btn=document.getElementById('hz-aimees-envoi');
-  if(btn){ btn.disabled=true; btn.textContent='Envoi…'; }
+  // les deux boutons possibles (popup + panier de la bande)
+  const btns=[document.getElementById('hz-aimees-envoi'), document.getElementById('hz-panier-valider')].filter(Boolean);
+  btns.forEach(b=>{ b.disabled=true; b.dataset.old=b.textContent; b.textContent='Envoi…'; });
   const maintenant=new Date().toISOString();
   const rows=aimees.map(f=>({voyage_id:HZ_VOYAGE_ID, lieu_id:f.id, statut:'retenue', maj_le:maintenant}));
   try{
     const {error}=await sb.from('voyage_fiches').upsert(rows,{onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.');
-      if(btn){btn.disabled=false;btn.textContent='✓ Valider suite';} return; }
-    if(btn) btn.textContent='✓ Envoyé ('+rows.length+')';
+      btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); return; }
+    btns.forEach(b=>b.textContent='✓ Envoyé ('+rows.length+') !');
     // CLÔTURE : on allège Horizon → fermer le popup, recommencer le geste
-    setTimeout(()=>{ fermeExplo(); recommenceGeste(); }, 900);
+    setTimeout(()=>{ fermeExplo(); recommenceGeste(); }, 1000);
   }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.');
-    if(btn){btn.disabled=false;btn.textContent='✓ Valider suite';} }
+    btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); }
 }
 
 function brancheAimeesActions(){
