@@ -144,24 +144,37 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
-/* ── Bande Carnet du coin (§B4/B6) ── */
-.b-carnet .bb{max-height:34vh;}
+/* ── Bande Carnet du coin (§B4/B6) : vignettes format Carnet ── */
+.b-carnet .bb{max-height:42vh;}
 .hz-coin-vide{font-size:13px;color:var(--ink-dim);padding:8px 2px;}
-.hz-coin-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-bottom:6px;}
-.hz-coin-carte{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r);
-  padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-height:0;}
-.hz-coin-carte.limit{opacity:.82;border-style:dashed;}
-.hz-coin-carte .cn{font-family:var(--font-title);font-size:13px;font-weight:600;color:var(--ink);line-height:1.25;}
-.hz-coin-carte .cr{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.3px;}
-.hz-coin-carte .cnote{font-size:11px;color:var(--gold-text);}
-.hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 6px;}
-.hz-coin-pied{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.hz-coin-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:11px;margin-bottom:6px;}
+.hz-cf{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
+.hz-cf.limit{opacity:.9;}
+.hz-cf-ph{height:96px;background-size:cover;background-position:center;position:relative;}
+.hz-cf-type{position:absolute;left:6px;bottom:6px;font-size:9.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 8px;border-radius:10px;}
+.hz-cf-body{padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
+.hz-cf-notes{display:flex;gap:4px;}
+.hz-cf-note{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--gold-a20);color:var(--gold-deep);}
+.hz-cf-nom{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--ink);line-height:1.25;}
+.hz-cf-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.hz-cf-tags span{font-size:9px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
+.hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
+.hz-coin-pied{display:flex;align-items:center;margin-top:10px;}
 .hz-coin-compte{font-size:12px;color:var(--ink-dim);}
-.hz-coin-envoi{font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;
-  padding:8px 16px;border-radius:var(--r-sm);border:1px solid var(--gold);background:var(--gold);
-  color:var(--chrome-bg);transition:opacity .15s;}
-.hz-coin-envoi:hover{opacity:.88;}
-.hz-coin-envoi:disabled{opacity:.5;cursor:default;}
+/* barre de vote — portée fidèlement du Carnet (même geste, même apparence) */
+.vote-bar{display:flex;gap:4px;align-items:center;margin-top:4px;padding-top:6px;border-top:1px solid var(--surface-line);flex-wrap:wrap;}
+.vote-btn{display:flex;align-items:center;gap:3px;padding:4px 9px;border-radius:20px;border:1.5px solid transparent;
+  font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;background:none;}
+.vote-btn:hover{transform:scale(1.06);}
+.vote-btn.love{border-color:rgba(220,60,100,.2);color:#d8456e;}
+.vote-btn.love.active{background:rgba(220,60,100,.12);border-color:rgba(220,60,100,.4);}
+.vote-btn.later{border-color:var(--gold-a20);color:var(--gold-deep);}
+.vote-btn.later.active{background:var(--gold-a20);border-color:var(--gold-a35);}
+.vote-btn.derived{cursor:default;opacity:.55;border-color:rgba(44,80,160,.2);color:#4a70b0;}
+.vote-btn.derived.active{opacity:1;background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
+.vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
+.vote-btn.ecartee.active{background:var(--surface-line);opacity:.85;}
+.vote-count{font-size:9.5px;font-weight:600;}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
 .hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
   border-radius:var(--r-pill,999px);padding:3px 11px;display:inline-block;margin-bottom:9px;}
@@ -343,7 +356,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
         <div class="hz-coin-grille" id="hz-coin-limit"></div>
         <div class="hz-coin-pied">
           <span class="hz-coin-compte" id="hz-coin-compte"></span>
-          <button class="hz-coin-envoi" id="hz-coin-envoi" type="button">→ Envoyer au Cockpit</button>
         </div>
       </div>
     </div>
@@ -1444,6 +1456,7 @@ function choisitTheme(cle){
     HZ_LIEUX=[]; rendLieuxChoisis(); peintLieuxSurCarte();
     construitCoin();   // thème retiré → la bande se vide
   }
+  sauveGeste();
   majGesteInfo();
 }
 
@@ -1461,7 +1474,8 @@ function toggleLieu(slug){
   }
   rendLieuxChoisis();
   peintLieuxSurCarte();
-  construitCoin();   // le couple thème×lieu se forme → paquet (affiché incrément 2)
+  construitCoin();   // le couple thème×lieu se forme → la bande se construit
+  sauveGeste();
   majGesteInfo();
 }
 
@@ -1497,8 +1511,100 @@ function themeLibelle(cle){
   return t?t.libelle:cle;
 }
 
+// ════════════════════════════════════════════════════════════════
+//  MÉCANIQUE CŒURS — portée fidèlement du Carnet (même geste, mêmes
+//  tables). Un ❤️ écrit dans `reactions` → la fiche remonte au Cockpit
+//  comme « coup de cœur ». Le 📌 Retenu est DÉRIVÉ d'un vote de groupe
+//  (voyage_fiches) → lecture seule ici. On garde la philosophie
+//  fiche → Cockpit → Voyage : pas d'envoi en bloc.
+// ════════════════════════════════════════════════════════════════
+const HZ_EMOJI_LOVE='❤️', HZ_EMOJI_LATER='✨';
+let HZ_COEURS={}, HZ_RETENUS=new Set(), HZ_ECARTEES=new Set();
+
+function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false},later:{count:0,mine:false}}; }
+
+async function hzChargerCoeurs(){
+  HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set();
+  if(!HZ_GROUPE_ID) return;
+  // (1) réactions ❤️/✨ sur les lieux (RLS limite déjà au groupe via lieux)
+  const {data:reacs,error:eR}=await sb.from('reactions')
+    .select('cible_id,membre_id,emoji').eq('cible_type','lieu');
+  if(eR){ console.warn('Horizon: coeurs',eR); }
+  const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
+  (reacs||[]).forEach(r=>{
+    const slot=HZ_COEURS[r.cible_id]||(HZ_COEURS[r.cible_id]={love:{count:0,mine:false},later:{count:0,mine:false}});
+    const k=r.emoji===HZ_EMOJI_LATER?'later':(r.emoji===HZ_EMOJI_LOVE?'love':null);
+    if(!k) return;
+    slot[k].count++;
+    if(r.membre_id && r.membre_id===moi) slot[k].mine=true;
+  });
+  // (2) statut par voyage (voyage_fiches, source de vérité D-ECH-12) — lecture seule
+  if(HZ_VOYAGE_ID){
+    const {data:vf,error:eV}=await sb.from('voyage_fiches')
+      .select('lieu_id,statut').eq('voyage_id',HZ_VOYAGE_ID);
+    if(eV){ console.warn('Horizon: voyage_fiches',eV); }
+    (vf||[]).forEach(r=>{
+      if(r.statut==='retenue') HZ_RETENUS.add(r.lieu_id);
+      else if(r.statut==='ecartee') HZ_ECARTEES.add(r.lieu_id);
+    });
+  }
+}
+
+// ❤️/✨ sur une fiche : écrit dans reactions (par membre_id, comme le Carnet).
+async function hzToggleVote(lieuId,type){
+  const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
+  if(!moi){ alert('Connexion requise.'); return; }
+  const emoji=type==='later'?HZ_EMOJI_LATER:HZ_EMOJI_LOVE;
+  const slot=hzCoeursDe(lieuId);
+  const dejaMis=(type==='later'?slot.later.mine:slot.love.mine);
+  if(dejaMis){
+    const {error}=await sb.from('reactions').delete()
+      .eq('cible_type','lieu').eq('cible_id',lieuId).eq('membre_id',moi).eq('emoji',emoji);
+    if(error){ console.warn('Horizon: retrait coeur',error); return; }
+  }else{
+    const {error}=await sb.from('reactions').insert({cible_type:'lieu',cible_id:lieuId,membre_id:moi,emoji:emoji});
+    if(error){ console.warn('Horizon: ajout coeur',error); return; }
+  }
+  await hzChargerCoeurs();
+  hzRefreshVoteBtns(lieuId);
+}
+
+function hzRefreshVoteBtns(lieuId){
+  const c=hzCoeursDe(lieuId);
+  const loveBtn=document.getElementById('hz-vote-love-'+lieuId);
+  const laterBtn=document.getElementById('hz-vote-later-'+lieuId);
+  if(loveBtn){
+    loveBtn.classList.toggle('active',c.love.mine);
+    const n=loveBtn.querySelector('.vote-count'); if(n) n.textContent=c.love.count>0?'J\'adore · '+c.love.count:'J\'adore';
+  }
+  if(laterBtn){
+    laterBtn.classList.toggle('active',c.later.mine);
+    const n=laterBtn.querySelector('.vote-count'); if(n) n.textContent=c.later.count>0?'Une prochaine fois · '+c.later.count:'Une prochaine fois';
+  }
+}
+
+// Barre de vote — identique au Carnet (IDs préfixés hz- pour cette page).
+function hzMakeVoteBar(l){
+  const c=hzCoeursDe(l.id);
+  const estRetenu=HZ_RETENUS.has(l.id);
+  const estEcartee=HZ_ECARTEES.has(l.id);
+  const loveLbl=c.love.count>0?'J\'adore · '+c.love.count:'J\'adore';
+  const laterLbl=c.later.count>0?'Une prochaine fois · '+c.later.count:'Une prochaine fois';
+  return '<div class="vote-bar">'+
+    '<button class="vote-btn love '+(c.love.mine?'active':'')+'" id="hz-vote-love-'+l.id+'" '+
+      'onclick="event.stopPropagation();hzToggleVote(\''+l.id+'\',\'love\')" title="J\'adore — la proposer au groupe">'+
+      '❤️ <span class="vote-count">'+loveLbl+'</span></button>'+
+    '<button class="vote-btn later '+(c.later.mine?'active':'')+'" id="hz-vote-later-'+l.id+'" '+
+      'onclick="event.stopPropagation();hzToggleVote(\''+l.id+'\',\'later\')" title="À garder pour une prochaine fois">'+
+      '✨ <span class="vote-count">'+laterLbl+'</span></button>'+
+    (estRetenu?'<span class="vote-btn save derived active" title="Retenue par un vote du groupe pour ce voyage">📌 <span class="vote-count">Retenu</span></span>':'')+
+    (estEcartee?'<span class="vote-btn ecartee derived active" title="Écartée par un vote du groupe (la fiche reste dans le carnet)">🚫 <span class="vote-count">Écartée</span></span>':'')+
+  '</div>';
+}
+
 // Construit le paquet (moteur pur) ET rend la bande Carnet du coin (§B4/B6).
-let HZ_COIN_PAQUET=null;   // dernier paquet calculé (pour l'envoi au Cockpit)
+let HZ_COIN_PAQUET=null;   // dernier paquet calculé
+
 
 function construitCoin(){
   const vide=document.getElementById('hz-coin-vide');
@@ -1517,15 +1623,24 @@ function construitCoin(){
   return paquet;
 }
 
-// Une petite carte de fiche dans la bande.
+// Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
+// tags) + la barre de vote identique. Version essentielle : parcourir & aimer.
 function carteFiche(f, estLimit){
-  const div=document.createElement('div');
-  div.className='hz-coin-carte'+(estLimit?' limit':'');
+  const ph=f.photo_url?'url(\''+f.photo_url+'\')':'linear-gradient(135deg,#88888844,#88888822)';
   const reg=labelRegionSvg(f._regionSvg||f.region||'');
-  const note=(Number(f.note_famille)>0)?('★ '+f.note_famille+'/5'):'';
-  div.innerHTML='<span class="cn">'+escapeHtmlHz(f.nom||'Sans nom')+'</span>'+
-    '<span class="cr">'+escapeHtmlHz(reg)+(estLimit?' · à côté':'')+'</span>'+
-    (note?'<span class="cnote">'+note+'</span>':'');
+  const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(estLimit?' · à côté':'');
+  const noteF=f.note_famille?'<span class="hz-cf-note">'+('★'.repeat(Number(f.note_famille)||0))+'</span>':'';
+  const tags=(f.tags&&f.tags.length)?'<div class="hz-cf-tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
+  const div=document.createElement('div');
+  div.className='hz-cf'+(estLimit?' limit':'');
+  div.innerHTML=
+    '<div class="hz-cf-ph" style="background-image:'+ph+'"><span class="hz-cf-type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="hz-cf-body">'+
+      (noteF?'<div class="hz-cf-notes">'+noteF+'</div>':'')+
+      '<div class="hz-cf-nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+
+      tags+
+      hzMakeVoteBar(f)+
+    '</div>';
   return div;
 }
 
@@ -1537,7 +1652,6 @@ function rendCarnetCoin(paquet){
   const limitBox=document.getElementById('hz-coin-limit');
   const limitTt=document.getElementById('hz-coin-soustitre-limit');
   const compte=document.getElementById('hz-coin-compte');
-  const envoi=document.getElementById('hz-coin-envoi');
   if(!corps) return;
 
   const lieuxLbl=HZ_LIEUX.map(labelRegionSvg).join(' & ');
@@ -1566,38 +1680,48 @@ function rendCarnetCoin(paquet){
   }
 
   const nC=paquet.coeur.length, nL=paquet.limitrophes.length;
-  compte.textContent = nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'');
-  if(envoi){
-    envoi.disabled = (nC+nL)===0;
-    envoi.textContent='→ Envoyer au Cockpit';
-    envoi.onclick=envoyerAuCockpit;
-  }
-}
-
-// Envoie les fiches du coin au Cockpit : upsert voyage_fiches (statut 'retenue').
-// Contrat identique à Cockpit (respiration des fiches Horizon→Cockpit).
-async function envoyerAuCockpit(){
-  if(!HZ_COIN_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
-  const fiches=HZ_COIN_PAQUET.toutes.filter(f=>f && f.id);
-  if(!fiches.length){ alert('Aucune fiche à envoyer.'); return; }
-  const envoi=document.getElementById('hz-coin-envoi');
-  if(envoi){ envoi.disabled=true; envoi.textContent='Envoi…'; }
-  const maintenant=new Date().toISOString();
-  const rows=fiches.map(f=>({ voyage_id:HZ_VOYAGE_ID, lieu_id:f.id, statut:'retenue', maj_le:maintenant }));
-  try{
-    const {error}=await sb.from('voyage_fiches').upsert(rows,{onConflict:'voyage_id,lieu_id'});
-    if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.'); if(envoi){envoi.disabled=false;envoi.textContent='→ Envoyer au Cockpit';} return; }
-    if(envoi){ envoi.textContent='✓ Envoyé au Cockpit ('+rows.length+')'; }
-  }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.'); if(envoi){envoi.disabled=false;envoi.textContent='→ Envoyer au Cockpit';} }
+  if(compte) compte.textContent=nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'')+' — aimez celles qui vous tentent ❤️';
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
 // par région) : si un thème est actif, le clic pose le lieu au lieu d'ouvrir
 // les fiches. Pas de second listener (évite le double-toggle).
 
-function initGesteFondateur(){
+// ── Mémoire du geste (ADN : mémoire des sélections) ──
+// Persistée par voyage : on retrouve son envie + ses régions au retour.
+function cleGeste(){ return 'rnr_horizon_geste_'+(HZ_VOYAGE_ID||HZ_TRI_GROUPE_ID||'anon'); }
+function sauveGeste(){
+  try{ sessionStorage.setItem(cleGeste(), JSON.stringify({theme:HZ_THEME, lieux:HZ_LIEUX})); }catch(e){}
+}
+function restaureGeste(){
+  try{
+    const raw=sessionStorage.getItem(cleGeste());
+    if(!raw) return;
+    const o=JSON.parse(raw);
+    if(o && o.theme){ HZ_THEME=o.theme; HZ_LIEUX=Array.isArray(o.lieux)?o.lieux.slice(0,2):[]; }
+  }catch(e){}
+}
+
+// Rejoue l'état du geste à l'écran après restauration (thème actif, régions
+// peintes, étape lieu ouverte, bande reconstruite).
+function rejoueGeste(){
   rendThemesChips();
+  if(HZ_THEME){
+    const etapeLieu=document.getElementById('hz-geste-lieu');
+    const carte=document.querySelector('.francemap');
+    if(etapeLieu) etapeLieu.style.display='block';
+    if(carte) carte.classList.add('attend-lieu');
+    rendLieuxChoisis();
+    peintLieuxSurCarte();
+    if(HZ_LIEUX.length) construitCoin();
+  }
   majGesteInfo();
+}
+
+async function initGesteFondateur(){
+  await hzChargerCoeurs();   // cœurs du groupe AVANT le premier rendu de bande
+  restaureGeste();
+  rejoueGeste();
 }
 
 async function loadHorizonData(userId){
@@ -1671,11 +1795,13 @@ async function loadHorizonData(userId){
     // rendBlocLentille();
     // brancheVoteMacro();
     // chargeVotesMacro();
-    // — GESTE FONDATEUR thème→lieu (neuf) —
-    initGesteFondateur();
 
     // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
     await chargerBlocGroupe(groupeId);
+
+    // 6bis) GESTE FONDATEUR thème→lieu (neuf) — APRÈS le bloc groupe car les
+    // cœurs ❤️ ont besoin de HZ_MEMBRES (monMembreIdReel) pour marquer « mine ».
+    await initGesteFondateur();
 
     // 7) Vote fondateur des leaders (a besoin de HZ_MEMBRES, donc après le bloc groupe)
     chargeVoteLeader();
