@@ -31,8 +31,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   grid-template-rows:auto 1fr auto;
   grid-template-areas:
     "ind   map   crew"
-    "vote  map   fiche"
-    "vote  map   fiche";
+    "vote  map   crew"
+    "carnet carnet carnet";
   min-height:0;
 }
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
@@ -47,10 +47,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .bb::-webkit-scrollbar-thumb{background:var(--gold-a35);border-radius:3px;}
 
 .b-ind{grid-area:ind;} .b-crew{grid-area:crew;} .b-vote{grid-area:vote;}
-.b-map{grid-area:map;} .b-fiche{grid-area:fiche;} .b-write{grid-area:write;}
+.b-map{grid-area:map;} .b-carnet{grid-area:carnet;}
 
-/* carte : remplit sa zone SANS déborder */
-.b-map .bb{padding:5px;align-items:center;justify-content:center;}
+/* carte : remplit sa zone SANS déborder ni scroller (sinon micro-tremblement) */
+.b-map .bb{padding:5px;align-items:center;justify-content:center;overflow:hidden;max-height:none;}
 .francemap{width:100%;height:100%;display:block;overflow:visible;}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
@@ -142,6 +142,24 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
+/* ── Bande Carnet du coin (§B4/B6) ── */
+.b-carnet .bb{max-height:34vh;}
+.hz-coin-vide{font-size:13px;color:var(--ink-dim);padding:8px 2px;}
+.hz-coin-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-bottom:6px;}
+.hz-coin-carte{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r);
+  padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-height:0;}
+.hz-coin-carte.limit{opacity:.82;border-style:dashed;}
+.hz-coin-carte .cn{font-family:var(--font-title);font-size:13px;font-weight:600;color:var(--ink);line-height:1.25;}
+.hz-coin-carte .cr{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.3px;}
+.hz-coin-carte .cnote{font-size:11px;color:var(--gold-text);}
+.hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 6px;}
+.hz-coin-pied{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;flex-wrap:wrap;}
+.hz-coin-compte{font-size:12px;color:var(--ink-dim);}
+.hz-coin-envoi{font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;
+  padding:8px 16px;border-radius:var(--r-sm);border:1px solid var(--gold);background:var(--gold);
+  color:var(--chrome-bg);transition:opacity .15s;}
+.hz-coin-envoi:hover{opacity:.88;}
+.hz-coin-envoi:disabled{opacity:.5;cursor:default;}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
 .hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
   border-radius:var(--r-pill,999px);padding:3px 11px;display:inline-block;margin-bottom:9px;}
@@ -224,7 +242,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 @media(max-width:880px){
   html,body{overflow:auto;}
-  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"ind" "crew" "vote" "map" "fiche";}
+  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"ind" "crew" "vote" "map" "carnet";}
   .b-map{min-height:48vh;}
   .b-write .bb{flex-direction:column;}
 }
@@ -265,7 +283,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
         </div>
         <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le thème -->
         <div class="hz-geste-etape" id="hz-geste-lieu" style="display:none">
-          <div class="hz-geste-lbl">2 · C'est où&nbsp;?</div>
+          <div class="hz-geste-lbl">2 · Et dans quelle région&nbsp;?</div>
           <div class="hz-geste-aide">Cliquez 1 ou 2 régions sur la carte (hésitation permise).</div>
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
@@ -301,7 +319,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 <text class="rlabel" x="415.9" y="397.2">PACA</text>
 <text class="rlabel" x="526.5" y="496.6">Corse</text></svg></div>
   </div>
-  <div class="blk fiche b-fiche">
+  <div class="blk fiche b-fiche" style="display:none">
     <div class="bh"><span class="ic">📷</span><h3>Une fiche qui fait envie</h3><span class="pin">📌</span></div>
     <div class="bb">
       <div class="ph" id="hz-fiche-ph" style="background:linear-gradient(135deg,#7a5a1f,var(--gold))"><span class="fl">🏰</span><span class="ev" id="hz-fiche-region">…</span></div>
@@ -310,6 +328,22 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <div class="chips" id="hz-fiche-chips"><span class="rr-badge">⭐ coup de cœur</span></div>
       <div class="hz-reve-mots" id="hz-reve-mots"></div>
       <button class="hz-reve-cta" id="hz-reve-cta" style="display:none">→ Voir les fiches de cette région</button>
+    </div>
+  </div>
+  <!-- BANDE CARNET DU COIN (incrément 2, §B4/B6) : ce que le couple envie×région engendre -->
+  <div class="blk carnet b-carnet">
+    <div class="bh"><span class="ic">📓</span><h3 id="hz-coin-titre">Le Carnet du coin</h3><span class="pin">📌</span></div>
+    <div class="bb">
+      <div id="hz-coin-vide" class="hz-coin-vide">Choisissez une envie puis une région : les fiches du coin s'afficheront ici.</div>
+      <div id="hz-coin-corps" style="display:none">
+        <div class="hz-coin-grille" id="hz-coin-coeur"></div>
+        <div class="hz-coin-soustitre" id="hz-coin-soustitre-limit" style="display:none">À côté, juste de l'autre côté de la frontière</div>
+        <div class="hz-coin-grille" id="hz-coin-limit"></div>
+        <div class="hz-coin-pied">
+          <span class="hz-coin-compte" id="hz-coin-compte"></span>
+          <button class="hz-coin-envoi" id="hz-coin-envoi" type="button">→ Envoyer au Cockpit</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="blk write b-write" style="display:none">
@@ -606,10 +640,11 @@ function ajouteEnvie(){
 function rendBarreEnvies(){
   const bar=document.getElementById('hz-envies-bar');
   if(!bar) return;
-  bar.innerHTML='';
-  const lead=document.createElement('span');
-  lead.className='hz-envies-lead'; lead.textContent='Vos envies :';
-  bar.appendChild(lead);
+  // INCRÉMENT 1 : la « barre des envies » (vieux système de couches) est
+  // remplacée par le geste fondateur thème→lieu. On la masque (code gardé).
+  bar.style.display='none';
+  return;
+  /* eslint-disable no-unreachable */
   HZ_ENVIES.forEach(e=>{
     const b=document.createElement('button');
     b.type='button';
@@ -1405,6 +1440,7 @@ function choisitTheme(cle){
     if(etapeLieu) etapeLieu.style.display='none';
     if(carte) carte.classList.remove('attend-lieu');
     HZ_LIEUX=[]; rendLieuxChoisis(); peintLieuxSurCarte();
+    construitCoin();   // thème retiré → la bande se vide
   }
   majGesteInfo();
 }
@@ -1450,7 +1486,7 @@ function majGesteInfo(){
   const info=document.getElementById('hz-geste-info');
   if(!info) return;
   if(!HZ_THEME){ info.textContent='Choisissez d\'abord une envie, puis le coin.'; return; }
-  if(!HZ_LIEUX.length){ info.textContent='Envie « '+themeLibelle(HZ_THEME)+' » — maintenant, cliquez le coin sur la carte.'; return; }
+  if(!HZ_LIEUX.length){ info.textContent='Envie « '+themeLibelle(HZ_THEME)+' » — maintenant, choisissez 1 ou 2 régions sur la carte.'; return; }
   info.textContent=''; // l'info passe au Carnet du coin (incrément 2)
 }
 
@@ -1459,14 +1495,98 @@ function themeLibelle(cle){
   return t?t.libelle:cle;
 }
 
-// Construit le paquet du Carnet du coin (moteur pur). Incrément 1 : on le
-// calcule et on le journalise ; l'affichage en bande arrive à l'incrément 2.
+// Construit le paquet (moteur pur) ET rend la bande Carnet du coin (§B4/B6).
+let HZ_COIN_PAQUET=null;   // dernier paquet calculé (pour l'envoi au Cockpit)
+
 function construitCoin(){
-  if(!HZ_THEME || !HZ_LIEUX.length || !window.RNR_CARNET_COIN) return null;
+  const vide=document.getElementById('hz-coin-vide');
+  const corps=document.getElementById('hz-coin-corps');
+  const titre=document.getElementById('hz-coin-titre');
+  if(!HZ_THEME || !HZ_LIEUX.length || !window.RNR_CARNET_COIN){
+    HZ_COIN_PAQUET=null;
+    if(titre) titre.textContent='Le Carnet du coin';
+    if(vide) vide.style.display='block';
+    if(corps) corps.style.display='none';
+    return null;
+  }
   const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, HZ_THEME, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME});
-  console.log('[Carnet du coin]', themeLibelle(HZ_THEME), '×', HZ_LIEUX.map(labelRegionSvg).join(' + '),
-              '→', paquet.coeur.length, 'au cœur,', paquet.limitrophes.length, 'à côté');
+  HZ_COIN_PAQUET=paquet;
+  rendCarnetCoin(paquet);
   return paquet;
+}
+
+// Une petite carte de fiche dans la bande.
+function carteFiche(f, estLimit){
+  const div=document.createElement('div');
+  div.className='hz-coin-carte'+(estLimit?' limit':'');
+  const reg=labelRegionSvg(f._regionSvg||f.region||'');
+  const note=(Number(f.note_famille)>0)?('★ '+f.note_famille+'/5'):'';
+  div.innerHTML='<span class="cn">'+escapeHtmlHz(f.nom||'Sans nom')+'</span>'+
+    '<span class="cr">'+escapeHtmlHz(reg)+(estLimit?' · à côté':'')+'</span>'+
+    (note?'<span class="cnote">'+note+'</span>':'');
+  return div;
+}
+
+function rendCarnetCoin(paquet){
+  const vide=document.getElementById('hz-coin-vide');
+  const corps=document.getElementById('hz-coin-corps');
+  const titre=document.getElementById('hz-coin-titre');
+  const coeurBox=document.getElementById('hz-coin-coeur');
+  const limitBox=document.getElementById('hz-coin-limit');
+  const limitTt=document.getElementById('hz-coin-soustitre-limit');
+  const compte=document.getElementById('hz-coin-compte');
+  const envoi=document.getElementById('hz-coin-envoi');
+  if(!corps) return;
+
+  const lieuxLbl=HZ_LIEUX.map(labelRegionSvg).join(' & ');
+  if(titre) titre.textContent='Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
+
+  if(vide) vide.style.display='none';
+  corps.style.display='block';
+
+  // cœur
+  coeurBox.innerHTML='';
+  if(paquet.coeur.length){
+    paquet.coeur.forEach(f=>coeurBox.appendChild(carteFiche(f,false)));
+  }else{
+    const d=document.createElement('div'); d.className='hz-coin-vide';
+    d.textContent='Aucune fiche « '+themeLibelle(HZ_THEME)+' » dans cette région pour l\'instant — le coin attend ses premières idées.';
+    coeurBox.appendChild(d);
+  }
+
+  // limitrophes
+  limitBox.innerHTML='';
+  if(paquet.limitrophes.length){
+    limitTt.style.display='block';
+    paquet.limitrophes.forEach(f=>limitBox.appendChild(carteFiche(f,true)));
+  }else{
+    limitTt.style.display='none';
+  }
+
+  const nC=paquet.coeur.length, nL=paquet.limitrophes.length;
+  compte.textContent = nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'');
+  if(envoi){
+    envoi.disabled = (nC+nL)===0;
+    envoi.textContent='→ Envoyer au Cockpit';
+    envoi.onclick=envoyerAuCockpit;
+  }
+}
+
+// Envoie les fiches du coin au Cockpit : upsert voyage_fiches (statut 'retenue').
+// Contrat identique à Cockpit (respiration des fiches Horizon→Cockpit).
+async function envoyerAuCockpit(){
+  if(!HZ_COIN_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
+  const fiches=HZ_COIN_PAQUET.toutes.filter(f=>f && f.id);
+  if(!fiches.length){ alert('Aucune fiche à envoyer.'); return; }
+  const envoi=document.getElementById('hz-coin-envoi');
+  if(envoi){ envoi.disabled=true; envoi.textContent='Envoi…'; }
+  const maintenant=new Date().toISOString();
+  const rows=fiches.map(f=>({ voyage_id:HZ_VOYAGE_ID, lieu_id:f.id, statut:'retenue', maj_le:maintenant }));
+  try{
+    const {error}=await sb.from('voyage_fiches').upsert(rows,{onConflict:'voyage_id,lieu_id'});
+    if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.'); if(envoi){envoi.disabled=false;envoi.textContent='→ Envoyer au Cockpit';} return; }
+    if(envoi){ envoi.textContent='✓ Envoyé au Cockpit ('+rows.length+')'; }
+  }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.'); if(envoi){envoi.disabled=false;envoi.textContent='→ Envoyer au Cockpit';} }
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
