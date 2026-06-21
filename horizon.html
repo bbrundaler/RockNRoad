@@ -1902,7 +1902,6 @@ function oublieGeste(){
 // RECOMMENCER : efface l'envie, les régions, la bande et la mémoire du voyage
 // courant. On repart de la page blanche du geste (ADN : bouton Reset).
 function recommenceGeste(){
-  console.log('[Recommencer] AVANT — theme:',HZ_THEME,'lieux:',JSON.stringify(HZ_LIEUX));
   fermeSeuil();                  // fermer l'overlay D'ABORD (évite tout clic avalé)
   HZ_THEME=null;
   HZ_LIEUX=[];
@@ -1931,7 +1930,6 @@ function recommenceGeste(){
   construitCoin();              // vide la bande (et masque « En avant »)
   majGesteInfo();
   majRecommencer();
-  console.log('[Recommencer] APRÈS — theme:',HZ_THEME,'lieux:',JSON.stringify(HZ_LIEUX));
 }
 
 // le bouton Recommencer n'apparaît que si un geste est en cours
