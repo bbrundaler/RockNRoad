@@ -156,6 +156,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   overflow:hidden;animation:hzSeuilPop .28s ease;}
 .hz-explo-tete{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 .hz-explo-tete h3{font-family:var(--font-title);font-size:17px;color:var(--gold-text);margin:0;flex-shrink:0;}
+.hz-titre-theme{color:var(--gold-text);font-weight:700;}
+.hz-titre-reg{color:var(--ink-dim);font-weight:500;transition:all .4s;}
+.hz-titre-reg.actif{color:var(--gold);font-weight:700;text-decoration:underline;text-underline-offset:3px;}
+.hz-titre-sep{color:var(--ink-dim);}
 .hz-explo-progres-wrap{flex:1;height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;min-width:60px;}
 .hz-explo-progres{height:100%;width:0;background:var(--gold);transition:width .3s;}
 .hz-explo-liste{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);flex-shrink:0;}
@@ -165,12 +169,14 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-carte{height:40%;min-height:190px;background:var(--bg);flex-shrink:0;}
 .hz-explo-carte .leaflet-container{height:100%;width:100%;background:var(--bg);}
 .hz-explo-bas{flex:1;overflow:hidden;padding:14px 16px;min-height:0;}
-.hz-explo-bas #hz-coin-swipe{grid-template-columns:1.25fr .75fr;height:100%;}
+.hz-explo-bas #hz-coin-swipe{grid-template-columns:1.5fr 1fr;height:100%;gap:18px;}
 .hz-explo-bas .hz-swipe-zone{height:100%;justify-content:flex-start;gap:14px;}
-.hz-explo-bas .hz-swipe-deck{min-height:260px;flex:none;}
-.hz-explo-bas .hz-swipe-card .body{justify-content:flex-start;}
-.hz-explo-bas .hz-swipe-card .ph{height:130px;}
-.hz-explo-bas .hz-swipe-aimees-liste{max-height:none;}
+.hz-explo-bas .hz-swipe-deck{min-height:0;flex:1;}
+.hz-explo-bas .hz-swipe-card{display:flex;flex-direction:column;}
+.hz-explo-bas .hz-swipe-card .ph{height:55%;min-height:150px;flex-shrink:0;}
+.hz-explo-bas .hz-swipe-card .body{flex:1;justify-content:center;gap:8px;}
+.hz-explo-bas .hz-swipe-aimees{display:flex;flex-direction:column;height:100%;min-height:0;}
+.hz-explo-bas .hz-swipe-aimees-liste{max-height:none;flex:1;}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
@@ -240,10 +246,17 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-aimee .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hz-aimee .ic{font-size:13px;}
 .hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
+.hz-aimee-grp-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.4px;
+  padding:8px 2px 5px;margin-top:6px;border-bottom:1px solid var(--gold-a20);}
+.hz-aimee-grp-tt:first-child{margin-top:0;}
+.hz-aimee-grp-tt.limit{color:var(--ink-dim);}
+.hz-aimee-grp-n{font-weight:600;font-size:10.5px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0;}
+.hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
-.hz-aimees-pied{display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid var(--surface-line);}
-.hz-aimees-btn{font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;padding:9px 12px;border-radius:var(--r-sm);transition:.15s;}
+.hz-aimees-pied{display:flex;flex-direction:row;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--surface-line);}
+.hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
 .hz-aimees-btn.refaire{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);}
 .hz-aimees-btn.refaire:hover{background:var(--gold-a10);}
 .hz-aimees-btn.envoi{background:var(--gold);border:1px solid var(--gold);color:var(--chrome-bg);}
@@ -507,11 +520,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           </div>
           <div class="hz-swipe-aimees">
             <div class="hz-swipe-aimees-tt">Aimées dans ce coin</div>
-            <div id="hz-swipe-aimees-liste" class="hz-swipe-aimees-liste"></div>
             <div class="hz-aimees-pied" id="hz-aimees-pied" style="display:none">
-              <button class="hz-aimees-btn refaire" id="hz-aimees-refaire" type="button">↺ Refaire passer ces fiches</button>
-              <button class="hz-aimees-btn envoi" id="hz-aimees-envoi" type="button">→ Envoyer au Cockpit</button>
+              <button class="hz-aimees-btn refaire" id="hz-aimees-refaire" type="button">↺ 2ème vote</button>
+              <button class="hz-aimees-btn envoi" id="hz-aimees-envoi" type="button">✓ Valider suite</button>
             </div>
+            <div id="hz-swipe-aimees-liste" class="hz-swipe-aimees-liste"></div>
           </div>
         </div>
 
@@ -2040,14 +2053,27 @@ function ouvreExplo(){
   if(!HZ_COIN_PAQUET) return;
   const ov=document.getElementById('hz-explo');
   if(!ov) return;
-  const titre=document.getElementById('hz-explo-titre');
-  if(titre) titre.textContent=themeLibelle(HZ_THEME)+' — '+HZ_LIEUX.map(labelRegionSvg).join(' & ');
   ov.style.display='flex';
-  setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); }, 60);
+  setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
+}
+
+// Titre du popup : la région ACTUELLE en évidence (or, gras), les autres
+// atténuées. À chaque transition, l'évidence se déplace (point 4).
+function majTitrePopup(slugActuel){
+  const titre=document.getElementById('hz-explo-titre');
+  if(!titre) return;
+  const theme=themeLibelle(HZ_THEME);
+  const parts=HZ_LIEUX.map(slug=>{
+    const lbl=escapeHtmlHz(labelRegionSvg(slug));
+    const actif=(slug===slugActuel);
+    return '<span class="hz-titre-reg'+(actif?' actif':'')+'">'+lbl+'</span>';
+  });
+  titre.innerHTML='<span class="hz-titre-theme">'+escapeHtmlHz(theme)+'</span> — '+parts.join('<span class="hz-titre-sep"> &amp; </span>');
 }
 function fermeExplo(){
   const ov=document.getElementById('hz-explo');
   if(ov) ov.style.display='none';
+  clearTimeout(HZ_TR_TIMER);
   demonteSwipeVersBande();
 }
 
@@ -2088,6 +2114,7 @@ function exploHighlight(lieuId){
 
 // Zoome la carte sur UNE région (bounds de ses points), avec effet animé.
 let HZ_EXPLO_REGION_ACTUELLE=null;
+let HZ_TR_TIMER=null;
 function zoomCarteSurRegion(slug, anime){
   if(!HZ_EXPLO_MAP || !HZ_COIN_PAQUET) return;
   const pts=[...HZ_COIN_PAQUET.coeur, ...HZ_COIN_PAQUET.limitrophes]
@@ -2096,9 +2123,9 @@ function zoomCarteSurRegion(slug, anime){
   if(!pts.length) return;
   HZ_EXPLO_REGION_ACTUELLE=slug;
   if(anime && HZ_EXPLO_MAP.flyToBounds){
-    HZ_EXPLO_MAP.flyToBounds(pts,{padding:[40,40],maxZoom:10,duration:1.1});
+    HZ_EXPLO_MAP.flyToBounds(pts,{padding:[45,45],maxZoom:10,duration:1.5});  // vol lent (lecture)
   }else{
-    HZ_EXPLO_MAP.fitBounds(pts,{padding:[40,40],maxZoom:10});
+    HZ_EXPLO_MAP.fitBounds(pts,{padding:[45,45],maxZoom:10});
   }
 }
 
@@ -2129,11 +2156,11 @@ function syncCarteSurFiche(){
   const e=elemCourant();
   if(!e) return;
   const slug=e.slug;
+  if(slug) majTitrePopup(slug);
   if(slug && slug!==HZ_EXPLO_REGION_ACTUELLE){
     zoomCarteSurRegion(slug, true);   // changement de région → vol animé
   }
   if(e.kind==='fiche' && e.fiche && e.fiche.id){
-    // laisser le vol s'amorcer, puis ouvrir le point
     setTimeout(()=>exploHighlight(e.fiche.id), slug!==HZ_EXPLO_REGION_ACTUELLE?0:200);
   }
 }
@@ -2218,17 +2245,20 @@ function rendSwipeCarte(){
   if(actions) actions.style.display='flex';
 
   if(e.kind==='transition'){
-    // carte-intercalaire : on la « franchit » avec un seul bouton
+    // TRANSITION AUTOMATIQUE : on affiche le texte, la carte vole (lentement
+    // pour qu'on lise), puis on enchaîne SEUL sur la fiche suivante (pas de clic).
     const t=document.createElement('div');
     t.className='hz-swipe-transition '+(e.ton==='limit'?'limit':'region');
     t.innerHTML='<div class="hz-tr-ic">'+(e.ton==='limit'?'🧭':'🚗')+'</div>'+
       '<div class="hz-tr-titre">'+escapeHtmlHz(e.titre)+'</div>'+
-      '<div class="hz-tr-sous">'+escapeHtmlHz(e.sous)+'</div>'+
-      '<button class="hz-tr-go" type="button">Continuer →</button>';
-    t.querySelector('.hz-tr-go').addEventListener('click',()=>avanceSwipe('like'));
+      '<div class="hz-tr-sous">'+escapeHtmlHz(e.sous)+'</div>';
     deck.appendChild(t);
     if(actions) actions.style.display='none';
-    syncCarteSurFiche();   // « Cap sur… » → la carte vole vers la nouvelle région
+    syncCarteSurFiche();            // la carte vole vers la nouvelle région (lent)
+    majTitrePopup(e.slug);          // le titre met en évidence la nouvelle région
+    // enchaînement auto après le vol (assez long pour lire le texte)
+    clearTimeout(HZ_TR_TIMER);
+    HZ_TR_TIMER=setTimeout(()=>{ HZ_SWIPE_I++; rendSwipeCarte(); majSwipeProgres(); }, 1700);
     return;
   }
 
@@ -2324,14 +2354,29 @@ function rendAimees(){
     if(pied) pied.style.display='none';
     return;
   }
-  aimees.forEach(f=>{
+  // GROUPER PAR RÉGION (le but : aider à se décider pour UNE région).
+  // Ordre : régions choisies d'abord (dans l'ordre du geste), limitrophes ensuite.
+  const parReg={};
+  aimees.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); });
+  const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+  const carteFiche=(f)=>{
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
       '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
       '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button>';
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
-    box.appendChild(d);
+    return d;
+  };
+  ordre.filter(r=>parReg[r]).forEach(slug=>{
+    const fiches=parReg[slug];
+    const estChoisie=HZ_LIEUX.indexOf(slug)!==-1;
+    const tt=document.createElement('div');
+    tt.className='hz-aimee-grp-tt'+(estChoisie?'':' limit');
+    tt.innerHTML='<span>📍 '+escapeHtmlHz(labelRegionSvg(slug))+(estChoisie?'':' · à côté')+'</span>'+
+      '<span class="hz-aimee-grp-n">'+fiches.length+' aimée'+(fiches.length>1?'s':'')+'</span>';
+    box.appendChild(tt);
+    fiches.forEach(f=>box.appendChild(carteFiche(f)));
   });
   if(pied) pied.style.display='flex';
 }
@@ -2377,12 +2422,12 @@ async function envoyerAimeesAuCockpit(){
   try{
     const {error}=await sb.from('voyage_fiches').upsert(rows,{onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.');
-      if(btn){btn.disabled=false;btn.textContent='→ Envoyer au Cockpit';} return; }
+      if(btn){btn.disabled=false;btn.textContent='✓ Valider suite';} return; }
     if(btn) btn.textContent='✓ Envoyé ('+rows.length+')';
     // CLÔTURE : on allège Horizon → fermer le popup, recommencer le geste
     setTimeout(()=>{ fermeExplo(); recommenceGeste(); }, 900);
   }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.');
-    if(btn){btn.disabled=false;btn.textContent='→ Envoyer au Cockpit';} }
+    if(btn){btn.disabled=false;btn.textContent='✓ Valider suite';} }
 }
 
 function brancheAimeesActions(){
