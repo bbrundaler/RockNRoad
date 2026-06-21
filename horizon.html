@@ -59,6 +59,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
 /* Brique 2 — région ÉTEINTE : estompée et grisée, JAMAIS supprimée (réversible) */
 .region.eteinte{fill:var(--surface-line,#3a352a);stroke:var(--surface-line,#3a352a);opacity:.32;filter:grayscale(.7);}
+.region.a-fiches{fill:var(--gold-a20);stroke:var(--gold);stroke-width:1.5;}
 .region.eteinte:hover{transform:none;filter:grayscale(.5);opacity:.45;}
 /* mode tri actif : la carte invite à éteindre */
 .francemap.mode-tri .region{cursor:crosshair;}
@@ -191,7 +192,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-seuil-envie b{color:var(--ink);font-weight:600;}
 .hz-seuil-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 4px;}
 .hz-seuil-sous{font-size:14px;color:var(--ink-dim);line-height:1.55;margin:0 0 18px;}
-.hz-seuil-coins{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.hz-seuil-coins{margin-bottom:16px;}
+.hz-seuil-grp-tt{font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
+.hz-seuil-grp{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.hz-seuil-grp-limit{opacity:.78;}
+.hz-seuil-grp-limit .hz-seuil-coin{border-style:dashed;}
 .hz-seuil-coin{flex:1;min-width:140px;display:flex;align-items:center;gap:10px;padding:12px 14px;
   background:var(--bg);border:1px solid var(--surface-line);border-radius:var(--r);}
 .hz-seuil-coin .pin{font-size:20px;}
@@ -1505,6 +1510,37 @@ function rendThemesChips(){
   });
 }
 
+// ── Coloration de la carte par THÈME (geste neuf, indépendant du vieux moteur) ──
+// Quand un thème est choisi, on estompe les régions qui n'ont AUCUNE fiche de
+// ce thème : la carte guide le choix vers les coins qui ont de la matière.
+// Les régions estompées deviennent non-cliquables (évite aussi les clics parasites).
+function regionsAvecFicheDuTheme(theme){
+  const set=new Set();
+  (HZ_FICHES||[]).forEach(f=>{
+    const reg=f._regionSvg||f.region; if(!reg) return;
+    let ts=[]; try{ ts=(window.RNR_THEMES?RNR_THEMES.themesDeFiche(f):[])||[]; }catch(e){}
+    if(ts.indexOf(theme)!==-1) set.add(reg);
+  });
+  return set;
+}
+function coloreCartePourTheme(theme){
+  const vivantes=regionsAvecFicheDuTheme(theme);
+  document.querySelectorAll('.region[data-r]').forEach(r=>{
+    const reg=r.getAttribute('data-r');
+    const morte=!vivantes.has(reg);
+    r.classList.toggle('eteinte', morte);
+    r.classList.toggle('a-fiches', !morte);   // liseré renforcé sur les régions qui ont de la matière
+    r.style.pointerEvents = morte ? 'none' : '';
+  });
+}
+function rallumeToutesRegions(){
+  document.querySelectorAll('.region[data-r]').forEach(r=>{
+    r.classList.remove('eteinte');
+    r.classList.remove('a-fiches');
+    r.style.pointerEvents='';
+  });
+}
+
 function choisitTheme(cle){
   HZ_THEME = (HZ_THEME===cle) ? null : cle;   // re-clic = désélection
   rendThemesChips();
@@ -1513,9 +1549,11 @@ function choisitTheme(cle){
   if(HZ_THEME){
     if(etapeLieu) etapeLieu.style.display='block';
     if(carte) carte.classList.add('attend-lieu');
+    coloreCartePourTheme(HZ_THEME);   // estompe les régions sans fiche du thème
   }else{
     if(etapeLieu) etapeLieu.style.display='none';
     if(carte) carte.classList.remove('attend-lieu');
+    rallumeToutesRegions();           // plus de thème → carte entièrement vivante
     HZ_LIEUX=[]; rendLieuxChoisis(); peintLieuxSurCarte();
     construitCoin();   // thème retiré → la bande se vide
   }
@@ -1710,16 +1748,24 @@ function lanceSeuil(){
   HZ_SEUIL_VU_SIG=HZ_THEME;
 }
 
-// Regroupe les fiches du coin par région (cœur + limitrophes) pour le récap.
+// Regroupe les fiches par région, en SÉPARANT nettement :
+//  - choisis      : les régions que l'utilisateur a cliquées (HZ_LIEUX)
+//  - limitrophes  : les régions voisines (à côté de la frontière)
+// Jamais mélangées (sinon confusion : « j'ai cliqué 1 région, on m'en montre 6 »).
 function coinsParRegion(paquet){
-  if(!paquet) return [];
-  const par={};
-  const ajoute=(f)=>{ const r=f._regionSvg||f.region||'?'; (par[r]=par[r]||[]).push(f); };
+  if(!paquet) return {choisis:[], limitrophes:[]};
+  const compte={};
+  const ajoute=(f)=>{ const r=f._regionSvg||f.region||'?'; compte[r]=(compte[r]||0)+1; };
   paquet.coeur.forEach(ajoute);
   paquet.limitrophes.forEach(ajoute);
-  // ordre : régions choisies d'abord, limitrophes ensuite
-  const ordre=[...HZ_LIEUX, ...Object.keys(par).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
-  return ordre.filter(r=>par[r]).map(r=>({slug:r, label:labelRegionSvg(r), n:par[r].length}));
+  const fab=(slug)=>({slug, label:labelRegionSvg(slug), n:compte[slug]||0});
+  // choisis = les régions de HZ_LIEUX (dans l'ordre de choix)
+  const choisis=HZ_LIEUX.filter(r=>compte[r]).map(fab);
+  // limitrophes = le reste (régions voisines apportées par le moteur)
+  const limitrophes=Object.keys(compte)
+    .filter(r=>HZ_LIEUX.indexOf(r)===-1)
+    .map(fab);
+  return {choisis, limitrophes};
 }
 
 function ouvreSeuil(){
@@ -1728,16 +1774,23 @@ function ouvreSeuil(){
   // envie
   const env=document.getElementById('hz-seuil-envie');
   if(env) env.innerHTML='✓ Votre envie : <b>'+escapeHtmlHz(themeLibelle(HZ_THEME))+'</b>';
-  // coins (un par région, avec compte réel)
+  // coins SÉPARÉS : « vos coins » (choisis) vs « juste à côté » (limitrophes)
   const box=document.getElementById('hz-seuil-coins');
   if(box){
-    box.innerHTML='';
-    coinsParRegion(HZ_COIN_PAQUET).forEach(c=>{
-      const d=document.createElement('div'); d.className='hz-seuil-coin';
-      d.innerHTML='<span class="pin">📍</span><div><div class="cn">'+escapeHtmlHz(c.label)+'</div>'+
-        '<div class="cc">'+c.n+' fiche'+(c.n>1?'s':'')+' '+escapeHtmlHz(themeLibelle(HZ_THEME).toLowerCase())+'</div></div>';
-      box.appendChild(d);
-    });
+    const {choisis, limitrophes}=coinsParRegion(HZ_COIN_PAQUET);
+    const carte=(c)=>'<div class="hz-seuil-coin"><span class="pin">📍</span><div>'+
+      '<div class="cn">'+escapeHtmlHz(c.label)+'</div>'+
+      '<div class="cc">'+c.n+' fiche'+(c.n>1?'s':'')+' '+escapeHtmlHz(themeLibelle(HZ_THEME).toLowerCase())+'</div></div></div>';
+    let html='';
+    if(choisis.length){
+      html+='<div class="hz-seuil-grp-tt">Vos coins</div>';
+      html+='<div class="hz-seuil-grp">'+choisis.map(carte).join('')+'</div>';
+    }
+    if(limitrophes.length){
+      html+='<div class="hz-seuil-grp-tt">Juste à côté, de l\'autre côté de la frontière</div>';
+      html+='<div class="hz-seuil-grp hz-seuil-grp-limit">'+limitrophes.map(carte).join('')+'</div>';
+    }
+    box.innerHTML=html;
   }
   ov.style.display='flex';
 }
@@ -1856,10 +1909,12 @@ function recommenceGeste(){
   // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
   try{ localStorage.removeItem(cleEnvies()); localStorage.removeItem(cleTri()); }catch(e){}
   // RESET RADICAL : retirer TOUTE coloration de TOUTES les régions, sans condition
-  // (eteinte = vieux système, lieu-choisi = geste). Aucune ne doit survivre.
+  // (eteinte = vieux système ou thème, lieu-choisi = geste). Aucune ne survit.
   document.querySelectorAll('.region[data-r]').forEach(r=>{
     r.classList.remove('eteinte');
     r.classList.remove('lieu-choisi');
+    r.classList.remove('a-fiches');
+    r.style.pointerEvents='';
   });
   // remettre l'écran à l'état initial
   const etapeLieu=document.getElementById('hz-geste-lieu');
@@ -1891,10 +1946,9 @@ function rejoueGeste(){
     const carte=document.querySelector('.francemap');
     if(etapeLieu) etapeLieu.style.display='block';
     if(carte) carte.classList.add('attend-lieu');
+    coloreCartePourTheme(HZ_THEME);   // recolorer selon le thème restauré
     rendLieuxChoisis();
     peintLieuxSurCarte();
-    // restauration : le seuil a déjà été vu pour cette envie → ne pas le rouvrir
-    // tout seul (le bouton « Revoir l'explication » reste disponible).
     HZ_SEUIL_VU_SIG=HZ_THEME;
     if(HZ_LIEUX.length) construitCoin();
   }
@@ -1909,6 +1963,7 @@ async function initGesteFondateur(){
   document.querySelectorAll('.region[data-r]').forEach(r=>{
     r.classList.remove('eteinte');
     r.classList.remove('lieu-choisi');
+    r.classList.remove('a-fiches');
   });
   brancheSeuil();            // boutons du seuil (une fois)
   restaureGeste();
