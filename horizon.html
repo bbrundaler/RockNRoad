@@ -166,8 +166,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-carte .leaflet-container{height:100%;width:100%;background:var(--bg);}
 .hz-explo-bas{flex:1;overflow:hidden;padding:14px 16px;min-height:0;}
 .hz-explo-bas #hz-coin-swipe{grid-template-columns:1.25fr .75fr;height:100%;}
-.hz-explo-bas .hz-swipe-zone{height:100%;justify-content:space-between;}
-.hz-explo-bas .hz-swipe-deck{min-height:0;flex:1;}
+.hz-explo-bas .hz-swipe-zone{height:100%;justify-content:flex-start;gap:14px;}
+.hz-explo-bas .hz-swipe-deck{min-height:260px;flex:none;}
+.hz-explo-bas .hz-swipe-card .body{justify-content:flex-start;}
 .hz-explo-bas .hz-swipe-card .ph{height:130px;}
 .hz-explo-bas .hz-swipe-aimees-liste{max-height:none;}
 /* la carte invite au clic quand on attend un lieu */
