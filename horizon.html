@@ -174,32 +174,46 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-coin-coin-onglet .n{font-size:10.5px;opacity:.7;}
 .hz-coin-modebtn{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);}
 .hz-coin-modebtn:hover{background:var(--gold-a10);}
-/* ── Mode swipe ── */
-#hz-coin-swipe{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
-.hz-swipe-zone{display:flex;flex-direction:column;align-items:center;gap:12px;}
-.hz-swipe-deck{position:relative;width:100%;min-height:230px;}
-.hz-swipe-card{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .32s ease,opacity .32s ease;}
-.hz-swipe-card .ph{height:130px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;padding:8px;}
-.hz-swipe-card .ph .type{font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.55);padding:2px 9px;border-radius:11px;}
-.hz-swipe-card .body{padding:11px 13px;flex:1;display:flex;flex-direction:column;gap:5px;}
-.hz-swipe-card .notes{font-size:11px;color:var(--gold-text);}
-.hz-swipe-card .nom{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--ink);line-height:1.25;}
-.hz-swipe-card .tags{display:flex;gap:4px;flex-wrap:wrap;}
-.hz-swipe-card .tags span{font-size:9.5px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 7px;border-radius:11px;}
-.hz-swipe-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--ink-dim);font-size:13px;padding:20px;}
-.hz-swipe-empty-ic{font-size:30px;}
-.hz-swipe-rejouer{font-family:var(--font-body);font-size:12.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:6px 13px;border-radius:var(--r-sm);}
-.hz-swipe-actions{display:flex;align-items:center;justify-content:center;gap:16px;}
-.hz-swipe-act{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);cursor:pointer;font-size:21px;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
-.hz-swipe-act:active{transform:scale(.88);}
-.hz-swipe-act.love{border-color:rgba(216,69,110,.4);}
+/* ── Mode swipe (refondu : fil continu) ── */
+#hz-coin-swipe{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start;}
+.hz-swipe-zone{display:flex;flex-direction:column;align-items:stretch;gap:10px;}
+.hz-swipe-deck{position:relative;width:100%;min-height:300px;}
+.hz-swipe-card,.hz-swipe-transition{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .28s ease,opacity .28s ease;}
+.hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
+.hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
+.hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
+.hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center;}
+.hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
+.hz-swipe-card .nom{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);line-height:1.2;}
+.hz-swipe-card .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
+.hz-swipe-card .tags span{font-size:10px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 9px;border-radius:12px;}
+/* cartes de transition (Cap sur… / Juste à côté…) */
+.hz-swipe-transition{align-items:center;justify-content:center;text-align:center;gap:8px;padding:24px;background:var(--gold-a10);border:1.5px dashed var(--gold-a35);}
+.hz-swipe-transition.limit{background:var(--bg);}
+.hz-tr-ic{font-size:38px;}
+.hz-tr-titre{font-family:var(--font-title);font-size:21px;font-weight:700;color:var(--gold-text);}
+.hz-tr-sous{font-size:13px;color:var(--ink-dim);}
+.hz-tr-go{margin-top:10px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;padding:9px 20px;border:none;border-radius:var(--r);background:var(--gold);color:var(--chrome-bg);}
+.hz-tr-go:hover{opacity:.88;}
+.hz-swipe-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--ink-dim);font-size:14px;padding:20px;}
+.hz-swipe-empty-ic{font-size:34px;}
+.hz-swipe-rejouer{font-family:var(--font-body);font-size:13px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:7px 15px;border-radius:var(--r-sm);}
+/* actions : remontées juste sous la carte, compactes */
+.hz-swipe-actions{display:flex;align-items:center;justify-content:center;gap:18px;padding:2px 0;}
+.hz-swipe-act{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);cursor:pointer;font-size:23px;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+.hz-swipe-act:active{transform:scale(.86);}
+.hz-swipe-act.love{border-color:rgba(216,69,110,.45);}
 .hz-swipe-act.later{border-color:var(--gold-a35);}
-.hz-swipe-act:disabled{opacity:.35;cursor:default;}
+/* barre de progression (remplace les onglets) */
+.hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
+.hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
+.hz-swipe-progres-txt{font-size:11px;color:var(--ink-dim);margin-left:8px;}
+.hz-coin-coins{display:flex;align-items:center;}
 .hz-swipe-aimees{min-width:0;}
 .hz-swipe-aimees-tt{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
-.hz-swipe-aimees-liste{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow:auto;scrollbar-width:thin;}
+.hz-swipe-aimees-liste{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow:auto;scrollbar-width:thin;}
 .hz-aimee{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-sm);}
-.hz-aimee .mini{width:30px;height:30px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
+.hz-aimee .mini{width:32px;height:32px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
 .hz-aimee .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hz-aimee .ic{font-size:13px;}
 .hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
@@ -1947,89 +1961,106 @@ function rendCarnetCoin(paquet){
 }
 
 // ════════════════════════════════════════════════════════════════
-//  SWIPE (incrément 3b) — une fiche à la fois, le pouce décide.
-//  Travaille coin par coin (région) : bascule en haut si 2 régions.
+//  SWIPE (incrément 3b refondu) — UN SEUL FIL CONTINU, pas d'onglets.
+//  Séquence ordonnée : région 1 (cœur) → carte « Juste à côté… » →
+//  région 1 (limitrophes) → carte « Cap sur <région 2> » → région 2…
+//  Les cartes de transition se swipent comme les fiches (élan préservé).
 //  ❤️/✨ écrivent dans reactions (tuyau existant) ; ✕ passe sans rien.
 // ════════════════════════════════════════════════════════════════
-let HZ_SWIPE_COINS=[];      // [{slug,label,fiches:[...]}]
-let HZ_SWIPE_COIN=0;        // index du coin actif
-let HZ_SWIPE_POS={};        // position dans chaque coin {slugCoin: index}
+let HZ_SWIPE_SEQ=[];        // séquence mêlant {kind:'fiche',fiche} et {kind:'transition',...}
+let HZ_SWIPE_I=0;           // position courante dans la séquence
 let HZ_SWIPE_MODE='swipe';  // 'swipe' | 'liste'
+let HZ_SWIPE_PAQUET=null;   // pour le mode liste
 
 function initSwipe(paquet){
-  // regrouper les fiches par région (choisies d'abord, puis limitrophes)
-  const parReg={};
-  const ajoute=(f)=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); };
-  paquet.coeur.forEach(ajoute); paquet.limitrophes.forEach(ajoute);
-  const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
-  HZ_SWIPE_COINS=ordre.filter(r=>parReg[r]).map(r=>({slug:r, label:labelRegionSvg(r), fiches:parReg[r]}));
-  HZ_SWIPE_COIN=0;
-  HZ_SWIPE_POS={};
-  HZ_SWIPE_COINS.forEach(c=>HZ_SWIPE_POS[c.slug]=0);
-  rendOngletsCoins();
+  HZ_SWIPE_PAQUET=paquet;
+  // 1) regrouper par région : cœur (régions choisies) puis limitrophes
+  const parRegCoeur={}, parRegLimit={};
+  paquet.coeur.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
+  paquet.limitrophes.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
+
+  // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
+  HZ_SWIPE_SEQ=[];
+  HZ_LIEUX.forEach((slug,idx)=>{
+    const label=labelRegionSvg(slug);
+    // transition « Cap sur <région> » avant chaque région SAUF la 1re
+    if(idx>0){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label}); }
+    // fiches du cœur de cette région
+    (parRegCoeur[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label}));
+    // limitrophes RATTACHÉS à cette région choisie ? (le moteur ne lie pas
+    // explicitement, donc on regroupe TOUS les limitrophes après la 1re région
+    // pour rester simple — on les annonce par « Juste à côté… »)
+  });
+  // 3) limitrophes (toutes régions voisines) à la fin, annoncés « Juste à côté »
+  const slugsLimit=Object.keys(parRegLimit);
+  if(slugsLimit.length){
+    HZ_SWIPE_SEQ.push({kind:'transition',ton:'limit',titre:'Juste à côté…',sous:'de l\'autre côté de la frontière'});
+    slugsLimit.forEach(slug=>{
+      const label=labelRegionSvg(slug);
+      (parRegLimit[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,limit:true}));
+    });
+  }
+  HZ_SWIPE_I=0;
   brancheSwipeActions();
   appliqueModeBande();
   rendSwipeCarte();
   rendAimees();
+  majSwipeProgres();
 }
 
-// onglets de bascule entre coins (si plusieurs régions)
-function rendOngletsCoins(){
-  const box=document.getElementById('hz-coin-coins');
-  if(!box) return;
-  box.innerHTML='';
-  if(HZ_SWIPE_COINS.length<=1){ box.style.display='none'; return; }
-  box.style.display='flex';
-  HZ_SWIPE_COINS.forEach((c,i)=>{
-    const b=document.createElement('button');
-    b.className='hz-coin-coin-onglet'+(i===HZ_SWIPE_COIN?' on':'');
-    b.innerHTML='📍 '+escapeHtmlHz(c.label)+' <span class="n">'+c.fiches.length+'</span>';
-    b.addEventListener('click',()=>{ HZ_SWIPE_COIN=i; rendOngletsCoins(); rendSwipeCarte(); rendAimees(); });
-    box.appendChild(b);
-  });
-}
+function elemCourant(){ return HZ_SWIPE_SEQ[HZ_SWIPE_I]||null; }
+function ficheCourante(){ const e=elemCourant(); return (e && e.kind==='fiche') ? e.fiche : null; }
 
-function coinActif(){ return HZ_SWIPE_COINS[HZ_SWIPE_COIN]||null; }
-function ficheCourante(){
-  const c=coinActif(); if(!c) return null;
-  const pos=HZ_SWIPE_POS[c.slug]||0;
-  return c.fiches[pos]||null;
-}
-
-// rend la carte du dessus (et une carte fantôme dessous pour la profondeur)
+// rend la carte du dessus selon son type (fiche ou transition)
 function rendSwipeCarte(){
   const deck=document.getElementById('hz-swipe-deck');
   const vide=document.getElementById('hz-swipe-empty');
   const actions=document.getElementById('hz-swipe-actions');
   if(!deck) return;
-  // retirer les anciennes cartes (garder le bloc vide)
-  Array.from(deck.querySelectorAll('.hz-swipe-card')).forEach(el=>el.remove());
-  const f=ficheCourante();
-  if(!f){
+  Array.from(deck.querySelectorAll('.hz-swipe-card,.hz-swipe-transition')).forEach(el=>el.remove());
+  const e=elemCourant();
+  if(!e){
     if(vide) vide.style.display='flex';
     if(actions) actions.style.display='none';
     return;
   }
   if(vide) vide.style.display='none';
   if(actions) actions.style.display='flex';
+
+  if(e.kind==='transition'){
+    // carte-intercalaire : on la « franchit » avec un seul bouton
+    const t=document.createElement('div');
+    t.className='hz-swipe-transition '+(e.ton==='limit'?'limit':'region');
+    t.innerHTML='<div class="hz-tr-ic">'+(e.ton==='limit'?'🧭':'🚗')+'</div>'+
+      '<div class="hz-tr-titre">'+escapeHtmlHz(e.titre)+'</div>'+
+      '<div class="hz-tr-sous">'+escapeHtmlHz(e.sous)+'</div>'+
+      '<button class="hz-tr-go" type="button">Continuer →</button>';
+    t.querySelector('.hz-tr-go').addEventListener('click',()=>avanceSwipe('like'));
+    deck.appendChild(t);
+    // sur une transition : masquer les 3 boutons (un seul geste = continuer)
+    if(actions) actions.style.display='none';
+    return;
+  }
+
+  // carte de fiche
+  const f=e.fiche;
   const card=document.createElement('div');
   card.className='hz-swipe-card';
   const ph=f.photo_url?'url(\''+f.photo_url+'\')':'linear-gradient(135deg,#88888844,#88888822)';
-  const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'');
+  const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(e.limit?' · à côté':'');
   const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
   const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
   card.innerHTML=
-    '<div class="ph" style="background-image:'+ph+'"><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+'</div>';
   deck.appendChild(card);
 }
 
-// passe à la fiche suivante avec animation d'envol
-function swipeSuivante(direction){
+// avance d'un cran dans la séquence (avec animation)
+function avanceSwipe(direction){
   const deck=document.getElementById('hz-swipe-deck');
-  const card=deck?deck.querySelector('.hz-swipe-card'):null;
-  const c=coinActif(); if(!c) return;
+  const card=deck?deck.querySelector('.hz-swipe-card,.hz-swipe-transition'):null;
   if(card){
     const dx=direction==='pass'?-380:380;
     const rot=direction==='pass'?-9:9;
@@ -2037,23 +2068,22 @@ function swipeSuivante(direction){
     card.style.opacity='0';
   }
   setTimeout(()=>{
-    HZ_SWIPE_POS[c.slug]=(HZ_SWIPE_POS[c.slug]||0)+1;
+    HZ_SWIPE_I++;
     rendSwipeCarte();
-    rendOngletsCoins();
-  },280);
+    majSwipeProgres();
+  },260);
 }
 
-// les 3 gestes
+// les 3 gestes (sur une fiche)
 async function swipeGeste(type){
   const f=ficheCourante(); if(!f){ return; }
-  if(type==='pass'){ swipeSuivante('pass'); return; }
-  // ❤️/✨ → écrit dans reactions (réutilise hzToggleVote, mais en mode "ajoute")
+  if(type==='pass'){ avanceSwipe('pass'); return; }
   if(type==='love' || type==='later'){
     const slot=hzCoeursDe(f.id);
     const deja=(type==='love')?slot.love.mine:slot.later.mine;
-    if(!deja){ await hzToggleVote(f.id, type); }   // ajoute le cœur si pas déjà mis
+    if(!deja){ await hzToggleVote(f.id, type); }
     rendAimees();
-    swipeSuivante('like');
+    avanceSwipe('like');
   }
 }
 
@@ -2065,20 +2095,30 @@ function brancheSwipeActions(){
   });
   const rejouer=document.getElementById('hz-swipe-rejouer');
   if(rejouer && !rejouer._cable){ rejouer._cable=true; rejouer.addEventListener('click',()=>{
-    const c=coinActif(); if(c){ HZ_SWIPE_POS[c.slug]=0; rendSwipeCarte(); }
+    HZ_SWIPE_I=0; rendSwipeCarte(); majSwipeProgres();
   }); }
   const modebtn=document.getElementById('hz-coin-modebtn');
   if(modebtn && !modebtn._cable){ modebtn._cable=true; modebtn.addEventListener('click',basculeModeBande); }
 }
 
-// liste des fiches aimées dans le coin actif (lecture des cœurs)
+// barre de progression (combien parcouru sur le total de fiches)
+function majSwipeProgres(){
+  const el=document.getElementById('hz-coin-coins');
+  if(!el) return;
+  const fiches=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').length;
+  const vues=HZ_SWIPE_SEQ.slice(0,HZ_SWIPE_I).filter(e=>e.kind==='fiche').length;
+  el.innerHTML='<div class="hz-swipe-progres"><div class="hz-swipe-progres-barre" style="width:'+
+    (fiches?Math.round(100*Math.min(vues,fiches)/fiches):0)+'%"></div></div>'+
+    '<span class="hz-swipe-progres-txt">'+Math.min(vues,fiches)+' / '+fiches+' fiches parcourues</span>';
+}
+
+// liste des fiches aimées (tout le coin, lecture des cœurs)
 function rendAimees(){
   const box=document.getElementById('hz-swipe-aimees-liste');
-  const c=coinActif();
-  if(!box) return;
+  if(!box || !HZ_SWIPE_PAQUET) return;
   box.innerHTML='';
-  if(!c){ return; }
-  const aimees=c.fiches.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine||s.love.count>0; });
+  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine||s.love.count>0; });
   if(!aimees.length){
     const d=document.createElement('div'); d.className='hz-aimee-vide';
     d.textContent='Aucune fiche aimée pour l\'instant — swipez ❤️ ce qui vous tente.';
@@ -2104,12 +2144,12 @@ function appliqueModeBande(){
   const sw=document.getElementById('hz-coin-swipe');
   const li=document.getElementById('hz-coin-liste');
   const btn=document.getElementById('hz-coin-modebtn');
-  const teteCoins=document.getElementById('hz-coin-coins');
+  const coins=document.getElementById('hz-coin-coins');
   const enSwipe=HZ_SWIPE_MODE==='swipe';
   if(sw) sw.style.display=enSwipe?'grid':'none';
   if(li) li.style.display=enSwipe?'none':'block';
   if(btn) btn.textContent=enSwipe?'▦ Voir en liste':'🃏 Revenir au swipe';
-  if(teteCoins) teteCoins.style.visibility=enSwipe?'visible':'hidden';
+  if(coins) coins.style.visibility=enSwipe?'visible':'hidden';
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
