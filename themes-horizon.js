@@ -56,6 +56,12 @@
       'ferme','fromagerie','marché','marche couvert','halles','moulin','salines','miellerie','conservatoire']
   };
 
+  /* Mots-mer AMBIGUS : ils existent aussi en intérieur (plage/dune/baie de LAC,
+     bassin, lagune d'étang…). Ils ne donnent « mer » que si le GPS confirme la
+     côte (estCotier). Les mots SANS ambiguïté (mer, océan, méditerranée,
+     atlantique, manche, littoral, calanque, phare, port de…) restent fiables. */
+  var MOTS_MER_AMBIGUS = ['plage','plages','dune','dunes','baie','bassin','lagune','cap '];
+
   /* ── Sous-distinctions de tags.js → thème(s) (réutilise la taxonomie) ──────
      Une sous-distinction peut nourrir plusieurs thèmes. On ne perd pas le
      travail v2 : on le branche sur les thèmes. */
@@ -64,7 +70,7 @@
     musee:      ['culture'],
     paysage:    ['nature'],
     balade:     ['nature'],
-    baignade:   ['mer','nature'],
+    baignade:   ['nature'],
     sport:      ['sport'],
     terroir:    ['terroir'],
     parcs:      ['loisirs'],
@@ -106,6 +112,14 @@
      évite « cap » ⊂ « scapin ». Les pièges où le préfixe matche un mot sans
      rapport (cap⊂capitale, port⊂portalet, mont⊂montre) sont neutralisés en
      déclarant ces mots-clés en LOCUTION (avec un espace : « cap », « port de »). */
+  /* Un mot (simple ou locution) est-il présent dans le nom ? Même règle que
+     nomMatcheTheme mais pour UN mot donné (sert à l'arbitrage mer ambigu). */
+  function motDansNom(nomLower, mot) {
+    if (mot.indexOf(' ') !== -1) return nomLower.indexOf(mot) !== -1;
+    var re = new RegExp('(^|[^a-zà-ÿ])' + escapeRe(mot), 'i');
+    return re.test(nomLower);
+  }
+
   function nomMatcheTheme(nomLower, theme) {
     var liste = MOTS[theme] || [];
     for (var i = 0; i < liste.length; i++) {
@@ -137,6 +151,26 @@
       if (nom && nomMatcheTheme(nom, t)) trouve[t] = true;
     });
 
+    /* 1bis) ARBITRAGE « plage/dune/baie… » par le GPS (décision Bruno) :
+       un mot-mer AMBIGU (qui existe aussi pour un lac) ne suffit pas. Si « mer »
+       n'a été posée QUE par un mot ambigu et que le GPS n'est PAS côtier, on
+       retire « mer » (la fiche reste « nature »). Une vraie plage atlantique,
+       elle, sera confirmée par estCotier à l'étape 4. */
+    if (trouve.mer) {
+      var motMerFiable = false, motMerAmbigu = false;
+      (MOTS.mer || []).forEach(function (mot) {
+        if (nom && motDansNom(nom, mot)) {
+          if (MOTS_MER_AMBIGUS.indexOf(mot) !== -1) motMerAmbigu = true;
+          else motMerFiable = true;
+        }
+      });
+      var cotier = (lat != null && lng != null && options.geo !== false) ? estCotier(lat, lng) : false;
+      if (motMerAmbigu && !motMerFiable && !cotier) {
+        delete trouve.mer;        /* plage/dune/baie en intérieur → pas la mer */
+        trouve.nature = true;     /* mais ça reste de la nature */
+      }
+    }
+
     /* 2) Sous-distinction tags.js (si on l'a — via classerDepuisGoogle). */
     var sd = options.sousDistinction || (fiche && fiche._sousDistinction) || null;
     if (sd && SD_VERS_THEMES[sd]) {
@@ -150,7 +184,7 @@
     if (tags.indexOf('nature') !== -1)     trouve.nature = true;
     if (tags.indexOf('vue') !== -1)        trouve.nature = true;
     if (tags.indexOf('randonnee') !== -1) { trouve.nature = true; trouve.sport = true; }
-    if (tags.indexOf('baignade') !== -1)  { trouve.mer = true; trouve.nature = true; }
+    if (tags.indexOf('baignade') !== -1)  { trouve.nature = true; }  /* baignade = nature ; la mer ne vient que du GPS côtier ou des mots marins */
 
     /* 4) GÉO : filets façades + massifs (en PLUS des mots). */
     if (options.geo !== false && lat != null && lng != null) {
