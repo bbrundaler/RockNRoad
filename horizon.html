@@ -25,10 +25,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
-  min-height:calc(100vh - 56px);   /* plein écran au départ, mais peut grandir (logique Cockpit) */
   padding:12px;display:grid;gap:11px;
   grid-template-columns:340px 1fr 400px;
-  grid-template-rows:auto 1fr auto;
+  grid-template-rows:auto auto auto;
   grid-template-areas:
     "ind   map   crew"
     "vote  map   crew"
@@ -49,9 +48,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .b-ind{grid-area:ind;} .b-crew{grid-area:crew;} .b-vote{grid-area:vote;}
 .b-map{grid-area:map;} .b-carnet{grid-area:carnet;}
 
-/* carte : remplit sa zone SANS déborder ni scroller (sinon micro-tremblement) */
+/* carte : remplit sa zone SANS déborder ni scroller (sinon micro-tremblement).
+   Plafonnée : on ne fait que désigner des régions, pas lire du détail → on
+   laisse la bande Carnet du coin respirer juste en dessous. */
+.b-map{max-height:54vh;}
 .b-map .bb{padding:5px;align-items:center;justify-content:center;overflow:hidden;max-height:none;}
-.francemap{width:100%;height:100%;display:block;overflow:visible;}
+.francemap{width:100%;height:100%;max-height:50vh;display:block;overflow:visible;}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
 .region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
