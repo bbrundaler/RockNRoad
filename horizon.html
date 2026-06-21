@@ -152,20 +152,24 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
   z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;}
 .hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
-  box-shadow:var(--shadow);width:min(960px,96vw);height:min(88vh,820px);display:flex;flex-direction:column;
+  box-shadow:var(--shadow);width:min(1040px,97vw);height:min(94vh,900px);display:flex;flex-direction:column;
   overflow:hidden;animation:hzSeuilPop .28s ease;}
-.hz-explo-tete{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--surface-line);}
+.hz-explo-tete{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 .hz-explo-tete h3{font-family:var(--font-title);font-size:17px;color:var(--gold-text);margin:0;flex-shrink:0;}
 .hz-explo-progres-wrap{flex:1;height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;min-width:60px;}
 .hz-explo-progres{height:100%;width:0;background:var(--gold);transition:width .3s;}
-.hz-explo-liste{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);}
+.hz-explo-liste{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);flex-shrink:0;}
 .hz-explo-liste:hover{background:var(--gold-a10);}
 .hz-explo-fermer{width:32px;height:32px;border-radius:50%;border:1px solid var(--surface-line);background:var(--bg);color:var(--ink);cursor:pointer;font-size:15px;flex-shrink:0;}
 .hz-explo-fermer:hover{border-color:var(--gold);}
-.hz-explo-carte{height:46%;min-height:200px;background:var(--bg);}
+.hz-explo-carte{height:40%;min-height:190px;background:var(--bg);flex-shrink:0;}
 .hz-explo-carte .leaflet-container{height:100%;width:100%;background:var(--bg);}
-.hz-explo-bas{flex:1;overflow:auto;padding:14px 16px;scrollbar-width:thin;}
-.hz-explo-bas #hz-coin-swipe{grid-template-columns:1.3fr .7fr;}
+.hz-explo-bas{flex:1;overflow:hidden;padding:14px 16px;min-height:0;}
+.hz-explo-bas #hz-coin-swipe{grid-template-columns:1.25fr .75fr;height:100%;}
+.hz-explo-bas .hz-swipe-zone{height:100%;justify-content:space-between;}
+.hz-explo-bas .hz-swipe-deck{min-height:0;flex:1;}
+.hz-explo-bas .hz-swipe-card .ph{height:130px;}
+.hz-explo-bas .hz-swipe-aimees-liste{max-height:none;}
 /* la carte invite au clic quand on attend un lieu */
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
@@ -2052,15 +2056,36 @@ function initExploCarte(){
     HZ_EXPLO_MARQUEURS[l.id]=m;
     bounds.push([l.lat,l.lng]);
   });
-  if(bounds.length) HZ_EXPLO_MAP.fitBounds(bounds,{padding:[30,30],maxZoom:11});
-  else HZ_EXPLO_MAP.setView([46.6,2.5],5);
+  if(bounds.length){
+    const premier=HZ_LIEUX[0];
+    const ptsRegion=[...HZ_COIN_PAQUET.coeur, ...HZ_COIN_PAQUET.limitrophes]
+      .filter(l=>(l._regionSvg||l.region)===premier && l.lat && l.lng).map(l=>[l.lat,l.lng]);
+    if(ptsRegion.length){ HZ_EXPLO_MAP.fitBounds(ptsRegion,{padding:[40,40],maxZoom:10}); HZ_EXPLO_REGION_ACTUELLE=premier; }
+    else HZ_EXPLO_MAP.fitBounds(bounds,{padding:[30,30],maxZoom:11});
+  } else HZ_EXPLO_MAP.setView([46.6,2.5],5);
   setTimeout(()=>{ if(HZ_EXPLO_MAP) HZ_EXPLO_MAP.invalidateSize(); }, 80);
 }
 
 function exploHighlight(lieuId){
   if(!HZ_EXPLO_MAP) return;
   const m=HZ_EXPLO_MARQUEURS[lieuId];
-  if(m){ HZ_EXPLO_MAP.panTo(m.getLatLng(),{animate:true,duration:.4}); m.openPopup(); }
+  if(m){ m.openPopup(); }
+}
+
+// Zoome la carte sur UNE région (bounds de ses points), avec effet animé.
+let HZ_EXPLO_REGION_ACTUELLE=null;
+function zoomCarteSurRegion(slug, anime){
+  if(!HZ_EXPLO_MAP || !HZ_COIN_PAQUET) return;
+  const pts=[...HZ_COIN_PAQUET.coeur, ...HZ_COIN_PAQUET.limitrophes]
+    .filter(l=>(l._regionSvg||l.region)===slug && l.lat && l.lng)
+    .map(l=>[l.lat,l.lng]);
+  if(!pts.length) return;
+  HZ_EXPLO_REGION_ACTUELLE=slug;
+  if(anime && HZ_EXPLO_MAP.flyToBounds){
+    HZ_EXPLO_MAP.flyToBounds(pts,{padding:[40,40],maxZoom:10,duration:1.1});
+  }else{
+    HZ_EXPLO_MAP.fitBounds(pts,{padding:[40,40],maxZoom:10});
+  }
 }
 
 // Déplace le conteneur swipe (un seul exemplaire) dans le popup à l'ouverture.
@@ -2083,10 +2108,19 @@ function demonteSwipeVersBande(){
   }
 }
 
-// La carte suit la fiche courante du swipe (effet wahoo : point mis en avant).
+// La carte suit la fiche courante : zoom sur sa région (si on a changé de
+// région) + met son point en avant.
 function syncCarteSurFiche(){
-  const f=ficheCourante();
-  if(f && f.id) exploHighlight(f.id);
+  const e=elemCourant();
+  if(!e) return;
+  const slug=e.slug;
+  if(slug && slug!==HZ_EXPLO_REGION_ACTUELLE){
+    zoomCarteSurRegion(slug, true);   // changement de région → vol animé
+  }
+  if(e.kind==='fiche' && e.fiche && e.fiche.id){
+    // laisser le vol s'amorcer, puis ouvrir le point
+    setTimeout(()=>exploHighlight(e.fiche.id), slug!==HZ_EXPLO_REGION_ACTUELLE?0:200);
+  }
 }
 
 function brancheExplo(){
@@ -2127,20 +2161,18 @@ function initSwipe(paquet){
   HZ_LIEUX.forEach((slug,idx)=>{
     const label=labelRegionSvg(slug);
     // transition « Cap sur <région> » avant chaque région SAUF la 1re
-    if(idx>0){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label}); }
+    if(idx>0){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
     // fiches du cœur de cette région
-    (parRegCoeur[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label}));
-    // limitrophes RATTACHÉS à cette région choisie ? (le moteur ne lie pas
-    // explicitement, donc on regroupe TOUS les limitrophes après la 1re région
-    // pour rester simple — on les annonce par « Juste à côté… »)
+    (parRegCoeur[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug}));
   });
   // 3) limitrophes (toutes régions voisines) à la fin, annoncés « Juste à côté »
   const slugsLimit=Object.keys(parRegLimit);
   if(slugsLimit.length){
-    HZ_SWIPE_SEQ.push({kind:'transition',ton:'limit',titre:'Juste à côté…',sous:'de l\'autre côté de la frontière'});
+    const premierLimit=slugsLimit[0];
+    HZ_SWIPE_SEQ.push({kind:'transition',ton:'limit',titre:'Juste à côté…',sous:'de l\'autre côté de la frontière',slug:premierLimit});
     slugsLimit.forEach(slug=>{
       const label=labelRegionSvg(slug);
-      (parRegLimit[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,limit:true}));
+      (parRegLimit[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,limit:true,slug:slug}));
     });
   }
   HZ_SWIPE_I=0;
@@ -2180,8 +2212,8 @@ function rendSwipeCarte(){
       '<button class="hz-tr-go" type="button">Continuer →</button>';
     t.querySelector('.hz-tr-go').addEventListener('click',()=>avanceSwipe('like'));
     deck.appendChild(t);
-    // sur une transition : masquer les 3 boutons (un seul geste = continuer)
     if(actions) actions.style.display='none';
+    syncCarteSurFiche();   // « Cap sur… » → la carte vole vers la nouvelle région
     return;
   }
 
@@ -2198,8 +2230,8 @@ function rendSwipeCarte(){
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+'</div>';
   deck.appendChild(card);
-  // dialogue carte↔swipe : si le popup est ouvert, la carte met ce point en avant
-  if(f.id) exploHighlight(f.id);
+  // dialogue carte↔swipe : zoom sur la région + point mis en avant
+  syncCarteSurFiche();
 }
 
 // avance d'un cran dans la séquence (avec animation)
