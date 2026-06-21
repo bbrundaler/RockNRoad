@@ -175,6 +175,35 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
 .vote-btn.ecartee.active{background:var(--surface-line);opacity:.85;}
 .vote-count{font-size:9.5px;font-weight:600;}
+/* ── SEUIL : overlay plein écran (porté du pattern maison .vy-overlay) ── */
+.hz-seuil-overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(3px);
+  z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;}
+.hz-seuil-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
+  box-shadow:var(--shadow);max-width:480px;width:100%;padding:26px 24px;animation:hzSeuilPop .28s ease;}
+@keyframes hzSeuilPop{from{transform:scale(.95);opacity:0;}to{transform:scale(1);opacity:1;}}
+.hz-seuil-envie{font-size:13px;color:var(--ink-dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.hz-seuil-envie b{color:var(--ink);font-weight:600;}
+.hz-seuil-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 4px;}
+.hz-seuil-sous{font-size:14px;color:var(--ink-dim);line-height:1.55;margin:0 0 18px;}
+.hz-seuil-coins{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.hz-seuil-coin{flex:1;min-width:140px;display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:var(--bg);border:1px solid var(--surface-line);border-radius:var(--r);}
+.hz-seuil-coin .pin{font-size:20px;}
+.hz-seuil-coin .cn{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
+.hz-seuil-coin .cc{font-size:12.5px;color:var(--ink-dim);}
+.hz-seuil-info{display:flex;gap:9px;padding:12px 14px;background:var(--gold-a10);border-radius:var(--r);
+  margin-bottom:18px;font-size:13px;color:var(--gold-text);line-height:1.55;}
+.hz-seuil-info b{font-weight:600;}
+.hz-seuil-info-ic{flex-shrink:0;}
+.hz-seuil-go{width:100%;padding:13px;border:none;border-radius:var(--r);background:var(--gold);
+  color:var(--chrome-bg);font-family:var(--font-body);font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;}
+.hz-seuil-go:hover{opacity:.88;}
+/* bouton « revoir l'explication » dans le pied de bande */
+.hz-coin-revoir{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;
+  border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;gap:5px;margin-left:auto;}
+.hz-coin-revoir:hover{background:var(--gold-a10);}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
 .hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
   border-radius:var(--r-pill,999px);padding:3px 11px;display:inline-block;margin-bottom:9px;}
@@ -356,6 +385,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
         <div class="hz-coin-grille" id="hz-coin-limit"></div>
         <div class="hz-coin-pied">
           <span class="hz-coin-compte" id="hz-coin-compte"></span>
+          <button class="hz-coin-revoir" id="hz-coin-revoir" type="button">💡 Revoir l'explication</button>
         </div>
       </div>
     </div>
@@ -380,7 +410,22 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   </div>
 </div>
 
-<!-- Supabase + garde d'authentification (même socle que les autres pages) -->
+<!-- SEUIL : passage de relais geste → swipe (overlay plein écran, §B + narratif « ouaouh »).
+     S'ouvre quand un coin devient prêt ; rouvrable via le bouton dédié. -->
+<div class="hz-seuil-overlay" id="hz-seuil" style="display:none">
+  <div class="hz-seuil-modal">
+    <div class="hz-seuil-envie" id="hz-seuil-envie">✓ Votre envie : <b>…</b></div>
+    <h2 class="hz-seuil-titre">En avant pour la sélection</h2>
+    <p class="hz-seuil-sous">Vous avez réuni de quoi rêver. On va parcourir les fiches et garder ce qui vous tente.</p>
+    <div class="hz-seuil-coins" id="hz-seuil-coins"></div>
+    <div class="hz-seuil-info">
+      <span class="hz-seuil-info-ic">ℹ️</span>
+      <span>C'est un <b>premier tri, pas la décision finale</b>. On dégrossit : ce que vous aimez remonte au groupe, le reste n'est pas perdu. Le vrai choix se fera ensemble, plus tard.</span>
+    </div>
+    <button class="hz-seuil-go" id="hz-seuil-go" type="button">En avant <span>→</span></button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const {createClient}=supabase;
@@ -1620,7 +1665,59 @@ function construitCoin(){
   const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, HZ_THEME, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME});
   HZ_COIN_PAQUET=paquet;
   rendCarnetCoin(paquet);
+  // SEUIL : s'ouvre quand un coin DEVIENT prêt (passage vide → des fiches),
+  // pas à chaque micro-ajustement de région. Anti-répétition par signature.
+  const prets=(paquet.coeur.length+paquet.limitrophes.length)>0;
+  if(prets){
+    const sig=HZ_THEME; // un seuil par envie : changer d'envie le rouvre
+    if(HZ_SEUIL_VU_SIG!==sig){ ouvreSeuil(); HZ_SEUIL_VU_SIG=sig; }
+  }
   return paquet;
+}
+
+// ── SEUIL (passage de relais geste → swipe) ──
+let HZ_SEUIL_VU_SIG=null;   // signature de la dernière envie pour qui le seuil s'est ouvert
+
+// Regroupe les fiches du coin par région (cœur + limitrophes) pour le récap.
+function coinsParRegion(paquet){
+  if(!paquet) return [];
+  const par={};
+  const ajoute=(f)=>{ const r=f._regionSvg||f.region||'?'; (par[r]=par[r]||[]).push(f); };
+  paquet.coeur.forEach(ajoute);
+  paquet.limitrophes.forEach(ajoute);
+  // ordre : régions choisies d'abord, limitrophes ensuite
+  const ordre=[...HZ_LIEUX, ...Object.keys(par).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+  return ordre.filter(r=>par[r]).map(r=>({slug:r, label:labelRegionSvg(r), n:par[r].length}));
+}
+
+function ouvreSeuil(){
+  const ov=document.getElementById('hz-seuil');
+  if(!ov || !HZ_COIN_PAQUET) return;
+  // envie
+  const env=document.getElementById('hz-seuil-envie');
+  if(env) env.innerHTML='✓ Votre envie : <b>'+escapeHtmlHz(themeLibelle(HZ_THEME))+'</b>';
+  // coins (un par région, avec compte réel)
+  const box=document.getElementById('hz-seuil-coins');
+  if(box){
+    box.innerHTML='';
+    coinsParRegion(HZ_COIN_PAQUET).forEach(c=>{
+      const d=document.createElement('div'); d.className='hz-seuil-coin';
+      d.innerHTML='<span class="pin">📍</span><div><div class="cn">'+escapeHtmlHz(c.label)+'</div>'+
+        '<div class="cc">'+c.n+' fiche'+(c.n>1?'s':'')+' '+escapeHtmlHz(themeLibelle(HZ_THEME).toLowerCase())+'</div></div>';
+      box.appendChild(d);
+    });
+  }
+  ov.style.display='flex';
+}
+function fermeSeuil(){ const ov=document.getElementById('hz-seuil'); if(ov) ov.style.display='none'; }
+
+// Branché une fois au chargement (boutons du seuil).
+function brancheSeuil(){
+  const go=document.getElementById('hz-seuil-go');
+  if(go) go.addEventListener('click', fermeSeuil);
+  // fermer en cliquant le fond
+  const ov=document.getElementById('hz-seuil');
+  if(ov) ov.addEventListener('click', e=>{ if(e.target===ov) fermeSeuil(); });
 }
 
 // Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
@@ -1681,6 +1778,8 @@ function rendCarnetCoin(paquet){
 
   const nC=paquet.coeur.length, nL=paquet.limitrophes.length;
   if(compte) compte.textContent=nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'')+' — aimez celles qui vous tentent ❤️';
+  const revoir=document.getElementById('hz-coin-revoir');
+  if(revoir) revoir.onclick=ouvreSeuil;   // rouvrir le seuil à la demande
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
@@ -1713,6 +1812,9 @@ function rejoueGeste(){
     if(carte) carte.classList.add('attend-lieu');
     rendLieuxChoisis();
     peintLieuxSurCarte();
+    // restauration : le seuil a déjà été vu pour cette envie → ne pas le rouvrir
+    // tout seul (le bouton « Revoir l'explication » reste disponible).
+    HZ_SEUIL_VU_SIG=HZ_THEME;
     if(HZ_LIEUX.length) construitCoin();
   }
   majGesteInfo();
@@ -1720,6 +1822,7 @@ function rejoueGeste(){
 
 async function initGesteFondateur(){
   await hzChargerCoeurs();   // cœurs du groupe AVANT le premier rendu de bande
+  brancheSeuil();            // boutons du seuil (une fois)
   restaureGeste();
   rejoueGeste();
 }
