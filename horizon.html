@@ -1129,6 +1129,12 @@ function regionsSvgPresentes(){
 
 // (Re)pose la couche de tri dans la cascade, puis applique le verdict au SVG.
 function appliqueCascade(){
+  // NEUTRALISÉ (incrément 1) : le geste thème→lieu a remplacé le système de
+  // cascade. Cette fonction ne doit plus JAMAIS poser de classe « eteinte »
+  // sur la carte (sinon régions grises résiduelles, ré-apparaissant après reset).
+  // Code d'origine conservé ci-dessous, mais inerte.
+  return;
+  /* eslint-disable no-unreachable */
   if(!window.RNR_CARTO){ return; } // moteur absent → on ne casse rien
   // Couche 1 : le tri perso (régions écartées à la main)
   RNR_CARTO.coucheListe({
@@ -1848,14 +1854,19 @@ function recommenceGeste(){
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
   oublieGeste();
   // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
-  // pour qu'aucune région estompée ne réapparaisse.
   try{ localStorage.removeItem(cleEnvies()); localStorage.removeItem(cleTri()); }catch(e){}
-  document.querySelectorAll('.region.eteinte').forEach(r=>r.classList.remove('eteinte'));
+  // RESET RADICAL : retirer TOUTE coloration de TOUTES les régions, sans condition
+  // (eteinte = vieux système, lieu-choisi = geste). Aucune ne doit survivre.
+  document.querySelectorAll('.region[data-r]').forEach(r=>{
+    r.classList.remove('eteinte');
+    r.classList.remove('lieu-choisi');
+  });
   // remettre l'écran à l'état initial
   const etapeLieu=document.getElementById('hz-geste-lieu');
   const carte=document.querySelector('.francemap');
   if(etapeLieu) etapeLieu.style.display='none';
-  if(carte) carte.classList.remove('attend-lieu');
+  if(carte){ carte.classList.remove('attend-lieu'); carte.classList.remove('mode-tri'); }
+  HZ_MODE_TRI=false;             // couper le vieux mode tri par sécurité
   rendThemesChips();
   rendLieuxChoisis();
   peintLieuxSurCarte();
@@ -1893,12 +1904,15 @@ function rejoueGeste(){
 
 async function initGesteFondateur(){
   await hzChargerCoeurs();   // cœurs du groupe AVANT le premier rendu de bande
-  // nettoyage one-shot : effacer toute région « eteinte » laissée par le
-  // vieux système de cascade (neutralisé) — sinon résidu gris sur la carte.
-  document.querySelectorAll('.region.eteinte').forEach(r=>r.classList.remove('eteinte'));
+  // PURGE au chargement : aucune région ne doit hériter d'une coloration du
+  // vieux système (eteinte) ni d'un état précédent (lieu-choisi) avant le rejeu.
+  document.querySelectorAll('.region[data-r]').forEach(r=>{
+    r.classList.remove('eteinte');
+    r.classList.remove('lieu-choisi');
+  });
   brancheSeuil();            // boutons du seuil (une fois)
   restaureGeste();
-  rejoueGeste();
+  rejoueGeste();             // ne repeint que les régions du geste restauré (≤2)
 }
 
 async function loadHorizonData(userId){
