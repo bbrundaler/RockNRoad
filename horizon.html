@@ -1825,6 +1825,10 @@ function recommenceGeste(){
   HZ_LIEUX=[];
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
   oublieGeste();
+  // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
+  // pour qu'aucune région estompée ne réapparaisse.
+  try{ localStorage.removeItem(cleEnvies()); localStorage.removeItem(cleTri()); }catch(e){}
+  document.querySelectorAll('.region.eteinte').forEach(r=>r.classList.remove('eteinte'));
   // remettre l'écran à l'état initial
   const etapeLieu=document.getElementById('hz-geste-lieu');
   const carte=document.querySelector('.francemap');
@@ -1867,6 +1871,9 @@ function rejoueGeste(){
 
 async function initGesteFondateur(){
   await hzChargerCoeurs();   // cœurs du groupe AVANT le premier rendu de bande
+  // nettoyage one-shot : effacer toute région « eteinte » laissée par le
+  // vieux système de cascade (neutralisé) — sinon résidu gris sur la carte.
+  document.querySelectorAll('.region.eteinte').forEach(r=>r.classList.remove('eteinte'));
   brancheSeuil();            // boutons du seuil (une fois)
   restaureGeste();
   rejoueGeste();
@@ -1931,13 +1938,15 @@ async function loadHorizonData(userId){
     // 5) Rendre la carte vivante : survol région → fiche correspondante à droite
     brancheSurvolCarte();
 
-    // 5bis) Restaurer les ENVIES mémorisées (localStorage, par groupe) et
-    // appliquer immédiatement la cascade : la carte rouvre dans l'envie active.
+    // 5bis) VIEUX SYSTÈME DES ENVIES/CASCADE — NEUTRALISÉ (incrément 1, code gardé).
+    //   restaureEnvies()+appliqueCascade() repeignaient la carte avec d'anciennes
+    //   régions estompées (résidu localStorage) → conflit visuel avec le geste neuf.
+    //   On garde seulement HZ_TRI_GROUPE_ID (utilisé par les clés de mémoire).
     HZ_TRI_GROUPE_ID=groupeId;
-    restaureEnvies();
-    appliqueCascade();
-    majInfoTri();
-    rendBarreEnvies();
+    // restaureEnvies();
+    // appliqueCascade();
+    // majInfoTri();
+    // rendBarreEnvies();
     // — VIEUX MOTEURS NEUTRALISÉS (incrément 1, code gardé) : lentille + vote macro région.
     //   Remplacés par le GESTE FONDATEUR thème→lieu ci-dessous (§B2/B3/B4).
     // rendBlocLentille();
