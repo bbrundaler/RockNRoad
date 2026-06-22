@@ -2103,7 +2103,12 @@ function rendPanier(){
   const panier=document.getElementById('hz-coin-panier');
   const recap=document.getElementById('hz-panier-recap');
   const valider=document.getElementById('hz-panier-valider');
-  if(!HZ_SWIPE_PAQUET) return;
+  if(!HZ_SWIPE_PAQUET){
+    // plus de coin actif (reset) → tout masquer
+    if(invite) invite.style.display='none';
+    if(panier) panier.style.display='none';
+    return;
+  }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
   const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
 
@@ -2597,10 +2602,13 @@ function oublieGeste(){
 // RECOMMENCER : efface l'envie, les régions, la bande et la mémoire du voyage
 // courant. On repart de la page blanche du geste (ADN : bouton Reset).
 function recommenceGeste(){
-  fermeSeuil();                  // fermer l'overlay D'ABORD (évite tout clic avalé)
+  fermeSeuil();                  // fermer l'ancien seuil
+  if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
   HZ_THEME=null;
   HZ_LIEUX=[];
   HZ_COIN_PAQUET=null;           // purge le paquet courant
+  HZ_SWIPE_PAQUET=null;          // purge le paquet du swipe/panier (sinon panier réaffiché)
+  HZ_SWIPE_SEQ=[];
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
   oublieGeste();
   // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
