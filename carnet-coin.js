@@ -38,6 +38,21 @@
     return fiche._regionSvg || fiche.region || null;
   }
 
+  /* Distance en km entre deux points GPS (Haversine). Sert à ne garder comme
+     « limitrophe » que les fiches RÉELLEMENT proches d'une frontière commune,
+     pas toute la région voisine (une région est grande : Bordeaux ≠ Bayonne). */
+  function distanceKm(lat1, lng1, lat2, lng2) {
+    if (lat1 == null || lng1 == null || lat2 == null || lng2 == null) return Infinity;
+    var R = 6371, toRad = Math.PI / 180;
+    var dLat = (lat2 - lat1) * toRad, dLng = (lng2 - lng1) * toRad;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(lat1*toRad)*Math.cos(lat2*toRad)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+  /* Rayon max d'une fiche limitrophe à une fiche cœur (km). Au-delà, ce n'est
+     plus « juste à côté » — on l'écarte. Réglable. */
+  var RAYON_LIMITROPHE_KM = 120;
+
   /* Une fiche correspond-elle au thème ? Le thème est une clé de famille de
      tags.js (ex. 'culture', 'nature', 'farniente'...). On s'appuie sur
      RNR_TAGS si présent ; sinon repli souple sur les champs de la fiche.
@@ -84,7 +99,7 @@
       });
     }
 
-    var coeur = [], limitrophes = [];
+    var coeur = [], limitrophesCandidates = [];
     (fiches || []).forEach(function (f) {
       if (!correspondTheme(f, theme, tagsApi)) return;
       var reg = regionDe(f);
@@ -92,9 +107,25 @@
       if (setCible[reg]) {
         coeur.push(f);
       } else if (setLimitrophe[reg]) {
-        var copie = f; copie._limitrophe = true;
-        limitrophes.push(copie);
+        limitrophesCandidates.push(f);
       }
+    });
+
+    /* Ne garder que les limitrophes RÉELLEMENT proches d'une fiche cœur.
+       Une fiche limitrophe sans GPS, ou si le cœur n'a aucun GPS, est gardée
+       (on ne pénalise pas l'absence de données ; le filtre n'agit que quand on
+       peut mesurer). */
+    var coeurAvecGPS = coeur.filter(function (c) { return c.lat != null && c.lng != null; });
+    var limitrophes = [];
+    limitrophesCandidates.forEach(function (f) {
+      var copie = f; copie._limitrophe = true;
+      if (f.lat == null || f.lng == null || !coeurAvecGPS.length) {
+        limitrophes.push(copie); return;   // pas de mesure possible → on garde
+      }
+      var proche = coeurAvecGPS.some(function (c) {
+        return distanceKm(f.lat, f.lng, c.lat, c.lng) <= RAYON_LIMITROPHE_KM;
+      });
+      if (proche) limitrophes.push(copie);
     });
 
     return {
