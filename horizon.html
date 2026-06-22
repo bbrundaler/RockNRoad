@@ -2146,6 +2146,7 @@ function rendPanier(){
   }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
   const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
+  console.log('[rendPanier] aimées non-retenues:',aimees.length,'| HZ_RETENUS:',HZ_RETENUS.size,'| noms:',aimees.map(f=>f.nom));
   if(!aimees.length){
     // ÉTAPE 1 — invitation seule
     if(invite) invite.style.display='flex';
