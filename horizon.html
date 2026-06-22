@@ -198,6 +198,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-cf-tags{display:flex;gap:3px;flex-wrap:wrap;}
 .hz-cf-tags span{font-size:9px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
 .hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
+/* ── ÉTAPE 1 : INVITATION (avant tout coup de cœur) ── */
+.hz-invite{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:6px 0;}
+.hz-invite-txt{display:flex;flex-direction:column;gap:5px;flex:1;min-width:240px;}
+.hz-invite-txt b{font-family:var(--font-title);font-size:17px;color:var(--gold-text);}
+.hz-invite-txt span{font-size:13.5px;color:var(--ink-dim);line-height:1.55;}
+.hz-invite-go{flex-shrink:0;font-family:var(--font-body);font-size:15px;font-weight:600;cursor:pointer;
+  background:var(--gold);border:none;color:var(--chrome-bg);padding:13px 28px;border-radius:var(--r);
+  display:flex;align-items:center;gap:8px;transition:.15s;}
+.hz-invite-go:hover{opacity:.9;}
+.hz-invite-go span{font-size:17px;}
 /* ── PANIER DE VALIDATION (bande du bas) ── */
 .hz-panier{display:flex;gap:18px;align-items:stretch;flex-wrap:wrap;}
 .hz-panier-gauche,.hz-panier-droite{flex:1;min-width:240px;display:flex;flex-direction:column;gap:10px;}
@@ -468,7 +478,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
         <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
-        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">C'est parti <span>→</span></button>
+        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none !important">C'est parti <span>→</span></button>
       </div>
     </div>
   </div>
@@ -556,9 +566,17 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-coin-grille" id="hz-coin-limit"></div>
         </div>
 
-        <!-- PANIER DE VALIDATION : visible dans la bande du bas (hors popup).
-             Récap par région + explication de la suite + bouton valider. -->
-        <div id="hz-coin-panier" class="hz-panier">
+        <!-- ÉTAPE 1 — INVITATION : rien d'aimé encore. Un seul bouton « C'est parti ». -->
+        <div id="hz-coin-invite" class="hz-invite">
+          <div class="hz-invite-txt">
+            <b id="hz-invite-tt">Prêt à explorer ce coin&nbsp;?</b>
+            <span id="hz-invite-sous">On va parcourir les fiches une à une sur la carte. Aimez celles qui vous tentent&nbsp;: un premier tri tout en douceur.</span>
+          </div>
+          <button class="hz-invite-go" id="hz-invite-go" type="button">C'est parti <span>→</span></button>
+        </div>
+
+        <!-- ÉTAPE 2 — PANIER : visible seulement quand on a des coups de cœur. -->
+        <div id="hz-coin-panier" class="hz-panier" style="display:none">
           <div class="hz-panier-gauche">
             <div class="hz-panier-tt">Vos coups de cœur</div>
             <div id="hz-panier-recap" class="hz-panier-recap"></div>
@@ -2058,7 +2076,7 @@ function rendCarnetCoin(paquet){
   }
 
   const nC=paquet.coeur.length, nL=paquet.limitrophes.length;
-  if(compte) compte.textContent=nC+' fiche'+(nC>1?'s':'')+' au cœur'+(nL?(' · '+nL+' à côté'):'')+' — aimez celles qui vous tentent ❤️';
+  if(compte) compte.textContent=nC+' fiche'+(nC>1?'s':'')+' dans ce coin'+(nL?(' · '+nL+' à côté'):'');
   const revoir=document.getElementById('hz-coin-revoir');
   if(revoir) revoir.onclick=ouvreSeuil;   // rouvrir le seuil à la demande
 
@@ -2075,35 +2093,44 @@ function rendCarnetCoin(paquet){
   rendPanier();
 }
 
-// PANIER (bande du bas) : récap des coups de cœur par région + explication
-// de la suite + bouton valider. Pousse à clôturer, avec bonne humeur.
+// Bloc du bas : DEUX ÉTATS selon l'avancement.
+//  - aucune aimée  → INVITATION (« C'est parti » seul)
+//  - ≥1 aimée      → PANIER (récap + valider)
+// Un seul moment, une seule action : pas de confusion entre les deux boutons.
 function rendPanier(){
+  const invite=document.getElementById('hz-coin-invite');
   const panier=document.getElementById('hz-coin-panier');
   const recap=document.getElementById('hz-panier-recap');
   const valider=document.getElementById('hz-panier-valider');
-  if(!panier || !HZ_SWIPE_PAQUET) return;
-  panier.style.display='flex';
-  // récap des aimées par région
+  if(!HZ_SWIPE_PAQUET) return;
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
   const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
+
+  if(!aimees.length){
+    // ÉTAPE 1 — invitation seule
+    if(invite) invite.style.display='flex';
+    if(panier) panier.style.display='none';
+    return;
+  }
+  // ÉTAPE 2 — panier
+  if(invite) invite.style.display='none';
+  if(panier) panier.style.display='flex';
   const parReg={};
   aimees.forEach(f=>{ const r=f._regionSvg||f.region||'?'; parReg[r]=(parReg[r]||0)+1; });
   if(recap){
-    if(!aimees.length){
-      recap.innerHTML='<span class="hz-panier-vide">Aucun coup de cœur encore. Cliquez « Continuer à explorer » et swipez ❤️ ce qui vous tente.</span>';
-    }else{
-      const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
-      recap.innerHTML=ordre.filter(r=>parReg[r]).map(slug=>{
-        const choisie=HZ_LIEUX.indexOf(slug)!==-1;
-        return '<span class="hz-panier-reg'+(choisie?'':' limit')+'">📍 '+escapeHtmlHz(labelRegionSvg(slug))+
-          ' <b>'+parReg[slug]+'</b></span>';
-      }).join('');
-    }
+    const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+    recap.innerHTML=ordre.filter(r=>parReg[r]).map(slug=>{
+      const choisie=HZ_LIEUX.indexOf(slug)!==-1;
+      return '<span class="hz-panier-reg'+(choisie?'':' limit')+'">📍 '+escapeHtmlHz(labelRegionSvg(slug))+
+        ' <b>'+parReg[slug]+'</b></span>';
+    }).join('');
   }
-  if(valider) valider.disabled=!aimees.length;
+  if(valider) valider.disabled=false;
 }
 
 function branchePanier(){
+  const go=document.getElementById('hz-invite-go');
+  if(go && !go._cable){ go._cable=true; go.addEventListener('click',ouvreExplo); }
   const rouvrir=document.getElementById('hz-panier-rouvrir');
   if(rouvrir && !rouvrir._cable){ rouvrir._cable=true; rouvrir.addEventListener('click',ouvreExplo); }
   const valider=document.getElementById('hz-panier-valider');
