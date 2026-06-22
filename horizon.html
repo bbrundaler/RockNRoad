@@ -53,7 +53,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    laisse la bande Carnet du coin respirer juste en dessous. */
 .b-map{max-height:54vh;}
 .b-map .bb{padding:5px;align-items:center;justify-content:center;overflow:hidden;max-height:none;}
-.francemap{width:100%;height:100%;max-height:50vh;display:block;overflow:visible;}
+.francemap{width:100%;height:100%;max-height:62vh;display:block;overflow:visible;}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
 .region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
@@ -2145,8 +2145,7 @@ function rendPanier(){
     return;
   }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
-  console.log('[rendPanier] aimées non-retenues:',aimees.length,'| HZ_RETENUS:',HZ_RETENUS.size,'| noms:',aimees.map(f=>f.nom));
+  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
   if(!aimees.length){
     // ÉTAPE 1 — invitation seule
     if(invite) invite.style.display='flex';
@@ -2349,12 +2348,14 @@ function brancheExplo(){
 //  ❤️/✨ écrivent dans reactions (tuyau existant) ; ✕ passe sans rien.
 // ════════════════════════════════════════════════════════════════
 let HZ_SWIPE_SEQ=[];        // séquence mêlant {kind:'fiche',fiche} et {kind:'transition',...}
+let HZ_AIMEES_SESSION=new Set();   // ids des fiches aimées PENDANT cette session d'exploration
 let HZ_SWIPE_I=0;           // position courante dans la séquence
 let HZ_SWIPE_MODE='swipe';  // 'swipe' | 'liste'
 let HZ_SWIPE_PAQUET=null;   // pour le mode liste
 
 function initSwipe(paquet){
   HZ_SWIPE_PAQUET=paquet;
+  HZ_AIMEES_SESSION=new Set();   // nouveau coin → nouvelle session (panier repart vide)
   // 1) regrouper par région : cœur (régions choisies) puis limitrophes
   const parRegCoeur={}, parRegLimit={};
   paquet.coeur.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
@@ -2466,6 +2467,7 @@ async function swipeGeste(type){
     const slot=hzCoeursDe(f.id);
     const deja=(type==='love')?slot.love.mine:slot.later.mine;
     if(!deja){ await hzToggleVote(f.id, type); }
+    if(type==='love'){ HZ_AIMEES_SESSION.add(f.id); }   // ❤️ de CETTE session
     rendAimees();
     avanceSwipe('like');
   }
@@ -2508,7 +2510,7 @@ function rendAimees(){
   if(!box || !HZ_SWIPE_PAQUET) return;
   box.innerHTML='';
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
+  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
   if(!aimees.length){
     const d=document.createElement('div'); d.className='hz-aimee-vide';
     d.textContent='Aucune fiche aimée pour l\'instant — swipez ❤️ ce qui vous tente.';
@@ -2547,14 +2549,16 @@ function rendAimees(){
 async function retireAimee(lieuId){
   const slot=hzCoeursDe(lieuId);
   if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire
+  HZ_AIMEES_SESSION.delete(lieuId);   // retirer aussi de la session
   rendAimees();
+  rendPanier();
 }
 
 // REFAIRE PASSER : relance le swipe uniquement sur les fiches aimées (2e tour).
 function refairePasserAimees(){
   if(!HZ_SWIPE_PAQUET) return;
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
+  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
   if(!aimees.length) return;
   // séquence simplifiée : juste les aimées, par région, sans limitrophes séparés
   HZ_SWIPE_SEQ=[];
@@ -2575,7 +2579,7 @@ function refairePasserAimees(){
 async function envoyerAimeesAuCockpit(){
   if(!HZ_SWIPE_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); }).filter(f=>f.id);
+  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id)).filter(f=>f.id);
   if(!aimees.length){ alert('Aucune fiche aimée à envoyer.'); return; }
   // les deux boutons possibles (popup + panier de la bande)
   const btns=[document.getElementById('hz-aimees-envoi'), document.getElementById('hz-panier-valider')].filter(Boolean);
@@ -2654,6 +2658,7 @@ function recommenceGeste(){
   HZ_COIN_PAQUET=null;
   HZ_SWIPE_PAQUET=null;
   HZ_SWIPE_SEQ=[];
+  HZ_AIMEES_SESSION=new Set();   // nouveau cycle → session d'aimées vidée
   fermeSeuil();                  // fermer l'ancien seuil
   if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
