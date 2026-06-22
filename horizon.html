@@ -1919,6 +1919,36 @@ async function hzChargerCoeurs(){
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+//  TEMPS RÉEL sur `voyage_fiches` (source de vérité de l'état par-voyage,
+//  D-ECH-12). Quand un membre valide des fiches au Cockpit, la carte des
+//  autres se met à jour SANS recharger. Calqué sur discussion.js : canal
+//  filtré par voyage_id (la RLS s'applique aux events → zéro fuite), écoute
+//  INSERT+UPDATE+DELETE (un statut peut passer retenue→ecartee), debounce
+//  150 ms, nettoyage du canal avant tout ré-abonnement.
+// ════════════════════════════════════════════════════════════════
+let HZ_CANAL_FICHES=null, HZ_RT_TIMER=null;
+
+async function hzMajApresRealtime(){
+  await hzChargerCoeurs();      // relit voyage_fiches → met à jour HZ_RETENUS
+  marqueRegionsRetenues();      // liserés verts + compteurs au survol
+  majLigneCockpit();            // ligne « N fiches déjà au Cockpit »
+}
+
+function hzAbonnerFichesRealtime(){
+  if(!HZ_VOYAGE_ID) return;
+  if(HZ_CANAL_FICHES){ try{ sb.removeChannel(HZ_CANAL_FICHES); }catch(e){} HZ_CANAL_FICHES=null; }
+  HZ_CANAL_FICHES = sb.channel('vf:'+HZ_VOYAGE_ID)
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'voyage_fiches', filter:'voyage_id=eq.'+HZ_VOYAGE_ID },
+      function(){ if(HZ_RT_TIMER) clearTimeout(HZ_RT_TIMER); HZ_RT_TIMER=setTimeout(hzMajApresRealtime,150); })
+    .subscribe();
+}
+
+window.addEventListener('beforeunload',function(){
+  if(HZ_CANAL_FICHES){ try{ sb.removeChannel(HZ_CANAL_FICHES); }catch(e){} HZ_CANAL_FICHES=null; }
+});
+
 // ❤️/✨ sur une fiche : écrit dans reactions (par membre_id, comme le Carnet).
 async function hzToggleVote(lieuId,type){
   const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
@@ -2884,6 +2914,10 @@ async function loadHorizonData(userId){
     // 6bis) GESTE FONDATEUR thème→lieu (neuf) — APRÈS le bloc groupe car les
     // cœurs ❤️ ont besoin de HZ_MEMBRES (monMembreIdReel) pour marquer « mine ».
     await initGesteFondateur();
+
+    // 6ter) TEMPS RÉEL sur voyage_fiches : la carte converge en direct quand un
+    // autre membre valide des fiches au Cockpit (HZ_VOYAGE_ID est posé ici).
+    hzAbonnerFichesRealtime();
 
     // 7) Vote fondateur des leaders (a besoin de HZ_MEMBRES, donc après le bloc groupe)
     chargeVoteLeader();
