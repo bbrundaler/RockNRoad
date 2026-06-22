@@ -258,6 +258,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-swipe-card .nom{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);line-height:1.2;}
 .hz-swipe-card .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
 .hz-swipe-card .tags span{font-size:10px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 9px;border-radius:12px;}
+/* MATCH / SPARK : l'étincelle nominative (or = âme de la marque). Pas un score. */
+.hz-spark{margin-top:7px;font-size:11.5px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:11px;padding:3px 10px;display:inline-block;line-height:1.3;}
 /* cartes de transition (Cap sur… / Juste à côté…) */
 .hz-swipe-transition{align-items:center;justify-content:center;text-align:center;gap:8px;padding:24px;background:var(--gold-a10);border:1.5px dashed var(--gold-a35);}
 .hz-swipe-transition.limit{background:var(--bg);}
@@ -1890,7 +1892,41 @@ function themeLibelle(cle){
 const HZ_EMOJI_LOVE='❤️', HZ_EMOJI_LATER='✨';
 let HZ_COEURS={}, HZ_RETENUS=new Set(), HZ_ECARTEES=new Set();
 
-function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false},later:{count:0,mine:false}}; }
+function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false,qui:[]},later:{count:0,mine:false,qui:[]}}; }
+
+// ════════════════════════════════════════════════════════════════
+//  MATCH / SPARK — l'étincelle quand 2+ membres aiment la même fiche.
+//  PAS un vote, PAS un score : un révélateur d'envies qui se rencontrent
+//  (ciment émotionnel du groupe). Lecture pure de HZ_COEURS (déjà chargé,
+//  rafraîchi en temps réel) + HZ_MEMBRES. Zéro requête, zéro table.
+// ════════════════════════════════════════════════════════════════
+function hzNomParUserId(uid){
+  const m=(HZ_MEMBRES||[]).find(x=>x.user_id===uid);
+  return m?(m.pseudo||m.prenom||'Un membre'):'Un membre';
+}
+// Texte nominatif du spark pour une fiche, ou '' s'il n'y a pas d'étincelle.
+//  - il faut au moins 2 likeurs ❤️ au total pour parler de coup de cœur partagé.
+function hzSparkTexte(lieuId){
+  const slot=hzCoeursDe(lieuId);
+  const qui=(slot.love&&slot.love.qui)?slot.love.qui:[];
+  if(qui.length<2) return '';                         // pas de partage → pas de spark
+  const autres=qui.filter(uid=>uid && uid!==HZ_USER_ID);   // les likeurs SAUF moi
+  const noms=[...new Set(autres)].map(hzNomParUserId);      // dédoublonne, mappe en noms
+  const jaime=slot.love.mine;
+  let coeur;
+  if(noms.length===0){ return ''; }                   // seul moi (ne devrait pas arriver vu qui.length≥2)
+  else if(noms.length===1){ coeur=noms[0]; }
+  else if(noms.length===2){ coeur=noms[0]+' et '+noms[1]; }
+  else { coeur=noms[0]+', '+noms[1]+' +'+(noms.length-2); }
+  // j'aime déjà → « … aussi a/ont flashé » ; entre eux → « … a/ont flashé »
+  const verbe=(noms.length===1)?'a flashé':'ont flashé';
+  return '✨ '+coeur+(jaime?' aussi':'')+' '+verbe;
+}
+// Petit fragment HTML du badge spark (ou '' si pas d'étincelle).
+function hzSparkBadge(lieuId){
+  const txt=hzSparkTexte(lieuId);
+  return txt?('<div class="hz-spark">'+escapeHtmlHz(txt)+'</div>'):'';
+}
 
 async function hzChargerCoeurs(){
   HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set();
@@ -1901,10 +1937,12 @@ async function hzChargerCoeurs(){
   if(eR){ console.warn('Horizon: coeurs',eR); }
   const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
   (reacs||[]).forEach(r=>{
-    const slot=HZ_COEURS[r.cible_id]||(HZ_COEURS[r.cible_id]={love:{count:0,mine:false},later:{count:0,mine:false}});
+    const slot=HZ_COEURS[r.cible_id]||(HZ_COEURS[r.cible_id]={love:{count:0,mine:false,qui:[]},later:{count:0,mine:false,qui:[]}});
     const k=r.emoji===HZ_EMOJI_LATER?'later':(r.emoji===HZ_EMOJI_LOVE?'love':null);
     if(!k) return;
     slot[k].count++;
+    if(!slot[k].qui) slot[k].qui=[];
+    if(r.membre_id) slot[k].qui.push(r.membre_id);   // user_id auth des likeurs (pour le spark nominatif)
     if(r.membre_id && r.membre_id===moi) slot[k].mine=true;
   });
   // (2) statut par voyage (voyage_fiches, source de vérité D-ECH-12) — lecture seule
@@ -1920,19 +1958,31 @@ async function hzChargerCoeurs(){
 }
 
 // ════════════════════════════════════════════════════════════════
-//  TEMPS RÉEL sur `voyage_fiches` (source de vérité de l'état par-voyage,
-//  D-ECH-12). Quand un membre valide des fiches au Cockpit, la carte des
-//  autres se met à jour SANS recharger. Calqué sur discussion.js : canal
-//  filtré par voyage_id (la RLS s'applique aux events → zéro fuite), écoute
-//  INSERT+UPDATE+DELETE (un statut peut passer retenue→ecartee), debounce
-//  150 ms, nettoyage du canal avant tout ré-abonnement.
+//  TEMPS RÉEL. Un seul canal Horizon écoute DEUX tables :
+//   • `voyage_fiches` (source de vérité de l'état par-voyage, D-ECH-12),
+//     filtré par voyage_id → la carte de France converge en direct quand
+//     un membre valide des fiches au Cockpit.
+//   • `reactions` (❤️/✨ du groupe, RLS limite au groupe) → le MATCH/SPARK
+//     jaillit quand le 2e cœur tombe sur une fiche, sans recharger.
+//  Calqué sur discussion.js : debounce 150 ms, nettoyage avant ré-abonnement.
 // ════════════════════════════════════════════════════════════════
 let HZ_CANAL_FICHES=null, HZ_RT_TIMER=null;
 
 async function hzMajApresRealtime(){
-  await hzChargerCoeurs();      // relit voyage_fiches → met à jour HZ_RETENUS
+  await hzChargerCoeurs();      // relit voyage_fiches → HZ_RETENUS ; et reactions → HZ_COEURS (spark)
   marqueRegionsRetenues();      // liserés verts + compteurs au survol
   majLigneCockpit();            // ligne « N fiches déjà au Cockpit »
+  // SPARK EN DIRECT : si le popup d'exploration est ouvert sur une fiche,
+  // re-rendre la carte courante pour faire apparaître l'étincelle sans clic.
+  const ov=document.getElementById('hz-explo');
+  const popupOuvert=ov && ov.style.display!=='none';
+  if(popupOuvert){
+    const e=(typeof elemCourant==='function')?elemCourant():null;
+    if(e && e.kind==='fiche'){ rendSwipeCarte(); }   // ne touche pas une transition en cours
+  }
+  // si le Carnet du coin (bande) est rendu, rafraîchir ses cartes (badges spark)
+  const corps=document.getElementById('hz-coin-corps');
+  if(corps && corps.style.display!=='none' && HZ_SWIPE_PAQUET){ rendCarnetCoin(HZ_SWIPE_PAQUET); }
 }
 
 function hzAbonnerFichesRealtime(){
@@ -1941,6 +1991,11 @@ function hzAbonnerFichesRealtime(){
   HZ_CANAL_FICHES = sb.channel('vf:'+HZ_VOYAGE_ID)
     .on('postgres_changes',
       { event:'*', schema:'public', table:'voyage_fiches', filter:'voyage_id=eq.'+HZ_VOYAGE_ID },
+      function(){ if(HZ_RT_TIMER) clearTimeout(HZ_RT_TIMER); HZ_RT_TIMER=setTimeout(hzMajApresRealtime,150); })
+    .on('postgres_changes',
+      // reactions : ❤️/✨ du groupe (pas de voyage_id ; la RLS limite déjà au groupe via lieux).
+      // Sert au MATCH/SPARK : l'étincelle jaillit quand le 2e cœur tombe, en direct.
+      { event:'*', schema:'public', table:'reactions' },
       function(){ if(HZ_RT_TIMER) clearTimeout(HZ_RT_TIMER); HZ_RT_TIMER=setTimeout(hzMajApresRealtime,150); })
     .subscribe();
 }
@@ -2125,6 +2180,7 @@ function carteFiche(f, estLimit){
       (noteF?'<div class="hz-cf-notes">'+noteF+'</div>':'')+
       '<div class="hz-cf-nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+
       tags+
+      hzSparkBadge(f.id)+
       hzMakeVoteBar(f)+
     '</div>';
   return div;
@@ -2500,7 +2556,7 @@ function rendSwipeCarte(){
   card.innerHTML=
     '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
-    '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+'</div>';
+    '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
   // dialogue carte↔swipe : zoom sur la région + point mis en avant
   syncCarteSurFiche();
