@@ -1945,10 +1945,11 @@ let HZ_SEUIL_VU_SIG=null;   // signature de la dernière envie pour qui le seuil
 // C'est LUI qui ouvre le seuil (et plus le clic région), pour qu'on puisse
 // poser tranquillement 1 OU 2 régions avant de lancer.
 function majEnAvant(paquet){
+  // NEUTRALISÉ : le bouton « C'est parti » du haut a été remplacé par
+  // l'INVITATION dans le bloc du bas (un seul point d'entrée). On garde la
+  // fonction (appelée ailleurs) mais on force le bouton haut à rester masqué.
   const b=document.getElementById('hz-en-avant');
-  if(!b) return;
-  const n=paquet ? (paquet.coeur.length+paquet.limitrophes.length) : 0;
-  b.style.display = n>0 ? 'flex' : 'none';
+  if(b) b.style.display='none';
 }
 function lanceSeuil(){
   ouvreSeuil();
