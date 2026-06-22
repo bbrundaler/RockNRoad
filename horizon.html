@@ -2110,8 +2110,7 @@ function rendPanier(){
     return;
   }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
-
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
   if(!aimees.length){
     // ÉTAPE 1 — invitation seule
     if(invite) invite.style.display='flex';
@@ -2464,7 +2463,7 @@ function rendAimees(){
   if(!box || !HZ_SWIPE_PAQUET) return;
   box.innerHTML='';
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
   if(!aimees.length){
     const d=document.createElement('div'); d.className='hz-aimee-vide';
     d.textContent='Aucune fiche aimée pour l\'instant — swipez ❤️ ce qui vous tente.';
@@ -2510,7 +2509,7 @@ async function retireAimee(lieuId){
 function refairePasserAimees(){
   if(!HZ_SWIPE_PAQUET) return;
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; });
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); });
   if(!aimees.length) return;
   // séquence simplifiée : juste les aimées, par région, sans limitrophes séparés
   HZ_SWIPE_SEQ=[];
@@ -2531,7 +2530,7 @@ function refairePasserAimees(){
 async function envoyerAimeesAuCockpit(){
   if(!HZ_SWIPE_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
   const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine; }).filter(f=>f.id);
+  const aimees=toutes.filter(f=>{ const s=hzCoeursDe(f.id); return s.love.mine && !HZ_RETENUS.has(f.id); }).filter(f=>f.id);
   if(!aimees.length){ alert('Aucune fiche aimée à envoyer.'); return; }
   // les deux boutons possibles (popup + panier de la bande)
   const btns=[document.getElementById('hz-aimees-envoi'), document.getElementById('hz-panier-valider')].filter(Boolean);
@@ -2543,6 +2542,8 @@ async function envoyerAimeesAuCockpit(){
     if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.');
       btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); return; }
     btns.forEach(b=>b.textContent='✓ Envoyé ('+rows.length+') !');
+    // marquer en mémoire comme « retenues » (déjà au Cockpit) → ne réapparaissent plus
+    aimees.forEach(f=>{ if(window.HZ_RETENUS) HZ_RETENUS.add(f.id); });
     // CLÔTURE : recommenceGeste ferme le popup ET purge tout (bon ordre).
     setTimeout(()=>{ recommenceGeste(); }, 1000);
   }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.');
