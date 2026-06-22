@@ -2543,8 +2543,8 @@ async function envoyerAimeesAuCockpit(){
     if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.');
       btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); return; }
     btns.forEach(b=>b.textContent='✓ Envoyé ('+rows.length+') !');
-    // CLÔTURE : on allège Horizon → fermer le popup, recommencer le geste
-    setTimeout(()=>{ fermeExplo(); recommenceGeste(); }, 1000);
+    // CLÔTURE : recommenceGeste ferme le popup ET purge tout (bon ordre).
+    setTimeout(()=>{ recommenceGeste(); }, 1000);
   }catch(e){ console.warn('Horizon: envoi Cockpit',e); alert('Envoi impossible, réessayez.');
     btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); }
 }
@@ -2602,13 +2602,14 @@ function oublieGeste(){
 // RECOMMENCER : efface l'envie, les régions, la bande et la mémoire du voyage
 // courant. On repart de la page blanche du geste (ADN : bouton Reset).
 function recommenceGeste(){
-  fermeSeuil();                  // fermer l'ancien seuil
-  if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
+  // purger les paquets D'ABORD : ainsi fermeExplo→rendPanier ne réaffiche rien
   HZ_THEME=null;
   HZ_LIEUX=[];
-  HZ_COIN_PAQUET=null;           // purge le paquet courant
-  HZ_SWIPE_PAQUET=null;          // purge le paquet du swipe/panier (sinon panier réaffiché)
+  HZ_COIN_PAQUET=null;
+  HZ_SWIPE_PAQUET=null;
   HZ_SWIPE_SEQ=[];
+  fermeSeuil();                  // fermer l'ancien seuil
+  if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
   oublieGeste();
   // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
