@@ -1479,7 +1479,9 @@ function brancheSurvolCarte(){
     //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
     reg.addEventListener('click',()=>{
       if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
-      if(HZ_THEME){ toggleLieu(dataR); return; }        // GESTE : on pose le lieu
+      // GESTE : on pose le lieu si on est en train de composer un monde —
+      // activités AVEC un thème choisi, OU couchage (qui n'a pas de sous-thème).
+      if(HZ_MONDE==='couchage' || HZ_THEME){ toggleLieu(dataR); return; }
       const matches=fichesPourRegionCarte(dataR);
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
       afficheReve(dataR, best);     // au cas où le survol n'a pas eu lieu (mobile/tactile)
