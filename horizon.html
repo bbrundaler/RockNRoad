@@ -1814,6 +1814,11 @@ function coloreCartePourTheme(theme){
 // region (ancien découpage). Symétrie totale avec coloreCartePourTheme.
 function coloreCartePourCouchage(){
   const vivantes=regionsAvecFicheDuTheme('__nuit__');
+  // DIAGNOSTIC TEMPORAIRE
+  try{
+    const ech=(HZ_FICHES||[]).slice(0,5).map(f=>({type:f.type, mn:f.monde_nuit, reg:f._regionSvg, couch:(window.RNR_TAGS&&RNR_TAGS.estCouchage)?RNR_TAGS.estCouchage(f):'?'}));
+    console.log('[COLORE COUCHAGE] HZ_MONDE=',HZ_MONDE,'| régions vivantes=',[...vivantes],'| RNR_TAGS?',!!window.RNR_TAGS,'| échantillon:',ech);
+  }catch(e){ console.warn('diag colore',e); }
   document.querySelectorAll('.region[data-r]').forEach(r=>{
     const reg=r.getAttribute('data-r');
     const morte=!vivantes.has(reg);
