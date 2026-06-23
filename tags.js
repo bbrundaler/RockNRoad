@@ -137,7 +137,7 @@
     Plage:      { libelle:'Plage / Lac',      emoji:'🏖️', famille:'nature',   jourNuit:'jour' },
     Randonnee:  { libelle:'Randonnée / Vélo', emoji:'🥾', famille:'activite', jourNuit:'jour' },
     Restaurant: { libelle:'Restaurant',       emoji:'🍽️', famille:'pause',    jourNuit:'jour' },
-    Halte:      { libelle:'Halte / Étape',    emoji:'🚗', famille:'pause',    jourNuit:'jour' }
+    Halte:      { libelle:'Halte / Étape',    emoji:'🚗', famille:'nuit',     jourNuit:'nuit' }
   };
 
   /* ───────────────────────────────────────────────────────────────────
@@ -305,6 +305,40 @@
         return { famille:'visiter', sousDistinction:null };
       return null;
     },
+
+    // ══ JOUR / NUIT — LA VÉRITÉ UNIQUE de classification d'une fiche ══
+    // Renvoie 'jour' (activité) ou 'nuit' (couchage). UNE seule maison pour
+    // cette règle : Horizon, Cockpit, Voyage, Carnet l'appellent tous au lieu
+    // de recoder leur propre liste (fin des divergences type « Halte »).
+    // Vocabulaire INTERNE 'jour'/'nuit' (F8 : réservé au contenu visiter/dormir) ;
+    // l'INTERFACE traduit en « Activités »/« Couchage » (A6).
+    // Cascade, du plus volontaire au plus déduit :
+    //   (1) marqueur humain explicite monde_nuit=true  -> nuit (la main prime)
+    //   (2) le type de la fiche (table TYPES, jourNuit)  -> source structurée
+    //   (3) la famille déduite des tags Google           -> repli
+    //   (4) défaut prudent                               -> jour (activité)
+    // Décidé 23/06 avec Bruno : 'Halte' = NUIT (point de chute van possible).
+    jourNuitFiche(fiche){
+      if(!fiche) return 'jour';
+      // (1) Volonté humaine : un marqueur explicite gagne sur toute déduction.
+      if(fiche.monde_nuit === true)  return 'nuit';
+      if(fiche.monde_nuit === false && fiche.jour_nuit === 'nuit') return 'nuit';
+      // (2) Type de fiche — source structurée. 'Halte' forcé en nuit (cf. ci-dessus).
+      var t = fiche.type;
+      if(t === 'Halte') return 'nuit';
+      if(t && TYPES[t] && TYPES[t].jourNuit) return TYPES[t].jourNuit;
+      // (3) Repli : famille déduite des tags/types Google.
+      try {
+        var fam = (fiche.famille) ? fiche.famille
+                : (this.classerDepuisGoogle(fiche.types || fiche.google_types, fiche.nom)||{}).famille;
+        if(fam && FAMILLES[fam] && FAMILLES[fam].jourNuit) return FAMILLES[fam].jourNuit;
+      } catch(e){ /* repli défaut */ }
+      // (4) Défaut prudent : activité.
+      return 'jour';
+    },
+
+    // Confort : true si la fiche est un couchage (où on dort).
+    estCouchage(fiche){ return this.jourNuitFiche(fiche) === 'nuit'; },
 
     // ══ AUTO-TAGS : tags à cocher depuis une réponse Google (aligné 17 $) ══
     // p = place Google ; lit p.types et p.name UNIQUEMENT (pas de champ cher).
