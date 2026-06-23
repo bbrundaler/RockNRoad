@@ -1804,6 +1804,20 @@ function coloreCartePourTheme(theme){
   marqueRegionsRetenues();   // par-dessus : signaler les régions ayant des fiches déjà prises
 }
 
+// Mode couchage : on n'ÉTEINT aucune région (on peut chercher un couchage partout).
+// On signale juste, par un liseré renforcé, celles qui en portent déjà. Toutes
+// restent cliquables — c'est ce qui débloque le clic en mode couchage.
+function coloreCartePourCouchage(){
+  const avecCouchage=regionsAvecFicheDuTheme('__nuit__'); // en mode couchage, ignore l'arg et liste les régions à couchage
+  document.querySelectorAll('.region[data-r]').forEach(r=>{
+    const reg=r.getAttribute('data-r');
+    r.classList.remove('eteinte');
+    r.classList.toggle('a-fiches', avecCouchage.has(reg));
+    r.style.pointerEvents='';   // TOUJOURS cliquable
+  });
+  marqueRegionsRetenues();
+}
+
 // Compte, par région, les fiches DÉJÀ RETENUES pour ce voyage (voyage_fiches).
 function compteRetenuesParRegion(){
   const par={};
@@ -1880,7 +1894,7 @@ function choisitMonde(monde){
     if(blocCouchLbl) blocCouchLbl.style.display='block';
     if(etapeLieu)    etapeLieu.style.display='block';
     if(carte)        carte.classList.add('attend-lieu');
-    coloreCartePourTheme('__nuit__');   // colore selon présence de couchages
+    coloreCartePourCouchage();   // colore les régions à couchage SANS rien éteindre
   }else{
     // Retour activités : on rend les 7 thèmes, on referme la carte tant qu'aucun thème.
     if(blocThemes)   blocThemes.style.display='block';
@@ -2968,7 +2982,7 @@ function rejoueGeste(){
     if(blocCouchLbl) blocCouchLbl.style.display='block';
     if(etapeLieu) etapeLieu.style.display='block';
     if(carte) carte.classList.add('attend-lieu');
-    coloreCartePourTheme('__nuit__');
+    coloreCartePourCouchage();
     rendLieuxChoisis();
     peintLieuxSurCarte();
     HZ_SEUIL_VU_SIG='__nuit__';
