@@ -1804,16 +1804,18 @@ function coloreCartePourTheme(theme){
   marqueRegionsRetenues();   // par-dessus : signaler les régions ayant des fiches déjà prises
 }
 
-// Mode couchage : on n'ÉTEINT aucune région (on peut chercher un couchage partout).
-// On signale juste, par un liseré renforcé, celles qui en portent déjà. Toutes
-// restent cliquables — c'est ce qui débloque le clic en mode couchage.
+// Mode couchage : même logique visuelle que les activités — on estompe les
+// régions SANS couchage (non cliquables) et on garde vivantes celles qui en
+// portent. La vérité région = _regionSvg (rattachement GPS), pas la colonne
+// region (ancien découpage). Symétrie totale avec coloreCartePourTheme.
 function coloreCartePourCouchage(){
-  const avecCouchage=regionsAvecFicheDuTheme('__nuit__'); // en mode couchage, ignore l'arg et liste les régions à couchage
+  const vivantes=regionsAvecFicheDuTheme('__nuit__');
   document.querySelectorAll('.region[data-r]').forEach(r=>{
     const reg=r.getAttribute('data-r');
-    r.classList.remove('eteinte');
-    r.classList.toggle('a-fiches', avecCouchage.has(reg));
-    r.style.pointerEvents='';   // TOUJOURS cliquable
+    const morte=!vivantes.has(reg);
+    r.classList.toggle('eteinte', morte);
+    r.classList.toggle('a-fiches', !morte);
+    r.style.pointerEvents = morte ? 'none' : '';
   });
   marqueRegionsRetenues();
 }
@@ -2182,6 +2184,18 @@ function construitCoin(){
     return null;
   }
   const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, themeEffectif, HZ_LIEUX, {tagsApi:tagsEffectif});
+  // DIAGNOSTIC TEMPORAIRE (mode couchage) — à retirer une fois validé.
+  if(HZ_MONDE==='couchage' && window.console){
+    try{
+      const tousCouchages=HZ_FICHES.filter(f=>window.RNR_TAGS&&RNR_TAGS.estCouchage&&RNR_TAGS.estCouchage(f));
+      const parReg={};
+      tousCouchages.forEach(f=>{ const r=f._regionSvg||('('+f.region+')'); parReg[r]=(parReg[r]||0)+1; });
+      console.log('[COUCHAGE] régions cliquées:',HZ_LIEUX,
+        '| total couchages:',tousCouchages.length,
+        '| par région SVG:',parReg,
+        '| coeur trouvé:',paquet.coeur.length);
+    }catch(e){ console.warn('diag couchage',e); }
+  }
   HZ_COIN_PAQUET=paquet;
   rendCarnetCoin(paquet);
   // NB : le seuil ne s'ouvre PLUS automatiquement ici (sinon il surgit dès la
@@ -2306,7 +2320,11 @@ function rendCarnetCoin(paquet){
   if(!corps) return;
 
   const lieuxLbl=HZ_LIEUX.map(labelRegionSvg).join(' & ');
-  if(titre) titre.textContent='Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
+  if(titre){
+    titre.textContent = (HZ_MONDE==='couchage')
+      ? 'Coin · où dormir autour de '+lieuxLbl
+      : 'Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
+  }
 
   if(vide) vide.style.display='none';
   corps.style.display='block';
@@ -2317,7 +2335,9 @@ function rendCarnetCoin(paquet){
     paquet.coeur.forEach(f=>coeurBox.appendChild(carteFiche(f,false)));
   }else{
     const d=document.createElement('div'); d.className='hz-coin-vide';
-    d.textContent='Aucune fiche « '+themeLibelle(HZ_THEME)+' » dans cette région pour l\'instant — le coin attend ses premières idées.';
+    d.textContent = (HZ_MONDE==='couchage')
+      ? 'Aucun couchage dans cette région pour l\'instant — le coin attend ses premières adresses où dormir.'
+      : 'Aucune fiche « '+themeLibelle(HZ_THEME)+' » dans cette région pour l\'instant — le coin attend ses premières idées.';
     coeurBox.appendChild(d);
   }
 
