@@ -253,6 +253,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-swipe-card,.hz-swipe-transition{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .28s ease,opacity .28s ease;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
 .hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
+.hz-swipe-card .ph .hz-swipe-deja{font-size:10.5px;font-weight:700;color:#fff;background:#1d9e75;padding:3px 10px;border-radius:12px;align-self:flex-start;margin-top:4px;box-shadow:0 1px 4px rgba(0,0,0,.35);}
 .hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
 .hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center;}
 .hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
@@ -2675,8 +2676,11 @@ function rendSwipeCarte(){
   const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(e.limit?' · à côté':'');
   const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
   const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
+  // B10 : une fiche déjà retenue reste VISIBLE mais signalée « ✓ déjà prise »
+  // (même vert que le marqueur carte), pour ne pas la reproposer à l'aveugle.
+  const badgePris=HZ_RETENUS.has(f.id)?'<span class="hz-swipe-deja">✓ déjà prise</span>':'';
   card.innerHTML=
-    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span>'+badgePris+'<span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
