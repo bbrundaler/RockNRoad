@@ -2599,10 +2599,21 @@ let HZ_SWIPE_PAQUET=null;   // pour le mode liste
 function initSwipe(paquet){
   HZ_SWIPE_PAQUET=paquet;
   HZ_AIMEES_SESSION=new Set();   // nouveau coin → nouvelle session (panier repart vide)
+  // B10 : le deck ne montre que des fiches VIERGES — ni déjà retenues
+  // (`HZ_RETENUS`), ni déjà aimées par moi (`love.mine`, donc déjà candidates au
+  // Cockpit). Exclusion EN AMONT, identique pour cœur et limitrophes (un seul
+  // critère, pas de branche dans le swipe — cf. TECHNIQUE §0).
+  const dejaTraitee=(f)=>{
+    if(HZ_RETENUS.has(f.id)) return true;
+    try{ if(hzCoeursDe(f.id).love.mine) return true; }catch(e){}
+    return false;
+  };
+  const coeurVierge=(paquet.coeur||[]).filter(f=>!dejaTraitee(f));
+  const limitVierge=(paquet.limitrophes||[]).filter(f=>!dejaTraitee(f));
   // 1) regrouper par région : cœur (régions choisies) puis limitrophes
   const parRegCoeur={}, parRegLimit={};
-  paquet.coeur.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
-  paquet.limitrophes.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
+  coeurVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
+  limitVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
 
   // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
   HZ_SWIPE_SEQ=[];
