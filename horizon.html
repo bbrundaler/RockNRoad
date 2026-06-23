@@ -1478,15 +1478,6 @@ function brancheSurvolCarte(){
     //  • un thème est choisi (on attend un lieu) → on (dé)sélectionne ce lieu
     //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
     reg.addEventListener('click',()=>{
-      // DIAGNOSTIC TEMPORAIRE — à retirer une fois résolu.
-      try{
-        console.log('[CLIC RÉGION]', dataR,
-          '| HZ_MONDE=', HZ_MONDE,
-          '| onglet couchage actif=', !!(document.getElementById('hz-monde-couchage')&&document.getElementById('hz-monde-couchage').classList.contains('on')),
-          '| estompée=', reg.classList.contains('eteinte'),
-          '| pointerEvents=', reg.style.pointerEvents || '(défaut)',
-          '| HZ_THEME=', HZ_THEME);
-      }catch(e){}
       if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
       // GESTE : on pose le lieu si on est en train de composer un monde.
       // Blindage : on vérifie l'onglet RÉELLEMENT actif (pas seulement HZ_MONDE),
@@ -2197,18 +2188,6 @@ function construitCoin(){
     return null;
   }
   const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, themeEffectif, HZ_LIEUX, {tagsApi:tagsEffectif});
-  // DIAGNOSTIC TEMPORAIRE (mode couchage) — à retirer une fois validé.
-  if(HZ_MONDE==='couchage' && window.console){
-    try{
-      const tousCouchages=HZ_FICHES.filter(f=>window.RNR_TAGS&&RNR_TAGS.estCouchage&&RNR_TAGS.estCouchage(f));
-      const parReg={};
-      tousCouchages.forEach(f=>{ const r=f._regionSvg||('('+f.region+')'); parReg[r]=(parReg[r]||0)+1; });
-      console.log('[COUCHAGE] régions cliquées:',HZ_LIEUX,
-        '| total couchages:',tousCouchages.length,
-        '| par région SVG:',parReg,
-        '| coeur trouvé:',paquet.coeur.length);
-    }catch(e){ console.warn('diag couchage',e); }
-  }
   HZ_COIN_PAQUET=paquet;
   rendCarnetCoin(paquet);
   // NB : le seuil ne s'ouvre PLUS automatiquement ici (sinon il surgit dès la

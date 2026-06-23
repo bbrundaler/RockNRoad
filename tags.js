@@ -330,7 +330,7 @@
       // (3) Repli : famille déduite des tags/types Google.
       try {
         var fam = (fiche.famille) ? fiche.famille
-                : (this.classerDepuisGoogle(fiche.types || fiche.google_types, fiche.nom)||{}).famille;
+                : (api.classerDepuisGoogle(fiche.types || fiche.google_types, fiche.nom)||{}).famille;
         if(fam && FAMILLES[fam] && FAMILLES[fam].jourNuit) return FAMILLES[fam].jourNuit;
       } catch(e){ /* repli défaut */ }
       // (4) Défaut prudent : activité.
@@ -338,7 +338,7 @@
     },
 
     // Confort : true si la fiche est un couchage (où on dort).
-    estCouchage(fiche){ return this.jourNuitFiche(fiche) === 'nuit'; },
+    estCouchage(fiche){ return api.jourNuitFiche(fiche) === 'nuit'; },
 
     // ══ AUTO-TAGS : tags à cocher depuis une réponse Google (aligné 17 $) ══
     // p = place Google ; lit p.types et p.name UNIQUEMENT (pas de champ cher).
