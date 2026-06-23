@@ -2924,6 +2924,10 @@ function appliqueModeBande(){
 // voyage à l'autre, même si la clé était ambiguë).
 function cleGeste(){ return 'rnr_horizon_geste_'+(HZ_VOYAGE_ID||HZ_TRI_GROUPE_ID||'anon'); }
 
+function sauveGeste(){
+  try{ sessionStorage.setItem(cleGeste(), JSON.stringify({voyage:HZ_VOYAGE_ID, monde:HZ_MONDE, theme:HZ_THEME, lieux:HZ_LIEUX})); }catch(e){}
+}
+
 function restaureGeste(){
   try{
     const raw=sessionStorage.getItem(cleGeste());
