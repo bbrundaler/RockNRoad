@@ -1478,6 +1478,15 @@ function brancheSurvolCarte(){
     //  • un thème est choisi (on attend un lieu) → on (dé)sélectionne ce lieu
     //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
     reg.addEventListener('click',()=>{
+      // DIAGNOSTIC TEMPORAIRE — à retirer une fois résolu.
+      try{
+        console.log('[CLIC RÉGION]', dataR,
+          '| HZ_MONDE=', HZ_MONDE,
+          '| onglet couchage actif=', !!(document.getElementById('hz-monde-couchage')&&document.getElementById('hz-monde-couchage').classList.contains('on')),
+          '| estompée=', reg.classList.contains('eteinte'),
+          '| pointerEvents=', reg.style.pointerEvents || '(défaut)',
+          '| HZ_THEME=', HZ_THEME);
+      }catch(e){}
       if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
       // GESTE : on pose le lieu si on est en train de composer un monde.
       // Blindage : on vérifie l'onglet RÉELLEMENT actif (pas seulement HZ_MONDE),
