@@ -312,7 +312,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ── CONTEXTE : coups de cœur du groupe ── -->
   <div class="blk b-context">
-    <div class="bh"><span class="ic">❤️</span><h3>Les coups de cœur du groupe</h3><span class="badge" id="cc-badge">0</span></div>
+    <div class="bh"><span class="ic">📌</span><h3>Les fiches retenues du groupe</h3><span class="badge" id="cc-badge">0</span></div>
     <div class="bb">
       <div id="cc-list" class="cc-list">Chargement…</div>
       <div id="cc-reserve" class="cc-reserve" data-ouvert="0" style="display:none"></div>
@@ -346,6 +346,7 @@ const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUz
    ════════════════════════════════════════════════════════════════ */
 let RNR_groupeId = null;
 let RNR_userId   = null;
+let RNR_estSuperAdmin = false;   // super-admin → peut forcer le retrait (E3 MAJ 24/06)
 let RNR_userNom  = null;
 let RNR_dernierMsg = null;   /* date ISO du dernier message — alimente le moteur d'animation (D-ECH-3) */
 let RNR_reactions = {};      /* cache des réactions du fil : {msgId:{emoji:{count,mine}}} */
@@ -395,6 +396,7 @@ async function chargerContexte(){
   // Nom affiché : le pseudo réel (identité v15) ; repli sur l'email si pas encore renseigné.
   RNR_userNom = (mem.pseudo && mem.pseudo.trim()) ? mem.pseudo.trim() : prenomDepuisEmail(session.user.email);
   RNR_groupeId = mem.groupe_id;
+  RNR_estSuperAdmin = !!mem.is_superadmin;   // passe-droit de retrait forcé (E3 MAJ 24/06)
   if(window.rnrChrome){
     if(mem.groupes&&mem.groupes.nom) rnrChrome.setGroupe(mem.groupes.nom);
     if(mem.is_superadmin) rnrChrome.setSuperAdmin(true);
@@ -529,10 +531,29 @@ async function retirerFicheDuVoyage(lieuId){
   const estRetenue = RNR_retenues.indexOf(lieuId)!==-1;
   const moiAuteur = jeSuisAuteurCoeur(lieuId);
   const autresAuteurs = auteursCoeur(lieuId).filter(a=>a.uid!==RNR_userId);
-  // Fiche aimée uniquement par d'autres, pas retenue → rien à retirer pour moi.
-  if(!estRetenue && !moiAuteur && autresAuteurs.length){
+  // Fiche qui appartient à d'autres (pas la mienne) → E1/E2 : on ne détruit pas le choix d'autrui.
+  if(!moiAuteur && autresAuteurs.length){
     const qui = libelleAuteursCoeur(lieuId);
-    alert("C'est le coup de cœur de "+qui+", pas le tien.\n\nOn ne retire jamais le choix d'un autre membre. Tu ne peux retirer que tes propres coups de cœur. (Un responsable de groupe pourra forcer le retrait plus tard — fonction à venir.)");
+    // PASSE-DROIT SUPER-ADMIN (E3 MAJ 24/06) : forcer le retrait reste possible, mais avec
+    // un message qui rend le geste CONSCIENT (« c'est le choix de X »). Le leader élu viendra
+    // plus tard, post-RLS (sinon fausse sécurité). Vraie suppression en base, pas masquage front.
+    if(RNR_estSuperAdmin){
+      if(!confirm("⚠️ Cette fiche est le choix de "+qui+", pas le tien.\n\n"+
+        "En tant que super-admin tu peux la RETIRER QUAND MÊME (nettoyage, litige). "+
+        "Cela supprime sa retenue ET son coup de cœur. Confirmer ce retrait forcé ?")) return;
+      try{
+        if(RNR_voyageId){ await sb.from('voyage_fiches').delete().eq('voyage_id',RNR_voyageId).eq('lieu_id',lieuId); }
+        // retrait forcé du ❤️ des autres auteurs sur cette fiche
+        await sb.from('reactions').delete().eq('cible_type','lieu').eq('cible_id',lieuId).eq('emoji','❤️');
+        if(typeof chargerRetenues==='function') await chargerRetenues();
+        if(typeof chargerFiches==='function') await chargerFiches();
+        if(typeof rendreRetenues==='function') rendreRetenues();
+        if(typeof rendreCoeurs==='function') rendreCoeurs();
+      }catch(e){ console.warn('Cockpit: retrait forcé',e); alert('Retrait impossible, réessayez.'); }
+      return;
+    }
+    // membre normal : interdiction claire (pourquoi je ne peux pas).
+    alert("C'est le coup de cœur de "+qui+", pas le tien.\n\nOn ne retire jamais le choix d'un autre membre. Tu ne peux retirer que tes propres coups de cœur. (Un responsable de groupe pourra forcer le retrait — fonction à venir.)");
     return;
   }
   const noms = autresAuteurs.map(a=>a.nom);
@@ -723,7 +744,8 @@ let RNR_autoCloture = false;         // garde anti-boucle pour la clôture autom
 let RNR_votes = {};      // { proposition_id: [ {votant_id, valeur, argument} ] }
 let RNR_vedetteId = null;
 let RNR_fiches = [];     // fiches du carnet du groupe (cache COMPLET) — résout les vignettes
-let RNR_fichesAimees = []; // fiches ayant ≥1 ❤️ — alimente le sélecteur de vote (entonnoir)
+let RNR_fichesAimees = []; // fiches VALIDÉES (voyage_fiches retenue) — la vraie liste du Cockpit
+let RNR_validees = new Set(); // lieu_id en statut 'retenue' pour le voyage actif (source de la liste)
 let RNR_fichesReserve = []; // fiches en RÉSERVE (✨ « une autre fois »), sans ❤️ ni statut tranché
 let RNR_nbMembres = 1;
 
@@ -740,10 +762,19 @@ async function chargerFiches(){
     .order('nom',{ascending:true});
   if(error){ console.warn('fiches',error); RNR_fiches=[]; RNR_fichesAimees=[]; RNR_fichesReserve=[]; return; }
   RNR_fiches = data||[];   /* cache COMPLET — sert à résoudre les vignettes des votes existants */
-  /* Cache des fiches AIMÉES (≥ 1 ❤️) — sert au sélecteur de création (entonnoir, Master 1.7).
-     Le ❤️ du carnet est la porte d'entrée dans la zone de vote.
-     Cache des fiches en RÉSERVE (✨ « une autre fois ») — réserve d'inspiration (G-RES) :
-     repliée, secondaire, jamais à égalité avec un ❤️. On lit les deux emojis en une requête. */
+  /* FRONTIÈRE INVIOLABLE (02_DECISIONS B12-L1, re-gravée 24/06) : le Cockpit n'affiche QUE des choix
+     ASSUMÉS, c.-à-d. les fiches VALIDÉES (voyage_fiches statut 'retenue'). Le ❤️ d'Horizon (reactions)
+     ne fait PAS entrer une fiche ici ; il ne sert qu'à l'ENROBAGE (auteur du coup de cœur, compteur,
+     spark, réserve ✨). Lire reactions pour décider QUELLES fiches afficher = BUG (fiches qui partent au
+     Cockpit dès le ❤️). On lit donc voyage_fiches comme source de la liste. */
+  RNR_validees = new Set();   // lieu_id en statut 'retenue' pour CE voyage (la vraie liste du Cockpit)
+  if(RNR_voyageId){
+    const {data:vf} = await sb.from('voyage_fiches')
+      .select('lieu_id,statut').eq('voyage_id',RNR_voyageId).eq('statut','retenue');
+    (vf||[]).forEach(r=>RNR_validees.add(r.lieu_id));
+  }
+  /* Enrobage : ❤️ (auteur, compteur, récence) + réserve ✨. On lit les deux emojis en une requête.
+     Ces données DÉCORENT les fiches validées ; elles ne décident PAS de la liste. */
   const {data:reacs} = await sb.from('reactions')
     .select('cible_id,emoji,created_at,membre_id').eq('cible_type','lieu').in('emoji',['❤️','✨']);
   const coeurParFiche = {};
@@ -762,9 +793,11 @@ async function chargerFiches(){
       if(!dernierReserve[r.cible_id] || t>dernierReserve[r.cible_id]) dernierReserve[r.cible_id]=t;
     }
   });
+  /* La liste du Cockpit = fiches VALIDÉES (voyage_fiches), décorées de leur ❤️ s'il existe.
+     Une fiche validée sans ❤️ (poussée via le panier sans like individuel) reste listée. */
   RNR_fichesAimees = RNR_fiches
-    .filter(f=>coeurParFiche[f.id]>0)
-    .map(f=>({...f, coeurs:coeurParFiche[f.id], dernierCoeur:dernierCoeur[f.id]||0}));
+    .filter(f=>RNR_validees.has(f.id))
+    .map(f=>({...f, coeurs:coeurParFiche[f.id]||0, dernierCoeur:dernierCoeur[f.id]||0}));
   /* La RÉSERVE = fiches avec ✨ mais SANS ❤️ (un ❤️ promeut hors réserve). L'exclusion des fiches
      déjà tranchées (retenue/écartée) se fait au RENDU (rendreReserve), où RNR_statutFiche est à jour —
      ainsi l'ordre des chargements n'a pas d'importance. */
@@ -970,9 +1003,9 @@ function rendreCoeurs(){
   if(badge) badge.textContent=aimees.length;
 
   if(!aimees.length){
-    box.innerHTML='<div class="cc-empty">Aucun coup de cœur pour l\'instant.<br>'+
-      'Dans le <b>carnet</b>, mettez un ❤️ sur les lieux qui vous font envie : ils apparaîtront ici, '+
-      'prêts à être soumis au groupe.</div>';
+    box.innerHTML='<div class="cc-empty">Aucune fiche retenue pour l\'instant.<br>'+
+      'Va dans <b>Horizon</b> : explore, mets des cœurs, puis <b>valide ton panier</b>. '+
+      'Les fiches que tu envoies apparaîtront ici, prêtes pour la suite.</div>';
     return;
   }
 
@@ -1379,9 +1412,9 @@ function choisirIntention(i){
   if(NV_intention.besoinFiche){
     if(!RNR_fichesAimees.length){
       box.innerHTML='<h3>'+escH(NV_intention.titre)+'</h3>'+
-        '<div class="vhint" style="margin-top:8px">Aucune fiche n\'a encore reçu de <b>❤️</b> dans le groupe. '+
-        'Passe d\'abord par le <b>carnet</b> : mets un cœur sur les lieux qui te font envie. '+
-        'Ce sont eux qu\'on pourra ensuite départager ici.</div>'+
+        '<div class="vhint" style="margin-top:8px">Aucune fiche <b>validée</b> dans ce voyage pour l\'instant. '+
+        'Passe d\'abord par <b>Horizon</b> : explore, mets des cœurs, puis <b>valide</b> ton panier — '+
+        'les fiches envoyées ici sont celles qu\'on pourra départager.</div>'+
         '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button></div>';
       return;
     }
