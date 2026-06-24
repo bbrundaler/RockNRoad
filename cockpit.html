@@ -433,6 +433,8 @@ async function CK_chargeVoyageActif(){
    RNR_leaders = Set de membre_id ; RNR_membresMap = id→{pseudo,prenom,...} pour le nom. */
 let RNR_leaders = new Set();
 let RNR_membresMap = {};
+let RNR_coeurAuteurs = {};      // cible_id -> Set de membre_id (user_id) ayant ❤️
+let RNR_membresParUser = {};    // user_id -> {pseudo,prenom,...} pour nommer l'auteur d'un ❤️
 async function chargerLeaders(){
   RNR_leaders = new Set();
   if(!RNR_voyageId) { rendreGroupe(); return; }
@@ -442,7 +444,7 @@ async function chargerLeaders(){
     /* table id→membre pour afficher le nom du/des leader(s) */
     if(!Object.keys(RNR_membresMap).length){
       const { data:ms } = await sb.from('membres').select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',RNR_groupeId).limit(60);
-      (ms||[]).forEach(m=>{ RNR_membresMap[m.id]=m; });
+      (ms||[]).forEach(m=>{ RNR_membresMap[m.id]=m; if(m.user_id) RNR_membresParUser[m.user_id]=m; });
     }
   }catch(e){ console.warn('chargerLeaders',e); }
   rendreGroupe();
@@ -451,6 +453,30 @@ async function chargerLeaders(){
 function nomLeader(membreId){
   const m = RNR_membresMap[membreId] || null;
   return (window.rnrNomMembre ? window.rnrNomMembre(m, '') : (m && (m.pseudo||m.prenom))) || 'Leader';
+}
+
+/* Noms des membres ayant mis ❤️ sur une fiche (B12-L1 : « qui a mis la fiche »).
+   reactions.membre_id = user_id (auth) → on traduit via RNR_membresParUser. */
+function auteursCoeur(cibleId){
+  const set = RNR_coeurAuteurs[cibleId];
+  if(!set || !set.size) return [];
+  return [...set].map(uid=>{
+    const m = RNR_membresParUser[uid] || null;
+    const nm = (window.rnrNomMembre ? window.rnrNomMembre(m,'') : (m && (m.pseudo||m.prenom))) || '';
+    return { uid, nom: nm || 'quelqu\'un' };
+  });
+}
+function libelleAuteursCoeur(cibleId){
+  const a = auteursCoeur(cibleId).map(x=>x.nom);
+  if(!a.length) return '';
+  if(a.length===1) return a[0];
+  if(a.length===2) return a[0]+' et '+a[1];
+  return a[0]+', '+a[1]+' +'+(a.length-2);
+}
+/* Ai-je (moi) mis un ❤️ sur cette fiche ? (droit de retrait — E1/E2) */
+function jeSuisAuteurCoeur(cibleId){
+  const set = RNR_coeurAuteurs[cibleId];
+  return !!(set && RNR_userId && set.has(RNR_userId));
 }
 
 /* ── Étape 2 de la respiration : les fiches RETENUES pour ce voyage (convergence).
@@ -495,29 +521,42 @@ function rendreRetenues(){
   }).join('');
 }
 
-/* RETRAIT d'une fiche — source unique (TECHNIQUE §0). Nettoie les DEUX états :
-   la retenue (voyage_fiches du voyage actif) ET le coup de cœur (reactions ❤️ de
-   l'utilisateur). Permet de repartir à vide et de revenir en arrière (B12-L1). */
+/* RETRAIT d'une fiche — source unique (TECHNIQUE §0). Respecte E1/E2 : on ne
+   détruit JAMAIS le coup de cœur d'un autre membre. On retire MA retenue et MON
+   coup de cœur. Si la fiche reste candidate (d'autres l'ont aimée), on l'explique. */
 async function retirerFicheDuVoyage(lieuId){
   if(!lieuId) return;
-  if(!confirm('Retirer cette fiche du voyage ? (enlève la retenue et votre coup de cœur)')) return;
+  const estRetenue = RNR_retenues.indexOf(lieuId)!==-1;
+  const moiAuteur = jeSuisAuteurCoeur(lieuId);
+  const autresAuteurs = auteursCoeur(lieuId).filter(a=>a.uid!==RNR_userId);
+  // Fiche aimée uniquement par d'autres, pas retenue → rien à retirer pour moi.
+  if(!estRetenue && !moiAuteur && autresAuteurs.length){
+    const qui = libelleAuteursCoeur(lieuId);
+    alert("C'est le coup de cœur de "+qui+", pas le tien.\n\nOn ne retire jamais le choix d'un autre membre. Tu ne peux retirer que tes propres coups de cœur. (Un responsable de groupe pourra forcer le retrait plus tard — fonction à venir.)");
+    return;
+  }
+  const noms = autresAuteurs.map(a=>a.nom);
+  const reste = noms.length
+    ? "\n\nNote : "+(noms.length===1 ? noms[0]+" l'a aussi aimée" : noms.join(', ')+" l'ont aussi aimée")+" — elle restera candidate via leur ❤️."
+    : "";
+  if(!confirm("Retirer cette fiche du voyage ? (enlève ta retenue et ton coup de cœur)"+reste)) return;
   try{
-    // 1) retirer la retenue du voyage actif
-    if(RNR_voyageId){
+    if(RNR_voyageId && estRetenue){
       await sb.from('voyage_fiches').delete().eq('voyage_id',RNR_voyageId).eq('lieu_id',lieuId);
     }
-    // 2) retirer mon coup de cœur ❤️ (candidate) — cible_type='lieu'
-    if(RNR_userId){
+    if(RNR_userId && moiAuteur){
       await sb.from('reactions').delete()
         .eq('cible_type','lieu').eq('cible_id',lieuId).eq('membre_id',RNR_userId).eq('emoji','❤️');
     }
-    // 3) recharger l'état et rafraîchir les deux blocs
     if(typeof chargerRetenues==='function') await chargerRetenues();
     if(typeof chargerFiches==='function') await chargerFiches();
     if(typeof rendreRetenues==='function') rendreRetenues();
     if(typeof rendreCoeurs==='function') rendreCoeurs();
   }catch(e){ console.warn('Cockpit: retrait fiche',e); alert('Retrait impossible, réessayez.'); }
 }
+
+
+
 
 /* Charger et afficher le fil (statut actif uniquement — G2 modération a posteriori) */
 async function chargerMessages(){
@@ -706,8 +745,9 @@ async function chargerFiches(){
      Cache des fiches en RÉSERVE (✨ « une autre fois ») — réserve d'inspiration (G-RES) :
      repliée, secondaire, jamais à égalité avec un ❤️. On lit les deux emojis en une requête. */
   const {data:reacs} = await sb.from('reactions')
-    .select('cible_id,emoji,created_at').eq('cible_type','lieu').in('emoji',['❤️','✨']);
+    .select('cible_id,emoji,created_at,membre_id').eq('cible_type','lieu').in('emoji',['❤️','✨']);
   const coeurParFiche = {};
+  RNR_coeurAuteurs = {};   // cible_id -> Set de membre_id (user_id) ayant mis ❤️
   const dernierCoeur = {};
   const reserveParFiche = {};
   const dernierReserve = {};
@@ -716,6 +756,7 @@ async function chargerFiches(){
     if(r.emoji==='❤️'){
       coeurParFiche[r.cible_id]=(coeurParFiche[r.cible_id]||0)+1;
       if(!dernierCoeur[r.cible_id] || t>dernierCoeur[r.cible_id]) dernierCoeur[r.cible_id]=t;
+      if(r.membre_id){ (RNR_coeurAuteurs[r.cible_id]=RNR_coeurAuteurs[r.cible_id]||new Set()).add(r.membre_id); }
     }else if(r.emoji==='✨'){
       reserveParFiche[r.cible_id]=(reserveParFiche[r.cible_id]||0)+1;
       if(!dernierReserve[r.cible_id] || t>dernierReserve[r.cible_id]) dernierReserve[r.cible_id]=t;
@@ -945,7 +986,8 @@ function rendreCoeurs(){
     const ph = f.photo_url
       ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
       : '<div class="cc-ph">🗺️</div>';
-    const meta = (f.region?escH(f.region)+' · ':'')+'❤️ '+(f.coeurs||0);
+    const auteurs = libelleAuteursCoeur(f.id);
+    const meta = (f.region?escH(f.region)+' · ':'')+'❤️ '+(f.coeurs||0)+(auteurs?' · par '+escH(auteurs):'');
 
     /* Fiche DÉJÀ TRANCHÉE pour ce voyage → sortie du cycle (D-ECH-10 l.105 + maj D-ECH-12).
        Plus de re-vote possible : ni bouton, ni relance. */
