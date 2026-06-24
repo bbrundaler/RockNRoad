@@ -306,6 +306,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   padding:8px 2px 5px;margin-top:6px;border-bottom:1px solid var(--gold-a20);}
 .hz-aimee-grp-tt:first-child{margin-top:0;}
 .hz-aimee-grp-tt.limit{color:var(--ink-dim);}
+/* Séparateur « 🌙 Où dormir » dans le panier : marque la frontière jour/nuit.
+   Trait un peu plus appuyé pour qu'on voie nettement le bloc couchage. */
+.hz-aimee-grp-tt.nuit{color:var(--ink);border-bottom:1.5px solid var(--gold-a35);margin-top:12px;}
 .hz-aimee-grp-n{font-weight:600;font-size:10.5px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0;}
 .hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
@@ -2286,8 +2289,8 @@ function rendPanier(){
     if(panier) panier.style.display='none';
     return;
   }
-  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
+  // panier cumulatif (jour+nuit), comme le panier de droite du popup.
+  const aimees=[...HZ_PANIER.values()].map(e=>e.fiche).filter(f=>!HZ_RETENUS.has(f.id));
   if(!aimees.length){
     // ÉTAPE 1 — invitation seule
     if(invite) invite.style.display='flex';
@@ -2522,6 +2525,10 @@ function brancheExplo(){
 // ════════════════════════════════════════════════════════════════
 let HZ_SWIPE_SEQ=[];        // séquence mêlant {kind:'fiche',fiche} et {kind:'transition',...}
 let HZ_AIMEES_SESSION=new Set();   // ids des fiches aimées PENDANT cette session d'exploration
+// PANIER CUMULATIF (jour + nuit) : survit à la bascule jour→nuit (basculeVersDormir),
+// vidé seulement au vrai reset/envoi. Map id → {fiche, nuit:bool}. C'est LUI que lit
+// le panier de droite et l'envoi au Cockpit, pour ne plus perdre les fiches jour.
+let HZ_PANIER=new Map();
 let HZ_FIN_TIMER=null;             // timer du retour auto en fin de swipe
 let HZ_SWIPE_I=0;           // position courante dans la séquence
 let HZ_SWIPE_MODE='swipe';  // 'swipe' | 'liste'
@@ -2647,11 +2654,10 @@ function rendFinSwipe(){
   if(!deck) return;
   Array.from(deck.querySelectorAll('.hz-swipe-card,.hz-swipe-transition')).forEach(el=>el.remove());
 
-  // combien d'aimées de session (non retenues) ?
+  // combien d'aimées au total (panier cumulatif jour+nuit, non encore retenues) ?
   let nb=0;
-  if(HZ_SWIPE_PAQUET){
-    const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-    nb=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id)).length;
+  {
+    nb=[...HZ_PANIER.values()].filter(e=>!HZ_RETENUS.has(e.fiche.id)).length;
   }
 
   if(vide){
@@ -2707,7 +2713,13 @@ async function swipeGeste(type){
     const slot=hzCoeursDe(f.id);
     const deja=(type==='love')?slot.love.mine:slot.later.mine;
     if(!deja){ await hzToggleVote(f.id, type); }
-    if(type==='love'){ HZ_AIMEES_SESSION.add(f.id); }   // ❤️ de CETTE session
+    if(type==='love'){
+      HZ_AIMEES_SESSION.add(f.id);   // ❤️ de CETTE session (pour la garde anti-rebuild)
+      // PANIER CUMULATIF : on ajoute la fiche avec son marqueur jour/nuit (le thème
+      // courant). Ainsi le panier garde les fiches jour même après bascule en nuit.
+      const estNuit=(HZ_THEME==='nuit');
+      HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
+    }
     rendAimees();
     avanceSwipe('like');
   }
@@ -2743,26 +2755,24 @@ function majSwipeProgres(){
   if(pop) pop.style.width=pct+'%';
 }
 
-// liste des fiches aimées (tout le coin, lecture des cœurs)
+// liste des fiches aimées — PANIER CUMULATIF (jour groupé par région + bloc nuit).
 function rendAimees(){
   const box=document.getElementById('hz-swipe-aimees-liste');
   const pied=document.getElementById('hz-aimees-pied');
-  if(!box || !HZ_SWIPE_PAQUET) return;
+  if(!box) return;
   box.innerHTML='';
-  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
-  if(!aimees.length){
+  // Source = le panier cumulatif (survit à la bascule jour→nuit), hors fiches déjà
+  // retenues au Cockpit. On sépare jour / nuit grâce au marqueur posé au ❤️.
+  const entrees=[...HZ_PANIER.values()].filter(e=>!HZ_RETENUS.has(e.fiche.id));
+  const jour=entrees.filter(e=>!e.nuit).map(e=>e.fiche);
+  const nuit=entrees.filter(e=>e.nuit).map(e=>e.fiche);
+  if(!jour.length && !nuit.length){
     const d=document.createElement('div'); d.className='hz-aimee-vide';
     d.textContent='Aucune fiche aimée pour l\'instant — swipez ❤️ ce qui vous tente.';
     box.appendChild(d);
     if(pied) pied.style.display='none';
     return;
   }
-  // GROUPER PAR RÉGION (le but : aider à se décider pour UNE région).
-  // Ordre : régions choisies d'abord (dans l'ordre du geste), limitrophes ensuite.
-  const parReg={};
-  aimees.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); });
-  const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
   const carteFiche=(f)=>{
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
@@ -2772,16 +2782,31 @@ function rendAimees(){
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
     return d;
   };
-  ordre.filter(r=>parReg[r]).forEach(slug=>{
-    const fiches=parReg[slug];
-    const estChoisie=HZ_LIEUX.indexOf(slug)!==-1;
-    const tt=document.createElement('div');
-    tt.className='hz-aimee-grp-tt'+(estChoisie?'':' limit');
-    tt.innerHTML='<span>📍 '+escapeHtmlHz(labelRegionSvg(slug))+(estChoisie?'':' · à côté')+'</span>'+
-      '<span class="hz-aimee-grp-n">'+fiches.length+' aimée'+(fiches.length>1?'s':'')+'</span>';
-    box.appendChild(tt);
-    fiches.forEach(f=>box.appendChild(carteFiche(f)));
-  });
+  // 1) BLOC JOUR — groupé par région (régions choisies d'abord, limitrophes ensuite).
+  if(jour.length){
+    const parReg={};
+    jour.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); });
+    const ordre=[...HZ_LIEUX, ...Object.keys(parReg).filter(r=>HZ_LIEUX.indexOf(r)===-1)];
+    ordre.filter(r=>parReg[r]).forEach(slug=>{
+      const fiches=parReg[slug];
+      const estChoisie=HZ_LIEUX.indexOf(slug)!==-1;
+      const tt=document.createElement('div');
+      tt.className='hz-aimee-grp-tt'+(estChoisie?'':' limit');
+      tt.innerHTML='<span>📍 '+escapeHtmlHz(labelRegionSvg(slug))+(estChoisie?'':' · à côté')+'</span>'+
+        '<span class="hz-aimee-grp-n">'+fiches.length+' aimée'+(fiches.length>1?'s':'')+'</span>';
+      box.appendChild(tt);
+      fiches.forEach(f=>box.appendChild(carteFiche(f)));
+    });
+  }
+  // 2) BLOC NUIT — séparateur « 🌙 Où dormir » puis les couchages (toutes régions).
+  if(nuit.length){
+    const sep=document.createElement('div');
+    sep.className='hz-aimee-grp-tt nuit';
+    sep.innerHTML='<span>🌙 Où dormir</span>'+
+      '<span class="hz-aimee-grp-n">'+nuit.length+' aimée'+(nuit.length>1?'s':'')+'</span>';
+    box.appendChild(sep);
+    nuit.forEach(f=>box.appendChild(carteFiche(f)));
+  }
   if(pied) pied.style.display='flex';
 }
 
@@ -2789,7 +2814,8 @@ function rendAimees(){
 async function retireAimee(lieuId){
   const slot=hzCoeursDe(lieuId);
   if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire
-  HZ_AIMEES_SESSION.delete(lieuId);   // retirer aussi de la session
+  HZ_AIMEES_SESSION.delete(lieuId);   // retirer de la session
+  HZ_PANIER.delete(lieuId);           // retirer du panier cumulatif (jour+nuit)
   rendAimees();
   rendPanier();
 }
@@ -2817,9 +2843,11 @@ function refairePasserAimees(){
 // ENVOYER AU COCKPIT : upsert voyage_fiches (statut 'retenue') pour les aimées,
 // puis on CLÔTURE l'envie : Horizon s'allège, prêt pour une nouvelle idée.
 async function envoyerAimeesAuCockpit(){
-  if(!HZ_SWIPE_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
-  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
-  const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id)).filter(f=>f.id);
+  if(!HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
+  // ENVOI = tout le PANIER CUMULATIF (activités + couchages aimés sur le parcours),
+  // pas seulement le paquet courant — sinon les fiches jour seraient perdues après
+  // une bascule vers la nuit. voyage_fiches est un statut universel.
+  const aimees=[...HZ_PANIER.values()].map(e=>e.fiche).filter(f=>f && f.id && !HZ_RETENUS.has(f.id));
   if(!aimees.length){ alert('Aucune fiche aimée à envoyer.'); return; }
   // les deux boutons possibles (popup + panier de la bande)
   const btns=[document.getElementById('hz-aimees-envoi'), document.getElementById('hz-panier-valider')].filter(Boolean);
@@ -2902,6 +2930,7 @@ function recommenceGeste(){
   HZ_SWIPE_SEQ=[];
   HZ_SWIPE_SIG=null;             // anti-rebuild : prochain coin remonté proprement
   HZ_AIMEES_SESSION=new Set();   // nouveau cycle → session d'aimées vidée
+  HZ_PANIER=new Map();           // panier cumulatif jour+nuit vidé (nouveau parcours)
   fermeSeuil();                  // fermer l'ancien seuil
   if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
