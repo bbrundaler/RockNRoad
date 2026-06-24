@@ -1826,7 +1826,18 @@ function rallumeToutesRegions(){
 }
 
 function choisitTheme(cle){
+  const themeAvant = HZ_THEME;
   HZ_THEME = (HZ_THEME===cle) ? null : cle;   // re-clic = désélection
+  // CHANGEMENT de thème (ex. Couchage → Culture) : les régions choisies pour
+  // l'ancien thème ne valent plus pour le nouveau. On repart sur des régions
+  // vierges, sinon elles se CUMULENT (« Bretagne en jour, mais une fiche reste
+  // en Occitanie venue du couchage »). Reset seulement si le thème a réellement
+  // changé pour une autre valeur (pas à la simple désélection, gérée plus bas).
+  if(HZ_THEME && themeAvant && themeAvant!==HZ_THEME){
+    HZ_LIEUX=[];
+    rendLieuxChoisis();
+    peintLieuxSurCarte();
+  }
   rendThemesChips();
   const etapeLieu=document.getElementById('hz-geste-lieu');
   const carte=document.querySelector('.francemap');
@@ -2489,7 +2500,27 @@ let HZ_SWIPE_I=0;           // position courante dans la séquence
 let HZ_SWIPE_MODE='swipe';  // 'swipe' | 'liste'
 let HZ_SWIPE_PAQUET=null;   // pour le mode liste
 
+// Signature d'un paquet : identité stable du coin en cours d'exploration.
+// Sert de garde anti-rebuild : un re-appel d'initSwipe avec le MÊME paquet
+// (typiquement déclenché par le realtime via rendCarnetCoin) ne doit PAS
+// réinitialiser le swipe ni vider le panier de session.
+function signaturePaquet(paquet){
+  if(!paquet) return '';
+  const ids=(paquet.coeur||[]).map(f=>f.id).concat((paquet.limitrophes||[]).map(f=>f.id));
+  return (HZ_THEME||'')+'|'+(HZ_LIEUX||[]).join(',')+'|'+ids.join(',');
+}
+let HZ_SWIPE_SIG=null;   // signature du swipe actuellement monté
+
 function initSwipe(paquet){
+  // GARDE ANTI-REBUILD : si on re-monte EXACTEMENT le même coin (même thème,
+  // mêmes régions, mêmes fiches), on ne touche à RIEN — le swipe en cours et le
+  // panier de session sont préservés. Évite la boucle « chaque ❤️ → realtime →
+  // rendCarnetCoin → initSwipe → swipe qui recommence + panier vidé ».
+  const sig=signaturePaquet(paquet);
+  if(sig && sig===HZ_SWIPE_SIG && HZ_SWIPE_SEQ.length){
+    return;   // même coin déjà monté : ne pas réinitialiser
+  }
+  HZ_SWIPE_SIG=sig;
   HZ_SWIPE_PAQUET=paquet;
   HZ_AIMEES_SESSION=new Set();   // nouveau coin → nouvelle session (panier repart vide)
   // 1) regrouper par région : cœur (régions choisies) puis limitrophes
@@ -2836,6 +2867,7 @@ function recommenceGeste(){
   HZ_COIN_PAQUET=null;
   HZ_SWIPE_PAQUET=null;
   HZ_SWIPE_SEQ=[];
+  HZ_SWIPE_SIG=null;             // anti-rebuild : prochain coin remonté proprement
   HZ_AIMEES_SESSION=new Set();   // nouveau cycle → session d'aimées vidée
   fermeSeuil();                  // fermer l'ancien seuil
   if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
