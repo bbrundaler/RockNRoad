@@ -190,8 +190,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-bas .hz-swipe-card .ph{height:72%;min-height:200px;flex-shrink:0;background-position:center;}
 .hz-explo-bas .hz-swipe-card .body{flex:1;justify-content:flex-start;gap:6px;padding:12px 15px;}
 .hz-explo-bas .hz-swipe-card .nom{font-size:18px;}
-.hz-explo-bas .hz-swipe-actions{gap:14px;padding:0;}
-.hz-explo-bas .hz-swipe-act{width:46px;height:46px;font-size:20px;}
+.hz-explo-bas .hz-swipe-actions{gap:18px;padding:0;}
+.hz-explo-bas .hz-swipe-act .hz-act-ic{width:46px;height:46px;font-size:20px;}
+.hz-explo-bas .hz-swipe-act .hz-act-lbl{font-size:10.5px;}
 .hz-explo-bas .hz-swipe-aimees{display:flex;flex-direction:column;height:100%;min-height:0;}
 .hz-explo-bas .hz-swipe-aimees-liste{max-height:none;flex:1;}
 /* la carte invite au clic quand on attend un lieu */
@@ -285,11 +286,20 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-fin-dormir{font-family:var(--font-body);font-size:13.5px;font-weight:600;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--ink);padding:10px 22px;border-radius:var(--r);margin-top:2px;transition:.15s;}
 .hz-fin-dormir:hover{background:var(--gold-a10);}
 /* actions : remontées juste sous la carte, compactes */
-.hz-swipe-actions{display:flex;align-items:center;justify-content:center;gap:18px;padding:2px 0;}
-.hz-swipe-act{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);cursor:pointer;font-size:23px;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
-.hz-swipe-act:active{transform:scale(.86);}
-.hz-swipe-act.love{border-color:rgba(216,69,110,.45);}
-.hz-swipe-act.later{border-color:var(--gold-a35);}
+/* Consigne au-dessus du deck : retour test réel 24/06 — la testeuse n'a pas vu
+   les boutons ni compris quoi faire. On nomme l'action attendue. */
+.hz-swipe-consigne{font-size:12px;font-weight:600;color:var(--gold-text);text-align:center;margin-bottom:8px;letter-spacing:.3px;}
+.hz-swipe-actions{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding:4px 0;}
+/* Chaque action = icône ronde + un MOT dessous (✕ J'écarte · ✨ Plus tard · ❤️ Je
+   retiens). Le mot lève l'ambiguïté ; la pastille ronde rend le bouton évident. */
+.hz-swipe-act{display:flex;flex-direction:column;align-items:center;gap:5px;border:none;background:none;cursor:pointer;padding:0;transition:transform .12s;}
+.hz-swipe-act:active{transform:scale(.9);}
+.hz-swipe-act .hz-act-ic{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);font-size:23px;display:flex;align-items:center;justify-content:center;}
+.hz-swipe-act .hz-act-lbl{font-size:11px;font-weight:600;color:var(--ink-dim);}
+.hz-swipe-act.love .hz-act-ic{border-color:rgba(216,69,110,.45);}
+.hz-swipe-act.love .hz-act-lbl{color:var(--love-text,#d8456e);}
+.hz-swipe-act.later .hz-act-ic{border-color:var(--gold-a35);}
+.hz-swipe-act.later .hz-act-lbl{color:var(--gold-text);}
 /* barre de progression (remplace les onglets) */
 .hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
 .hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
@@ -515,7 +525,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
         <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
-        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none !important">C'est parti <span>→</span></button>
+        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">Explorer les fiches <span>→</span></button>
       </div>
     </div>
   </div>
@@ -573,6 +583,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
         <!-- MODE SWIPE (défaut) : une fiche à la fois -->
         <div id="hz-coin-swipe">
           <div class="hz-swipe-zone">
+            <div class="hz-swipe-consigne" id="hz-swipe-consigne">👇 Réagissez à chaque fiche</div>
             <div class="hz-swipe-deck" id="hz-swipe-deck">
               <div class="hz-swipe-empty" id="hz-swipe-empty" style="display:none">
                 <span class="hz-swipe-empty-ic">✓</span>
@@ -581,9 +592,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
               </div>
             </div>
             <div class="hz-swipe-actions" id="hz-swipe-actions">
-              <button class="hz-swipe-act pass" id="hz-swipe-pass" type="button" title="passer">✕</button>
-              <button class="hz-swipe-act later" id="hz-swipe-later" type="button" title="une prochaine fois">✨</button>
-              <button class="hz-swipe-act love" id="hz-swipe-love" type="button" title="j'adore">❤️</button>
+              <button class="hz-swipe-act pass" id="hz-swipe-pass" type="button" title="j'écarte"><span class="hz-act-ic">✕</span><span class="hz-act-lbl">J'écarte</span></button>
+              <button class="hz-swipe-act later" id="hz-swipe-later" type="button" title="plus tard"><span class="hz-act-ic">✨</span><span class="hz-act-lbl">Plus tard</span></button>
+              <button class="hz-swipe-act love" id="hz-swipe-love" type="button" title="je retiens"><span class="hz-act-ic">❤️</span><span class="hz-act-lbl">Je retiens</span></button>
             </div>
           </div>
           <div class="hz-swipe-aimees">
@@ -2135,12 +2146,16 @@ let HZ_SEUIL_VU_SIG=null;   // signature de la dernière envie pour qui le seuil
 // Le bouton « En avant » n'apparaît que lorsqu'un coin a des fiches à parcourir.
 // C'est LUI qui ouvre le seuil (et plus le clic région), pour qu'on puisse
 // poser tranquillement 1 OU 2 régions avant de lancer.
+// Le bouton « Explorer les fiches » vit dans le BLOC ENVIE, juste après le choix
+// thème + région : c'est la marche 3 de l'entonnoir (1 envie → 2 région → 3 on y
+// va), au même endroit, sous le doigt. Retour test réel 24/06 : « le bouton est
+// dans un autre cadre, pas logique ». Il apparaît dès qu'un coin a des fiches à
+// parcourir ; sinon il reste masqué. (L'invitation du bas reste en filet.)
 function majEnAvant(paquet){
-  // NEUTRALISÉ : le bouton « C'est parti » du haut a été remplacé par
-  // l'INVITATION dans le bloc du bas (un seul point d'entrée). On garde la
-  // fonction (appelée ailleurs) mais on force le bouton haut à rester masqué.
   const b=document.getElementById('hz-en-avant');
-  if(b) b.style.display='none';
+  if(!b) return;
+  const aDesFiches = !!(paquet && ((paquet.coeur&&paquet.coeur.length) || (paquet.limitrophes&&paquet.limitrophes.length)));
+  b.style.display = aDesFiches ? 'flex' : 'none';
 }
 function lanceSeuil(){
   ouvreSeuil();
@@ -2613,6 +2628,7 @@ function rendSwipeCarte(){
   Array.from(deck.querySelectorAll('.hz-swipe-card,.hz-swipe-transition')).forEach(el=>el.remove());
   const e=elemCourant();
   if(!e){
+    const csg=document.getElementById('hz-swipe-consigne'); if(csg) csg.style.display='none';
     rendFinSwipe();   // fin de séquence : écran adapté (vide → retour / aimées → valider)
     return;
   }
@@ -2630,6 +2646,7 @@ function rendSwipeCarte(){
       '<div class="hz-tr-sous">'+escapeHtmlHz(e.sous)+'</div>';
     deck.appendChild(t);
     if(actions) actions.style.display='none';
+    { const csg=document.getElementById('hz-swipe-consigne'); if(csg) csg.style.display='none'; }
     syncCarteSurFiche();            // la carte vole vers la nouvelle région (lent)
     majTitrePopup(e.slug);          // le titre met en évidence la nouvelle région
     // enchaînement auto après le vol (assez long pour lire le texte)
@@ -2640,6 +2657,7 @@ function rendSwipeCarte(){
 
   // carte de fiche
   const f=e.fiche;
+  { const csg=document.getElementById('hz-swipe-consigne'); if(csg) csg.style.display='block'; }
   const card=document.createElement('div');
   card.className='hz-swipe-card';
   const ph=f.photo_url?'url(\''+f.photo_url+'\')':'linear-gradient(135deg,#88888844,#88888822)';
