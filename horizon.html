@@ -142,10 +142,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-theme-chip.on{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
 .hz-theme-chip .ct{font-size:10.5px;opacity:.7;}
 .hz-theme-chip.on .ct{opacity:.85;}
-/* 8e thème Couchage : visuellement mis à part (un léger espace avant + bordure
-   pleine) — c'est « où dormir », pas une envie d'activité. Placement affiné + tard. */
-.hz-theme-chip-nuit{margin-left:8px;border-style:dashed;}
-.hz-theme-chip-nuit::before{content:"";display:inline-block;width:1px;height:14px;margin-right:8px;background:var(--gold-a35);}
+/* 8e thème Couchage : il est désormais sa propre PORTE (porte B), à égalité avec
+   la porte des activités. Plus d'appendice « mis à part » : c'est un départ égal. */
+.hz-theme-chip-nuit{margin-left:0;}
+/* Séparateur « — ou — » entre les deux portes (activités / couchage). Marque le
+   choix de départ égal, sans hiérarchie. */
+.hz-geste-ou{font-size:11px;color:var(--ink-dim);text-align:center;margin:10px 0 8px;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
 .hz-lieu-pick{display:flex;flex-wrap:wrap;gap:6px;min-height:20px;}
 .hz-lieu-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:var(--r-sm);
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
@@ -495,15 +497,21 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <div id="hz-gauche-vote" style="display:none"></div>
       <!-- VISAGE 2 : LE GESTE FONDATEUR thème→lieu (Carnet du coin, doctrine §B2/B4) -->
       <div id="hz-gauche-perso">
-        <!-- Temps 1 : le thème (7 thèmes calculés à la volée, RNR_THEMES) -->
+        <!-- Temps 1 : DEUX PORTES ÉGALES (retour test réel 24/06 : une testeuse part
+             des activités, l'autre part du couchage — deux approches également logiques).
+             Porte A = activités (7 thèmes) ; porte B = couchage (8e thème 'nuit').
+             Même rendu, même rang : ce sont deux départs égaux, pas un principal + un à part. -->
         <div class="hz-geste-etape" id="hz-geste-themes">
-          <div class="hz-geste-lbl">1 · Une envie de…</div>
+          <div class="hz-geste-lbl">1 · On choisit d'abord les activités&nbsp;?</div>
           <div class="hz-themes-chips" id="hz-themes-chips"></div>
+          <div class="hz-geste-ou">— ou —</div>
+          <div class="hz-geste-lbl">Ou d'abord où on dort&nbsp;?</div>
+          <div class="hz-themes-chips" id="hz-nuit-porte"></div>
         </div>
-        <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le thème -->
+        <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le choix -->
         <div class="hz-geste-etape" id="hz-geste-lieu" style="display:none">
           <div class="hz-geste-lbl">2 · Et dans quelle région&nbsp;?</div>
-          <div class="hz-geste-aide">Cliquez 1 ou 2 régions sur la carte (hésitation permise).</div>
+          <div class="hz-geste-aide">⚠️ Sans région, la carte ne bouge pas. Cliquez 1 ou 2 régions sur la carte (hésitation permise).</div>
           <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         </div>
         <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
@@ -1744,16 +1752,20 @@ function rendThemesChips(){
     chip.addEventListener('click',()=>choisitTheme(t.cle));
     box.appendChild(chip);
   });
-  // 8e thème : COUCHAGE 🌙. Même chemin que les 7 autres (choisitTheme), mais
-  // marqué à part visuellement (chip-nuit) — c'est « où dormir », pas une envie
-  // d'activité. La clé 'nuit' est reconnue par themesDeFiche (vérité estCouchage).
-  {
+  // 8e thème : COUCHAGE 🌙 = PORTE B, dans son propre conteneur (#hz-nuit-porte),
+  // à égalité avec la porte des activités. Même chemin que les 7 autres
+  // (choisitTheme) — Moteur unique. La clé 'nuit' est reconnue par themesDeFiche
+  // (vérité estCouchage). Retour test réel 24/06 : « où on dort » est un départ
+  // aussi légitime que « quoi faire » → même rang, pas un appendice.
+  const boxNuit=document.getElementById('hz-nuit-porte');
+  if(boxNuit){
+    boxNuit.innerHTML='';
     const n=compte['nuit']||0;
     const chip=document.createElement('span');
     chip.className='hz-theme-chip hz-theme-chip-nuit'+(HZ_THEME==='nuit'?' on':'');
     chip.innerHTML='🌙 Couchage<span class="ct">'+n+'</span>';
     chip.addEventListener('click',()=>choisitTheme('nuit'));
-    box.appendChild(chip);
+    boxNuit.appendChild(chip);
   }
 }
 
