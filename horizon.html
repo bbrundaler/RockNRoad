@@ -270,6 +270,18 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-tr-sous{font-size:13px;color:var(--ink-dim);}
 .hz-tr-go{margin-top:10px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;padding:9px 20px;border:none;border-radius:var(--r);background:var(--gold);color:var(--chrome-bg);}
 .hz-tr-go:hover{opacity:.88;}
+/* PONT NUIT (L2/B12) : à la fin des activités d'un coin, on propose le couchage.
+   Registre visuel « nuit » distinct des transitions de région (or) : on s'appuie
+   sur le bloc transition mais avec sa propre teinte (tokens couchage). */
+.hz-swipe-transition.nuit{background:var(--couch-bg,var(--surface));border:1.5px solid var(--couch-line,var(--gold-a35));}
+.hz-pont-titre{font-family:var(--font-title);font-size:20px;font-weight:700;color:var(--couch-text,var(--ink));}
+.hz-pont-sous{font-size:13px;color:var(--ink-dim);max-width:240px;}
+.hz-pont-boutons{display:flex;flex-direction:column;gap:9px;margin-top:6px;width:100%;max-width:260px;}
+.hz-pont-oui{font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;padding:11px 18px;border:none;border-radius:var(--r);background:var(--couch-accent,var(--gold));color:var(--chrome-bg);}
+.hz-pont-oui:hover{opacity:.9;}
+.hz-pont-non{font-family:var(--font-body);font-size:13px;cursor:pointer;padding:9px 16px;border:1px solid var(--gold-a35);border-radius:var(--r);background:none;color:var(--ink-dim);}
+.hz-pont-non:hover{background:var(--gold-a10);}
+.hz-pont-vide{font-size:12.5px;color:var(--ink-dim);font-style:italic;margin-top:2px;}
 .hz-swipe-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--ink-dim);font-size:14px;padding:20px;}
 .hz-swipe-empty-ic{font-size:34px;}
 .hz-swipe-rejouer{font-family:var(--font-body);font-size:13px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:7px 15px;border-radius:var(--r-sm);}
@@ -2615,6 +2627,24 @@ function initSwipe(paquet){
   coeurVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
   limitVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
 
+  // ── L2 (B12) : COUCHAGES PAR COIN ──
+  // Le swipe est un seul fil. Après les activités d'un coin, on propose « Et pour
+  // dormir ici ? ». On NE duplique PAS le moteur : on rappelle construirePaquet
+  // avec le pont nuit (HZ_TAGS_NUIT) sur les MÊMES régions. Les couchages sont
+  // groupés par région, exclus des déjà-traitées comme les activités.
+  // En mode COUCHAGE pur (geste « nuit » d'entrée), pas de pont : le fil EST déjà
+  // du couchage. Le pont ne sert qu'en mode activités (continuité jour→nuit).
+  const modeActiv = (HZ_MONDE!=='couchage');
+  const couchParReg={};
+  if(modeActiv && window.RNR_CARNET_COIN && HZ_LIEUX.length){
+    try{
+      const pqNuit=RNR_CARNET_COIN.construirePaquet(HZ_FICHES,'__nuit__',HZ_LIEUX,{tagsApi:HZ_TAGS_NUIT});
+      (pqNuit.coeur||[]).filter(f=>!dejaTraitee(f)).forEach(f=>{
+        const r=f._regionSvg||f.region||'?'; (couchParReg[r]=couchParReg[r]||[]).push(f);
+      });
+    }catch(e){ /* pas de couchage calculable → ponts informatifs */ }
+  }
+
   // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
   HZ_SWIPE_SEQ=[];
   HZ_LIEUX.forEach((slug,idx)=>{
@@ -2623,6 +2653,14 @@ function initSwipe(paquet){
     if(idx>0){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
     // fiches du cœur de cette région
     (parRegCoeur[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug}));
+    // PONT NUIT du coin (mode activités seulement) : carte « Et pour dormir ici ? »,
+    // puis les couchages du coin, MASQUÉS tant qu'on n'a pas dit « oui » (révélés
+    // dynamiquement par repondPontNuit). On les pose éteints dans la séquence.
+    if(modeActiv){
+      const couchs=couchParReg[slug]||[];
+      HZ_SWIPE_SEQ.push({kind:'pont-nuit',slug:slug,region:label,n:couchs.length,ouvert:false});
+      couchs.forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug,nuit:true,cache:true}));
+    }
   });
   // 3) limitrophes (toutes régions voisines) à la fin, annoncés « Juste à côté »
   const slugsLimit=Object.keys(parRegLimit);
@@ -2657,9 +2695,42 @@ function rendSwipeCarte(){
     rendFinSwipe();   // fin de séquence : écran adapté (vide → retour / aimées → valider)
     return;
   }
+  // L2 : une fiche couchage non révélée (pont fermé) est ENJAMBÉE en silence.
+  if(e.kind==='fiche' && e.cache){ HZ_SWIPE_I++; rendSwipeCarte(); majSwipeProgres(); return; }
   if(vide) vide.style.display='none';
   if(actions) actions.style.display='flex';
   // (suite de rendSwipeCarte ci-dessous)
+
+  // L2 : PONT NUIT — « Et pour dormir dans ce coin ? ». Carte interactive (2 choix)
+  // si des couchages existent, sinon carte informative grisée puis enchaînement auto.
+  if(e.kind==='pont-nuit'){
+    if(actions) actions.style.display='none';
+    const t=document.createElement('div');
+    t.className='hz-swipe-transition nuit';
+    if(e.n>0){
+      t.innerHTML='<div class="hz-tr-ic">🌙</div>'+
+        '<div class="hz-pont-titre">Et pour dormir dans ce coin&nbsp;?</div>'+
+        '<div class="hz-pont-sous">'+e.n+' endroit'+(e.n>1?'s':'')+' où poser le van à '+escapeHtmlHz(e.region||'')+'.</div>'+
+        '<div class="hz-pont-boutons">'+
+          '<button class="hz-pont-oui" id="hz-pont-oui" type="button">🌙 Oui, voir où dormir</button>'+
+          '<button class="hz-pont-non" id="hz-pont-non" type="button">Pas ici, je verrai plus loin →</button>'+
+        '</div>';
+      deck.appendChild(t);
+      const oui=document.getElementById('hz-pont-oui');
+      if(oui) oui.addEventListener('click',()=>repondPontNuit(true));
+      const non=document.getElementById('hz-pont-non');
+      if(non) non.addEventListener('click',()=>repondPontNuit(false));
+    }else{
+      // coin sans couchage référencé : on le dit, puis on enchaîne seul.
+      t.innerHTML='<div class="hz-tr-ic">🌙</div>'+
+        '<div class="hz-pont-titre">Où dormir à '+escapeHtmlHz(e.region||'')+'&nbsp;?</div>'+
+        '<div class="hz-pont-vide">Aucun couchage référencé ici pour l\'instant — on verra plus loin.</div>';
+      deck.appendChild(t);
+      clearTimeout(HZ_TR_TIMER);
+      HZ_TR_TIMER=setTimeout(()=>{ HZ_SWIPE_I++; rendSwipeCarte(); majSwipeProgres(); }, 1600);
+    }
+    return;
+  }
 
   if(e.kind==='transition'){
     // TRANSITION AUTOMATIQUE : on affiche le texte, la carte vole (lentement
@@ -2710,10 +2781,10 @@ function rendFinSwipe(){
   if(!deck) return;
   Array.from(deck.querySelectorAll('.hz-swipe-card,.hz-swipe-transition')).forEach(el=>el.remove());
 
-  // combien d'aimées de session (non retenues) ?
+  // combien d'aimées de session (non retenues) ? — sur tout le fil (couchages inclus)
   let nb=0;
-  if(HZ_SWIPE_PAQUET){
-    const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
+  {
+    const toutes=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').map(e=>e.fiche);
     nb=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id)).length;
   }
 
@@ -2756,6 +2827,29 @@ function avanceSwipe(direction){
   },260);
 }
 
+// L2 : réponse au pont nuit d'un coin.
+//  oui → on RÉVÈLE les couchages du coin (les fiches cache:true rattachées à ce
+//        pont, jusqu'au prochain pont/transition) puis on avance dessus.
+//  non → on laisse caché : rendSwipeCarte enjambera les couchages en silence.
+// Aucun moteur dupliqué : on bascule juste un drapeau sur la séquence existante.
+function repondPontNuit(oui){
+  const e=elemCourant();
+  if(!e || e.kind!=='pont-nuit') return;
+  e.ouvert=!!oui;
+  if(oui){
+    // dévoiler les fiches couchage qui suivent ce pont, jusqu'au prochain
+    // pont/transition (= bornes d'un coin).
+    for(let i=HZ_SWIPE_I+1;i<HZ_SWIPE_SEQ.length;i++){
+      const x=HZ_SWIPE_SEQ[i];
+      if(x.kind==='pont-nuit' || x.kind==='transition') break;
+      if(x.kind==='fiche' && x.cache) x.cache=false;
+    }
+  }
+  HZ_SWIPE_I++;
+  rendSwipeCarte();
+  majSwipeProgres();
+}
+
 // les 3 gestes (sur une fiche)
 async function swipeGeste(type){
   const f=ficheCourante(); if(!f){ return; }
@@ -2786,8 +2880,12 @@ function brancheSwipeActions(){
 
 // barre de progression (combien parcouru sur le total de fiches)
 function majSwipeProgres(){
-  const fiches=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').length;
-  const vues=HZ_SWIPE_SEQ.slice(0,HZ_SWIPE_I).filter(e=>e.kind==='fiche').length;
+  // L2 : on ne compte QUE les fiches réellement parcourables (une fiche couchage
+  // non révélée — pont fermé — n'entre pas dans le total, sinon la barre n'atteint
+  // jamais 100 %).
+  const estVisible=e=>e.kind==='fiche' && !e.cache;
+  const fiches=HZ_SWIPE_SEQ.filter(estVisible).length;
+  const vues=HZ_SWIPE_SEQ.slice(0,HZ_SWIPE_I).filter(estVisible).length;
   const pct=fiches?Math.round(100*Math.min(vues,fiches)/fiches):0;
   // barre dans la bande (si swipe en bas)
   const el=document.getElementById('hz-coin-coins');
@@ -2806,7 +2904,9 @@ function rendAimees(){
   const pied=document.getElementById('hz-aimees-pied');
   if(!box || !HZ_SWIPE_PAQUET) return;
   box.innerHTML='';
-  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
+  // L2 : le panier reflète TOUT le fil (activités ET couchages révélés/aimés).
+  // Source = la séquence elle-même, vérité unique du parcours en cours.
+  const toutes=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').map(e=>e.fiche);
   const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id));
   if(!aimees.length){
     const d=document.createElement('div'); d.className='hz-aimee-vide';
@@ -2874,8 +2974,11 @@ function refairePasserAimees(){
 // ENVOYER AU COCKPIT : upsert voyage_fiches (statut 'retenue') pour les aimées,
 // puis on CLÔTURE l'envie : Horizon s'allège, prêt pour une nouvelle idée.
 async function envoyerAimeesAuCockpit(){
-  if(!HZ_SWIPE_PAQUET || !HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
-  const toutes=[...HZ_SWIPE_PAQUET.coeur, ...HZ_SWIPE_PAQUET.limitrophes];
+  if(!HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
+  // L2 : on envoie TOUTES les fiches aimées du fil — activités ET couchages.
+  // voyage_fiches est un statut universel ; le Cockpit reclasse jour/nuit à la
+  // lecture via RNR_TAGS.estCouchage. Pas de colonne, pas de migration.
+  const toutes=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').map(e=>e.fiche);
   const aimees=toutes.filter(f=>HZ_AIMEES_SESSION.has(f.id) && !HZ_RETENUS.has(f.id)).filter(f=>f.id);
   if(!aimees.length){ alert('Aucune fiche aimée à envoyer.'); return; }
   // les deux boutons possibles (popup + panier de la bande)
