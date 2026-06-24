@@ -13,8 +13,8 @@
 <script src="carto.js"></script>
 <script src="carto-cascade.js"></script>
 <script src="carto-lentilles.js"></script>
-<script src="themes-horizon.js"></script>
 <script src="tags.js"></script>
+<script src="themes-horizon.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
@@ -134,7 +134,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-geste-etape{margin-bottom:12px;}
 .hz-geste-lbl{font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
 .hz-geste-aide{font-size:11.5px;color:var(--ink-dim);margin-bottom:7px;}
-
+.hz-themes-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .hz-theme-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-body);font-size:12.5px;
   padding:6px 11px;border-radius:999px;border:1px solid var(--gold-a35);background:var(--gold-a10);
   color:var(--ink);cursor:pointer;transition:all .15s;}
@@ -142,6 +142,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-theme-chip.on{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
 .hz-theme-chip .ct{font-size:10.5px;opacity:.7;}
 .hz-theme-chip.on .ct{opacity:.85;}
+/* 8e thème Couchage : visuellement mis à part (un léger espace avant + bordure
+   pleine) — c'est « où dormir », pas une envie d'activité. Placement affiné + tard. */
+.hz-theme-chip-nuit{margin-left:8px;border-style:dashed;}
+.hz-theme-chip-nuit::before{content:"";display:inline-block;width:1px;height:14px;margin-right:8px;background:var(--gold-a35);}
 .hz-lieu-pick{display:flex;flex-wrap:wrap;gap:6px;min-height:20px;}
 .hz-lieu-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:var(--r-sm);
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
@@ -253,7 +257,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-swipe-card,.hz-swipe-transition{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .28s ease,opacity .28s ease;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
 .hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
-.hz-swipe-card .ph .hz-swipe-deja{font-size:10.5px;font-weight:700;color:#fff;background:#1d9e75;padding:3px 10px;border-radius:12px;align-self:flex-start;margin-top:4px;box-shadow:0 1px 4px rgba(0,0,0,.35);}
 .hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
 .hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center;}
 .hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
@@ -485,27 +488,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       <div id="hz-gauche-vote" style="display:none"></div>
       <!-- VISAGE 2 : LE GESTE FONDATEUR thème→lieu (Carnet du coin, doctrine §B2/B4) -->
       <div id="hz-gauche-perso">
-        <!-- SÉLECTEUR DE MONDE (A6) : Activités (jour) / Couchage (nuit). Deux couleurs distinctes.
-             L'utilisateur ne lit JAMAIS « jour/nuit » ; le code, lui, raisonne en 'jour'/'nuit'. -->
-        <div class="hz-monde-pick" id="hz-monde-pick" role="tablist" aria-label="Que cherche-t-on ?">
-          <button type="button" class="hz-monde-onglet on" id="hz-monde-activite"
-                  data-monde="activite" role="tab" aria-selected="true">
-            <span class="hz-monde-emoji">🌞</span> Activités
-          </button>
-          <button type="button" class="hz-monde-onglet" id="hz-monde-couchage"
-                  data-monde="couchage" role="tab" aria-selected="false">
-            <span class="hz-monde-emoji">🌙</span> Couchage
-          </button>
-        </div>
         <!-- Temps 1 : le thème (7 thèmes calculés à la volée, RNR_THEMES) -->
         <div class="hz-geste-etape" id="hz-geste-themes">
           <div class="hz-geste-lbl">1 · Une envie de…</div>
           <div class="hz-themes-chips" id="hz-themes-chips"></div>
-        </div>
-        <!-- Temps 1bis : en mode COUCHAGE, pas de sous-thème — message direct vers la région -->
-        <div class="hz-geste-etape" id="hz-geste-couchage-lbl" style="display:none">
-          <div class="hz-geste-lbl">1 · Où poser le van&nbsp;?</div>
-          <div class="hz-geste-aide">Choisissez la ou les régions où vous cherchez un coin pour dormir.</div>
         </div>
         <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le thème -->
         <div class="hz-geste-etape" id="hz-geste-lieu" style="display:none">
@@ -1481,13 +1467,7 @@ function brancheSurvolCarte(){
     //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
     reg.addEventListener('click',()=>{
       if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
-      // GESTE : on pose le lieu si on est en train de composer un monde.
-      // Blindage : on vérifie l'onglet RÉELLEMENT actif (pas seulement HZ_MONDE),
-      // pour qu'un état désynchronisé n'envoie jamais le clic vers le Carnet.
-      const ongletCouchage=document.getElementById('hz-monde-couchage');
-      const estCouchage=(HZ_MONDE==='couchage') || (ongletCouchage && ongletCouchage.classList.contains('on'));
-      if(estCouchage){ if(HZ_MONDE!=='couchage') HZ_MONDE='couchage'; toggleLieu(dataR); return; }
-      if(HZ_THEME){ toggleLieu(dataR); return; }
+      if(HZ_THEME){ toggleLieu(dataR); return; }        // GESTE : on pose le lieu
       const matches=fichesPourRegionCarte(dataR);
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
       afficheReve(dataR, best);     // au cas où le survol n'a pas eu lieu (mobile/tactile)
@@ -1717,34 +1697,17 @@ async function chargeVoyageActif(groupeId){
 //  Le couple engendre un paquet « Carnet du coin » (RNR_CARNET_COIN) —
 //  affiché en incrément 2. Ici : le geste + la carte qui réagit.
 // ════════════════════════════════════════════════════════════════
-let HZ_THEME=null;                 // clé du thème choisi (mode activités)
+let HZ_THEME=null;                 // clé du thème choisi
 let HZ_LIEUX=[];                   // 1-2 slugs de région choisis
-let HZ_MONDE='activite';           // 'activite' (jour) | 'couchage' (nuit) — sélecteur A6
 
-// Pont THÈME (mode ACTIVITÉS) : carnet-coin attend RNR_TAGS.familleDeFiche ; nos
-// thèmes viennent de RNR_THEMES.themesDeFiche (multi-thèmes). On adapte sans
+// Pont THÈME : carnet-coin attend RNR_TAGS.familleDeFiche ; nos thèmes
+// viennent de RNR_THEMES.themesDeFiche (multi-thèmes). On adapte sans
 // dupliquer la logique : une fiche correspond si le thème est dans sa liste.
-// EXCLUSION RÉCIPROQUE (A6) : une fiche couchage ne peut JAMAIS matcher un thème
-// d'activité (c'est ce qui faisait fuiter le camping dans le swipe). La vérité
-// vient de RNR_TAGS.jourNuitFiche — maison unique de la classification.
 const HZ_TAGS_THEME = {
   familleDeFiche:function(f){
     try{
-      if(window.RNR_TAGS && RNR_TAGS.estCouchage && RNR_TAGS.estCouchage(f)) return {cle:'__non__'};
       const ts = (window.RNR_THEMES && RNR_THEMES.themesDeFiche) ? RNR_THEMES.themesDeFiche(f) : [];
       return ts.indexOf(HZ_THEME)!==-1 ? {cle:HZ_THEME} : {cle:'__non__'};
-    }catch(e){ return {cle:'__non__'}; }
-  }
-};
-
-// Pont COUCHAGE (mode NUIT) : pas de sous-thème — une fiche correspond si, et
-// seulement si, c'est un couchage (RNR_TAGS.jourNuitFiche==='nuit'). On passe
-// HZ_THEME='__nuit__' à construirePaquet pour qu'il filtre via ce pont.
-const HZ_TAGS_NUIT = {
-  familleDeFiche:function(f){
-    try{
-      const couchage = (window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(f) : false;
-      return couchage ? {cle:'__nuit__'} : {cle:'__non__'};
     }catch(e){ return {cle:'__non__'}; }
   }
 };
@@ -1774,6 +1737,17 @@ function rendThemesChips(){
     chip.addEventListener('click',()=>choisitTheme(t.cle));
     box.appendChild(chip);
   });
+  // 8e thème : COUCHAGE 🌙. Même chemin que les 7 autres (choisitTheme), mais
+  // marqué à part visuellement (chip-nuit) — c'est « où dormir », pas une envie
+  // d'activité. La clé 'nuit' est reconnue par themesDeFiche (vérité estCouchage).
+  {
+    const n=compte['nuit']||0;
+    const chip=document.createElement('span');
+    chip.className='hz-theme-chip hz-theme-chip-nuit'+(HZ_THEME==='nuit'?' on':'');
+    chip.innerHTML='🌙 Couchage<span class="ct">'+n+'</span>';
+    chip.addEventListener('click',()=>choisitTheme('nuit'));
+    box.appendChild(chip);
+  }
 }
 
 // ── Coloration de la carte par THÈME (geste neuf, indépendant du vieux moteur) ──
@@ -1782,17 +1756,8 @@ function rendThemesChips(){
 // Les régions estompées deviennent non-cliquables (évite aussi les clics parasites).
 function regionsAvecFicheDuTheme(theme){
   const set=new Set();
-  const modeNuit = (HZ_MONDE==='couchage');
   (HZ_FICHES||[]).forEach(f=>{
     const reg=f._regionSvg||f.region; if(!reg) return;
-    if(modeNuit){
-      // Mode couchage : la région est vivante si elle porte au moins un couchage.
-      const couchage = (window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(f) : false;
-      if(couchage) set.add(reg);
-      return;
-    }
-    // Mode activités : région vivante si une fiche (non-couchage) porte le thème.
-    if(window.RNR_TAGS && RNR_TAGS.estCouchage && RNR_TAGS.estCouchage(f)) return;
     let ts=[]; try{ ts=(window.RNR_THEMES?RNR_THEMES.themesDeFiche(f):[])||[]; }catch(e){}
     if(ts.indexOf(theme)!==-1) set.add(reg);
   });
@@ -1808,22 +1773,6 @@ function coloreCartePourTheme(theme){
     r.style.pointerEvents = morte ? 'none' : '';
   });
   marqueRegionsRetenues();   // par-dessus : signaler les régions ayant des fiches déjà prises
-}
-
-// Mode couchage : même logique visuelle que les activités — on estompe les
-// régions SANS couchage (non cliquables) et on garde vivantes celles qui en
-// portent. La vérité région = _regionSvg (rattachement GPS), pas la colonne
-// region (ancien découpage). Symétrie totale avec coloreCartePourTheme.
-function coloreCartePourCouchage(){
-  const vivantes=regionsAvecFicheDuTheme('__nuit__');
-  document.querySelectorAll('.region[data-r]').forEach(r=>{
-    const reg=r.getAttribute('data-r');
-    const morte=!vivantes.has(reg);
-    r.classList.toggle('eteinte', morte);
-    r.classList.toggle('a-fiches', !morte);
-    r.style.pointerEvents = morte ? 'none' : '';
-  });
-  marqueRegionsRetenues();
 }
 
 // Compte, par région, les fiches DÉJÀ RETENUES pour ce voyage (voyage_fiches).
@@ -1874,48 +1823,6 @@ function rallumeToutesRegions(){
     r.style.pointerEvents='';
   });
   marqueRegionsRetenues();   // garder le marquage des fiches prises même carte rallumée
-}
-
-// Bascule entre les deux mondes (A6). Réinitialise la sélection en cours :
-// changer de monde, c'est repartir d'une page neuve pour ce monde-là.
-function choisitMonde(monde){
-  if(monde!=='couchage' && monde!=='activite') return;
-  if(monde===HZ_MONDE) return;
-  HZ_MONDE = monde;
-  // Onglets : état visuel + ARIA
-  document.querySelectorAll('.hz-monde-onglet').forEach(b=>{
-    const on = (b.getAttribute('data-monde')===monde);
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-selected', on ? 'true' : 'false');
-  });
-  // Reset de la sélection en cours (thème + régions) — on change de monde.
-  HZ_THEME=null;
-  HZ_LIEUX=[];
-  rendLieuxChoisis(); peintLieuxSurCarte();
-  const blocThemes  = document.getElementById('hz-geste-themes');
-  const blocCouchLbl = document.getElementById('hz-geste-couchage-lbl');
-  const etapeLieu   = document.getElementById('hz-geste-lieu');
-  const carte       = document.querySelector('.francemap');
-  if(monde==='couchage'){
-    // Pas de sous-thème : on montre le libellé couchage, et on ouvre direct la carte.
-    if(blocThemes)   blocThemes.style.display='none';
-    if(blocCouchLbl) blocCouchLbl.style.display='block';
-    if(etapeLieu)    etapeLieu.style.display='block';
-    if(carte)        carte.classList.add('attend-lieu');
-    coloreCartePourCouchage();   // colore les régions à couchage SANS rien éteindre
-  }else{
-    // Retour activités : on rend les 7 thèmes, on referme la carte tant qu'aucun thème.
-    if(blocThemes)   blocThemes.style.display='block';
-    if(blocCouchLbl) blocCouchLbl.style.display='none';
-    if(etapeLieu)    etapeLieu.style.display='none';
-    if(carte)        carte.classList.remove('attend-lieu');
-    rallumeToutesRegions();
-    rendThemesChips();
-  }
-  construitCoin();   // recalcule la bande pour le nouveau monde (se vide si rien)
-  sauveGeste();
-  majGesteInfo();
-  majRecommencer();
 }
 
 function choisitTheme(cle){
@@ -1981,11 +1888,6 @@ function peintLieuxSurCarte(){
 function majGesteInfo(){
   const info=document.getElementById('hz-geste-info');
   if(!info) return;
-  if(HZ_MONDE==='couchage'){
-    if(!HZ_LIEUX.length){ info.textContent='Choisissez 1 ou 2 régions sur la carte pour trouver où dormir.'; return; }
-    info.textContent='';
-    return;
-  }
   if(!HZ_THEME){ info.textContent='Choisissez d\'abord une envie, puis le coin.'; return; }
   if(!HZ_LIEUX.length){ info.textContent='Envie « '+themeLibelle(HZ_THEME)+' » — maintenant, choisissez 1 ou 2 régions sur la carte.'; return; }
   info.textContent=''; // l'info passe au Carnet du coin (incrément 2)
@@ -2178,10 +2080,7 @@ function construitCoin(){
   const vide=document.getElementById('hz-coin-vide');
   const corps=document.getElementById('hz-coin-corps');
   const titre=document.getElementById('hz-coin-titre');
-  // En mode couchage, il n'y a pas de thème à choisir : la « clé » est fixe.
-  const themeEffectif = (HZ_MONDE==='couchage') ? '__nuit__' : HZ_THEME;
-  const tagsEffectif  = (HZ_MONDE==='couchage') ? HZ_TAGS_NUIT : HZ_TAGS_THEME;
-  if(!themeEffectif || !HZ_LIEUX.length || !window.RNR_CARNET_COIN){
+  if(!HZ_THEME || !HZ_LIEUX.length || !window.RNR_CARNET_COIN){
     HZ_COIN_PAQUET=null;
     if(titre) titre.textContent='Le Carnet du coin';
     if(vide) vide.style.display='block';
@@ -2189,7 +2088,7 @@ function construitCoin(){
     majEnAvant(null);
     return null;
   }
-  const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, themeEffectif, HZ_LIEUX, {tagsApi:tagsEffectif});
+  const paquet=RNR_CARNET_COIN.construirePaquet(HZ_FICHES, HZ_THEME, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME});
   HZ_COIN_PAQUET=paquet;
   rendCarnetCoin(paquet);
   // NB : le seuil ne s'ouvre PLUS automatiquement ici (sinon il surgit dès la
@@ -2314,11 +2213,7 @@ function rendCarnetCoin(paquet){
   if(!corps) return;
 
   const lieuxLbl=HZ_LIEUX.map(labelRegionSvg).join(' & ');
-  if(titre){
-    titre.textContent = (HZ_MONDE==='couchage')
-      ? 'Coin · où dormir autour de '+lieuxLbl
-      : 'Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
-  }
+  if(titre) titre.textContent='Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
 
   if(vide) vide.style.display='none';
   corps.style.display='block';
@@ -2329,9 +2224,7 @@ function rendCarnetCoin(paquet){
     paquet.coeur.forEach(f=>coeurBox.appendChild(carteFiche(f,false)));
   }else{
     const d=document.createElement('div'); d.className='hz-coin-vide';
-    d.textContent = (HZ_MONDE==='couchage')
-      ? 'Aucun couchage dans cette région pour l\'instant — le coin attend ses premières adresses où dormir.'
-      : 'Aucune fiche « '+themeLibelle(HZ_THEME)+' » dans cette région pour l\'instant — le coin attend ses premières idées.';
+    d.textContent='Aucune fiche « '+themeLibelle(HZ_THEME)+' » dans cette région pour l\'instant — le coin attend ses premières idées.';
     coeurBox.appendChild(d);
   }
 
@@ -2599,21 +2492,10 @@ let HZ_SWIPE_PAQUET=null;   // pour le mode liste
 function initSwipe(paquet){
   HZ_SWIPE_PAQUET=paquet;
   HZ_AIMEES_SESSION=new Set();   // nouveau coin → nouvelle session (panier repart vide)
-  // B10 : le deck ne montre que des fiches VIERGES — ni déjà retenues
-  // (`HZ_RETENUS`), ni déjà aimées par moi (`love.mine`, donc déjà candidates au
-  // Cockpit). Exclusion EN AMONT, identique pour cœur et limitrophes (un seul
-  // critère, pas de branche dans le swipe — cf. TECHNIQUE §0).
-  const dejaTraitee=(f)=>{
-    if(HZ_RETENUS.has(f.id)) return true;
-    try{ if(hzCoeursDe(f.id).love.mine) return true; }catch(e){}
-    return false;
-  };
-  const coeurVierge=(paquet.coeur||[]).filter(f=>!dejaTraitee(f));
-  const limitVierge=(paquet.limitrophes||[]).filter(f=>!dejaTraitee(f));
   // 1) regrouper par région : cœur (régions choisies) puis limitrophes
   const parRegCoeur={}, parRegLimit={};
-  coeurVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
-  limitVierge.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
+  paquet.coeur.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
+  paquet.limitrophes.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
 
   // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
   HZ_SWIPE_SEQ=[];
@@ -2687,11 +2569,8 @@ function rendSwipeCarte(){
   const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(e.limit?' · à côté':'');
   const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
   const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
-  // B10 : une fiche déjà retenue reste VISIBLE mais signalée « ✓ déjà prise »
-  // (même vert que le marqueur carte), pour ne pas la reproposer à l'aveugle.
-  const badgePris=HZ_RETENUS.has(f.id)?'<span class="hz-swipe-deja">✓ déjà prise</span>':'';
   card.innerHTML=
-    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span>'+badgePris+'<span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
@@ -2931,11 +2810,9 @@ function appliqueModeBande(){
 // dans la valeur (ceinture + bretelles : un geste ne peut pas fuir d'un
 // voyage à l'autre, même si la clé était ambiguë).
 function cleGeste(){ return 'rnr_horizon_geste_'+(HZ_VOYAGE_ID||HZ_TRI_GROUPE_ID||'anon'); }
-
 function sauveGeste(){
-  try{ sessionStorage.setItem(cleGeste(), JSON.stringify({voyage:HZ_VOYAGE_ID, monde:HZ_MONDE, theme:HZ_THEME, lieux:HZ_LIEUX})); }catch(e){}
+  try{ sessionStorage.setItem(cleGeste(), JSON.stringify({voyage:HZ_VOYAGE_ID, theme:HZ_THEME, lieux:HZ_LIEUX})); }catch(e){}
 }
-
 function restaureGeste(){
   try{
     const raw=sessionStorage.getItem(cleGeste());
@@ -2943,10 +2820,7 @@ function restaureGeste(){
     const o=JSON.parse(raw);
     // garde-fou : le geste doit appartenir au voyage courant, sinon on ignore
     if(o && o.voyage && HZ_VOYAGE_ID && o.voyage!==HZ_VOYAGE_ID){ return; }
-    if(o && o.monde==='couchage'){
-      HZ_MONDE='couchage';
-      HZ_LIEUX=Array.isArray(o.lieux)?o.lieux.slice(0,2):[];
-    } else if(o && o.theme){ HZ_THEME=o.theme; HZ_LIEUX=Array.isArray(o.lieux)?o.lieux.slice(0,2):[]; }
+    if(o && o.theme){ HZ_THEME=o.theme; HZ_LIEUX=Array.isArray(o.lieux)?o.lieux.slice(0,2):[]; }
   }catch(e){}
 }
 function oublieGeste(){
@@ -3000,29 +2874,6 @@ function majRecommencer(){
 // Rejoue l'état du geste à l'écran après restauration (thème actif, régions
 // peintes, étape lieu ouverte, bande reconstruite).
 function rejoueGeste(){
-  // Mode couchage restauré : pas de thème, on rétablit l'affichage couchage + carte.
-  if(HZ_MONDE==='couchage'){
-    document.querySelectorAll('.hz-monde-onglet').forEach(b=>{
-      const on=(b.getAttribute('data-monde')==='couchage');
-      b.classList.toggle('on', on); b.setAttribute('aria-selected', on?'true':'false');
-    });
-    const blocThemes=document.getElementById('hz-geste-themes');
-    const blocCouchLbl=document.getElementById('hz-geste-couchage-lbl');
-    const etapeLieu=document.getElementById('hz-geste-lieu');
-    const carte=document.querySelector('.francemap');
-    if(blocThemes) blocThemes.style.display='none';
-    if(blocCouchLbl) blocCouchLbl.style.display='block';
-    if(etapeLieu) etapeLieu.style.display='block';
-    if(carte) carte.classList.add('attend-lieu');
-    coloreCartePourCouchage();
-    rendLieuxChoisis();
-    peintLieuxSurCarte();
-    HZ_SEUIL_VU_SIG='__nuit__';
-    if(HZ_LIEUX.length) construitCoin();
-    majGesteInfo();
-    majRecommencer();
-    return;
-  }
   rendThemesChips();
   if(HZ_THEME){
     const etapeLieu=document.getElementById('hz-geste-lieu');
@@ -3049,10 +2900,6 @@ async function initGesteFondateur(){
     r.classList.remove('a-fiches');
   });
   brancheSeuil();            // boutons du seuil (une fois)
-  // Onglets de monde (A6) : Activités / Couchage — câblés une seule fois.
-  document.querySelectorAll('.hz-monde-onglet').forEach(b=>{
-    b.addEventListener('click',()=>choisitMonde(b.getAttribute('data-monde')));
-  });
   restaureGeste();
   rejoueGeste();             // ne repeint que les régions du geste restauré (≤2)
   marqueRegionsRetenues();   // signaler d'emblée les régions ayant des fiches déjà prises

@@ -142,6 +142,16 @@
   function themesDeFiche(fiche, options) {
     options = options || {};
     var trouve = {};
+    /* 0) COUCHAGE = 8e thème « nuit », et RIEN d'autre (décidé 24/06 avec Bruno :
+       un camping n'est pas 'culture'). On réutilise la VÉRITÉ UNIQUE estCouchage
+       de tags.js — aucune logique de classification dupliquée ici. Si la fiche est
+       un couchage, on court-circuite : elle n'appartient qu'au thème nuit. */
+    try {
+      var _tags = (typeof window !== 'undefined' && window.RNR_TAGS) ? window.RNR_TAGS : null;
+      if (_tags && typeof _tags.estCouchage === 'function' && _tags.estCouchage(fiche)) {
+        return ['nuit'];
+      }
+    } catch (e) { /* si tags.js absent : la fiche suit la détection normale */ }
     var nom = (fiche && fiche.nom ? String(fiche.nom) : '').toLowerCase();
     var lat = (fiche && fiche.lat != null) ? +fiche.lat : null;
     var lng = (fiche && fiche.lng != null) ? +fiche.lng : null;
