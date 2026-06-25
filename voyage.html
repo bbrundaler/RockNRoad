@@ -79,6 +79,24 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .vr-empty{font-size:12px;color:var(--ink-dim);align-self:center;line-height:1.5;}
 
+/* ── DRAG d'une retenue vers l'itinéraire (pointer events = doigt + souris) ──
+   La vignette est saisissable ; on suit le doigt avec un « fantôme » ; la zone
+   d'itinéraire s'allume quand on la survole. Même grammaire que le réordon. */
+.vr-fiche{cursor:grab;touch-action:none;} /* touch-action:none = on capte le geste, pas le scroll de la bande */
+.vr-fiche.vrf-placed{opacity:.5;}          /* déjà sur la carte */
+.vrf-placed-tag{font-size:9.5px;font-weight:700;color:var(--gold-text);text-align:center;letter-spacing:.3px;}
+.vr-fiche.vrf-dragging{opacity:.35;}
+.vr-ghost{position:fixed;z-index:9999;width:84px;pointer-events:none;opacity:.92;
+  transform:translate(-50%,-50%) rotate(-3deg);box-shadow:0 8px 24px rgba(0,0,0,.4);
+  border-radius:var(--r);overflow:hidden;border:2px solid var(--gold);}
+.vr-ghost .vrf-ph{width:100%;height:54px;background-size:cover;background-position:center;
+  display:grid;place-items:center;background-color:var(--gold-a20);font-size:20px;}
+.vr-ghost .vrf-nm{font-size:11px;font-weight:600;color:var(--ink);background:var(--paper);
+  padding:3px;text-align:center;line-height:1.2;}
+/* l'itinéraire s'allume comme cible quand une retenue le survole */
+#stops-list.vr-drop-on{outline:2px dashed var(--gold);outline-offset:-6px;background:var(--gold-a10);}
+.vr-hint{font-size:10px;color:var(--ink-dim);font-style:italic;margin-top:2px;}
+
 /* MOBILE : carte en haut (contexte visuel), panneau Itinéraire en dessous.
    Sans cette règle, le panneau 320px fixe écrasait la carte sur téléphone. */
 @media (max-width:700px){
@@ -105,7 +123,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div id="voyage-panel">
       <div id="panel-header">
         <h2>Itinéraire</h2>
-        <p>Glissez pour réordonner · × pour retirer</p>
+        <p>Glissez une retenue ici · réordonnez · × pour retirer</p>
         <div class="panel-actions">
           <button class="tb-btn tb-btn-add" onclick="window.location.href='carnet.html'">+ Ajouter des lieux</button>
           <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
@@ -115,13 +133,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div id="stops-list">
         <div class="empty-voyage" id="emptyVoyage" style="display:flex;">
           <div class="icon">🗺️</div>
-          <h3>Voyage vide</h3>
-          <p>Ajoutez des lieux depuis le Carnet en cliquant sur "🧭 Mon Voyage"</p>
+          <h3>Itinéraire vide</h3>
+          <p>Glissez une fiche depuis « Retenues pour ce voyage » (en bas) pour la poser sur la carte et tracer votre route.</p>
         </div>
       </div>
       <div id="panel-footer">
         <div class="pf-row">
-          <span class="pf-label">Distance totale</span>
+          <span class="pf-label">Distance d'étape à étape</span>
           <span class="pf-val" id="totalDist">— km</span>
         </div>
         <div class="pf-row">
@@ -162,7 +180,11 @@ let voyage = [];
 })();
 
 /* ── Bande « Retenues pour ce voyage » : même invariant que le Cockpit (Master 4.18).
-   Lit voyage_fiches (statut='retenue') du voyage actif + les infos des fiches. ── */
+   Lit voyage_fiches (statut='retenue') du voyage actif + les infos des fiches.
+   Chaque vignette est SAISISSABLE : on l'attrape (doigt/souris) et on la dépose
+   dans l'itinéraire (cf. initRetenueDrag). Décision Bruno 25/06 : l'itinéraire
+   est à part, on y fait entrer une retenue d'un geste. ── */
+let RETENUES_INFO={};   // id -> {id,nom,lat,lng,region,type,photo_url} (source du drag)
 async function chargerRetenuesVoyage(userId){
   const box=document.getElementById('vr-list');
   const badge=document.getElementById('vr-badge');
@@ -191,17 +213,130 @@ async function chargerRetenuesVoyage(userId){
       box.innerHTML='<div class="vr-empty">Aucune fiche retenue. Les fiches gardées au Cockpit arrivent ici.</div>';
       return;
     }
-    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url').in('id',ids);
-    const map2={}; (fs||[]).forEach(f=>{ map2[f.id]=f; });
+    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url,lat,lng,region,type').in('id',ids);
+    RETENUES_INFO={}; (fs||[]).forEach(f=>{ RETENUES_INFO[f.id]=f; });
+    const placed=new Set(voyage.map(v=>v.id));   // déjà sur l'itinéraire
     box.innerHTML = ids.map(id=>{
-      const f=map2[id];
+      const f=RETENUES_INFO[id];
       if(!f) return '<div class="vr-fiche"><div class="vrf-ph">🗺️</div><div class="vrf-nm">—</div></div>';
       const ph=f.photo_url
         ? '<div class="vrf-ph" style="background-image:url(\''+escVr(f.photo_url)+'\')"></div>'
         : '<div class="vrf-ph">🗺️</div>';
-      return '<div class="vr-fiche">'+ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div></div>';
+      const dejaPlace=placed.has(id);
+      const sansCoord=(f.lat==null||f.lng==null);
+      const tag=dejaPlace?'<div class="vrf-placed-tag">✓ sur la carte</div>':'';
+      const cls='vr-fiche'+(dejaPlace?' vrf-placed':'')+(sansCoord?' vrf-nocoord':'');
+      return '<div class="'+cls+'" data-id="'+escVr(id)+'">'+ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div>'+tag+'</div>';
     }).join('');
+    initRetenueDrag();
   }catch(e){ console.warn('chargerRetenuesVoyage',e); box.innerHTML='<div class="vr-empty">Indisponible.</div>'; }
+}
+/* re-rend la bande pour refléter l'état placé/non-placé après ajout/retrait */
+function rafraichitRetenues(){
+  const box=document.getElementById('vr-list');
+  if(!box) return;
+  const placed=new Set(voyage.map(v=>v.id));
+  box.querySelectorAll('.vr-fiche[data-id]').forEach(el=>{
+    const id=el.dataset.id;
+    const f=RETENUES_INFO[id];
+    const deja=placed.has(id);
+    el.classList.toggle('vrf-placed',deja);
+    let tag=el.querySelector('.vrf-placed-tag');
+    if(deja && !tag){ tag=document.createElement('div'); tag.className='vrf-placed-tag'; tag.textContent='✓ sur la carte'; el.appendChild(tag); }
+    if(!deja && tag){ tag.remove(); }
+  });
+}
+
+/* ── DRAG d'une retenue → itinéraire, en POINTER EVENTS (doigt + souris).
+   On NE peut PAS utiliser le drag&drop HTML5 : il n'émet rien au doigt (limite
+   du standard, déjà contournée pour le réordon des étapes). Ici : on attrape une
+   vignette, un « fantôme » suit le doigt, et lâcher au-dessus de l'itinéraire y
+   insère la fiche (à la position survolée, sinon à la fin). ── */
+function initRetenueDrag(){
+  const box=document.getElementById('vr-list');
+  const list=document.getElementById('stops-list');
+  if(!box||!list||box._dragCable) return;
+  box._dragCable=true;
+  let src=null, ghost=null, started=false, sx=0, sy=0;
+
+  box.addEventListener('pointerdown', e=>{
+    const fiche=e.target.closest('.vr-fiche[data-id]');
+    if(!fiche) return;
+    const id=fiche.dataset.id;
+    const f=RETENUES_INFO[id];
+    if(!f) return;
+    if(f.lat==null||f.lng==null) return;   // pas de coordonnées → pas plaçable sur la carte
+    if(voyage.some(v=>v.id===id)) return;  // déjà sur l'itinéraire → on ne re-traîne pas
+    src={fiche,id,f}; started=false; sx=e.clientX; sy=e.clientY;
+    try{ box.setPointerCapture(e.pointerId); }catch(_){}
+  });
+
+  box.addEventListener('pointermove', e=>{
+    if(!src) return;
+    if(!started){
+      if(Math.abs(e.clientX-sx)<6 && Math.abs(e.clientY-sy)<6) return; // seuil anti-clic
+      started=true;
+      src.fiche.classList.add('vrf-dragging');
+      ghost=document.createElement('div');
+      ghost.className='vr-ghost';
+      const ph=src.f.photo_url
+        ? '<div class="vrf-ph" style="background-image:url(\''+escVr(src.f.photo_url)+'\')"></div>'
+        : '<div class="vrf-ph">🗺️</div>';
+      ghost.innerHTML=ph+'<div class="vrf-nm">'+escVr(src.f.nom)+'</div>';
+      document.body.appendChild(ghost);
+    }
+    e.preventDefault();
+    ghost.style.left=e.clientX+'px';
+    ghost.style.top=e.clientY+'px';
+    // l'itinéraire est-il survolé ?
+    const overList=document.elementFromPoint(e.clientX,e.clientY)?.closest('#stops-list');
+    list.classList.toggle('vr-drop-on', !!overList);
+  });
+
+  const finish=e=>{
+    if(!src){ return; }
+    const wasStarted=started;
+    const cur=src; src=null; started=false;
+    if(ghost){ ghost.remove(); ghost=null; }
+    cur.fiche.classList.remove('vrf-dragging');
+    list.classList.remove('vr-drop-on');
+    if(!wasStarted) return;  // simple tap, pas un drag
+    const x=e.clientX, y=e.clientY;
+    const overList=document.elementFromPoint(x,y)?.closest('#stops-list');
+    if(!overList) return;    // lâché ailleurs → on n'ajoute pas
+    // position d'insertion : au-dessus de l'étape survolée, sinon à la fin
+    const overItem=document.elementFromPoint(x,y)?.closest('.stop-item');
+    let insertAt=voyage.length;
+    if(overItem && overItem.dataset.uid){
+      const idx=voyage.findIndex(v=>v.uid===overItem.dataset.uid);
+      if(idx>=0){
+        const r=overItem.getBoundingClientRect();
+        insertAt=(y < r.top+r.height/2)?idx:idx+1;
+      }
+    }
+    ajouteRetenueAItineraire(cur.id, insertAt);
+  };
+  box.addEventListener('pointerup', finish);
+  box.addEventListener('pointercancel', e=>{
+    if(ghost){ ghost.remove(); ghost=null; }
+    if(src) src.fiche.classList.remove('vrf-dragging');
+    list.classList.remove('vr-drop-on');
+    src=null; started=false;
+  });
+}
+
+/* ajoute une retenue (par id) dans voyage[] à la position voulue, puis re-rend tout */
+function ajouteRetenueAItineraire(id, insertAt){
+  const f=RETENUES_INFO[id];
+  if(!f || f.lat==null || f.lng==null) return;
+  if(voyage.some(v=>v.id===id)) return;   // anti-doublon
+  const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||''};
+  const pos=(typeof insertAt==='number' && insertAt>=0 && insertAt<=voyage.length)?insertAt:voyage.length;
+  voyage.splice(pos,0,item);
+  saveVoyage();
+  render();
+  rafraichitRetenues();
 }
 function escVr(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
@@ -420,6 +555,7 @@ function removeByUid(uid){
   }
   saveVoyage();
   render();
+  rafraichitRetenues();
 }
 
 function clearAll(){
@@ -427,6 +563,7 @@ function clearAll(){
   voyage=[];
   saveVoyage();
   render();
+  rafraichitRetenues();
 }
 
 // ── Haversine ─────────────────────────────────────────────────────────────────
