@@ -48,6 +48,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 /* étapes = mini-cartes PAPIER (encres fixes sur papier) */
 .stop-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:6px;cursor:grab;transition:box-shadow .15s;}
 .stop-item:hover{box-shadow:var(--shadow-hover);}
+/* Écartement fluide pendant le réordon (FLIP) : les voisines GLISSENT vers leur
+   nouvelle place au lieu de sauter. Classe posée le temps du drag uniquement. */
+.stop-item.vy-sliding{transition:box-shadow .15s, transform .18s ease;}
+.stop-item.vy-grabbed{opacity:.4;transition:none;}  /* l'étape tenue ne s'auto-anime pas */
 .drag-handle{color:#c4b89e;font-size:16px;cursor:grab;flex-shrink:0;user-select:none;touch-action:none;padding:4px 6px;margin:-4px -2px;} /* touch-action:none = la poignée capte le geste au lieu du scroll */
 .stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#1a1208;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
 .stop-info{flex:1;min-width:0;}
@@ -415,7 +419,7 @@ function initListEvents(){
     if(!pDragEl||!pDragEl.dataset.uid){ pDragEl=null; return; }
     e.preventDefault();
     try{ handle.setPointerCapture(e.pointerId); }catch(_){}
-    pDragEl.style.opacity='0.4';
+    pDragEl.classList.add('vy-grabbed');
   });
   list.addEventListener('pointermove', e=>{
     if(!pDragEl) return;
@@ -423,13 +427,28 @@ function initListEvents(){
     const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('.stop-item');
     if(over&&over!==pDragEl){
       const r=over.getBoundingClientRect();
-      if(e.clientY < r.top + r.height/2) list.insertBefore(pDragEl, over);
-      else list.insertBefore(pDragEl, over.nextSibling);
+      const avant=(e.clientY < r.top + r.height/2);
+      const ref=avant?over:over.nextSibling;
+      // ── FLIP : mémoriser les positions AVANT le déplacement DOM ──
+      const items=[...list.querySelectorAll('.stop-item')];
+      const first=new Map(); items.forEach(el=>first.set(el, el.getBoundingClientRect().top));
+      list.insertBefore(pDragEl, ref);
+      // ── puis animer chaque voisine de son ancienne vers sa nouvelle place ──
+      items.forEach(el=>{
+        if(el===pDragEl) return;            // l'étape tenue ne glisse pas
+        const dy=first.get(el)-el.getBoundingClientRect().top;
+        if(!dy) return;
+        el.classList.add('vy-sliding');
+        el.style.transform='translateY('+dy+'px)';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.transform=''; }));
+      });
     }
   });
   const endPointerDrag=()=>{
     if(!pDragEl) return;
-    pDragEl.style.opacity='';
+    pDragEl.classList.remove('vy-grabbed');
+    // nettoyer les classes/transform d'animation
+    list.querySelectorAll('.stop-item.vy-sliding').forEach(el=>{ el.classList.remove('vy-sliding'); el.style.transform=''; });
     pDragEl=null;
     // L'ordre final = l'ordre du DOM après l'aperçu en direct
     const order=[...list.querySelectorAll('.stop-item')].map(el=>el.dataset.uid);
