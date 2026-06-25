@@ -312,7 +312,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ── CONTEXTE : coups de cœur du groupe ── -->
   <div class="blk b-context">
-    <div class="bh"><span class="ic">📌</span><h3>Les fiches retenues du groupe</h3><span class="badge" id="cc-badge">0</span></div>
+    <div class="bh"><span class="ic">❤️</span><h3>Les coups de cœur</h3><span class="badge" id="cc-badge">0</span></div>
     <div class="bb">
       <div id="cc-list" class="cc-list">Chargement…</div>
       <div id="cc-reserve" class="cc-reserve" data-ouvert="0" style="display:none"></div>
@@ -484,7 +484,7 @@ function jeSuisAuteurCoeur(cibleId){
 /* ── Étape 2 de la respiration : les fiches RETENUES pour ce voyage (convergence).
    Lit voyage_fiches (statut='retenue') du voyage actif → la matière prête à affiner/ordonner. ── */
 let RNR_retenues = [];   // lieu_id retenus pour le voyage actif
-let RNR_statutFiche = {};   // lieu_id -> 'retenue' | 'ecartee' (statut tranché pour ce voyage)
+let RNR_statutFiche = {};   // lieu_id -> 'candidate' | 'retenue' | 'ecartee' (statut pour ce voyage)
 async function chargerRetenues(){
   RNR_retenues = [];
   RNR_statutFiche = {};
@@ -508,8 +508,9 @@ function rendreRetenues(){
   if(!box) return;
   if(badge) badge.textContent=RNR_retenues.length;
   if(!RNR_retenues.length){
-    box.innerHTML='<div class="ret-empty">Aucune fiche retenue.<br>'+
-      'Quand un vote <b>Garder / écarter</b> se clôt sur « Garder », la fiche arrive ici.</div>';
+    box.innerHTML='<div class="ret-empty">Aucune fiche épinglée pour l\'instant.<br>'+
+      'Choisis un <b>coup de cœur</b> ci-dessus et lance son vote : si le groupe dit « Garder », '+
+      'la fiche s\'<b>épingle ici</b> 📌 — c\'est le butin du voyage.</div>';
     return;
   }
   box.innerHTML = RNR_retenues.map(id=>{
@@ -528,7 +529,6 @@ function rendreRetenues(){
    coup de cœur. Si la fiche reste candidate (d'autres l'ont aimée), on l'explique. */
 async function retirerFicheDuVoyage(lieuId){
   if(!lieuId) return;
-  const estRetenue = RNR_retenues.indexOf(lieuId)!==-1;
   const moiAuteur = jeSuisAuteurCoeur(lieuId);
   const autresAuteurs = auteursCoeur(lieuId).filter(a=>a.uid!==RNR_userId);
   // Fiche qui appartient à d'autres (pas la mienne) → E1/E2 : on ne détruit pas le choix d'autrui.
@@ -561,8 +561,11 @@ async function retirerFicheDuVoyage(lieuId){
     ? "\n\nNote : "+(noms.length===1 ? noms[0]+" l'a aussi aimée" : noms.join(', ')+" l'ont aussi aimée")+" — elle restera candidate via leur ❤️."
     : "";
   if(!confirm("Retirer cette fiche du voyage ? (enlève ta retenue et ton coup de cœur)"+reste)) return;
+  // A6 : une fiche est dans voyage_fiches qu'elle soit 'candidate' OU 'retenue' → on
+  // supprime la ligne dans les deux cas (sinon une candidate retirée réapparaît au rechargement).
+  const dansVoyageFiches = !!(RNR_statutFiche && RNR_statutFiche[lieuId]);
   try{
-    if(RNR_voyageId && estRetenue){
+    if(RNR_voyageId && dansVoyageFiches){
       await sb.from('voyage_fiches').delete().eq('voyage_id',RNR_voyageId).eq('lieu_id',lieuId);
     }
     if(RNR_userId && moiAuteur){
@@ -762,15 +765,17 @@ async function chargerFiches(){
     .order('nom',{ascending:true});
   if(error){ console.warn('fiches',error); RNR_fiches=[]; RNR_fichesAimees=[]; RNR_fichesReserve=[]; return; }
   RNR_fiches = data||[];   /* cache COMPLET — sert à résoudre les vignettes des votes existants */
-  /* FRONTIÈRE INVIOLABLE (02_DECISIONS B12-L1, re-gravée 24/06) : le Cockpit n'affiche QUE des choix
-     ASSUMÉS, c.-à-d. les fiches VALIDÉES (voyage_fiches statut 'retenue'). Le ❤️ d'Horizon (reactions)
-     ne fait PAS entrer une fiche ici ; il ne sert qu'à l'ENROBAGE (auteur du coup de cœur, compteur,
-     spark, réserve ✨). Lire reactions pour décider QUELLES fiches afficher = BUG (fiches qui partent au
-     Cockpit dès le ❤️). On lit donc voyage_fiches comme source de la liste. */
-  RNR_validees = new Set();   // lieu_id en statut 'retenue' pour CE voyage (la vraie liste du Cockpit)
+  /* DOCTRINE A6 (révise l'ancienne D5/B12-L1) : le Cockpit montre DEUX étages de fiche.
+     - CANDIDATES (voyage_fiches statut 'candidate') = coups de cœur envoyés d'Horizon, en
+       attente : VOTABLES (bouton « Lancer le vote »), jamais grisées.
+     - RETENUES (statut 'retenue') = épingles, décisions du groupe : tranchées, sorties du vote.
+     Le ❤️ brut (reactions) ne DÉCIDE toujours PAS de la liste — il ne sert qu'à l'ENROBAGE
+     (auteur du coup de cœur, compteur, spark, réserve ✨). La liste vient de voyage_fiches.
+     Le passage candidate → retenue se fait par le VOTE (propagerVerdict). */
+  RNR_validees = new Set();   // lieu_id présents au Cockpit (candidate OU retenue) pour CE voyage
   if(RNR_voyageId){
     const {data:vf} = await sb.from('voyage_fiches')
-      .select('lieu_id,statut').eq('voyage_id',RNR_voyageId).eq('statut','retenue');
+      .select('lieu_id,statut').eq('voyage_id',RNR_voyageId).in('statut',['candidate','retenue']);
     (vf||[]).forEach(r=>RNR_validees.add(r.lieu_id));
   }
   /* Enrobage : ❤️ (auteur, compteur, récence) + réserve ✨. On lit les deux emojis en une requête.
@@ -1003,9 +1008,9 @@ function rendreCoeurs(){
   if(badge) badge.textContent=aimees.length;
 
   if(!aimees.length){
-    box.innerHTML='<div class="cc-empty">Aucune fiche retenue pour l\'instant.<br>'+
+    box.innerHTML='<div class="cc-empty">Aucun coup de cœur pour l\'instant.<br>'+
       'Va dans <b>Horizon</b> : explore, mets des cœurs, puis <b>valide ton panier</b>. '+
-      'Les fiches que tu envoies apparaîtront ici, prêtes pour la suite.</div>';
+      'Les coups de cœur du groupe arrivent ici — vote l\'un d\'eux pour <b>l\'épingler au voyage</b>.</div>';
     return;
   }
 
@@ -1015,16 +1020,19 @@ function rendreCoeurs(){
 
   box.innerHTML = aimees.map(f=>{
     const enVote = voteDe[f.id];
-    const statut = RNR_statutFiche[f.id];   // 'retenue' | 'ecartee' | undefined
+    const statut = RNR_statutFiche[f.id];   // 'candidate' | 'retenue' | 'ecartee' | undefined
+    /* A6 : SEULES 'retenue'/'ecartee' sont tranchées (sorties du vote, grisées).
+       'candidate' reste un coup de cœur VOTABLE → ne pas la griser. */
+    const tranchee = (statut==='retenue' || statut==='ecartee');
     const ph = f.photo_url
       ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
       : '<div class="cc-ph">🗺️</div>';
     const auteurs = libelleAuteursCoeur(f.id);
     const meta = (f.region?escH(f.region)+' · ':'')+'❤️ '+(f.coeurs||0)+(auteurs?' · par '+escH(auteurs):'');
 
-    /* Fiche DÉJÀ TRANCHÉE pour ce voyage → sortie du cycle (D-ECH-10 l.105 + maj D-ECH-12).
+    /* Fiche DÉJÀ TRANCHÉE pour ce voyage → sortie du cycle (A6 : retenue/écartée seulement).
        Plus de re-vote possible : ni bouton, ni relance. */
-    if(statut){
+    if(tranchee){
       const tag = statut==='retenue'
         ? '<span class="cc-tag cc-tag-ret">📌 retenue</span>'
         : '<span class="cc-tag cc-tag-eca">écartée</span>';
@@ -1109,7 +1117,8 @@ async function repecherEnvie(lieuId){
 
 /* Raccourci : lancer un vote « garder/écarter » pré-rempli sur une fiche candidate. */
 function lancerVoteSurFiche(lieuId){
-  if(RNR_statutFiche && RNR_statutFiche[lieuId]){
+  const st = RNR_statutFiche && RNR_statutFiche[lieuId];
+  if(st==='retenue' || st==='ecartee'){   /* A6 : seules les tranchées sortent du cycle, pas les candidates */
     alert('Cette fiche est déjà tranchée pour ce voyage. Elle est sortie du cycle de vote.');
     return;
   }
