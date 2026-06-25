@@ -1820,9 +1820,13 @@ function compteRetenuesParRegion(){
 function majLigneCockpit(){
   const el=document.getElementById('hz-ligne-cockpit');
   if(!el) return;
-  const n=HZ_RETENUS.size;
+  // A6 : « au Cockpit » = coups de cœur envoyés (candidates) + épingles (retenues).
+  const auCockpit=new Set([...HZ_CANDIDATES, ...HZ_RETENUS]);
+  const n=auCockpit.size;
   if(!n){ el.style.display='none'; return; }
-  const nReg=Object.keys(compteRetenuesParRegion()).length;
+  const regs=new Set();
+  (HZ_FICHES||[]).forEach(f=>{ if(auCockpit.has(f.id)){ const r=f._regionSvg||f.region; if(r) regs.add(r); } });
+  const nReg=regs.size;
   el.style.display='block';
   el.innerHTML='<span class="hz-lc-ic">🚀</span> <b>'+n+' fiche'+(n>1?'s':'')+'</b> déjà '+
     (n>1?'envoyées':'envoyée')+' au Cockpit'+(nReg>1?(' sur <b>'+nReg+' régions</b>'):'')+
@@ -1949,6 +1953,9 @@ function themeLibelle(cle){
 // ════════════════════════════════════════════════════════════════
 const HZ_EMOJI_LOVE='❤️', HZ_EMOJI_LATER='✨';
 let HZ_COEURS={}, HZ_RETENUS=new Set(), HZ_ECARTEES=new Set();
+// A6 : candidates = coups de cœur envoyés au Cockpit, en attente de vote. NE sont
+// PAS retenues (pas exclues du swipe, pas badgées « déjà prise ») — sert au compteur.
+let HZ_CANDIDATES=new Set();
 
 function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false,qui:[]},later:{count:0,mine:false,qui:[]}}; }
 
@@ -1987,7 +1994,7 @@ function hzSparkBadge(lieuId){
 }
 
 async function hzChargerCoeurs(){
-  HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set();
+  HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set(); HZ_CANDIDATES=new Set();
   if(!HZ_GROUPE_ID) return;
   // (1) réactions ❤️/✨ sur les lieux (RLS limite déjà au groupe via lieux)
   const {data:reacs,error:eR}=await sb.from('reactions')
@@ -2011,6 +2018,7 @@ async function hzChargerCoeurs(){
     (vf||[]).forEach(r=>{
       if(r.statut==='retenue') HZ_RETENUS.add(r.lieu_id);
       else if(r.statut==='ecartee') HZ_ECARTEES.add(r.lieu_id);
+      else if(r.statut==='candidate') HZ_CANDIDATES.add(r.lieu_id);
     });
   }
 }
@@ -2027,7 +2035,7 @@ async function hzChargerCoeurs(){
 let HZ_CANAL_FICHES=null, HZ_RT_TIMER=null;
 
 async function hzMajApresRealtime(){
-  await hzChargerCoeurs();      // relit voyage_fiches → HZ_RETENUS ; et reactions → HZ_COEURS (spark)
+  await hzChargerCoeurs();      // relit voyage_fiches → HZ_RETENUS/HZ_CANDIDATES ; reactions → HZ_COEURS (spark)
   marqueRegionsRetenues();      // liserés verts + compteurs au survol
   majLigneCockpit();            // ligne « N fiches déjà au Cockpit »
   // SPARK EN DIRECT : si le popup d'exploration est ouvert sur une fiche,
@@ -2905,8 +2913,11 @@ function refairePasserAimees(){
   majSwipeProgres();
 }
 
-// ENVOYER AU COCKPIT : upsert voyage_fiches (statut 'retenue') pour les aimées,
-// puis on CLÔTURE l'envie : Horizon s'allège, prêt pour une nouvelle idée.
+// ENVOYER AU COCKPIT (A6) : upsert voyage_fiches (statut 'candidate') pour les
+// aimées. AIMER NE VAUT PAS RETENIR : Horizon ne tranche pas. Les fiches partent
+// au Cockpit comme CANDIDATES (coups de cœur du groupe), où le vote — ou plus tard
+// le leader — décidera de les épingler (statut 'retenue'). Puis on CLÔTURE l'envie :
+// Horizon s'allège, prêt pour une nouvelle idée.
 async function envoyerAimeesAuCockpit(){
   if(!HZ_VOYAGE_ID){ alert('Aucun voyage actif.'); return; }
   // ENVOI = tout le PANIER CUMULATIF (activités + couchages aimés sur le parcours),
@@ -2918,14 +2929,18 @@ async function envoyerAimeesAuCockpit(){
   const btns=[document.getElementById('hz-aimees-envoi'), document.getElementById('hz-panier-valider')].filter(Boolean);
   btns.forEach(b=>{ b.disabled=true; b.dataset.old=b.textContent; b.textContent='Envoi…'; });
   const maintenant=new Date().toISOString();
-  const rows=aimees.map(f=>({voyage_id:HZ_VOYAGE_ID, lieu_id:f.id, statut:'retenue', maj_le:maintenant}));
+  const rows=aimees.map(f=>({voyage_id:HZ_VOYAGE_ID, lieu_id:f.id, statut:'candidate', maj_le:maintenant}));
   try{
     const {error}=await sb.from('voyage_fiches').upsert(rows,{onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: envoi Cockpit',error); alert('Envoi impossible, réessayez.');
       btns.forEach(b=>{b.disabled=false;b.textContent=b.dataset.old||'✓ Valider';}); return; }
     btns.forEach(b=>b.textContent='✓ Envoyé ('+rows.length+') !');
-    // marquer en mémoire comme « retenues » (déjà au Cockpit) → ne réapparaissent plus
-    aimees.forEach(f=>{ if(window.HZ_RETENUS) HZ_RETENUS.add(f.id); });
+    // A6 : une candidate N'EST PAS retenue → on ne l'ajoute PAS à HZ_RETENUS
+    // (sinon elle serait traitée comme « déjà prise » : exclue du swipe, région
+    // colorée en vert à tort). Aimer reste aimer ; c'est le Cockpit qui tranchera.
+    // On la mémorise comme CANDIDATE, seulement pour le compteur de la ligne positive.
+    // recommenceGeste() ci-dessous ferme le popup, donc pas de réapparition gênante.
+    aimees.forEach(f=>{ HZ_CANDIDATES.add(f.id); });
     majLigneCockpit();        // rafraîchir la ligne positive
     marqueRegionsRetenues();  // rafraîchir la carte (régions retenues)
     // CLÔTURE : recommenceGeste ferme le popup ET purge tout (bon ordre).
