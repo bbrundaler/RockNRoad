@@ -58,6 +58,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-name{font-size:13px;font-weight:600;color:#1a1208;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-meta{font-size:11px;color:#6B5F4A;margin-top:1px;}
 .stop-dist{font-size:10px;color:var(--gold-deep);margin-top:2px;}
+.stop-dist-home{font-weight:700;color:var(--gold-text);}
 .stop-remove{background:none;border:none;color:#b3a88e;font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
 .stop-remove:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
 
@@ -149,7 +150,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       </div>
       <div id="panel-footer">
         <div class="pf-row">
-          <span class="pf-label">Distance d'étape à étape</span>
+          <span class="pf-label">Distance totale (depuis la maison)</span>
           <span class="pf-val" id="totalDist">— km</span>
         </div>
         <div class="pf-row">
@@ -179,13 +180,24 @@ let map, routeLayer;
 let voyage = [];
 let VOYAGE_ID = null;   // voyage actif (résolu une fois, partagé load/save/retenues)
 let MEMBRE_USER_ID = null;
+let DOMICILE = null;    // {lat,lng,nom} point de départ du groupe (groupes.*_depart) — null si non renseigné
 
 // Résout le voyage actif : sessionStorage, sinon le principal du groupe du membre.
-// Mémorise dans VOYAGE_ID. Moteur unique : load, save et la bande retenues s'en servent.
+// Mémorise dans VOYAGE_ID. Charge aussi le DOMICILE du groupe (pour « depuis chez
+// moi »). Moteur unique : load, save et la bande retenues s'en servent.
 async function resoutVoyageId(userId){
   if(VOYAGE_ID) return VOYAGE_ID;
-  try{ const s=sessionStorage.getItem('rnr_voyage_id'); if(s){ VOYAGE_ID=s; return VOYAGE_ID; } }catch(e){}
+  let sess=null;
+  try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
   const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+  if(mem){
+    // domicile du groupe (point de départ) — sert à la distance « depuis la maison »
+    const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',mem.groupe_id).single();
+    if(g && g.lat_depart!=null && g.lng_depart!=null){
+      DOMICILE={lat:Number(g.lat_depart), lng:Number(g.lng_depart), nom:(g.ville||g.adresse_depart||'la maison')};
+    }
+  }
+  if(sess){ VOYAGE_ID=sess; return VOYAGE_ID; }
   if(!mem) return null;
   const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
     .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
@@ -529,10 +541,17 @@ function renderList(){
   empty.style.display='none';
 
   voyage.forEach((item, i)=>{
-    const dist = i>0 && voyage[i-1].lat && item.lat
-      ? calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng)
-      : null;
-    const distHtml = dist ? `<div class="stop-dist">↑ ${dist} km</div>` : '';
+    let distHtml='';
+    if(i===0){
+      // 1re étape : « depuis chez vous » si le domicile du groupe est connu
+      if(DOMICILE && item.lat){
+        const d=calcDist(DOMICILE.lat, DOMICILE.lng, item.lat, item.lng);
+        distHtml=`<div class="stop-dist stop-dist-home">🏠 ${d} km depuis la maison</div>`;
+      }
+    } else if(voyage[i-1].lat && item.lat){
+      const d=calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng);
+      distHtml=`<div class="stop-dist">↑ ${d} km</div>`;
+    }
 
     const row = document.createElement('div');
     row.className='stop-item';
@@ -552,8 +571,11 @@ function renderList(){
     list.appendChild(row);
   });
 
-  // Totaux
+  // Totaux : trajet complet = maison → étape 1 → … → dernière étape
   let total=0;
+  if(DOMICILE && voyage[0] && voyage[0].lat){
+    total+=calcDist(DOMICILE.lat, DOMICILE.lng, voyage[0].lat, voyage[0].lng);
+  }
   for(let i=1;i<voyage.length;i++){
     const a=voyage[i-1], b=voyage[i];
     if(a.lat&&b.lat) total+=calcDist(a.lat,a.lng,b.lat,b.lng);
