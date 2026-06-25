@@ -101,12 +101,18 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 #stops-list.vr-drop-on{outline:2px dashed var(--gold);outline-offset:-6px;background:var(--gold-a10);}
 .vr-hint{font-size:10px;color:var(--ink-dim);font-style:italic;margin-top:2px;}
 
-/* MOBILE : carte en haut (contexte visuel), panneau Itinéraire en dessous.
-   Sans cette règle, le panneau 320px fixe écrasait la carte sur téléphone. */
+/* MOBILE : on EMPILE et on laisse la PAGE défiler (body normalement overflow:hidden
+   en desktop). Sans ça, carte 44vh + retenues + tabbar écrasaient l'itinéraire à
+   ~0 et il n'apparaissait pas (test tel 25/06). On donne à chaque zone une hauteur
+   explicite et on rend le tout scrollable. */
 @media (max-width:700px){
-  #voyage-content{flex-direction:column;padding-bottom:58px;} /* 58px = tabbar mobile du chrome */
-  #map{flex:none;order:-1;height:44vh;min-height:240px;width:100%;}
-  #voyage-panel{width:100%;flex:1;min-height:0;border-right:none;border-top:1px solid var(--surface-line);}
+  html,body{height:auto;overflow:auto;}
+  #app-main{height:auto;min-height:100vh;}
+  #voyage-content{flex-direction:column;overflow:visible;}
+  #map{flex:none;order:-1;height:38vh;min-height:220px;width:100%;}
+  #voyage-panel{width:100%;flex:none;min-height:0;border-right:none;border-top:1px solid var(--surface-line);overflow:visible;}
+  #stops-list{overflow:visible;min-height:180px;}        /* l'itinéraire a toujours sa place */
+  #voyage-retenues{max-height:none;padding-bottom:72px;}  /* 72px = au-dessus de la tabbar */
   .panel-actions{gap:8px;}
 }
 
@@ -418,7 +424,10 @@ function initListEvents(){
     pDragEl=handle.closest('.stop-item');
     if(!pDragEl||!pDragEl.dataset.uid){ pDragEl=null; return; }
     e.preventDefault();
-    try{ handle.setPointerCapture(e.pointerId); }catch(_){}
+    // capture sur LIST (le conteneur qui écoute pointermove). Capturer sur la
+    // poignée détournerait tous les move vers elle → l'écartement ne se voit pas
+    // (cassé surtout à la souris). Voir test PC 25/06.
+    try{ list.setPointerCapture(e.pointerId); }catch(_){}
     pDragEl.classList.add('vy-grabbed');
   });
   list.addEventListener('pointermove', e=>{
