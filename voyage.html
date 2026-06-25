@@ -177,16 +177,34 @@ let map, routeLayer;
 // Source unique de vérité — tableau d'objets {uid, nom, lat, lng, region, type}
 // uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
 let voyage = [];
+let VOYAGE_ID = null;   // voyage actif (résolu une fois, partagé load/save/retenues)
+let MEMBRE_USER_ID = null;
+
+// Résout le voyage actif : sessionStorage, sinon le principal du groupe du membre.
+// Mémorise dans VOYAGE_ID. Moteur unique : load, save et la bande retenues s'en servent.
+async function resoutVoyageId(userId){
+  if(VOYAGE_ID) return VOYAGE_ID;
+  try{ const s=sessionStorage.getItem('rnr_voyage_id'); if(s){ VOYAGE_ID=s; return VOYAGE_ID; } }catch(e){}
+  const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+  if(!mem) return null;
+  const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
+    .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
+  const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
+  VOYAGE_ID=actif?actif.id:null;
+  return VOYAGE_ID;
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 (async()=>{
   const {data:{session}} = await sb.auth.getSession();
   if(!session){window.location.href='index.html';return;}
   document.getElementById('auth-check').style.display='none';
+  MEMBRE_USER_ID=session.user.id;
   initMap();
   initListEvents();
-  loadVoyage();
-  chargerRetenuesVoyage(session.user.id);
+  await resoutVoyageId(session.user.id);   // VOYAGE_ID résolu une fois
+  await loadVoyage();                       // itinéraire depuis la base (partagé)
+  chargerRetenuesVoyage(session.user.id);   // bande retenues (calcule « déjà placé » après load)
 })();
 
 /* ── Bande « Retenues pour ce voyage » : même invariant que le Cockpit (Master 4.18).
@@ -200,18 +218,7 @@ async function chargerRetenuesVoyage(userId){
   const badge=document.getElementById('vr-badge');
   if(!box) return;
   try{
-    /* groupe du membre */
-    const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
-    if(!mem){ box.innerHTML='<div class="vr-empty">—</div>'; return; }
-    /* voyage actif : sessionStorage, sinon principal */
-    let voyageId=null;
-    try{ voyageId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
-    if(!voyageId){
-      const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
-        .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
-      const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
-      voyageId=actif?actif.id:null;
-    }
+    const voyageId = await resoutVoyageId(userId);
     if(!voyageId){ box.innerHTML='<div class="vr-empty">Aucun voyage actif.</div>'; return; }
 
     const {data:vf}=await sb.from('voyage_fiches')
@@ -360,23 +367,40 @@ function initMap(){
 }
 
 // ── Persistance ───────────────────────────────────────────────────────────────
-function saveVoyage(){
-  localStorage.setItem('rr_voyage_full', JSON.stringify(voyage));
-  localStorage.setItem('rr_voyage', JSON.stringify(voyage.map(v=>v.id)));
+// L'itinéraire vit en BASE (table voyage_itineraire), partagé avec le groupe —
+// plus de localStorage (qui n'était pas synchronisé entre appareils ni membres).
+// Décision Bruno 25/06. Stratégie d'écriture : remplacement complet de l'itinéraire
+// du voyage (delete + insert ordonné) = simple, last-write-wins, conforme doctrine.
+let _saveEnCours=false, _saveRedemande=false;
+async function saveVoyage(){
+  if(!VOYAGE_ID) return;
+  if(_saveEnCours){ _saveRedemande=true; return; }  // sérialise les écritures rapprochées
+  _saveEnCours=true;
+  try{
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i}));
+    await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
+    if(snapshot.length){ await sb.from('voyage_itineraire').insert(snapshot); }
+  }catch(e){ console.warn('saveVoyage',e); }
+  _saveEnCours=false;
+  if(_saveRedemande){ _saveRedemande=false; saveVoyage(); }
 }
 
-function loadVoyage(){
-  const raw = JSON.parse(localStorage.getItem('rr_voyage_full')||'[]');
-  // Migrer les anciens formats : garantir que chaque item a un uid
-  voyage = raw
-    .filter(v=>v&&v.lat&&v.lng)
-    .map(v=>{
-      // Générer un uid unique pour chaque item sans uid
-      const uid = v.uid && typeof v.uid==='string' && v.uid.length>4
-        ? v.uid
-        : Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-      return {...v, uid};
-    });
+async function loadVoyage(){
+  if(!VOYAGE_ID){ voyage=[]; render(); return; }
+  try{
+    const {data:rows}=await sb.from('voyage_itineraire')
+      .select('uid,lieu_id,ordre').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
+    let infos={};
+    if(ids.length){
+      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,region,type').in('id',ids);
+      (fs||[]).forEach(f=>{ infos[f.id]=f; });
+    }
+    voyage=(rows||[])
+      .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||''}; })
+      .filter(Boolean);
+  }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
 }
 
