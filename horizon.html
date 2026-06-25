@@ -2401,6 +2401,27 @@ function hzRetenueIcon(){
     html:'<div style="width:20px;height:20px;border-radius:50%;background:#1d9e75;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;">✓</div>',
     iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-11]});
 }
+// marqueur pour une fiche AIMÉE pendant CETTE session de swipe (cœur sur pastille
+// rose) : on la distingue à l'œil sur la carte au fur et à mesure des ❤️, pour se
+// faire une idée des distances entre les lieux choisis. Distinct du vert « déjà
+// pris pour ce voyage » (qui vient de la base, pas du geste en cours).
+function hzAimeeIcon(){
+  return L.divIcon({className:'',
+    html:'<div style="width:20px;height:20px;border-radius:50%;background:#d8456e;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1;">❤</div>',
+    iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-11]});
+}
+// Repose la bonne icône d'un marqueur selon l'état courant du lieu (priorité :
+// déjà retenu en base > aimé en session > pastille de type). Appelé à chaque ❤️
+// et à chaque retrait, pour que la carte suive les choix en direct.
+function hzMajMarqueur(lieuId, type){
+  const m=HZ_EXPLO_MARQUEURS&&HZ_EXPLO_MARQUEURS[lieuId];
+  if(!m) return;
+  let icon;
+  if(HZ_RETENUS.has(lieuId)) icon=hzRetenueIcon();
+  else if(HZ_AIMEES_SESSION.has(lieuId)) icon=hzAimeeIcon();
+  else icon=hzColoredIcon(hzTypeColor(type));
+  m.setIcon(icon);
+}
 
 let HZ_EXPLO_MAP=null;
 let HZ_EXPLO_MARQUEURS={};
@@ -2450,12 +2471,14 @@ function initExploCarte(){
   const bounds=[];
   toutes.forEach(l=>{
     const retenue=HZ_RETENUS.has(l.id);
+    const aimeeSession=HZ_AIMEES_SESSION.has(l.id);
     const col=hzTypeColor(l.type);
     const badge=retenue?'<br><span style="font-size:10px;color:#1d9e75;font-weight:700;">✓ déjà prise pour ce voyage</span>':'';
     const popup='<div style="font-family:sans-serif;min-width:150px;"><strong style="font-size:13px;">'+
       escapeHtmlHz(l.nom||'—')+'</strong><br><span style="font-size:10px;color:#888;">'+
       escapeHtmlHz((l.type||'Lieu')+(l.sous_region?(' · '+l.sous_region):''))+'</span>'+badge+'</div>';
-    const icon=retenue?hzRetenueIcon():hzColoredIcon(col);
+    // priorité : déjà retenu en base > aimé dans cette session > pastille de type
+    const icon=retenue?hzRetenueIcon():(aimeeSession?hzAimeeIcon():hzColoredIcon(col));
     const m=L.marker([l.lat,l.lng],{icon:icon}).addTo(HZ_EXPLO_MAP).bindPopup(popup);
     HZ_EXPLO_MARQUEURS[l.id]=m;
     bounds.push([l.lat,l.lng]);
@@ -2584,19 +2607,23 @@ function initSwipe(paquet){
   HZ_SWIPE_SIG=sig;
   HZ_SWIPE_PAQUET=paquet;
   HZ_AIMEES_SESSION=new Set();   // nouveau coin → nouvelle session (panier repart vide)
-  // 1) regrouper par région : cœur (régions choisies) puis limitrophes
+  // 1) regrouper par région : cœur (régions choisies) puis limitrophes.
+  //    On EXCLUT les fiches déjà retenues pour ce voyage (HZ_RETENUS) : elles
+  //    restent visibles sur la carte (✓ vert, pour juger les distances) mais ne
+  //    repassent JAMAIS dans le swipe — décision Bruno 25/06.
   const parRegCoeur={}, parRegLimit={};
-  paquet.coeur.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
-  paquet.limitrophes.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
+  paquet.coeur.forEach(f=>{ if(HZ_RETENUS.has(f.id)) return; const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
+  paquet.limitrophes.forEach(f=>{ if(HZ_RETENUS.has(f.id)) return; const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
 
   // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
   HZ_SWIPE_SEQ=[];
   HZ_LIEUX.forEach((slug,idx)=>{
+    const fichesReg=parRegCoeur[slug]||[];
+    if(!fichesReg.length) return;   // région vidée (toutes retenues) → pas de transition orpheline
     const label=labelRegionSvg(slug);
-    // transition « Cap sur <région> » avant chaque région SAUF la 1re
-    if(idx>0){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
-    // fiches du cœur de cette région
-    (parRegCoeur[slug]||[]).forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug}));
+    // transition « Cap sur <région> » avant chaque région SAUF la 1re présentée
+    if(HZ_SWIPE_SEQ.length){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
+    fichesReg.forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug}));
   });
   // 3) limitrophes (toutes régions voisines) à la fin, annoncés « Juste à côté »
   const slugsLimit=Object.keys(parRegLimit);
@@ -2749,6 +2776,7 @@ async function swipeGeste(type){
       // courant). Ainsi le panier garde les fiches jour même après bascule en nuit.
       const estNuit=(HZ_THEME==='nuit');
       HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
+      hzMajMarqueur(f.id, f.type);   // la carte suit : le point passe en cœur rose
     }
     rendAimees();
     avanceSwipe('like');
@@ -2846,6 +2874,13 @@ async function retireAimee(lieuId){
   if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire
   HZ_AIMEES_SESSION.delete(lieuId);   // retirer de la session
   HZ_PANIER.delete(lieuId);           // retirer du panier cumulatif (jour+nuit)
+  // la carte suit : le point reprend sa pastille de type (ou reste vert si retenu en base)
+  let typeLieu=null;
+  if(HZ_COIN_PAQUET){
+    const l=[...HZ_COIN_PAQUET.coeur,...HZ_COIN_PAQUET.limitrophes].find(x=>x.id===lieuId);
+    if(l) typeLieu=l.type;
+  }
+  hzMajMarqueur(lieuId, typeLieu);
   rendAimees();
   rendPanier();
 }
