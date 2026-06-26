@@ -499,35 +499,29 @@ function initListEvents(){
     if(uid) removeByUid(uid);
   });
 
-  // Drag & drop — délégation
-  list.addEventListener('dragstart', e=>{
-    const item = e.target.closest('.stop-item');
-    if(!item) return;
-    e.dataTransfer.effectAllowed='move';
-    e.dataTransfer.setData('text/plain', item.dataset.uid||'');
-    item.style.opacity='0.4';
-  });
-  list.addEventListener('dragend', e=>{
-    const item = e.target.closest('.stop-item');
-    if(item) item.style.opacity='';
-  });
-  // ── Réordonner via la poignée ⠿ — POINTER EVENTS : couvre le TACTILE et la souris.
-  // (Le D&D HTML5 ci-dessus n'émet AUCUN événement au doigt — limite du standard.)
-  let pDragEl=null;
+  // (Le drag natif HTML5 a été RETIRÉ : il entrait en conflit avec le pointer-drag
+  //  ci-dessous — sur PC, attraper une fiche au corps déclenchait le natif, sans
+  //  écartement et sans réordon réel. Tout passe désormais par les pointer events.)
+  // ── Réordonner via POINTER EVENTS : couvre le TACTILE et la souris.
+  // (Le D&D HTML5 a été retiré : il n'émettait rien au doigt et parasitait la souris.)
+  let pDragEl=null, pStarted=false, pSx=0, pSy=0;
   list.addEventListener('pointerdown', e=>{
-    const handle=e.target.closest('.drag-handle');
-    if(!handle) return;
-    pDragEl=handle.closest('.stop-item');
-    if(!pDragEl||!pDragEl.dataset.uid){ pDragEl=null; return; }
-    e.preventDefault();
-    // capture sur LIST (le conteneur qui écoute pointermove). Capturer sur la
-    // poignée détournerait tous les move vers elle → l'écartement ne se voit pas
-    // (cassé surtout à la souris). Voir test PC 25/06.
+    if(e.target.closest('.stop-remove')) return;   // la croix reste cliquable, pas un drag
+    const item=e.target.closest('.stop-item');
+    if(!item||!item.dataset.uid) return;
+    pDragEl=item; pStarted=false; pSx=e.clientX; pSy=e.clientY;
+    // capture sur LIST (le conteneur qui écoute pointermove). Capturer sur l'item
+    // détournerait les move vers lui → l'écartement ne se voit pas (cassé à la souris).
     try{ list.setPointerCapture(e.pointerId); }catch(_){}
-    pDragEl.classList.add('vy-grabbed');
   });
   list.addEventListener('pointermove', e=>{
     if(!pDragEl) return;
+    if(!pStarted){
+      // seuil anti-clic : tant qu'on n'a pas bougé de 6px, ce n'est pas un drag
+      if(Math.abs(e.clientX-pSx)<6 && Math.abs(e.clientY-pSy)<6) return;
+      pStarted=true;
+      pDragEl.classList.add('vy-grabbed');
+    }
     e.preventDefault();
     const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('.stop-item');
     if(over&&over!==pDragEl){
@@ -551,10 +545,12 @@ function initListEvents(){
   });
   const endPointerDrag=()=>{
     if(!pDragEl) return;
+    const wasStarted=pStarted;
     pDragEl.classList.remove('vy-grabbed');
     // nettoyer les classes/transform d'animation
     list.querySelectorAll('.stop-item.vy-sliding').forEach(el=>{ el.classList.remove('vy-sliding'); el.style.transform=''; });
-    pDragEl=null;
+    pDragEl=null; pStarted=false;
+    if(!wasStarted) return;   // simple clic, pas un drag → ne pas re-render inutilement
     // L'ordre final = l'ordre du DOM après l'aperçu en direct
     const order=[...list.querySelectorAll('.stop-item')].map(el=>el.dataset.uid);
     voyage.sort((a,b)=>order.indexOf(a.uid)-order.indexOf(b.uid));
@@ -563,23 +559,6 @@ function initListEvents(){
   };
   list.addEventListener('pointerup', endPointerDrag);
   list.addEventListener('pointercancel', endPointerDrag);
-
-  list.addEventListener('dragover', e=>{ e.preventDefault(); });
-  list.addEventListener('drop', e=>{
-    e.preventDefault();
-    const target = e.target.closest('.stop-item');
-    if(!target) return;
-    const fromUid = e.dataTransfer.getData('text/plain');
-    const toUid = target.dataset.uid;
-    if(!fromUid||!toUid||fromUid===toUid) return;
-    const fi = voyage.findIndex(v=>v.uid===fromUid);
-    const ti = voyage.findIndex(v=>v.uid===toUid);
-    if(fi<0||ti<0) return;
-    const moved = voyage.splice(fi,1)[0];
-    voyage.splice(ti,0,moved);
-    saveVoyage();
-    render();
-  });
 }
 
 function renderList(){
@@ -615,7 +594,6 @@ function renderList(){
 
     const row = document.createElement('div');
     row.className='stop-item';
-    row.draggable=true;
     row.dataset.uid = item.uid; // ← uid dans le DOM, pas dans un listener
 
     row.innerHTML=`
