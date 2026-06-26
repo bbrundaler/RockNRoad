@@ -263,9 +263,15 @@ async function chargerRetenuesVoyage(userId){
       const sansCoord=(f.lat==null||f.lng==null);
       const tag=dejaPlace?'<div class="vrf-placed-tag">✓ sur la carte</div>':'';
       const cls='vr-fiche'+(dejaPlace?' vrf-placed':'')+(sansCoord?' vrf-nocoord':'');
+      // Croix « Renvoyer au Carnet » UNIQUEMENT sur les fiches vivantes (pas placées) :
+      // parcours strict en 2 temps — une fiche sur la carte se retire d'abord via la
+      // croix de l'itinéraire (cran 1), puis seulement, redevenue vivante, peut quitter
+      // le voyage (cran 2). On ne saute pas le cran 1.
+      const croix=dejaPlace ? '' :
+        '<button class="vrf-x" type="button" title="Renvoyer au Carnet" '
+        +'onclick="event.stopPropagation();sortieVoyageVersCarnet(\''+escVr(id)+'\')">✕</button>';
       return '<div class="'+cls+'" data-id="'+escVr(id)+'">'
-        +'<button class="vrf-x" type="button" title="Retirer de ce voyage" data-x="'+escVr(id)+'">✕</button>'
-        +ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div>'+tag+'</div>';
+        +croix+ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div>'+tag+'</div>';
     }).join('');
     initRetenueDrag();
     // 3c : maintenant que RETENUES_INFO est peuplé, redessiner pour faire
@@ -367,34 +373,33 @@ function initRetenueDrag(){
     src=null; started=false;
   });
 
-  // Croix : SORTIR la fiche DU VOYAGE → retour au Carnet (2ᵉ cran, après le retrait
-  // d'itinéraire). « Elle n'est plus faite pour ce voyage. » Geste DESTRUCTEUR d'une
-  // décision → mot de sécurité obligatoire (anti-fausse-manip). Même effet qu'au
-  // Cockpit (retirerFicheDuVoyage) : supprime la retenue (voyage_fiches) ET MON ❤️
-  // (reactions) → la fiche redevient neutre au Carnet. E1/E2 : on ne touche qu'à MON ❤️.
-  box.addEventListener('click', async e=>{
-    const x=e.target.closest('.vrf-x');
-    if(!x) return;
-    e.preventDefault(); e.stopPropagation();
-    const id=x.dataset.x;
-    const f=RETENUES_INFO[id];
-    const nom=f?f.nom:'cette fiche';
-    if(!confirm('Renvoyer « '+nom+' » au Carnet ?\n\n'+
-      'Elle quitte ce voyage (retenue + ton coup de cœur retirés). '+
-      'La fiche reste dans ton Carnet, prête pour un autre voyage. Confirmer ?')) return;
-    // Si elle est encore posée sur la carte, on l'en retire d'abord (cohérence visuelle).
-    const etape=voyage.find(v=>v.id===id);
-    if(etape){ voyage=voyage.filter(v=>v.uid!==etape.uid); saveVoyage(); }
-    try{
-      if(VOYAGE_ID){ await sb.from('voyage_fiches').delete().eq('voyage_id',VOYAGE_ID).eq('lieu_id',id); }
-      if(MEMBRE_USER_ID){
-        await sb.from('reactions').delete()
-          .eq('cible_type','lieu').eq('cible_id',id).eq('membre_id',MEMBRE_USER_ID).eq('emoji','❤️');
-      }
-    }catch(err){ console.warn('sortie voyage→carnet',err); alert('Retrait impossible, réessaie.'); return; }
-    render();
-    chargerRetenuesVoyage(MEMBRE_USER_ID);   // recharge la bande (la fiche en sort)
-  });
+  // (Le retrait vers le Carnet est géré par sortieVoyageVersCarnet(), branché
+  //  directement sur chaque croix au rendu — voir chargerRetenuesVoyage. Pas de
+  //  délégation ici : elle entrait en concurrence avec le drag pointer.)
+}
+
+/* SORTIR la fiche DU VOYAGE → retour au Carnet (2ᵉ cran, après le retrait d'itinéraire).
+   « Elle n'est plus faite pour ce voyage. » Geste DESTRUCTEUR d'une décision → mot de
+   sécurité obligatoire. Même effet qu'au Cockpit : supprime la retenue (voyage_fiches)
+   ET MON ❤️ (reactions) → la fiche redevient neutre au Carnet. E1/E2 : on ne touche qu'à MON ❤️. */
+async function sortieVoyageVersCarnet(id){
+  const f=RETENUES_INFO[id];
+  const nom=f?f.nom:'cette fiche';
+  if(!confirm('Renvoyer « '+nom+' » au Carnet ?\n\n'+
+    'Elle quitte ce voyage (retenue + ton coup de cœur retirés). '+
+    'La fiche reste dans ton Carnet, prête pour un autre voyage. Confirmer ?')) return;
+  // Si elle est encore posée sur la carte, on l'en retire d'abord (cohérence visuelle).
+  const etape=voyage.find(v=>v.id===id);
+  if(etape){ voyage=voyage.filter(v=>v.uid!==etape.uid); saveVoyage(); }
+  try{
+    if(VOYAGE_ID){ await sb.from('voyage_fiches').delete().eq('voyage_id',VOYAGE_ID).eq('lieu_id',id); }
+    if(MEMBRE_USER_ID){
+      await sb.from('reactions').delete()
+        .eq('cible_type','lieu').eq('cible_id',id).eq('membre_id',MEMBRE_USER_ID).eq('emoji','❤️');
+    }
+  }catch(err){ console.warn('sortie voyage→carnet',err); alert('Retrait impossible, réessaie.'); return; }
+  render();
+  chargerRetenuesVoyage(MEMBRE_USER_ID);   // recharge la bande (la fiche en sort)
 }
 
 /* ajoute une retenue (par id) dans voyage[] à la position voulue, puis re-rend tout */
