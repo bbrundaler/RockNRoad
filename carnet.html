@@ -389,7 +389,9 @@
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script></head>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="tags.js"></script>
+<script src="carto-marqueurs.js"></script></head>
 <body>
 
 <!-- Auth overlay -->
@@ -876,6 +878,10 @@ let carteMarkers = [], ficheMarkers = [];
 let regionMaps = {}; // Leaflet maps pour les récap régions
 
 // Couleurs par type de lieu (markers colorés)
+/* MARQUEURS — délégués au MOTEUR UNIQUE carto-marqueurs.js (A6 étape 3).
+   Plus de couleur-par-type sur les PASTILLES : la FORME dit jour/nuit, la
+   COULEUR dit le rapport au lieu (neutre / mon cœur / cœur des autres / épingle).
+   typeColor reste pour les usages NON-carte (puces de liste, chips). */
 const TYPE_COLORS = {
   'Camping':'#2C5016', 'Halte':'#3a7a3a',
   'Restaurant':'#e8540a', 'Brasserie':'#e8540a',
@@ -887,7 +893,19 @@ const TYPE_COLORS = {
   'default':'#888'
 };
 function typeColor(type){ return TYPE_COLORS[type] || TYPE_COLORS['default']; }
-
+function etatLieuCarnet(lieuId){
+  const c = coeursDe(lieuId).love;            // {count, mine}
+  return {
+    epingle:    retenus.has(lieuId),          // 📌 du voyage actif (Carnet le connaît)
+    coeurMoi:   !!c.mine,
+    coeurAutre: (c.count > 0) && !c.mine
+  };
+}
+function iconeCarnet(fiche){
+  if(window.RNR_MARQUEURS) return RNR_MARQUEURS.icone(fiche, etatLieuCarnet(fiche.id));
+  return coloredIcon('#888');                 // repli si moteur absent
+}
+/* Repli minimal conservé pour robustesse (moteur non chargé). */
 function coloredIcon(color){
   return L.divIcon({
     className:'',
@@ -1190,7 +1208,7 @@ function initRegionMap(rk){
       <br><span style="font-size:10px;background:var(--bg);color:var(--ink-dim);padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
       <br><a href="${l.lat&&l.lng?'https://www.google.com/maps?q='+l.lat+','+l.lng:'https://maps.google.com/?q='+encodeURIComponent(l.nom||'')}" target="_blank" style="font-size:10px;color:var(--gold);font-weight:700;text-decoration:none;">📍 Google Maps →</a>
     </div>`;
-    const marker=L.marker([l.lat,l.lng],{icon:coloredIcon(col)}).addTo(map).bindPopup(popup);
+    const marker=L.marker([l.lat,l.lng],{icon:iconeCarnet(l)}).addTo(map).bindPopup(popup);
     marker._lieuxId=l.id;
     bounds.push([l.lat,l.lng]);
   });
@@ -1304,7 +1322,7 @@ function initCarteGlobal(){
       <br><a href="https://www.google.com/maps?q=${l.lat},${l.lng}" target="_blank" style="font-size:10px;color:var(--gold);font-weight:700;text-decoration:none;">📍 Maps →</a>
       <button onclick="showTab('${ALL_SUPABASE_REGIONS.includes(rk)?rk:'dyn-'+rk}')" style="font-size:9px;background:var(--chrome-bg);color:var(--gold);border:none;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:4px;">Voir fiche</button>
     </div>`;
-    const marker=L.marker([l.lat,l.lng],{icon:coloredIcon(col)}).addTo(carteGlobalMap).bindPopup(popup);
+    const marker=L.marker([l.lat,l.lng],{icon:iconeCarnet(l)}).addTo(carteGlobalMap).bindPopup(popup);
     marker.on('mouseover click',()=>updateCarteInfoPanel(l));
     if(!carteGlobalMarkersByRegion[rk]) carteGlobalMarkersByRegion[rk]=[];
     carteGlobalMarkersByRegion[rk].push(marker);
@@ -1375,7 +1393,7 @@ function initFicheGlobal(){
       ${l.note_famille?`<span style="font-size:10px;font-weight:700;color:var(--gold-deep);">${'★'.repeat(l.note_famille)} 🐾</span>`:''}
       <br><span style="font-size:9px;background:var(--bg);color:var(--ink-dim);border-radius:6px;padding:1px 5px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
     </div>`;
-    const marker=L.marker([l.lat,l.lng],{icon:coloredIcon(col)}).addTo(ficheGlobalMap).bindPopup(popup);
+    const marker=L.marker([l.lat,l.lng],{icon:iconeCarnet(l)}).addTo(ficheGlobalMap).bindPopup(popup);
     if(!ficheGlobalMarkersByRegion[rk]) ficheGlobalMarkersByRegion[rk]=[];
     ficheGlobalMarkersByRegion[rk].push(marker);
     bounds.push([l.lat,l.lng]);
