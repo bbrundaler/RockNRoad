@@ -292,6 +292,17 @@ function rafraichitRetenues(){
     let tag=el.querySelector('.vrf-placed-tag');
     if(deja && !tag){ tag=document.createElement('div'); tag.className='vrf-placed-tag'; tag.textContent='✓ sur la carte'; el.appendChild(tag); }
     if(!deja && tag){ tag.remove(); }
+    // Croix « Renvoyer au Carnet » : présente seulement sur les fiches VIVANTES.
+    // On l'ajoute/retire ici pour qu'elle apparaisse DÈS le retrait d'itinéraire
+    // (sans recharger la page).
+    let croix=el.querySelector('.vrf-x');
+    if(!deja && !croix){
+      croix=document.createElement('button');
+      croix.className='vrf-x'; croix.type='button'; croix.title='Renvoyer au Carnet'; croix.textContent='✕';
+      croix.setAttribute('onclick',"event.stopPropagation();sortieVoyageVersCarnet('"+id+"')");
+      el.insertBefore(croix, el.firstChild);
+    }
+    if(deja && croix){ croix.remove(); }
   });
 }
 
