@@ -1150,7 +1150,7 @@ async function epinglerDirectement(lieuId){
   if(!confirm('Tu épingles « '+f.nom+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.')) return;
   try{
     const { error } = await sb.from('voyage_fiches')
-      .upsert({ voyage_id:RNR_voyageId, lieu_id:lieuId, statut:'retenue' }, { onConflict:'voyage_id,lieu_id' });
+      .upsert({ voyage_id:RNR_voyageId, lieu_id:lieuId, statut:'retenue', origine:'leader' }, { onConflict:'voyage_id,lieu_id' });
     if(error){ console.warn('épingle directe',error); alert('Impossible d\'épingler pour le moment.'); return; }
   }catch(e){ console.warn('épingle directe',e); alert('Impossible d\'épingler pour le moment.'); return; }
   if(typeof celebrer==='function') celebrer('📌 « '+f.nom+' » épinglée au voyage !');
@@ -1401,7 +1401,7 @@ async function propagerVerdict(p){
     vts.forEach(v=>{ if(v.valeur==='Garder') g++; else if(v.valeur==='Écarter') e++; });
     const statut = (g>=e) ? 'retenue' : 'ecartee';   // égalité → retenue
     const { error } = await sb.from('voyage_fiches').upsert(
-      [{ voyage_id:p.voyage_id, lieu_id:p.lieu_id, statut, maj_le:new Date().toISOString() }],
+      [{ voyage_id:p.voyage_id, lieu_id:p.lieu_id, statut, origine:'vote', maj_le:new Date().toISOString() }],
       { onConflict:'voyage_id,lieu_id' });
     if(error) console.warn('voyage_fiches upsert', error);
     return;
