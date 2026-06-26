@@ -1016,7 +1016,13 @@ function rendreCoeurs(){
   const badge=document.getElementById('cc-badge');
   if(!box) return;
 
-  const aimees=[...RNR_fichesAimees].sort((a,b)=>(b.dernierCoeur||0)-(a.dernierCoeur||0));
+  /* Décision Bruno (26/06) : une fiche TRANCHÉE (retenue/écartée) DISPARAÎT des coups de
+     cœur — ce bloc ne montre que ce qui pose encore question (candidates + en vote). La
+     fiche tranchée vit ailleurs (bloc « Retenues » / page Voyage). Affine la doctrine A6
+     (« grisée + tag » → « disparaît ») : moins de charge visuelle, focus sur l'arbitrage. */
+  const aimees=[...RNR_fichesAimees]
+    .filter(f=>{ const s=RNR_statutFiche[f.id]; return s!=='retenue' && s!=='ecartee'; })
+    .sort((a,b)=>(b.dernierCoeur||0)-(a.dernierCoeur||0));
   if(badge) badge.textContent=aimees.length;
 
   if(!aimees.length){
@@ -1032,27 +1038,11 @@ function rendreCoeurs(){
 
   box.innerHTML = aimees.map(f=>{
     const enVote = voteDe[f.id];
-    const statut = RNR_statutFiche[f.id];   // 'candidate' | 'retenue' | 'ecartee' | undefined
-    /* A6 : SEULES 'retenue'/'ecartee' sont tranchées (sorties du vote, grisées).
-       'candidate' reste un coup de cœur VOTABLE → ne pas la griser. */
-    const tranchee = (statut==='retenue' || statut==='ecartee');
     const ph = f.photo_url
       ? '<div class="cc-ph" style="background-image:url(\''+escH(f.photo_url)+'\')"></div>'
       : '<div class="cc-ph">🗺️</div>';
     const auteurs = libelleAuteursCoeur(f.id);
     const meta = (f.region?escH(f.region)+' · ':'')+'❤️ '+(f.coeurs||0)+(auteurs?' · par '+escH(auteurs):'');
-
-    /* Fiche DÉJÀ TRANCHÉE pour ce voyage → sortie du cycle (A6 : retenue/écartée seulement).
-       Plus de re-vote possible : ni bouton, ni relance. */
-    if(tranchee){
-      const tag = statut==='retenue'
-        ? '<span class="cc-tag cc-tag-ret">📌 retenue</span>'
-        : '<span class="cc-tag cc-tag-eca">écartée</span>';
-      return '<div class="cc-item cc-tranchee">'+ph+
-        '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+' '+tag+'</div>'+
-        '<div class="cc-mt">'+meta+' · déjà tranchée pour ce voyage</div></div>'+
-        '<button class="cc-retirer" type="button" title="retirer" onclick="retirerFicheDuVoyage(\''+escH(f.id)+'\')">✕</button></div>';
-    }
 
     const action = enVote
       ? '<button class="cc-act cc-act-vote" onclick="mettreEnVedette(\''+enVote+'\')">Au vote →</button>'

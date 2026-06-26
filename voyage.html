@@ -367,16 +367,33 @@ function initRetenueDrag(){
     src=null; started=false;
   });
 
-  // Croix B : retirer la fiche de L'ITINÉRAIRE en cours (pas de la retenue —
-  // la décision de groupe reste au Cockpit). Sans droit : chacun compose sa route.
-  box.addEventListener('click', e=>{
+  // Croix : SORTIR la fiche DU VOYAGE → retour au Carnet (2ᵉ cran, après le retrait
+  // d'itinéraire). « Elle n'est plus faite pour ce voyage. » Geste DESTRUCTEUR d'une
+  // décision → mot de sécurité obligatoire (anti-fausse-manip). Même effet qu'au
+  // Cockpit (retirerFicheDuVoyage) : supprime la retenue (voyage_fiches) ET MON ❤️
+  // (reactions) → la fiche redevient neutre au Carnet. E1/E2 : on ne touche qu'à MON ❤️.
+  box.addEventListener('click', async e=>{
     const x=e.target.closest('.vrf-x');
     if(!x) return;
     e.preventDefault(); e.stopPropagation();
     const id=x.dataset.x;
+    const f=RETENUES_INFO[id];
+    const nom=f?f.nom:'cette fiche';
+    if(!confirm('Renvoyer « '+nom+' » au Carnet ?\n\n'+
+      'Elle quitte ce voyage (retenue + ton coup de cœur retirés). '+
+      'La fiche reste dans ton Carnet, prête pour un autre voyage. Confirmer ?')) return;
+    // Si elle est encore posée sur la carte, on l'en retire d'abord (cohérence visuelle).
     const etape=voyage.find(v=>v.id===id);
-    if(etape){ removeByUid(etape.uid); }   // était sur la carte → on l'en retire
-    // (si pas sur la carte, rien à faire : elle reste une retenue disponible)
+    if(etape){ voyage=voyage.filter(v=>v.uid!==etape.uid); saveVoyage(); }
+    try{
+      if(VOYAGE_ID){ await sb.from('voyage_fiches').delete().eq('voyage_id',VOYAGE_ID).eq('lieu_id',id); }
+      if(MEMBRE_USER_ID){
+        await sb.from('reactions').delete()
+          .eq('cible_type','lieu').eq('cible_id',id).eq('membre_id',MEMBRE_USER_ID).eq('emoji','❤️');
+      }
+    }catch(err){ console.warn('sortie voyage→carnet',err); alert('Retrait impossible, réessaie.'); return; }
+    render();
+    chargerRetenuesVoyage(MEMBRE_USER_ID);   // recharge la bande (la fiche en sort)
   });
 }
 
