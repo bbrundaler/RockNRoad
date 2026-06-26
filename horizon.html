@@ -14,6 +14,7 @@
 <script src="carto-cascade.js"></script>
 <script src="carto-lentilles.js"></script>
 <script src="tags.js"></script>
+<script src="carto-marqueurs.js"></script>
 <script src="themes-horizon.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
@@ -2389,46 +2390,39 @@ function basculeVersDormir(){
 
 // ════════════════════════════════════════════════════════════════
 //  GRAND POPUP D'EXPLORATION (3d) — carte Leaflet zoomée + swipe.
-//  Helpers carte portés de Carnet (marqueurs colorés par type).
+//  Marqueurs : délégués au MOTEUR UNIQUE carto-marqueurs.js (A6 étape 3).
+//  Plus de couleur-par-type en dur : la FORME dit jour/nuit, la COULEUR
+//  dit mon rapport (neutre/mon cœur/cœur des autres/épingle).
 // ════════════════════════════════════════════════════════════════
-const HZ_TYPE_COLORS={
-  'Camping':'#2C5016','Halte':'#3a7a3a','Restaurant':'#e8540a','Brasserie':'#e8540a',
-  'Site':'#1a5a7a','Randonnee':'#1a5a7a','Plage':'#00a0c0','Lac':'#00a0c0',
-  'Musee':'#6B3288','Culture':'#6B3288','Chateau':'#C8A84B','Monument':'#C8A84B',
-  'Cave':'#7B2020','Degustation':'#7B2020','default':'#888'
-};
-function hzTypeColor(t){ return HZ_TYPE_COLORS[t]||HZ_TYPE_COLORS['default']; }
-function hzColoredIcon(color){
-  return L.divIcon({className:'',
-    html:'<div style="width:14px;height:14px;border-radius:50%;background:'+color+';border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>',
-    iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-8]});
+// Rapport du groupe à un lieu → { epingle, coeurMoi, coeurAutre } pour le moteur.
+function hzEtatLieu(lieuId){
+  const c = hzCoeursDe(lieuId).love;           // {count, mine, qui}
+  return {
+    epingle:    HZ_RETENUS.has(lieuId),        // vraie retenue (décision groupe, A6)
+    coeurMoi:   !!c.mine || HZ_AIMEES_SESSION.has(lieuId),
+    coeurAutre: (c.count > 0) && !c.mine        // aimée par d'autres, pas par moi
+  };
 }
-// marqueur distinct pour une fiche DÉJÀ RETENUE (coche verte sur pastille)
-function hzRetenueIcon(){
-  return L.divIcon({className:'',
-    html:'<div style="width:20px;height:20px;border-radius:50%;background:#1d9e75;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;">✓</div>',
-    iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-11]});
+// Retrouve la fiche complète d'un lieu (pour estCouchage : monde_nuit, famille…).
+function ficheParIdHz(lieuId){
+  if(!window.HZ_COIN_PAQUET) return null;
+  const tout=[...(HZ_COIN_PAQUET.coeur||[]), ...(HZ_COIN_PAQUET.limitrophes||[])];
+  return tout.find(f=>f && f.id===lieuId) || null;
 }
-// marqueur pour une fiche AIMÉE pendant CETTE session de swipe (cœur sur pastille
-// rose) : on la distingue à l'œil sur la carte au fur et à mesure des ❤️, pour se
-// faire une idée des distances entre les lieux choisis. Distinct du vert « déjà
-// pris pour ce voyage » (qui vient de la base, pas du geste en cours).
-function hzAimeeIcon(){
-  return L.divIcon({className:'',
-    html:'<div style="width:20px;height:20px;border-radius:50%;background:#d8456e;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;line-height:1;">❤</div>',
-    iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-11]});
+// Icône d'un lieu via le moteur unique (fiche nécessaire pour estCouchage).
+function hzIcone(fiche){
+  if(window.RNR_MARQUEURS) return RNR_MARQUEURS.icone(fiche, hzEtatLieu(fiche.id));
+  return null;
 }
-// Repose la bonne icône d'un marqueur selon l'état courant du lieu (priorité :
-// déjà retenu en base > aimé en session > pastille de type). Appelé à chaque ❤️
-// et à chaque retrait, pour que la carte suive les choix en direct.
+// Repose la bonne icône d'un marqueur selon l'état courant du lieu. Appelé à
+// chaque ❤️ et à chaque retrait, pour que la carte suive les choix en direct.
 function hzMajMarqueur(lieuId, type){
   const m=HZ_EXPLO_MARQUEURS&&HZ_EXPLO_MARQUEURS[lieuId];
   if(!m) return;
-  let icon;
-  if(HZ_RETENUS.has(lieuId)) icon=hzRetenueIcon();
-  else if(HZ_AIMEES_SESSION.has(lieuId)) icon=hzAimeeIcon();
-  else icon=hzColoredIcon(hzTypeColor(type));
-  m.setIcon(icon);
+  const fiche = (typeof ficheParIdHz==='function' ? ficheParIdHz(lieuId) : null)
+             || {id:lieuId, type:type};
+  const icon = hzIcone(fiche);
+  if(icon) m.setIcon(icon);
 }
 
 let HZ_EXPLO_MAP=null;
@@ -2479,15 +2473,13 @@ function initExploCarte(){
   const bounds=[];
   toutes.forEach(l=>{
     const retenue=HZ_RETENUS.has(l.id);
-    const aimeeSession=HZ_AIMEES_SESSION.has(l.id);
-    const col=hzTypeColor(l.type);
-    const badge=retenue?'<br><span style="font-size:10px;color:#1d9e75;font-weight:700;">✓ déjà prise pour ce voyage</span>':'';
+    const badge=retenue?'<br><span style="font-size:10px;color:var(--mk-epingle,#1d9e75);font-weight:700;">📌 épinglée pour ce voyage</span>':'';
     const popup='<div style="font-family:sans-serif;min-width:150px;"><strong style="font-size:13px;">'+
       escapeHtmlHz(l.nom||'—')+'</strong><br><span style="font-size:10px;color:#888;">'+
       escapeHtmlHz((l.type||'Lieu')+(l.sous_region?(' · '+l.sous_region):''))+'</span>'+badge+'</div>';
-    // priorité : déjà retenu en base > aimé dans cette session > pastille de type
-    const icon=retenue?hzRetenueIcon():(aimeeSession?hzAimeeIcon():hzColoredIcon(col));
-    const m=L.marker([l.lat,l.lng],{icon:icon}).addTo(HZ_EXPLO_MAP).bindPopup(popup);
+    // Moteur unique : forme = jour/nuit, couleur = mon rapport (épingle/cœur/neutre)
+    const icon = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.icone(l, hzEtatLieu(l.id)) : null;
+    const m=L.marker([l.lat,l.lng], icon?{icon:icon}:{}).addTo(HZ_EXPLO_MAP).bindPopup(popup);
     HZ_EXPLO_MARQUEURS[l.id]=m;
     bounds.push([l.lat,l.lng]);
   });

@@ -129,3 +129,21 @@
   /* liens utilitaires (web / tél.) */
   --st-link:    #2A5AAA;  --st-link-bg:#F0F4FF;  --st-link-line:#C0D0F0;
 }
+
+/* ═══ MARQUEURS DE CARTE (A6 — la « couche de style » des cartes) ════════
+   Lus par carto-marqueurs.js, le MOTEUR UNIQUE des pastilles (Horizon,
+   Carnet, Voyage, futur Hub). Gérer la couleur des points ICI, jamais
+   dans une fiche ni recopiée page par page — la fiche porte la DONNÉE,
+   le token porte le STYLE. Invariants (le SENS d'un marqueur ne dépend
+   pas du thème). DEUX CANAUX INDÉPENDANTS :
+   · la FORME dit le monde   : rond = activité (jour), carré = couchage (nuit)
+   · la COULEUR dit mon rapport : neutre → mon cœur → cœur des autres → épingle
+   L'ÉPINGLE N'EST JAMAIS ROUGE (le rouge = l'émotion ❤️, pas la décision).
+   -bord = liseré du marqueur (lisible sur tuiles claires comme sombres).  */
+:root{
+  --mk-neutre:       #6B5F4A;   /* pas encore aimée — grège discret        */
+  --mk-coeur-moi:    #DC3C64;   /* MON coup de cœur — rose (aligné st-love) */
+  --mk-coeur-autre:  #EF9F27;   /* cœur d'un coéquipier — ambre            */
+  --mk-epingle:      #1D9E75;   /* épingle, décision du groupe — teal      */
+  --mk-bord:         #FFFFFF;   /* liseré pastille                          */
+}
