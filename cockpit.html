@@ -234,8 +234,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .cc-empty{font-size:13px;color:var(--ink-dim);line-height:1.7;text-align:center;padding:14px 6px;}
 .cc-item{display:flex;gap:11px;align-items:center;padding:8px;border:1px solid var(--surface-line);
   border-radius:11px;background:var(--paper);}
-.cc-ph{width:46px;height:46px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
-  font-size:20px;background:var(--gold-a20);background-size:cover;background-position:center;}
+.cc-ph{width:88px;height:88px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
+  font-size:34px;background:var(--gold-a20);background-size:cover;background-position:center;}
 .cc-in{flex:1;min-width:0;}
 .cc-nm{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--ink);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -247,7 +247,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .cc-tag-ret{color:#1a1208;background:var(--gold);}
 .cc-tag-eca{color:var(--ink-dim);background:var(--surface-line);}
 .cc-tranchee{opacity:.6;}
-.cc-act{flex-shrink:0;font-size:12px;font-weight:600;border-radius:var(--r-pill);
+/* Boutons d'action empilés verticalement (gain de largeur → image agrandie). */
+.cc-actions{flex-shrink:0;display:flex;flex-direction:column;gap:6px;align-items:stretch;}
+.cc-act{font-size:12px;font-weight:600;border-radius:var(--r-pill);white-space:nowrap;text-align:center;
   padding:6px 12px;cursor:pointer;border:1px solid var(--gold-a35);}
 .cc-act-go{background:var(--gold-light);color:#1a1208;border-color:transparent;}
 .cc-act-vote{background:transparent;color:var(--gold-text);}
@@ -538,13 +540,19 @@ async function retirerFicheDuVoyage(lieuId){
   // Fiche qui appartient à d'autres (pas la mienne) → E1/E2 : on ne détruit pas le choix d'autrui.
   if(!moiAuteur && autresAuteurs.length){
     const qui = libelleAuteursCoeur(lieuId);
-    // PASSE-DROIT SUPER-ADMIN (E3 MAJ 24/06) : forcer le retrait reste possible, mais avec
-    // un message qui rend le geste CONSCIENT (« c'est le choix de X »). Le leader élu viendra
-    // plus tard, post-RLS (sinon fausse sécurité). Vraie suppression en base, pas masquage front.
-    if(RNR_estSuperAdmin){
-      if(!confirm("⚠️ Cette fiche est le choix de "+qui+", pas le tien.\n\n"+
-        "En tant que super-admin tu peux la RETIRER QUAND MÊME (nettoyage, litige). "+
-        "Cela supprime sa retenue ET son coup de cœur. Confirmer ce retrait forcé ?")) return;
+    // PASSE-DROIT D'ARBITRAGE : forcer le retrait du choix d'autrui est réservé. Depuis
+    // S25 (RLS leader posée), c'est le pendant « écarter » de l'épingle directe : le LEADER
+    // arbitre au nom du groupe, et le SUPER-ADMIN garde son droit de nettoyage/litige.
+    // Le geste reste CONSCIENT (« c'est le choix de X ») et c'est une vraie suppression en base.
+    const estLeader = (typeof jeSuisLeader==='function' && jeSuisLeader());
+    if(RNR_estSuperAdmin || estLeader){
+      const intro = estLeader
+        ? "📌 Cette fiche est le choix de "+qui+".\n\nEn tant que leader, tu peux l'ÉCARTER au nom du groupe "+
+          "(le pendant de l'épingle). Cela retire sa retenue ET son coup de cœur. Confirmer ?"
+        : "⚠️ Cette fiche est le choix de "+qui+", pas le tien.\n\n"+
+          "En tant que super-admin tu peux la RETIRER QUAND MÊME (nettoyage, litige). "+
+          "Cela supprime sa retenue ET son coup de cœur. Confirmer ce retrait forcé ?";
+      if(!confirm(intro)) return;
       try{
         if(RNR_voyageId){ await sb.from('voyage_fiches').delete().eq('voyage_id',RNR_voyageId).eq('lieu_id',lieuId); }
         // retrait forcé du ❤️ des autres auteurs sur cette fiche
@@ -557,7 +565,7 @@ async function retirerFicheDuVoyage(lieuId){
       return;
     }
     // membre normal : interdiction claire (pourquoi je ne peux pas).
-    alert("C'est le coup de cœur de "+qui+", pas le tien.\n\nOn ne retire jamais le choix d'un autre membre. Tu ne peux retirer que tes propres coups de cœur. (Un responsable de groupe pourra forcer le retrait — fonction à venir.)");
+    alert("C'est le coup de cœur de "+qui+", pas le tien.\n\nOn ne retire jamais le choix d'un autre membre. Tu ne peux retirer que tes propres coups de cœur. (Le leader ou un responsable de groupe peut écarter au nom du groupe.)");
     return;
   }
   const noms = autresAuteurs.map(a=>a.nom);
@@ -1059,7 +1067,8 @@ function rendreCoeurs(){
       : '';
     return '<div class="cc-item">'+ph+
       '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+' '+tag+'</div>'+
-      '<div class="cc-mt">'+meta+'</div></div>'+action+actLeader+
+      '<div class="cc-mt">'+meta+'</div></div>'+
+      '<div class="cc-actions">'+action+actLeader+'</div>'+
       '<button class="cc-retirer" type="button" title="retirer" onclick="retirerFicheDuVoyage(\''+escH(f.id)+'\')">✕</button></div>';
   }).join('');
 
