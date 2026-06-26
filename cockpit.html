@@ -251,6 +251,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   padding:6px 12px;cursor:pointer;border:1px solid var(--gold-a35);}
 .cc-act-go{background:var(--gold-light);color:#1a1208;border-color:transparent;}
 .cc-act-vote{background:transparent;color:var(--gold-text);}
+/* Épingle directe du LEADER (A6 2ᵉ chemin, E3) — teal « décision du groupe »,
+   jamais rouge. Visible du seul leader (garde front, cf. dette RLS connue). */
+.cc-act-pin{background:transparent;color:var(--mk-epingle);border-color:var(--mk-epingle);}
+.cc-act-pin:hover{background:var(--mk-epingle);color:#fff;}
 /* RÉSERVE ✨ « une autre fois » (G-RES) — secondaire, repliée, tokens purs. */
 .cc-reserve{margin-top:8px;border-top:1px dashed var(--surface-line);padding-top:8px;}
 .cc-res-tete{width:100%;display:flex;align-items:center;gap:8px;background:none;border:none;
@@ -1048,9 +1052,14 @@ function rendreCoeurs(){
     const tag = enVote
       ? '<span class="cc-tag cc-tag-vote">en vote</span>'
       : '<span class="cc-tag cc-tag-cand">candidate</span>';
+    /* Pouvoir leader (A6/E3) : sur une candidate pas encore en vote, le leader peut
+       épingler directement (trancher au nom du groupe). Invisible au non-leader. */
+    const actLeader = (!enVote && jeSuisLeader())
+      ? '<button class="cc-act cc-act-pin" type="button" onclick="epinglerDirectement(\''+f.id+'\')">📌 Épingler (leader)</button>'
+      : '';
     return '<div class="cc-item">'+ph+
       '<div class="cc-in"><div class="cc-nm">'+escH(f.nom)+' '+tag+'</div>'+
-      '<div class="cc-mt">'+meta+'</div></div>'+action+
+      '<div class="cc-mt">'+meta+'</div></div>'+action+actLeader+
       '<button class="cc-retirer" type="button" title="retirer" onclick="retirerFicheDuVoyage(\''+escH(f.id)+'\')">✕</button></div>';
   }).join('');
 
@@ -1113,6 +1122,41 @@ async function repecherEnvie(lieuId){
   }catch(e){ console.warn('repêcher',e); }
   await chargerFiches();
   rendreCoeurs();   /* recalcule coups de cœur + réserve */
+}
+
+/* ── POUVOIR DU LEADER : épingle directe (A6 2ᵉ chemin, E3) ──
+   Le leader tranche au nom du groupe : il fait passer un coup de cœur 'candidate'
+   en 'retenue' SANS vote (les deux chemins coexistent — A6). C'est le visage
+   ARBITRE du leader (E3). Garde côté front (le bouton n'apparaît qu'au leader) :
+   conforme à l'état actuel du projet — le durcissement RLS leader est une dette
+   connue (ÉTAT), traitée avant lancement public, pas ici.
+   user_id (auth) → mon membre.id via RNR_membresParUser, puis test RNR_leaders. */
+function jeSuisLeader(){
+  if(!RNR_userId || !RNR_leaders || !RNR_leaders.size) return false;
+  const moi = RNR_membresParUser[RNR_userId];
+  return !!(moi && moi.id && RNR_leaders.has(moi.id));
+}
+
+/* Épingle directe : upsert voyage_fiches en 'retenue' (même cible que la clôture
+   d'un vote « garder » dans propagerVerdict). Geste conscient : on confirme. */
+async function epinglerDirectement(lieuId){
+  if(!jeSuisLeader()) return;   /* garde de sûreté (le bouton ne s'affiche déjà qu'au leader) */
+  const st = RNR_statutFiche && RNR_statutFiche[lieuId];
+  if(st==='retenue' || st==='ecartee'){
+    alert('Cette fiche est déjà tranchée pour ce voyage.');
+    return;
+  }
+  const f = ficheParId(lieuId); if(!f) return;
+  if(!confirm('Tu épingles « '+f.nom+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.')) return;
+  try{
+    const { error } = await sb.from('voyage_fiches')
+      .upsert({ voyage_id:RNR_voyageId, lieu_id:lieuId, statut:'retenue' }, { onConflict:'voyage_id,lieu_id' });
+    if(error){ console.warn('épingle directe',error); alert('Impossible d\'épingler pour le moment.'); return; }
+  }catch(e){ console.warn('épingle directe',e); alert('Impossible d\'épingler pour le moment.'); return; }
+  if(typeof celebrer==='function') celebrer('📌 « '+f.nom+' » épinglée au voyage !');
+  await chargerFiches();
+  if(typeof chargerRetenues==='function') await chargerRetenues();
+  rendreCoeurs();
 }
 
 /* Raccourci : lancer un vote « garder/écarter » pré-rempli sur une fiche candidate. */
