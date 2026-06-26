@@ -11,6 +11,8 @@
 <script src="chrome.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="tags.js"></script>
+<script src="carto-marqueurs.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -258,6 +260,9 @@ async function chargerRetenuesVoyage(userId){
       return '<div class="'+cls+'" data-id="'+escVr(id)+'">'+ph+'<div class="vrf-nm">'+escVr(f.nom)+'</div>'+tag+'</div>';
     }).join('');
     initRetenueDrag();
+    // 3c : maintenant que RETENUES_INFO est peuplé, redessiner pour faire
+    // apparaître les épingles non placées sur la carte.
+    if(routeLayer){ routeLayer.clearLayers(); renderMap(); }
   }catch(e){ console.warn('chargerRetenuesVoyage',e); box.innerHTML='<div class="vr-empty">Indisponible.</div>'; }
 }
 /* re-rend la bande pour refléter l'état placé/non-placé après ajout/retrait */
@@ -421,8 +426,9 @@ function render(){
   // Toujours vider la carte en premier — synchrone, garanti
   if(routeLayer) routeLayer.clearLayers();
   renderList();
-  // Redessiner la carte seulement s'il reste des lieux
-  if(voyage.length) renderMap();
+  // Redessiner si itinéraire OU épingles non placées (3c : la carte montre les deux)
+  const aDesEpingles = (typeof RETENUES_INFO==='object') && Object.keys(RETENUES_INFO).length>0;
+  if(voyage.length || aDesEpingles) renderMap();
 }
 
 // ── Délégation d'événements — UN seul listener permanent sur le container ─────
@@ -588,30 +594,60 @@ function renderMap(){
   if(!map||!routeLayer) return;
   // clearLayers déjà appelé dans render() avant renderMap()
   const pts = voyage.filter(v=>v.lat&&v.lng);
-  if(!pts.length) return;
 
+  const bounds=[];
+
+  // (1) L'ITINÉRAIRE ORDONNÉ : pastilles or numérotées (identité de marque).
+  //     La FORME bascule jour/nuit (rond = activité, carré arrondi = couchage).
   pts.forEach((v,i)=>{
+    const nuit = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.estNuit(v) : false;
+    const rayon = nuit ? '9px' : '50%';   // carré arrondi la nuit, rond le jour
     const icon=L.divIcon({
-      // pastilles SUR-CARTE (fond OSM) : couleurs invariantes par nature
-      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
+      // pastilles SUR-CARTE (fond OSM) : or de marque, invariant
+      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:${rayon};width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
       className:'',iconSize:[30,30],iconAnchor:[15,15]
     });
     L.marker([v.lat,v.lng],{icon}).addTo(routeLayer).bindPopup(`
       <div style="font-family:Inter,sans-serif;min-width:160px;">
         <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${v.nom||'—'}</div>
-        <div style="font-size:11px;color:#888;">${v.region||''} ${v.type?'· '+v.type:''}</div>
+        <div style="font-size:11px;color:#888;">${v.region||''} ${v.type?'· '+v.type:''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
     `);
+    bounds.push([v.lat,v.lng]);
   });
 
+  // (2) Le TRACÉ : ligne dorée reliant l'itinéraire dans l'ordre.
   if(pts.length>1){
     const coords=pts.map(v=>[v.lat,v.lng]);
     L.polyline(coords,{color:'rgba(200,168,75,.2)',weight:10}).addTo(routeLayer);
     L.polyline(coords,{color:'#C8A84B',weight:3,dashArray:'10,6'}).addTo(routeLayer);
   }
 
-  if(pts.length===1) map.setView([pts[0].lat,pts[0].lng],12);
-  else map.fitBounds(pts.map(v=>[v.lat,v.lng]),{padding:[40,40]});
+  // (3) Les ÉPINGLES PAS ENCORE PLACÉES : validées pour le voyage mais hors
+  //     itinéraire. On les montre via le moteur (teal 📌 + forme jour/nuit) pour
+  //     voir OÙ elles sont et décider de les glisser dans le trajet (A6, 3c).
+  if(window.RNR_MARQUEURS && typeof RETENUES_INFO==='object'){
+    const placed=new Set(voyage.map(v=>v.id));
+    Object.keys(RETENUES_INFO).forEach(id=>{
+      const f=RETENUES_INFO[id];
+      if(!f || f.lat==null || f.lng==null) return;
+      if(placed.has(f.id)) return;   // déjà dans le trajet → c'est une pastille numérotée
+      const icon=RNR_MARQUEURS.icone(f,{epingle:true},{taille:22});
+      L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(routeLayer).bindPopup(`
+        <div style="font-family:Inter,sans-serif;min-width:160px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">📌 ${f.nom||'—'}</div>
+          <div style="font-size:11px;color:#888;">${f.region||''} ${f.type?'· '+f.type:''}</div>
+          <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;">Épinglée — à placer dans le trajet</div>
+        </div>
+      `);
+      bounds.push([f.lat,f.lng]);
+    });
+  }
+
+  // (4) Cadrage : englobe l'itinéraire ET les épingles flottantes.
+  if(!bounds.length) return;
+  if(bounds.length===1) map.setView(bounds[0],12);
+  else map.fitBounds(bounds,{padding:[40,40]});
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
