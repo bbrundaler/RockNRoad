@@ -8,6 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="tags.js"></script>
+<script src="carto-marqueurs.js"></script>
 <script src="chrome.js"></script>
 <script src="discussion.js"></script>
 <style>
@@ -17,8 +21,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh;}
 
-/* ── LE FIL DU VOYAGE — la signature ergonomique ── */
-.fil{
+/* ── LE FIL DU VOYAGE — la signature ergonomique ── */.fil{
   background:var(--surface);border:1px solid var(--surface-line);
   border-radius:var(--r-lg);padding:24px 26px 18px;margin-top:18px;
   box-shadow:var(--shadow);
@@ -118,6 +121,35 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   .fil-step .lbl{font-size:11px;}
   .hub-grid{padding-bottom:130px;}
 }
+/* ── CARTE DE CONSTRUCTION (B16.1) ── */
+.hub-carte-zone{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin:6px 0 22px;}
+@media(max-width:860px){.hub-carte-zone{grid-template-columns:1fr;}}
+.hub-carte-wrap{position:relative;border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;
+  height:420px;background:var(--surface);}
+@media(max-width:860px){.hub-carte-wrap{height:320px;}}
+#hub-map{width:100%;height:100%;}
+.hub-carte-vide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;text-align:center;background:var(--surface);z-index:500;padding:20px;}
+.hub-carte-vide .hcv-ic{font-size:46px;opacity:.7;}
+.hub-carte-vide .hcv-t{font-size:18px;font-weight:600;color:var(--ink);}
+.hub-carte-vide .hcv-s{font-size:13px;color:var(--ink-dim);line-height:1.6;}
+.hub-carte-vide a{color:var(--gold-text);font-weight:600;}
+.hub-carte-cote{display:flex;flex-direction:column;}
+.hub-itin-aide{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:8px;}
+.hub-itin-liste{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0;padding:0;}
+.hub-itin-liste li{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);
+  border:1px solid var(--surface-line);border-radius:var(--r-sm);font-size:13px;}
+.hub-itin-liste li .hi-n{width:22px;height:22px;flex-shrink:0;border-radius:50%;background:var(--gold);
+  color:#1a1208;font-weight:700;font-size:12px;display:grid;place-items:center;}
+.hub-itin-liste li .hi-nom{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.hub-itin-liste li .hi-x{border:none;background:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;}
+.hub-itin-liste li .hi-x:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
+.hub-porte2{display:block;text-align:center;margin-top:12px;padding:9px;font-size:13px;color:var(--ink-dim);
+  text-decoration:none;border:1px solid var(--surface-line);border-radius:var(--r);}
+.hub-porte2:hover{border-color:var(--gold-a35);color:var(--ink);}
+.hub-porte2 b{color:var(--gold-text);}
+/* marqueur cliquable « dans l'itinéraire » : halo or autour de la pastille du moteur */
+.hub-mk-choisi{filter:drop-shadow(0 0 0 2px var(--gold));}
 </style>
 </head>
 <body>
@@ -148,6 +180,29 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     <div class="fil-now-line">
       <span>Vous êtes en phase <b>Rêver</b> — <span id="fil-resume">alors, on part où ?</span></span>
       <a class="rr-btn rr-btn-ghost rr-btn-sm" href="carnet.html">Continuer à collecter →</a>
+    </div>
+  </div>
+
+  <div class="rr-section">Construire mon voyage</div>
+
+  <!-- ═══ CARTE DE CONSTRUCTION (B16.1) — porte « je sais où je vais » ═══ -->
+  <div class="hub-carte-zone">
+    <div class="hub-carte-wrap">
+      <div id="hub-map"></div>
+      <div class="hub-carte-vide" id="hub-carte-vide" style="display:none;">
+        <div class="hcv-ic">🗺️</div>
+        <div class="hcv-t">La carte est vide</div>
+        <div class="hcv-s">Le site a besoin de fiches pour fonctionner.<br>Commence par nourrir le <a href="carnet.html">Carnet</a>.</div>
+      </div>
+    </div>
+    <div class="hub-carte-cote">
+      <div class="rr-surface">
+        <h3>Mon itinéraire</h3>
+        <div class="hub-itin-aide" id="hub-itin-aide">Clique les points sur la carte, dans l'ordre du voyage.</div>
+        <ol class="hub-itin-liste" id="hub-itin-liste"></ol>
+      </div>
+      <button class="rr-btn rr-btn-primary" id="hub-valider" style="width:100%;margin-top:10px;" disabled>Valider → Voyage</button>
+      <a class="hub-porte2" href="horizon.html">Pas d'idée précise ? <b>Explorer →</b></a>
     </div>
   </div>
 
@@ -355,10 +410,141 @@ async function loadHubData(userId){
       /* hash fixe vs #dyn-xxx indécidable d'ici : lien simple, robuste */
     }
 
+    /* ── CARTE DE CONSTRUCTION (B16.1) : porte « je sais où je vais » ── */
+    initHubCarte(fiches, groupeId, userId);
+
     /* ── Premier voyage ? Si le groupe n'en a aucun, on ouvre la scène de création ── */
     await verifierPremierVoyage(groupeId, userId);
   }catch(err){ console.warn('Hub: chargement',err); }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   CARTE DE CONSTRUCTION DU HUB (B16.1) — porte « je sais où je vais ».
+   Toutes les fiches en marqueurs (moteur unique carto-marqueurs.js). On clique
+   les points DANS L'ORDRE → ils s'ajoutent à « Mon itinéraire ». « Valider »
+   écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
+   ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
+   ════════════════════════════════════════════════════════════════════════ */
+let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null;
+
+async function initHubCarte(fiches, groupeId, userId){
+  HUB_GROUPE_ID=groupeId;
+  const wrap=document.getElementById('hub-map');
+  const vide=document.getElementById('hub-carte-vide');
+  if(!wrap) return;
+  // fiches géolocalisées seulement (un point sans lat/lng n'est pas plaçable)
+  const geo=(fiches||[]).filter(f=>f.lat!=null && f.lng!=null);
+  geo.forEach(f=>{ HUB_FICHES[f.id]=f; });
+  if(!geo.length){ if(vide) vide.style.display='flex'; return; }
+  if(vide) vide.style.display='none';
+
+  if(!HUB_MAP){
+    HUB_MAP=L.map('hub-map',{scrollWheelZoom:true}).setView([46.5,2.5],6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© OpenStreetMap', maxZoom:18
+    }).addTo(HUB_MAP);
+  }
+  const bounds=[];
+  geo.forEach(f=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
+    const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,{},{taille:20}):null;
+    const mk=L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(HUB_MAP);
+    mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;">'+
+      '<div style="font-weight:700;font-size:14px;margin-bottom:3px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
+      '<div style="font-size:11px;color:#888;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '<div style="font-size:11px;color:var(--gold-text,#8b6914);font-weight:700;margin-top:4px;cursor:pointer;" '+
+      'onclick="hubTogglePoint(\''+f.id+'\')">＋ Ajouter à mon itinéraire</div>'+
+      '</div>');
+    mk.on('click', ()=>{ /* le clic ouvre le popup ; l'ajout se fait via le lien du popup */ });
+    HUB_MARKERS[f.id]=mk;
+    bounds.push([f.lat,f.lng]);
+  });
+  if(bounds.length) HUB_MAP.fitBounds(bounds,{padding:[40,40]});
+  setTimeout(()=>HUB_MAP.invalidateSize(),200); // la carte était peut-être cachée au montage
+
+  const btn=document.getElementById('hub-valider');
+  if(btn && !btn._lie){ btn._lie=true; btn.addEventListener('click', hubValider); }
+}
+
+// Ajoute / retire un point de l'itinéraire en construction.
+function hubTogglePoint(id){
+  const i=HUB_ITIN.indexOf(id);
+  if(i>=0){ HUB_ITIN.splice(i,1); }
+  else { HUB_ITIN.push(id); }
+  hubRendItin();
+  if(HUB_MAP) HUB_MAP.closePopup();
+}
+
+function hubRendItin(){
+  const liste=document.getElementById('hub-itin-liste');
+  const aide=document.getElementById('hub-itin-aide');
+  const btn=document.getElementById('hub-valider');
+  if(!liste) return;
+  liste.innerHTML=HUB_ITIN.map((id,idx)=>{
+    const f=HUB_FICHES[id]; if(!f) return '';
+    return '<li><span class="hi-n">'+(idx+1)+'</span>'+
+      '<span class="hi-nom">'+escapeHubHtml(f.nom||'—')+'</span>'+
+      '<button class="hi-x" type="button" title="retirer" onclick="hubTogglePoint(\''+id+'\')">✕</button></li>';
+  }).join('');
+  if(aide) aide.style.display = HUB_ITIN.length ? 'none' : 'block';
+  if(btn) btn.disabled = HUB_ITIN.length===0;
+  // halo or sur les marqueurs choisis + trait reliant
+  Object.keys(HUB_MARKERS).forEach(id=>{
+    const el=HUB_MARKERS[id]._icon;
+    if(el) el.classList.toggle('hub-mk-choisi', HUB_ITIN.indexOf(id)>=0);
+  });
+  hubTrace();
+}
+
+function hubTrace(){
+  if(!HUB_MAP) return;
+  if(HUB_TRAIT){ HUB_MAP.removeLayer(HUB_TRAIT); HUB_TRAIT=null; }
+  const pts=HUB_ITIN.map(id=>HUB_FICHES[id]).filter(f=>f).map(f=>[f.lat,f.lng]);
+  if(pts.length>=2){
+    HUB_TRAIT=L.polyline(pts,{color:'#C8A84B',weight:3,dashArray:'8,6'}).addTo(HUB_MAP);
+  }
+}
+
+// VALIDER : écrit des retenues (origine 'hub') + l'ordre, puis ouvre Voyage.
+async function hubValider(){
+  if(!HUB_ITIN.length) return;
+  const btn=document.getElementById('hub-valider');
+  if(btn){ btn.disabled=true; btn.textContent='Création…'; }
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ window.location.href='index.html'; return; }
+    const voyageId=await hubResoutVoyage(session.user.id);
+    if(!voyageId){ alert('Aucun voyage actif. Crée d\'abord un voyage.'); if(btn){btn.disabled=false;btn.textContent='Valider → Voyage';} return; }
+    // 1) retenues (origine 'hub')
+    const retenues=HUB_ITIN.map(id=>({voyage_id:voyageId, lieu_id:id, statut:'retenue', origine:'hub'}));
+    const {error:e1}=await sb.from('voyage_fiches').upsert(retenues,{onConflict:'voyage_id,lieu_id'});
+    if(e1){ console.warn('Hub valider: voyage_fiches',e1); alert('Enregistrement impossible, réessaie.'); if(btn){btn.disabled=false;btn.textContent='Valider → Voyage';} return; }
+    // 2) l'ordre dans voyage_itineraire (on repart propre pour ce voyage)
+    await sb.from('voyage_itineraire').delete().eq('voyage_id',voyageId);
+    const etapes=HUB_ITIN.map((id,idx)=>({voyage_id:voyageId, uid:'hub_'+id+'_'+Date.now()+'_'+idx, lieu_id:id, ordre:idx}));
+    const {error:e2}=await sb.from('voyage_itineraire').insert(etapes);
+    if(e2){ console.warn('Hub valider: voyage_itineraire',e2); /* non bloquant : les retenues sont posées */ }
+    try{ sessionStorage.setItem('rnr_voyage_id',voyageId); }catch(e){}
+    window.location.href='voyage.html';
+  }catch(err){
+    console.warn('Hub valider',err); alert('Une erreur est survenue, réessaie.');
+    if(btn){ btn.disabled=false; btn.textContent='Valider → Voyage'; }
+  }
+}
+
+// Résolution du voyage actif (même logique que voyage.html : session → principal → premier).
+async function hubResoutVoyage(userId){
+  let sess=null; try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  if(sess) return sess;
+  const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+  if(!mem) return null;
+  const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at')
+    .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
+  const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
+  return actif?actif.id:null;
+}
+
+function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 </script>
 <script src="boussole.js" defer></script>
 
