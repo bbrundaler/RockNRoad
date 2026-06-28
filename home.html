@@ -425,7 +425,7 @@ async function loadHubData(userId){
    écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
    ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
    ════════════════════════════════════════════════════════════════════════ */
-let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null;
+let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null, HUB_ETATS={};
 
 async function initHubCarte(fiches, groupeId, userId){
   HUB_GROUPE_ID=groupeId;
@@ -438,6 +438,21 @@ async function initHubCarte(fiches, groupeId, userId){
   if(!geo.length){ if(vide) vide.style.display='flex'; return; }
   if(vide) vide.style.display='none';
 
+  // ── État de chaque fiche pour le voyage actif, pour COLORER les marqueurs comme
+  //    dans Voyage : retenue → épingle ; mon coup de cœur → coeurMoi. Le moteur
+  //    carto-marqueurs traduit ça en couleur (un seul endroit décide de la teinte).
+  HUB_ETATS={};
+  try{
+    const voyageId=await hubResoutVoyage(userId);
+    if(voyageId){
+      const {data:rf}=await sb.from('voyage_fiches').select('lieu_id,statut').eq('voyage_id',voyageId).eq('statut','retenue');
+      (rf||[]).forEach(r=>{ HUB_ETATS[r.lieu_id]={epingle:true}; });
+    }
+    const {data:rx}=await sb.from('reactions').select('cible_id')
+      .eq('cible_type','lieu').eq('membre_id',userId).eq('emoji','❤️');
+    (rx||[]).forEach(r=>{ if(!HUB_ETATS[r.cible_id]) HUB_ETATS[r.cible_id]={coeurMoi:true}; });
+  }catch(err){ console.warn('Hub: états marqueurs',err); }
+
   if(!HUB_MAP){
     HUB_MAP=L.map('hub-map',{scrollWheelZoom:true}).setView([46.5,2.5],6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
@@ -447,7 +462,8 @@ async function initHubCarte(fiches, groupeId, userId){
   const bounds=[];
   geo.forEach(f=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
-    const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,{},{taille:20}):null;
+    const etat=HUB_ETATS[f.id]||{};
+    const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,etat,{taille:20}):null;
     const mk=L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(HUB_MAP);
     const photo = f.photo_url
       ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHubHtml(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
