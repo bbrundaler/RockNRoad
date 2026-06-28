@@ -192,8 +192,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-bas .hz-swipe-card .body{flex:1;justify-content:flex-start;gap:6px;padding:12px 15px;}
 .hz-explo-bas .hz-swipe-card .nom{font-size:18px;}
 .hz-explo-bas .hz-swipe-actions{gap:18px;padding:0;}
-.hz-explo-bas .hz-swipe-act .hz-act-ic{width:46px;height:46px;font-size:20px;}
-.hz-explo-bas .hz-swipe-act .hz-act-lbl{font-size:10.5px;}
+.hz-explo-bas .hz-swipe-act .hz-act-ic{width:50px;height:50px;font-size:22px;}
+.hz-explo-bas .hz-swipe-act .hz-act-lbl{font-size:11.5px;}
 .hz-explo-bas .hz-swipe-aimees{display:flex;flex-direction:column;height:100%;min-height:0;}
 .hz-explo-bas .hz-swipe-aimees-liste{max-height:none;flex:1;}
 /* la carte invite au clic quand on attend un lieu */
@@ -295,8 +295,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    retiens). Le mot lève l'ambiguïté ; la pastille ronde rend le bouton évident. */
 .hz-swipe-act{display:flex;flex-direction:column;align-items:center;gap:5px;border:none;background:none;cursor:pointer;padding:0;transition:transform .12s;}
 .hz-swipe-act:active{transform:scale(.9);}
-.hz-swipe-act .hz-act-ic{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);font-size:23px;display:flex;align-items:center;justify-content:center;}
-.hz-swipe-act .hz-act-lbl{font-size:11px;font-weight:600;color:var(--ink-dim);}
+.hz-swipe-act .hz-act-ic{width:60px;height:60px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);font-size:27px;display:flex;align-items:center;justify-content:center;}
+.hz-swipe-act .hz-act-lbl{font-size:13px;font-weight:600;color:var(--ink-dim);}
 .hz-swipe-act.love .hz-act-ic{border-color:rgba(216,69,110,.45);}
 .hz-swipe-act.love .hz-act-lbl{color:var(--love-text,#d8456e);}
 .hz-swipe-act.later .hz-act-ic{border-color:var(--gold-a35);}
@@ -307,11 +307,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-swipe-progres-txt{font-size:11px;color:var(--ink-dim);margin-left:8px;}
 .hz-coin-coins{display:flex;align-items:center;}
 .hz-swipe-aimees{min-width:0;}
-.hz-swipe-aimees-tt{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.hz-swipe-aimees-tt{font-size:13px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .hz-swipe-aimees-liste{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow:auto;scrollbar-width:thin;}
-.hz-aimee{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-sm);}
-.hz-aimee .mini{width:32px;height:32px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
-.hz-aimee .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hz-aimee{display:flex;align-items:center;gap:11px;padding:8px 10px;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-sm);}
+.hz-aimee .mini{width:52px;height:52px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
+.hz-aimee .nm{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hz-aimee .ic{font-size:13px;}
 .hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
 .hz-aimee-grp-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -599,7 +599,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
             </div>
           </div>
           <div class="hz-swipe-aimees">
-            <div class="hz-swipe-aimees-tt">Aimées dans ce coin</div>
+            <div class="hz-swipe-aimees-tt">❤️ Mes coups de cœur</div>
             <div class="hz-aimees-pied" id="hz-aimees-pied" style="display:none">
               <button class="hz-aimees-btn refaire" id="hz-aimees-refaire" type="button">↺ 2ème vote</button>
               <button class="hz-aimees-btn envoi" id="hz-aimees-envoi" type="button">✓ Valider suite</button>
