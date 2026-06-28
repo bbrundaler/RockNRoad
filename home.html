@@ -449,12 +449,16 @@ async function initHubCarte(fiches, groupeId, userId){
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
     const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,{},{taille:20}):null;
     const mk=L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(HUB_MAP);
-    mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;">'+
-      '<div style="font-weight:700;font-size:14px;margin-bottom:3px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
-      '<div style="font-size:11px;color:#888;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
-      '<div style="font-size:11px;color:var(--gold-text,#8b6914);font-weight:700;margin-top:4px;cursor:pointer;" '+
+    const photo = f.photo_url
+      ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHubHtml(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+      : '';
+    mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
+      photo+
+      '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
+      '<div style="font-size:11px;color:#888;padding:0 2px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '<div style="font-size:12px;color:var(--gold-text,#8b6914);font-weight:700;margin-top:6px;padding:4px 2px;cursor:pointer;" '+
       'onclick="hubTogglePoint(\''+f.id+'\')">＋ Ajouter à mon itinéraire</div>'+
-      '</div>');
+      '</div>', {maxWidth:240});
     mk.on('click', ()=>{ /* le clic ouvre le popup ; l'ajout se fait via le lien du popup */ });
     HUB_MARKERS[f.id]=mk;
     bounds.push([f.lat,f.lng]);
