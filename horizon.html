@@ -602,7 +602,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
             <div class="hz-swipe-aimees-tt">❤️ Mes coups de cœur</div>
             <div class="hz-aimees-pied" id="hz-aimees-pied" style="display:none">
               <button class="hz-aimees-btn refaire" id="hz-aimees-refaire" type="button">↺ 2ème vote</button>
-              <button class="hz-aimees-btn envoi" id="hz-aimees-envoi" type="button">✓ Valider suite</button>
             </div>
             <div id="hz-swipe-aimees-liste" class="hz-swipe-aimees-liste"></div>
           </div>
@@ -633,9 +632,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
           </div>
           <div class="hz-panier-droite">
             <div class="hz-panier-explik">
-              <b>Et après&nbsp;?</b> Validez vos coups de cœur : ils partent au <b>Cockpit</b>, où le groupe affine ensemble. Puis on construit le voyage dans <b>Voyage</b>. Rien n'est figé — on avance, tranquille&nbsp;!
+              <b>Et après&nbsp;?</b> Chaque coup de cœur part <b>déjà</b> au <b>Cockpit</b>, où le groupe affine ensemble. Puis on construit le voyage dans <b>Voyage</b>. Rien n'est figé — on avance, tranquille&nbsp;!
             </div>
-            <button class="hz-panier-valider" id="hz-panier-valider" type="button">✓ Valider et envoyer au Cockpit</button>
+            <button class="hz-panier-valider" id="hz-panier-suite" type="button">→ Voir au Cockpit</button>
           </div>
         </div>
 
@@ -2362,8 +2361,8 @@ function branchePanier(){
   if(go && !go._cable){ go._cable=true; go.addEventListener('click',ouvreExplo); }
   const rouvrir=document.getElementById('hz-panier-rouvrir');
   if(rouvrir && !rouvrir._cable){ rouvrir._cable=true; rouvrir.addEventListener('click',ouvreExplo); }
-  const valider=document.getElementById('hz-panier-valider');
-  if(valider && !valider._cable){ valider._cable=true; valider.addEventListener('click',envoyerAimeesAuCockpit); }
+  const suite=document.getElementById('hz-panier-suite');
+  if(suite && !suite._cable){ suite._cable=true; suite.addEventListener('click',()=>{ window.location.href='cockpit.html'; }); }
 }
 
 // TRANSITION JOUR→NUIT (vécu testeuse 1 : « je fais d'abord, je dors après »).
@@ -2765,7 +2764,20 @@ function avanceSwipe(direction){
 // les 3 gestes (sur une fiche)
 async function swipeGeste(type){
   const f=ficheCourante(); if(!f){ return; }
-  if(type==='pass'){ avanceSwipe('pass'); return; }
+  if(type==='pass'){
+    // « J'écarte » : si la fiche était aimée, le geste DÉFAIT le cœur (et donc la candidate,
+    //  réversibilité décidée le 28/06). Sinon, simple passage.
+    const slot=hzCoeursDe(f.id);
+    if(slot.love.mine){
+      await hzToggleVote(f.id,'love');   // retire le ❤️
+      await hzRetireCandidate(f.id);     // retire la candidate au Cockpit
+      HZ_AIMEES_SESSION.delete(f.id);
+      HZ_PANIER.delete(f.id);
+      hzMajMarqueur(f.id, f.type);       // le point reprend sa pastille de type
+      rendAimees();
+    }
+    avanceSwipe('pass'); return;
+  }
   if(type==='love' || type==='later'){
     const slot=hzCoeursDe(f.id);
     const deja=(type==='love')?slot.love.mine:slot.later.mine;
@@ -2777,10 +2789,42 @@ async function swipeGeste(type){
       const estNuit=(HZ_THEME==='nuit');
       HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
       hzMajMarqueur(f.id, f.type);   // la carte suit : le point passe en cœur rose
+      hzEnvoieCandidate(f.id);       // ENVOI DIRECT : le ❤️ crée la candidate au Cockpit (plus de panier à valider)
     }
     rendAimees();
     avanceSwipe('like');
   }
+}
+
+// ❤️ DIRECT (décision 28/06) : un coup de cœur en swipe crée IMMÉDIATEMENT une candidate
+// au Cockpit (voyage_fiches statut 'candidate'), sans passer par un bouton « valider ».
+// Fini le « clic de trop » et les cœurs orphelins. Le ❤️ propose au groupe tout de suite.
+async function hzEnvoieCandidate(lieuId){
+  if(!HZ_VOYAGE_ID || !lieuId) return;
+  if(HZ_RETENUS.has(lieuId)) return;   // déjà retenue : ne pas rétrograder en candidate
+  try{
+    const {error}=await sb.from('voyage_fiches').upsert(
+      [{voyage_id:HZ_VOYAGE_ID, lieu_id:lieuId, statut:'candidate', maj_le:new Date().toISOString()}],
+      {onConflict:'voyage_id,lieu_id'});
+    if(error){ console.warn('Horizon: envoi candidate direct',error); return; }
+    HZ_CANDIDATES.add(lieuId);
+    majLigneCockpit();
+  }catch(e){ console.warn('Horizon: envoi candidate direct',e); }
+}
+
+// RETRAIT réversible (décision 28/06) : retirer le ❤️ retire AUSSI la candidate du Cockpit
+// — mais seulement si elle est encore 'candidate' (on ne défait pas une 'retenue', décision
+// de groupe, ni une 'ecartee'). Garde la symétrie du geste sans casser le tranché.
+async function hzRetireCandidate(lieuId){
+  if(!HZ_VOYAGE_ID || !lieuId) return;
+  if(HZ_RETENUS.has(lieuId)) return;   // décision de groupe : on n'y touche pas depuis Horizon
+  try{
+    const {error}=await sb.from('voyage_fiches').delete()
+      .eq('voyage_id',HZ_VOYAGE_ID).eq('lieu_id',lieuId).eq('statut','candidate');
+    if(error){ console.warn('Horizon: retrait candidate',error); return; }
+    HZ_CANDIDATES.delete(lieuId);
+    majLigneCockpit();
+  }catch(e){ console.warn('Horizon: retrait candidate',e); }
 }
 
 function brancheSwipeActions(){
@@ -2872,6 +2916,7 @@ function rendAimees(){
 async function retireAimee(lieuId){
   const slot=hzCoeursDe(lieuId);
   if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire
+  await hzRetireCandidate(lieuId);    // ❤️ direct : retirer le cœur retire la candidate (réversible)
   HZ_AIMEES_SESSION.delete(lieuId);   // retirer de la session
   HZ_PANIER.delete(lieuId);           // retirer du panier cumulatif (jour+nuit)
   // la carte suit : le point reprend sa pastille de type (ou reste vert si retenu en base)
