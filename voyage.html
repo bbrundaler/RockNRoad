@@ -468,12 +468,12 @@ async function loadVoyage(){
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
-      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,region,type').in('id',ids);
+      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,region,type,photo_url').in('id',ids);
       (fs||[]).forEach(f=>{ infos[f.id]=f; });
     }
     voyage=(rows||[])
       .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||''}; })
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||'', photo_url:f.photo_url||''}; })
       .filter(Boolean);
   }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
@@ -637,12 +637,10 @@ function renderMap(){
   //     La FORME bascule jour/nuit (rond = activité, carré arrondi = couchage).
   pts.forEach((v,i)=>{
     const nuit = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.estNuit(v) : false;
-    const rayon = nuit ? '9px' : '50%';   // carré arrondi la nuit, rond le jour
-    const icon=L.divIcon({
-      // pastilles SUR-CARTE (fond OSM) : or de marque, invariant
-      html:`<div style="background:#1A1208;color:#C8A84B;border-radius:${rayon};width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
-      className:'',iconSize:[30,30],iconAnchor:[15,15]
-    });
+    // Pastille numérotée VIA LE MOTEUR (rond numéroté, couleur = jour/nuit). D-MK.
+    const icon = (window.RNR_MARQUEURS)
+      ? RNR_MARQUEURS.icone(v, {epingle:true}, {numero:i+1, taille:32})
+      : L.divIcon({html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;">${i+1}</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
     const photoNum = v.photo_url
       ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escVr(v.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
       : '';
@@ -664,8 +662,9 @@ function renderMap(){
   // (2) Le TRACÉ : ligne dorée reliant l'itinéraire dans l'ordre.
   if(pts.length>1){
     const coords=pts.map(v=>[v.lat,v.lng]);
-    L.polyline(coords,{color:'rgba(200,168,75,.2)',weight:10}).addTo(routeLayer);
-    L.polyline(coords,{color:'#C8A84B',weight:3,dashArray:'10,6'}).addTo(routeLayer);
+    const colTrace = (window.RNR_MARQUEURS && RNR_MARQUEURS.couleurTrace) ? RNR_MARQUEURS.couleurTrace() : '#C8A84B';
+    L.polyline(coords,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
+    L.polyline(coords,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
   }
 
   // (3) Les ÉPINGLES PAS ENCORE PLACÉES : validées pour le voyage mais hors

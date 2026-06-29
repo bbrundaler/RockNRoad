@@ -360,7 +360,7 @@ async function loadHubData(userId){
    écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
    ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
    ════════════════════════════════════════════════════════════════════════ */
-let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null, HUB_ETATS={};
+let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null;
 // Tactile : sur mobile le survol n'existe pas → on n'ouvre pas la fiche au survol (le tap ajoute direct).
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
@@ -376,14 +376,19 @@ async function initHubCarte(fiches, groupeId, userId){
   if(vide) vide.style.display='none';
 
   // ── État de chaque fiche pour le voyage actif, pour COLORER les marqueurs comme
-  //    dans Voyage : retenue → épingle ; mon coup de cœur → coeurMoi. Le moteur
-  //    carto-marqueurs traduit ça en couleur (un seul endroit décide de la teinte).
+  //    dans Voyage : retenue → épingle ; mon coup de cœur → coeurMoi ; PLACÉE dans
+  //    le trajet → rond numéroté (lit voyage_itineraire, comme Voyage). D-MK : la
+  //    carte du Hub et celle de Voyage parlent la même langue (correspondance bidi).
   HUB_ETATS={};
+  HUB_PLACEES={};   // lieu_id -> numéro d'ordre (1-based), pour le rond numéroté + tracé
   try{
     const voyageId=await hubResoutVoyage(userId);
     if(voyageId){
       const {data:rf}=await sb.from('voyage_fiches').select('lieu_id,statut').eq('voyage_id',voyageId).eq('statut','retenue');
       (rf||[]).forEach(r=>{ HUB_ETATS[r.lieu_id]={epingle:true}; });
+      // L'itinéraire ordonné du voyage : ces fiches sont PLACÉES (numéro + tracé).
+      const {data:ri}=await sb.from('voyage_itineraire').select('lieu_id,ordre').eq('voyage_id',voyageId).order('ordre',{ascending:true});
+      let n=0; (ri||[]).forEach(r=>{ if(HUB_PLACEES[r.lieu_id]==null){ HUB_PLACEES[r.lieu_id]=(++n); } });
     }
     const {data:rx}=await sb.from('reactions').select('cible_id')
       .eq('cible_type','lieu').eq('membre_id',userId).eq('emoji','❤️');
@@ -400,7 +405,10 @@ async function initHubCarte(fiches, groupeId, userId){
   geo.forEach(f=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
     const etat=HUB_ETATS[f.id]||{};
-    const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,etat,{taille:20}):null;
+    // Fiche déjà placée dans le trajet (voyage_itineraire) → rond numéroté, comme Voyage.
+    const num=HUB_PLACEES[f.id];
+    const opts = (num!=null) ? {numero:num, taille:30} : {taille:20};
+    const icon=(window.RNR_MARQUEURS)?RNR_MARQUEURS.icone(f,etat,opts):null;
     const mk=L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(HUB_MAP);
     const photo = f.photo_url
       ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHubHtml(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
@@ -421,6 +429,11 @@ async function initHubCarte(fiches, groupeId, userId){
   });
   if(bounds.length) HUB_MAP.fitBounds(bounds,{padding:[40,40]});
   setTimeout(()=>HUB_MAP.invalidateSize(),200); // la carte était peut-être cachée au montage
+
+  // ── TRACÉ DU VOYAGE : relie les fiches déjà placées (voyage_itineraire) dans
+  //    l'ordre. C'est le reflet permanent de la carte Voyage sur le Hub (D-MK).
+  //    Distinct du trait de CONSTRUCTION (HUB_TRAIT) qu'on dessine en cliquant.
+  hubTraceVoyage();
 
   const btn=document.getElementById('hub-valider');
   if(btn && !btn._lie){ btn._lie=true; btn.addEventListener('click', hubValider); }
@@ -469,7 +482,23 @@ function hubTrace(){
   if(HUB_TRAIT){ HUB_MAP.removeLayer(HUB_TRAIT); HUB_TRAIT=null; }
   const pts=HUB_ITIN.map(id=>HUB_FICHES[id]).filter(f=>f).map(f=>[f.lat,f.lng]);
   if(pts.length>=2){
-    HUB_TRAIT=L.polyline(pts,{color:'#C8A84B',weight:3,dashArray:'8,6'}).addTo(HUB_MAP);
+    const col=(window.RNR_MARQUEURS&&RNR_MARQUEURS.couleurTrace)?RNR_MARQUEURS.couleurTrace():'#C8A84B';
+    HUB_TRAIT=L.polyline(pts,{color:col,weight:3,dashArray:'8,6'}).addTo(HUB_MAP);
+  }
+}
+
+// Tracé PERMANENT des fiches déjà placées dans le trajet (reflet de Voyage).
+// Suit l'ordre de voyage_itineraire (HUB_PLACEES = lieu_id -> numéro).
+function hubTraceVoyage(){
+  if(!HUB_MAP) return;
+  if(HUB_TRACE_VOYAGE){ HUB_MAP.removeLayer(HUB_TRACE_VOYAGE); HUB_TRACE_VOYAGE=null; }
+  const ordonne=Object.keys(HUB_PLACEES)
+    .sort((a,b)=>HUB_PLACEES[a]-HUB_PLACEES[b])
+    .map(id=>HUB_FICHES[id]).filter(f=>f&&f.lat!=null&&f.lng!=null)
+    .map(f=>[f.lat,f.lng]);
+  if(ordonne.length>=2){
+    const col=(window.RNR_MARQUEURS&&RNR_MARQUEURS.couleurTrace)?RNR_MARQUEURS.couleurTrace():'#C8A84B';
+    HUB_TRACE_VOYAGE=L.polyline(ordonne,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_MAP);
   }
 }
 
