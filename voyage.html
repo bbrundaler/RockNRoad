@@ -40,15 +40,22 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 #panel-header h2{font-family:var(--font-title);font-size:19px;color:var(--ink);margin-bottom:2px;}
 #panel-header p{font-size:12px;color:var(--ink-dim);}
 #stops-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--gold-a35) transparent;}
-#panel-footer{padding:12px 16px;border-top:1px solid var(--surface-line);flex-shrink:0;background:var(--surface);}
-.pf-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-.pf-label{font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);}
-.pf-val{font-family:var(--font-title);font-size:21px;font-weight:800;color:var(--gold-text);}
-.pf-val.sm{font-size:13px;}
+/* ── TABLEAU DE BORD : 3 stats horizontales en haut du panneau (km / temps / étapes).
+   Partagé visuellement avec le Hub (même grammaire). Remplace l'ancien footer. ── */
+.dashboard{display:flex;align-items:stretch;gap:0;background:var(--gold-a10,rgba(200,168,75,.10));
+  border:1px solid var(--gold-a30,rgba(200,168,75,.35));border-radius:var(--r);margin-top:10px;overflow:hidden;}
+.db-cell{flex:1;text-align:center;padding:8px 4px;}
+.db-cell + .db-cell{border-left:1px solid var(--gold-a30,rgba(200,168,75,.30));}
+.db-val{font-family:var(--font-title);font-size:20px;font-weight:800;color:var(--gold-text);line-height:1;}
+.db-val .u{font-size:11px;font-weight:700;}
+.db-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
+
+/* L'itinéraire prend toute la hauteur restante et scrolle DANS son bloc (plus la page). */
+#stops-list{flex:1;min-height:0;overflow-y:auto;padding:10px 14px;}
 
 /* STOP ITEMS */
-/* étapes = mini-cartes PAPIER (encres fixes sur papier) */
-.stop-item{display:flex;align-items:center;gap:8px;padding:10px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:6px;cursor:grab;transition:box-shadow .15s;}
+/* étapes = mini-cartes PAPIER (encres fixes sur papier) — COMPACTES (8-10 visibles) */
+.stop-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:5px;cursor:grab;transition:box-shadow .15s;}
 .stop-item:hover{box-shadow:var(--shadow-hover);}
 /* Écartement fluide pendant le réordon (FLIP) : les voisines GLISSENT vers leur
    nouvelle place au lieu de sauter. Classe posée le temps du drag uniquement. */
@@ -145,6 +152,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div id="panel-header">
         <h2>Itinéraire</h2>
         <p>Glissez une retenue ici · réordonnez · × pour retirer</p>
+        <div class="dashboard">
+          <div class="db-cell">
+            <div class="db-val" id="totalDist">—<span class="u"> km</span></div>
+            <div class="db-label">aller-retour</div>
+          </div>
+          <div class="db-cell">
+            <div class="db-val" id="totalDuree">—</div>
+            <div class="db-label">de route</div>
+          </div>
+          <div class="db-cell">
+            <div class="db-val" id="totalStops">0</div>
+            <div class="db-label">étapes</div>
+          </div>
+        </div>
         <div class="panel-actions">
           <button class="tb-btn tb-btn-add" onclick="window.location.href='carnet.html'">+ Ajouter des lieux</button>
           <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
@@ -155,21 +176,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <div class="empty-voyage" id="emptyVoyage" style="display:flex;">
           <div class="icon">🗺️</div>
           <h3>Itinéraire vide</h3>
-          <p>Glissez une fiche depuis « Retenues pour ce voyage » (en bas) pour la poser sur la carte et tracer votre route.</p>
-        </div>
-      </div>
-      <div id="panel-footer">
-        <div class="pf-row">
-          <span class="pf-label">Distance (aller-retour maison)</span>
-          <span class="pf-val" id="totalDist">— km</span>
-        </div>
-        <div class="pf-row">
-          <span class="pf-label">Temps de route</span>
-          <span class="pf-val sm" id="totalDuree">—</span>
-        </div>
-        <div class="pf-row">
-          <span class="pf-label">Étapes</span>
-          <span class="pf-val sm" id="totalStops">0</span>
+          <p>Glissez une fiche depuis « Retenues pour ce voyage » (sous la carte) pour la poser sur la carte et tracer votre route.</p>
         </div>
       </div>
     </div>
@@ -578,7 +585,7 @@ function renderList(){
     list.querySelectorAll('.stop-item').forEach(el=>el.remove());
     list.appendChild(empty);
     empty.style.display='flex';
-    document.getElementById('totalDist').textContent='— km';
+    document.getElementById('totalDist').innerHTML='—<span class="u"> km</span>';
     document.getElementById('totalDuree').textContent='—';
     document.getElementById('totalStops').textContent='0';
     return;
@@ -634,22 +641,26 @@ function renderList(){
     const last=voyage[voyage.length-1];
     if(last.lat) total+=calcDist(last.lat, last.lng, DOMICILE.lat, DOMICILE.lng);
   }
-  document.getElementById('totalDist').textContent=total>0?('≈ '+Math.round(total)+' km'):'— km';
+  document.getElementById('totalDist').innerHTML = total>0
+    ? ('≈ '+Math.round(total)+'<span class="u"> km</span>')
+    : '—<span class="u"> km</span>';
   document.getElementById('totalStops').textContent=voyage.length;
 }
 
+// Petit format de distance/durée pour le tableau de bord.
+function _fmtDuree(h){
+  const H=Math.floor(h), M=Math.round((h-H)*60);
+  return H>0 ? (H+'<span class="u">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span class="u"> min</span>');
+}
+
 // Remplace les totaux provisoires par la vraie distance + durée routières
-// renvoyées par le tracé (ORS). Format durée : « 3 h 12 ».
+// renvoyées par le tracé (ORS). Format durée : « 3h12 ».
 function majTotauxRoute(r){
   if(!r) return;
   const elD=document.getElementById('totalDist');
   const elT=document.getElementById('totalDuree');
-  if(elD && r.distance_km!=null) elD.textContent=r.distance_km+' km';
-  if(elT && r.duree_h!=null){
-    const h=Math.floor(r.duree_h);
-    const m=Math.round((r.duree_h-h)*60);
-    elT.textContent = h>0 ? (h+' h'+(m>0?' '+String(m).padStart(2,'0'):'')) : (m+' min');
-  }
+  if(elD && r.distance_km!=null) elD.innerHTML=r.distance_km+'<span class="u"> km</span>';
+  if(elT && r.duree_h!=null) elT.innerHTML=_fmtDuree(r.duree_h);
 }
 
 function renderMap(){

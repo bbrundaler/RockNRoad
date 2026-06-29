@@ -362,12 +362,19 @@ async function loadHubData(userId){
    écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
    ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
    ════════════════════════════════════════════════════════════════════════ */
-let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null;
+let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null, HUB_DOMICILE=null, HUB_MAISON_MK=null;
 // Tactile : sur mobile le survol n'existe pas → on n'ouvre pas la fiche au survol (le tap ajoute direct).
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
 async function initHubCarte(fiches, groupeId, userId){
   HUB_GROUPE_ID=groupeId;
+  // Domicile du groupe (point de départ/retour) — pour la boucle, comme dans Voyage.
+  try{
+    const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',groupeId).single();
+    if(g && g.lat_depart!=null && g.lng_depart!=null){
+      HUB_DOMICILE={lat:Number(g.lat_depart), lng:Number(g.lng_depart), nom:(g.ville||g.adresse_depart||'la maison')};
+    } else { HUB_DOMICILE=null; }
+  }catch(e){ HUB_DOMICILE=null; }
   const wrap=document.getElementById('hub-map');
   const vide=document.getElementById('hub-carte-vide');
   if(!wrap) return;
@@ -432,6 +439,19 @@ async function initHubCarte(fiches, groupeId, userId){
   if(bounds.length) HUB_MAP.fitBounds(bounds,{padding:[40,40]});
   setTimeout(()=>HUB_MAP.invalidateSize(),200); // la carte était peut-être cachée au montage
 
+  // ── LA MAISON : point de départ/retour du groupe (comme dans Voyage).
+  if(HUB_DOMICILE && window.RNR_MARQUEURS && RNR_MARQUEURS.iconeMaison){
+    if(HUB_MAISON_MK){ HUB_MAP.removeLayer(HUB_MAISON_MK); HUB_MAISON_MK=null; }
+    HUB_MAISON_MK=L.marker([HUB_DOMICILE.lat,HUB_DOMICILE.lng],
+      {icon:RNR_MARQUEURS.iconeMaison({taille:32}), zIndexOffset:1000}).addTo(HUB_MAP)
+      .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHubHtml(HUB_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div></div>',
+      {maxWidth:220, autoPan:false, closeButton:false});
+    if(!HUB_TACTILE){
+      HUB_MAISON_MK.on('mouseover', ()=>HUB_MAISON_MK.openPopup());
+      HUB_MAISON_MK.on('mouseout',  ()=>HUB_MAISON_MK.closePopup());
+    }
+  }
+
   // ── TRACÉ DU VOYAGE : relie les fiches déjà placées (voyage_itineraire) dans
   //    l'ordre. C'est le reflet permanent de la carte Voyage sur le Hub (D-MK).
   //    Distinct du trait de CONSTRUCTION (HUB_TRAIT) qu'on dessine en cliquant.
@@ -490,13 +510,19 @@ function hubTraceVoyage(){
     .sort((a,b)=>HUB_PLACEES[a]-HUB_PLACEES[b])
     .map(id=>HUB_FICHES[id]).filter(f=>f&&f.lat!=null&&f.lng!=null)
     .map(f=>[f.lat,f.lng]);
-  if(ordonne.length>=2){
+  // BOUCLE : départ et retour à la maison (même langage que Voyage).
+  let pts=ordonne;
+  if(HUB_DOMICILE && ordonne.length>=1){
+    const m=[HUB_DOMICILE.lat,HUB_DOMICILE.lng];
+    pts=[m, ...ordonne, m];
+  }
+  if(pts.length>=2){
     HUB_TRACE_VOYAGE=L.layerGroup().addTo(HUB_MAP);
     if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
-      RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, ordonne, {surl:SURL, skey:SKEY}).catch(()=>{});
+      RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, pts, {surl:SURL, skey:SKEY}).catch(()=>{});
     } else {
       const col='#C8A84B';
-      L.polyline(ordonne,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
+      L.polyline(pts,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
     }
   }
 }
