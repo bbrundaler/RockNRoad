@@ -217,7 +217,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const {createClient}=supabase;
-const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+const SURL="https://cazqllstxhuecoqpktwm.supabase.co";
+const SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
+const sb=createClient(SURL,SKEY);
 
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function normalizeRegionKey(region){
@@ -478,16 +480,24 @@ function hubRafraichitMarqueur(id){
 
 // Tracé PERMANENT des fiches déjà placées dans le trajet (reflet de Voyage).
 // Suit l'ordre de voyage_itineraire (HUB_PLACEES = lieu_id -> numéro).
+// TRACÉ ROUTIER (29/06) : passe par le moteur unique (→ Edge Function 'route' →
+// OpenRouteService), repli ligne droite si indisponible. Même langage que Voyage.
 function hubTraceVoyage(){
   if(!HUB_MAP) return;
+  // HUB_TRACE_VOYAGE est désormais un layerGroup (le tracé routier = plusieurs polylignes).
   if(HUB_TRACE_VOYAGE){ HUB_MAP.removeLayer(HUB_TRACE_VOYAGE); HUB_TRACE_VOYAGE=null; }
   const ordonne=Object.keys(HUB_PLACEES)
     .sort((a,b)=>HUB_PLACEES[a]-HUB_PLACEES[b])
     .map(id=>HUB_FICHES[id]).filter(f=>f&&f.lat!=null&&f.lng!=null)
     .map(f=>[f.lat,f.lng]);
   if(ordonne.length>=2){
-    const col=(window.RNR_MARQUEURS&&RNR_MARQUEURS.couleurTrace)?RNR_MARQUEURS.couleurTrace():'#C8A84B';
-    HUB_TRACE_VOYAGE=L.polyline(ordonne,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_MAP);
+    HUB_TRACE_VOYAGE=L.layerGroup().addTo(HUB_MAP);
+    if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+      RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, ordonne, {surl:SURL, skey:SKEY}).catch(()=>{});
+    } else {
+      const col='#C8A84B';
+      L.polyline(ordonne,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
+    }
   }
 }
 

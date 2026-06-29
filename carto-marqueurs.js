@@ -177,10 +177,89 @@
     };
   }
 
+  /* ───────────────────────────────────────────────────────────────────────
+     TRACÉ ROUTIER — un seul endroit pour tout le site (Hub + Voyage).
+     Relie une suite de points en suivant LES ROUTES (via l'Edge Function
+     'route' → OpenRouteService), au lieu d'une ligne droite qui coupe l'océan.
+
+     traceRoute(map, layer, latlngs, cfg, opts) :
+       map     : la carte Leaflet (pour rien aujourd'hui mais réservé).
+       layer   : le L.layerGroup où dessiner (on y ajoute les polylignes).
+       latlngs : [[lat,lng], [lat,lng], ...] dans l'ordre du trajet (≥2).
+       cfg     : { surl, skey } — URL Supabase + clé anon (les pages les ont déjà).
+       opts    : { profile } optionnel ('driving-car' par défaut).
+     → renvoie une Promise résolue avec { ok, distance_km, duree_h } si routé,
+       ou { ok:false } si on a dû retomber sur la ligne droite.
+
+     ROBUSTESSE : si l'Edge Function échoue, tarde (>8s) ou renvoie autre chose
+     qu'un GeoJSON exploitable, on dessine la LIGNE DROITE (comportement d'avant).
+     Le tracé n'est JAMAIS absent. Le site ne casse pas.
+  */
+  function _ligneDroite(layer, latlngs) {
+    var col = couleurTrace();
+    L.polyline(latlngs, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
+    L.polyline(latlngs, { color: col, weight: 3, dashArray: '10,6' }).addTo(layer);
+  }
+
+  function traceRoute(map, layer, latlngs, cfg, opts) {
+    opts = opts || {};
+    if (!layer || !Array.isArray(latlngs) || latlngs.length < 2) {
+      return Promise.resolve({ ok: false });
+    }
+    // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
+    if (!cfg || !cfg.surl || !cfg.skey) {
+      _ligneDroite(layer, latlngs);
+      return Promise.resolve({ ok: false });
+    }
+    // ORS attend [lng,lat] ; Leaflet nous donne [lat,lng] → on inverse.
+    var pts = latlngs.map(function (p) { return [p[1], p[0]]; });
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+
+    return fetch(cfg.surl + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': cfg.skey,
+        'Authorization': 'Bearer ' + cfg.skey
+      },
+      body: JSON.stringify({
+        action: 'route',
+        points: pts,
+        profile: opts.profile || 'driving-car'
+      }),
+      signal: ctrl ? ctrl.signal : undefined
+    })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject('http ' + r.status); })
+      .then(function (geo) {
+        clearTimeout(to);
+        var feat = geo && geo.features && geo.features[0];
+        var coords = feat && feat.geometry && feat.geometry.coordinates;
+        if (!coords || !coords.length) throw 'pas de géométrie';
+        // GeoJSON = [lng,lat] → Leaflet veut [lat,lng].
+        var trace = coords.map(function (c) { return [c[1], c[0]]; });
+        var col = couleurTrace();
+        L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
+        L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
+        var s = (feat.properties && feat.properties.summary) || {};
+        return {
+          ok: true,
+          distance_km: s.distance ? Math.round(s.distance / 1000) : null,
+          duree_h: s.duration ? (s.duration / 3600) : null
+        };
+      })
+      .catch(function () {
+        clearTimeout(to);
+        _ligneDroite(layer, latlngs); // REPLI : on ne laisse jamais la carte sans tracé.
+        return { ok: false };
+      });
+  }
+
   global.RNR_MARQUEURS = {
     icone: icone,
     estNuit: estNuit,
     couleurTrace: couleurTrace,
+    traceRoute: traceRoute,
     legende: legende,
     invalideCache: invalideCache
   };

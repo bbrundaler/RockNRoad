@@ -659,12 +659,19 @@ function renderMap(){
     bounds.push([v.lat,v.lng]);
   });
 
-  // (2) Le TRACÉ : ligne dorée reliant l'itinéraire dans l'ordre.
+  // (2) Le TRACÉ ROUTIER : suit les routes (via le moteur unique → Edge Function
+  //     'route' → OpenRouteService). Repli automatique sur la ligne droite si le
+  //     routage est indisponible. Dessiné en asynchrone dans routeLayer (vidé à
+  //     chaque render, donc pas de cumul de tracés).
   if(pts.length>1){
-    const coords=pts.map(v=>[v.lat,v.lng]);
-    const colTrace = (window.RNR_MARQUEURS && RNR_MARQUEURS.couleurTrace) ? RNR_MARQUEURS.couleurTrace() : '#C8A84B';
-    L.polyline(coords,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
-    L.polyline(coords,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
+    const latlngs=pts.map(v=>[v.lat,v.lng]);
+    if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+      RNR_MARQUEURS.traceRoute(map, routeLayer, latlngs, {surl:SURL, skey:SKEY}).catch(()=>{});
+    } else {
+      const colTrace = '#C8A84B';
+      L.polyline(latlngs,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
+      L.polyline(latlngs,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
+    }
   }
 
   // (3) Les ÉPINGLES PAS ENCORE PLACÉES : validées pour le voyage mais hors
