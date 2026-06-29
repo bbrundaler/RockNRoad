@@ -152,5 +152,6 @@
   --mk-coeur-autre:  #EF9F27;   /* cœur d'un coéquipier — ambre            */
   --mk-epingle:      #1D9E75;   /* épingle, décision du groupe — teal      */
   --mk-bord:         #FFFFFF;   /* liseré pastille                          */
+  --mk-bord-epingle: #E24B4A;   /* liseré de l'épingle — rouge accent pour ressortir (Bruno 29/06) */
   --mk-trace:        #C8A84B;   /* tracé reliant l'itinéraire — or de marque */
 }

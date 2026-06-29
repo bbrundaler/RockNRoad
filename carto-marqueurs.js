@@ -45,6 +45,7 @@
       jourInk: tok('--mk-jour-ink', '#5a4a00'),
       nuitInk: tok('--mk-nuit-ink', '#FFFFFF'),
       bord:    tok('--mk-bord',     '#FFFFFF'),
+      bordEpingle: tok('--mk-bord-epingle', '#E24B4A'),
       trace:   tok('--mk-trace',    '#C8A84B')
     };
     return _cache;
@@ -138,7 +139,7 @@
       html = svgRondNum(coul, c.bord, ink, opts.numero, taille);
     } else if (statut === 'epingle') {
       taille = opts.taille || 38;          /* la goutte a besoin de hauteur, agrandie (Bruno 29/06) */
-      html = svgEpingle(coul, c.bord, taille);
+      html = svgEpingle(coul, c.bordEpingle, taille);
     } else if (statut === 'coeur') {
       taille = opts.taille || 28;
       html = svgCoeur(coul, c.bord, taille);
