@@ -165,6 +165,32 @@
   /* Couleur du tracé reliant l'itinéraire (pour que les pages ne la codent pas en dur). */
   function couleurTrace() { return couleurs().trace; }
 
+  /* Marqueur MAISON : le point de départ/retour du groupe (groupes.*_depart).
+     Pastille or au token --mk-jour, contour blanc, petite maison dedans.
+     Volontairement distincte des pastilles numérotées (ce n'est pas une étape,
+     c'est l'ancrage du voyage). Une seule icône sert au départ ET au retour. */
+  function iconeMaison(opts) {
+    opts = opts || {};
+    var t = opts.taille || 34;
+    var c = couleurs();
+    var r = t / 2;
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + t + '" height="' + t + '" viewBox="0 0 ' + t + ' ' + t + '">' +
+      '<circle cx="' + r + '" cy="' + r + '" r="' + (r - 1.5) + '" fill="' + c.jour + '" stroke="' + c.bord + '" stroke-width="2.5"/>' +
+      '<path d="M' + r + ' ' + (r - t * 0.18) + ' L' + (r + t * 0.22) + ' ' + (r + t * 0.02) +
+        ' L' + (r + t * 0.15) + ' ' + (r + t * 0.02) + ' L' + (r + t * 0.15) + ' ' + (r + t * 0.20) +
+        ' L' + (r - t * 0.15) + ' ' + (r + t * 0.20) + ' L' + (r - t * 0.15) + ' ' + (r + t * 0.02) +
+        ' L' + (r - t * 0.22) + ' ' + (r + t * 0.02) + ' Z" fill="' + c.jourInk + '"/>' +
+      '</svg>';
+    return L.divIcon({
+      html: svg,
+      className: 'rnr-mk rnr-mk-maison',
+      iconSize: [t, t],
+      iconAnchor: [r, r],
+      popupAnchor: [0, -Math.round(t * 0.55)]
+    });
+  }
+
   /* Légende prête à afficher (libellés courts). */
   function legende() {
     return {
@@ -283,6 +309,7 @@
 
   global.RNR_MARQUEURS = {
     icone: icone,
+    iconeMaison: iconeMaison,
     estNuit: estNuit,
     couleurTrace: couleurTrace,
     traceRoute: traceRoute,

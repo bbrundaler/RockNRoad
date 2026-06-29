@@ -160,8 +160,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       </div>
       <div id="panel-footer">
         <div class="pf-row">
-          <span class="pf-label">Distance totale (depuis la maison)</span>
+          <span class="pf-label">Distance (aller-retour maison)</span>
           <span class="pf-val" id="totalDist">— km</span>
+        </div>
+        <div class="pf-row">
+          <span class="pf-label">Temps de route</span>
+          <span class="pf-val sm" id="totalDuree">—</span>
         </div>
         <div class="pf-row">
           <span class="pf-label">Étapes</span>
@@ -575,6 +579,7 @@ function renderList(){
     list.appendChild(empty);
     empty.style.display='flex';
     document.getElementById('totalDist').textContent='— km';
+    document.getElementById('totalDuree').textContent='—';
     document.getElementById('totalStops').textContent='0';
     return;
   }
@@ -613,7 +618,9 @@ function renderList(){
     list.appendChild(row);
   });
 
-  // Totaux : trajet complet = maison → étape 1 → … → dernière étape
+  // Totaux PROVISOIRES « à vol d'oiseau » (affichage immédiat, sans attendre le
+  // réseau). Remplacés par la vraie distance/durée routières dès que traceRoute
+  // répond (majTotauxRoute). Si le routage échoue, ce provisoire reste affiché.
   let total=0;
   if(DOMICILE && voyage[0] && voyage[0].lat){
     total+=calcDist(DOMICILE.lat, DOMICILE.lng, voyage[0].lat, voyage[0].lng);
@@ -622,8 +629,27 @@ function renderList(){
     const a=voyage[i-1], b=voyage[i];
     if(a.lat&&b.lat) total+=calcDist(a.lat,a.lng,b.lat,b.lng);
   }
-  document.getElementById('totalDist').textContent=total>0?Math.round(total)+' km':'— km';
+  // retour à la maison (boucle) dans l'estimation provisoire aussi
+  if(DOMICILE && voyage.length>0){
+    const last=voyage[voyage.length-1];
+    if(last.lat) total+=calcDist(last.lat, last.lng, DOMICILE.lat, DOMICILE.lng);
+  }
+  document.getElementById('totalDist').textContent=total>0?('≈ '+Math.round(total)+' km'):'— km';
   document.getElementById('totalStops').textContent=voyage.length;
+}
+
+// Remplace les totaux provisoires par la vraie distance + durée routières
+// renvoyées par le tracé (ORS). Format durée : « 3 h 12 ».
+function majTotauxRoute(r){
+  if(!r) return;
+  const elD=document.getElementById('totalDist');
+  const elT=document.getElementById('totalDuree');
+  if(elD && r.distance_km!=null) elD.textContent=r.distance_km+' km';
+  if(elT && r.duree_h!=null){
+    const h=Math.floor(r.duree_h);
+    const m=Math.round((r.duree_h-h)*60);
+    elT.textContent = h>0 ? (h+' h'+(m>0?' '+String(m).padStart(2,'0'):'')) : (m+' min');
+  }
 }
 
 function renderMap(){
@@ -659,18 +685,49 @@ function renderMap(){
     bounds.push([v.lat,v.lng]);
   });
 
+  // (1bis) LA MAISON : point de départ ET de retour du groupe (groupes.*_depart).
+  //        Affichée seulement si le domicile est renseigné (groupe TEST = null → rien).
+  //        Une seule pastille maison (départ et retour sont le même lieu).
+  if(DOMICILE && window.RNR_MARQUEURS && RNR_MARQUEURS.iconeMaison){
+    const iconMaison=RNR_MARQUEURS.iconeMaison({taille:34});
+    const mkMaison=L.marker([DOMICILE.lat,DOMICILE.lng],{icon:iconMaison,zIndexOffset:1000}).addTo(routeLayer).bindPopup(`
+      <div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">🏠 ${escVr(DOMICILE.nom||'La maison')}</div>
+        <div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div>
+      </div>
+    `, {maxWidth:220, autoPan:false, closeButton:false});
+    if(!VY_TACTILE){
+      mkMaison.on('mouseover', ()=>mkMaison.openPopup());
+      mkMaison.on('mouseout',  ()=>mkMaison.closePopup());
+    }
+    bounds.push([DOMICILE.lat,DOMICILE.lng]);
+  }
+
   // (2) Le TRACÉ ROUTIER : suit les routes (via le moteur unique → Edge Function
   //     'route' → OpenRouteService). Repli automatique sur la ligne droite si le
   //     routage est indisponible. Dessiné en asynchrone dans routeLayer (vidé à
   //     chaque render, donc pas de cumul de tracés).
-  if(pts.length>1){
-    const latlngs=pts.map(v=>[v.lat,v.lng]);
-    if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
-      RNR_MARQUEURS.traceRoute(map, routeLayer, latlngs, {surl:SURL, skey:SKEY}).catch(()=>{});
-    } else {
-      const colTrace = '#C8A84B';
-      L.polyline(latlngs,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
-      L.polyline(latlngs,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
+  //     BOUCLE COMPLÈTE : si le domicile est connu, le trajet part de la maison et
+  //     y revient (maison → étape 1 → … → dernière étape → maison). Du coup un seul
+  //     point d'étape + maison suffisent à dessiner une route (tracé dès la 1re étape).
+  if(pts.length>=1){
+    const etapes=pts.map(v=>[v.lat,v.lng]);
+    let latlngs=etapes;
+    if(DOMICILE){
+      const m=[DOMICILE.lat,DOMICILE.lng];
+      latlngs=[m, ...etapes, m]; // départ maison + retour maison
+    }
+    // Sans domicile, il faut au moins 2 étapes pour une route.
+    if(latlngs.length>=2){
+      if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+        RNR_MARQUEURS.traceRoute(map, routeLayer, latlngs, {surl:SURL, skey:SKEY})
+          .then(r=>{ if(r && r.ok) majTotauxRoute(r); })
+          .catch(()=>{});
+      } else {
+        const colTrace = '#C8A84B';
+        L.polyline(latlngs,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
+        L.polyline(latlngs,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
+      }
     }
   }
 
