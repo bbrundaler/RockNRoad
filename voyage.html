@@ -126,6 +126,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 }
 
 @media print{.rnrc-nav,.rnrc-tabbar,.bsl-btn,#voyage-panel{display:none!important;}#app-main{width:100%!important;}#map{height:100vh!important;width:100vw!important;}}
+#map .leaflet-marker-icon{transition:transform .12s ease;}
+#map .leaflet-marker-icon:hover{transform:scale(1.25);z-index:1000;}
 </style>
 </head>
 <body>
@@ -183,6 +185,8 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const sb=supabase.createClient(SURL,SKEY);
 
 let map, routeLayer;
+// Tactile : pas de survol au doigt → la fiche s'ouvre au tap, pas en passant dessus.
+const VY_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 // Source unique de vérité — tableau d'objets {uid, nom, lat, lng, region, type}
 // uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
 let voyage = [];
@@ -639,12 +643,21 @@ function renderMap(){
       html:`<div style="background:#1A1208;color:#C8A84B;border-radius:${rayon};width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;box-shadow:0 2px 8px rgba(0,0,0,.4);">${i+1}</div>`,
       className:'',iconSize:[30,30],iconAnchor:[15,15]
     });
-    L.marker([v.lat,v.lng],{icon}).addTo(routeLayer).bindPopup(`
-      <div style="font-family:Inter,sans-serif;min-width:160px;">
-        <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${i+1}. ${v.nom||'—'}</div>
-        <div style="font-size:11px;color:#888;">${v.region||''} ${v.type?'· '+v.type:''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
+    const photoNum = v.photo_url
+      ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escVr(v.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+      : '';
+    const mkNum = L.marker([v.lat,v.lng],{icon}).addTo(routeLayer).bindPopup(`
+      <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
+        ${photoNum}
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">${i+1}. ${escVr(v.nom||'—')}</div>
+        <div style="font-size:11px;color:#888;padding:0 2px;">${escVr(v.region||'')} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
-    `);
+    `, {maxWidth:240, autoPan:false, closeButton:false});
+    // SURVOL (desktop) : la fiche s'ouvre pour savoir QUEL lieu est ce numéro. Tactile → au tap.
+    if(!VY_TACTILE){
+      mkNum.on('mouseover', ()=>mkNum.openPopup());
+      mkNum.on('mouseout',  ()=>mkNum.closePopup());
+    }
     bounds.push([v.lat,v.lng]);
   });
 
@@ -665,13 +678,21 @@ function renderMap(){
       if(!f || f.lat==null || f.lng==null) return;
       if(placed.has(f.id)) return;   // déjà dans le trajet → c'est une pastille numérotée
       const icon=RNR_MARQUEURS.icone(f,{epingle:true},{taille:22});
-      L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(routeLayer).bindPopup(`
-        <div style="font-family:Inter,sans-serif;min-width:160px;">
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">📌 ${f.nom||'—'}</div>
-          <div style="font-size:11px;color:#888;">${f.region||''} ${f.type?'· '+f.type:''}</div>
-          <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;">Épinglée — à placer dans le trajet</div>
+      const phEp = f.photo_url
+        ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escVr(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+        : '';
+      const mkEp = L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(routeLayer).bindPopup(`
+        <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
+          ${phEp}
+          <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">📌 ${escVr(f.nom||'—')}</div>
+          <div style="font-size:11px;color:#888;padding:0 2px;">${escVr(f.region||'')} ${f.type?'· '+escVr(f.type):''}</div>
+          <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
-      `);
+      `, {maxWidth:240, autoPan:false, closeButton:false});
+      if(!VY_TACTILE){
+        mkEp.on('mouseover', ()=>mkEp.openPopup());
+        mkEp.on('mouseout',  ()=>mkEp.closePopup());
+      }
       bounds.push([f.lat,f.lng]);
     });
   }
