@@ -137,7 +137,7 @@
       taille = opts.taille || 30;
       html = svgRondNum(coul, c.bord, ink, opts.numero, taille);
     } else if (statut === 'epingle') {
-      taille = opts.taille || 30;          /* la goutte a besoin de hauteur */
+      taille = opts.taille || 38;          /* la goutte a besoin de hauteur, agrandie (Bruno 29/06) */
       html = svgEpingle(coul, c.bord, taille);
     } else if (statut === 'coeur') {
       taille = opts.taille || 28;

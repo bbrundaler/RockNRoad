@@ -183,11 +183,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     </div>
     <div class="hub-carte-cote">
       <div class="rr-surface">
-        <h3>Mon itinéraire</h3>
-        <div class="hub-itin-aide" id="hub-itin-aide">Survole un point pour le voir, clique pour l'ajouter — dans l'ordre du voyage.</div>
-        <ol class="hub-itin-liste" id="hub-itin-liste"></ol>
+        <h3>Comment ça marche</h3>
+        <div class="hub-itin-aide">Survole un point pour le voir. <b>Clique pour le retenir</b> — il rejoint « Retenues pour ce voyage », prêt à être placé dans le trajet.</div>
+        <div class="hub-itin-aide" style="margin-top:10px;">Les points <b>numérotés</b> sont déjà dans ton trajet. Tu les ordonnes dans <a href="voyage.html" style="color:var(--gold-text);font-weight:600;">Voyage</a>.</div>
       </div>
-      <button class="rr-btn rr-btn-primary" id="hub-valider" style="width:100%;margin-top:10px;" disabled>Valider → Voyage</button>
+      <a class="rr-btn rr-btn-primary" href="voyage.html" style="width:100%;margin-top:10px;text-align:center;text-decoration:none;display:block;box-sizing:border-box;">Ouvrir mon voyage →</a>
       <a class="hub-porte2" href="horizon.html">Pas d'idée précise ? <b>Explorer →</b></a>
     </div>
   </div>
@@ -360,7 +360,7 @@ async function loadHubData(userId){
    écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
    ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
    ════════════════════════════════════════════════════════════════════════ */
-let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null;
+let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null;
 // Tactile : sur mobile le survol n'existe pas → on n'ouvre pas la fiche au survol (le tap ajoute direct).
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
@@ -434,57 +434,46 @@ async function initHubCarte(fiches, groupeId, userId){
   //    l'ordre. C'est le reflet permanent de la carte Voyage sur le Hub (D-MK).
   //    Distinct du trait de CONSTRUCTION (HUB_TRAIT) qu'on dessine en cliquant.
   hubTraceVoyage();
-
-  const btn=document.getElementById('hub-valider');
-  if(btn && !btn._lie){ btn._lie=true; btn.addEventListener('click', hubValider); }
 }
 
-// Ajoute / retire un point de l'itinéraire en construction.
-function hubTogglePoint(id){
-  const i=HUB_ITIN.indexOf(id);
-  if(i>=0){ HUB_ITIN.splice(i,1); }
-  else { HUB_ITIN.push(id); }
-  hubRendItin();
+// CLIC sur un point du Hub = on RETIENT la fiche pour le voyage (statut 'retenue',
+// origine 'hub'). Elle apparaît dans « Retenues pour ce voyage » (bas de Voyage),
+// en attente d'être montée dans le trajet. Le Hub N'ÉCRIT JAMAIS l'itinéraire (D-MK).
+// Re-cliquer une fiche retenue (mais pas encore placée) la retire.
+async function hubTogglePoint(id){
+  const f=HUB_FICHES[id]; if(!f) return;
+  if(HUB_PLACEES[id]!=null){          // déjà placée dans le trajet → on ne touche pas depuis le Hub
+    if(HUB_MAP) HUB_MAP.closePopup();
+    return;
+  }
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ window.location.href='index.html'; return; }
+    const voyageId=await hubResoutVoyage(session.user.id);
+    if(!voyageId){ alert('Crée d\'abord un voyage.'); return; }
+    const dejaRetenue = HUB_ETATS[id] && HUB_ETATS[id].epingle;
+    if(dejaRetenue){
+      await sb.from('voyage_fiches').delete().eq('voyage_id',voyageId).eq('lieu_id',id).eq('statut','retenue');
+      delete HUB_ETATS[id];
+    }else{
+      await sb.from('voyage_fiches').upsert(
+        [{voyage_id:voyageId, lieu_id:id, statut:'retenue', origine:'hub'}],
+        {onConflict:'voyage_id,lieu_id'});
+      HUB_ETATS[id]={epingle:true};
+    }
+    hubRafraichitMarqueur(id);
+  }catch(err){ console.warn('Hub toggle retenue',err); }
   if(HUB_MAP) HUB_MAP.closePopup();
 }
 
-function hubRendItin(){
-  const liste=document.getElementById('hub-itin-liste');
-  const aide=document.getElementById('hub-itin-aide');
-  const btn=document.getElementById('hub-valider');
-  if(!liste) return;
-  liste.innerHTML=HUB_ITIN.map((id,idx)=>{
-    const f=HUB_FICHES[id]; if(!f) return '';
-    return '<li><span class="hi-n">'+(idx+1)+'</span>'+
-      '<span class="hi-nom">'+escapeHubHtml(f.nom||'—')+'</span>'+
-      '<button class="hi-x" type="button" title="retirer" onclick="hubTogglePoint(\''+id+'\')">✕</button></li>';
-  }).join('');
-  if(aide) aide.style.display = HUB_ITIN.length ? 'none' : 'block';
-  if(btn) btn.disabled = HUB_ITIN.length===0;
-  // Point dans l'itinéraire → allumé en TEAL (couleur officielle « dans le voyage »),
-  // via le moteur unique (zéro couleur en dur). Hors itinéraire → son état réel.
-  Object.keys(HUB_MARKERS).forEach(id=>{
-    const mk=HUB_MARKERS[id]; const f=HUB_FICHES[id];
-    const dans = HUB_ITIN.indexOf(id)>=0;
-    if(window.RNR_MARQUEURS && f){
-      const etat = dans ? {epingle:true} : (HUB_ETATS[id]||{});
-      const ic = RNR_MARQUEURS.icone(f, etat, {taille:20});
-      if(ic) mk.setIcon(ic);
-    }
-    const el=mk._icon;
-    if(el) el.classList.toggle('hub-mk-choisi', dans);
-  });
-  hubTrace();
-}
-
-function hubTrace(){
-  if(!HUB_MAP) return;
-  if(HUB_TRAIT){ HUB_MAP.removeLayer(HUB_TRAIT); HUB_TRAIT=null; }
-  const pts=HUB_ITIN.map(id=>HUB_FICHES[id]).filter(f=>f).map(f=>[f.lat,f.lng]);
-  if(pts.length>=2){
-    const col=(window.RNR_MARQUEURS&&RNR_MARQUEURS.couleurTrace)?RNR_MARQUEURS.couleurTrace():'#C8A84B';
-    HUB_TRAIT=L.polyline(pts,{color:col,weight:3,dashArray:'8,6'}).addTo(HUB_MAP);
-  }
+// Redessine UN marqueur selon son état courant (épingle si retenue, etc.).
+function hubRafraichitMarqueur(id){
+  const mk=HUB_MARKERS[id]; const f=HUB_FICHES[id];
+  if(!mk||!f||!window.RNR_MARQUEURS) return;
+  const num=HUB_PLACEES[id];
+  const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
+  const ic=RNR_MARQUEURS.icone(f, HUB_ETATS[id]||{}, opts);
+  if(ic) mk.setIcon(ic);
 }
 
 // Tracé PERMANENT des fiches déjà placées dans le trajet (reflet de Voyage).
@@ -499,33 +488,6 @@ function hubTraceVoyage(){
   if(ordonne.length>=2){
     const col=(window.RNR_MARQUEURS&&RNR_MARQUEURS.couleurTrace)?RNR_MARQUEURS.couleurTrace():'#C8A84B';
     HUB_TRACE_VOYAGE=L.polyline(ordonne,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_MAP);
-  }
-}
-
-// VALIDER : écrit des retenues (origine 'hub') + l'ordre, puis ouvre Voyage.
-async function hubValider(){
-  if(!HUB_ITIN.length) return;
-  const btn=document.getElementById('hub-valider');
-  if(btn){ btn.disabled=true; btn.textContent='Création…'; }
-  try{
-    const {data:{session}}=await sb.auth.getSession();
-    if(!session){ window.location.href='index.html'; return; }
-    const voyageId=await hubResoutVoyage(session.user.id);
-    if(!voyageId){ alert('Aucun voyage actif. Crée d\'abord un voyage.'); if(btn){btn.disabled=false;btn.textContent='Valider → Voyage';} return; }
-    // 1) retenues (origine 'hub')
-    const retenues=HUB_ITIN.map(id=>({voyage_id:voyageId, lieu_id:id, statut:'retenue', origine:'hub'}));
-    const {error:e1}=await sb.from('voyage_fiches').upsert(retenues,{onConflict:'voyage_id,lieu_id'});
-    if(e1){ console.warn('Hub valider: voyage_fiches',e1); alert('Enregistrement impossible, réessaie.'); if(btn){btn.disabled=false;btn.textContent='Valider → Voyage';} return; }
-    // 2) l'ordre dans voyage_itineraire (on repart propre pour ce voyage)
-    await sb.from('voyage_itineraire').delete().eq('voyage_id',voyageId);
-    const etapes=HUB_ITIN.map((id,idx)=>({voyage_id:voyageId, uid:'hub_'+id+'_'+Date.now()+'_'+idx, lieu_id:id, ordre:idx}));
-    const {error:e2}=await sb.from('voyage_itineraire').insert(etapes);
-    if(e2){ console.warn('Hub valider: voyage_itineraire',e2); /* non bloquant : les retenues sont posées */ }
-    try{ sessionStorage.setItem('rnr_voyage_id',voyageId); }catch(e){}
-    window.location.href='voyage.html';
-  }catch(err){
-    console.warn('Hub valider',err); alert('Une erreur est survenue, réessaie.');
-    if(btn){ btn.disabled=false; btn.textContent='Valider → Voyage'; }
   }
 }
 
