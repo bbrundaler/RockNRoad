@@ -201,11 +201,39 @@
     L.polyline(latlngs, { color: col, weight: 3, dashArray: '10,6' }).addTo(layer);
   }
 
+  /* Dessine un tracé routier déjà calculé (liste de [lat,lng]) dans le layer. */
+  function _dessineTrace(layer, trace) {
+    var col = couleurTrace();
+    L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
+    L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
+  }
+
+  /* CACHE MÉMOIRE du tracé (le temps de la page ouverte). Économise le quota ORS :
+     tant que la suite des étapes est identique, on ne rappelle PAS le routeur.
+     Vidé au rechargement de page (volontaire — cf. décision « cache option 1 »).
+     Clé = profil + coordonnées arrondies (5 décimales ≈ 1 m, largement assez). */
+  var _routeCache = {};
+  function _cleRoute(latlngs, profile) {
+    return profile + '|' + latlngs.map(function (p) {
+      return p[0].toFixed(5) + ',' + p[1].toFixed(5);
+    }).join(';');
+  }
+
   function traceRoute(map, layer, latlngs, cfg, opts) {
     opts = opts || {};
     if (!layer || !Array.isArray(latlngs) || latlngs.length < 2) {
       return Promise.resolve({ ok: false });
     }
+    var profile = opts.profile || 'driving-car';
+
+    // (0) CACHE : itinéraire déjà routé → on redessine sans appeler ORS.
+    var cle = _cleRoute(latlngs, profile);
+    var hit = _routeCache[cle];
+    if (hit) {
+      _dessineTrace(layer, hit.trace);
+      return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
+    }
+
     // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
     if (!cfg || !cfg.surl || !cfg.skey) {
       _ligneDroite(layer, latlngs);
@@ -226,7 +254,7 @@
       body: JSON.stringify({
         action: 'route',
         points: pts,
-        profile: opts.profile || 'driving-car'
+        profile: profile
       }),
       signal: ctrl ? ctrl.signal : undefined
     })
@@ -238,15 +266,13 @@
         if (!coords || !coords.length) throw 'pas de géométrie';
         // GeoJSON = [lng,lat] → Leaflet veut [lat,lng].
         var trace = coords.map(function (c) { return [c[1], c[0]]; });
-        var col = couleurTrace();
-        L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
-        L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
         var s = (feat.properties && feat.properties.summary) || {};
-        return {
-          ok: true,
-          distance_km: s.distance ? Math.round(s.distance / 1000) : null,
-          duree_h: s.duration ? (s.duration / 3600) : null
-        };
+        var dist = s.distance ? Math.round(s.distance / 1000) : null;
+        var duree = s.duration ? (s.duration / 3600) : null;
+        // Range au cache AVANT de dessiner (réutilisable au prochain render identique).
+        _routeCache[cle] = { trace: trace, distance_km: dist, duree_h: duree };
+        _dessineTrace(layer, trace);
+        return { ok: true, distance_km: dist, duree_h: duree };
       })
       .catch(function () {
         clearTimeout(to);
