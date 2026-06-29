@@ -141,9 +141,16 @@
    L'ÉPINGLE N'EST JAMAIS ROUGE (le rouge = l'émotion ❤️, pas la décision).
    -bord = liseré du marqueur (lisible sur tuiles claires comme sombres).  */
 :root{
+  /* MONDE (nouvelle grammaire D-MK, 29/06) : la couleur dit jour/nuit */
+  --mk-jour:         #F5C518;   /* activité/jour — or lumineux                */
+  --mk-nuit:         #1B2A6B;   /* couchage/nuit — bleu nuit profond          */
+  --mk-jour-ink:     #5a4a00;   /* chiffre/texte posé sur l'or (lisible)      */
+  --mk-nuit-ink:     #FFFFFF;   /* chiffre/texte posé sur le bleu nuit        */
+  /* STATUT — anciens tokens conservés (transition ; certains usages legacy)  */
   --mk-neutre:       #6B5F4A;   /* pas encore aimée — grège discret        */
   --mk-coeur-moi:    #DC3C64;   /* MON coup de cœur — rose (aligné st-love) */
   --mk-coeur-autre:  #EF9F27;   /* cœur d'un coéquipier — ambre            */
   --mk-epingle:      #1D9E75;   /* épingle, décision du groupe — teal      */
   --mk-bord:         #FFFFFF;   /* liseré pastille                          */
+  --mk-trace:        #C8A84B;   /* tracé reliant l'itinéraire — or de marque */
 }

@@ -1,23 +1,28 @@
 /* ════════════════════════════════════════════════════════════════════
    RockNRoad — carto-marqueurs.js
-   LE MOTEUR UNIQUE des pastilles de carte (A6, étape 3).
+   LE MOTEUR UNIQUE des pastilles de carte.
 
    Une seule maison pour « à quoi ressemble un point sur une carte ».
-   Branché par Horizon, Carnet, Voyage — et le futur Hub. Toute page qui
-   dessine des lieux passe par ici : on ne recopie JAMAIS la logique de
-   marqueur ailleurs (loi du Master : un comportement = un seul endroit).
+   Branché par Horizon, Carnet, Voyage, Hub. Toute page qui dessine des
+   lieux passe par ici : on ne recopie JAMAIS la logique de marqueur
+   ailleurs (loi du Master : un comportement = un seul endroit).
 
-   DEUX CANAUX INDÉPENDANTS (décision Bruno 25/06) :
-     · la FORME dit le MONDE      → rond = activité (jour) · carré arrondi = couchage (nuit)
-     · la COULEUR dit MON RAPPORT → neutre · mon cœur · cœur des autres · épingle
-   Les deux ne s'annulent pas : un couchage épinglé = carré teal ;
-   une activité épinglée = rond teal. On lit le voyage ET le monde d'un coup d'œil.
+   ── GRAMMAIRE (D-MK, refonte 29/06, décision Bruno) ──────────────────
+     · la FORME dit le STATUT  → rond = un lieu · cœur = coup de cœur ·
+                                  épingle = retenu · rond numéroté = placé dans le trajet
+     · la COULEUR dit le MONDE → or = jour/activité · bleu nuit = nuit/couchage
+   On lit d'un coup d'œil OÙ EN EST la fiche (silhouette) ET dans QUEL
+   monde elle vit (couleur). Le cœur EST un cœur, l'épingle EST une épingle :
+   plus de symbole minuscule à deviner.
+
+   Numéro + tracé = grammaire COMMUNE au Hub ET à Voyage (correspondance
+   bidirectionnelle : on enrichit depuis le Hub, on ordonne dans Voyage).
 
    Règles gravées :
-     · L'ÉPINGLE N'EST JAMAIS ROUGE — le rouge appartient à l'émotion (❤️), pas à la décision.
      · ZÉRO COULEUR EN DUR : tout vient de tokens.css (--mk-*), lu via getComputedStyle.
-     · LE COUCHAGE se décide via RNR_TAGS.estCouchage — jamais une détection maison.
-     · Épuré : forme + couleur portent le sens ; seul symbole toléré = 📌 sur l'épingle.
+     · LE MONDE se décide via RNR_TAGS.estCouchage — jamais une détection maison.
+     · SIGNATURE STABLE : icone(fiche, {epingle,coeurMoi,coeurAutre}, opts?) —
+       inchangée pour ne pas casser Horizon/Carnet/Hub. opts.numero = rond numéroté.
 
    Dépendance : Leaflet (window.L) + tags.js (window.RNR_TAGS) chargés avant.
    ════════════════════════════════════════════════════════════════════ */
@@ -35,11 +40,12 @@
   function couleurs() {
     if (_cache) return _cache;
     _cache = {
-      neutre:      tok('--mk-neutre',      '#6B5F4A'),
-      coeurMoi:    tok('--mk-coeur-moi',   '#DC3C64'),
-      coeurAutre:  tok('--mk-coeur-autre', '#EF9F27'),
-      epingle:     tok('--mk-epingle',     '#1D9E75'),
-      bord:        tok('--mk-bord',        '#FFFFFF')
+      jour:    tok('--mk-jour',     '#F5C518'),
+      nuit:    tok('--mk-nuit',     '#1B2A6B'),
+      jourInk: tok('--mk-jour-ink', '#5a4a00'),
+      nuitInk: tok('--mk-nuit-ink', '#FFFFFF'),
+      bord:    tok('--mk-bord',     '#FFFFFF'),
+      trace:   tok('--mk-trace',    '#C8A84B')
     };
     return _cache;
   }
@@ -54,47 +60,67 @@
         return global.RNR_TAGS.estCouchage(fiche) === true;
       }
     } catch (e) { /* repli prudent ci-dessous */ }
-    return false; /* défaut : jour (cohérent avec jourNuitFiche) */
+    return false; /* défaut : jour */
   }
 
-  /* — La COULEUR : mon rapport à la fiche, par priorité de SENS.
-       épingle > mon cœur > cœur d'un autre > neutre.
-       etat = { epingle:bool, coeurMoi:bool, coeurAutre:bool } — fourni par la page. */
-  function couleurDe(etat) {
-    var c = couleurs();
-    if (!etat) return c.neutre;
-    if (etat.epingle)    return c.epingle;
-    if (etat.coeurMoi)   return c.coeurMoi;
-    if (etat.coeurAutre) return c.coeurAutre;
-    return c.neutre;
+  /* — Le STATUT d'une fiche, par priorité de SENS. La forme en découle.
+       placé (numéro fourni) > épingle > mon cœur > cœur d'un autre > neutre.
+       etat = { epingle, coeurMoi, coeurAutre } ; opts.numero = placé dans le trajet. */
+  function statutDe(etat, opts) {
+    if (opts && opts.numero != null) return 'place';
+    if (!etat) return 'neutre';
+    if (etat.epingle)    return 'epingle';
+    if (etat.coeurMoi)   return 'coeur';
+    if (etat.coeurAutre) return 'coeur';   /* même forme cœur ; nuance possible plus tard */
+    return 'neutre';
   }
 
-  /* — Construit le HTML interne d'une pastille selon forme + couleur.
-       nuit → carré arrondi ; jour → rond. taille = diamètre/côté en px.
-       epingle → on pose le seul symbole toléré : 📌. */
-  function pastilleHTML(opts) {
-    var couleur = opts.couleur;
-    var nuit    = opts.nuit;
-    var taille  = opts.taille || 16;
-    var bord    = opts.bord;
-    var symbole = opts.epingle ? '📌' : '';
-    var rayon   = nuit ? Math.round(taille * 0.32) + 'px' : '50%';
-    var police  = Math.round(taille * 0.62);
-    return '<div style="' +
-      'width:' + taille + 'px;height:' + taille + 'px;' +
-      'background:' + couleur + ';' +
-      'border:2px solid ' + bord + ';' +
-      'border-radius:' + rayon + ';' +
-      'box-shadow:0 1px 4px rgba(0,0,0,.45);' +
-      'display:flex;align-items:center;justify-content:center;' +
-      'font-size:' + police + 'px;line-height:1;">' + symbole + '</div>';
+  /* ── Les SILHOUETTES (SVG inline, couleur = monde) ──────────────────
+     Chaque forme reçoit la couleur de fond (jour/nuit) + le liseré.
+     Tailles pensées pour une carte dense : nettes mais pas envahissantes. */
+
+  /* Rond simple — un lieu. */
+  function svgRond(coul, bord, t) {
+    var r = t / 2 - 2;
+    return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 ' + t + ' ' + t + '">' +
+      '<circle cx="' + (t/2) + '" cy="' + (t/2) + '" r="' + r + '" fill="' + coul + '" stroke="' + bord + '" stroke-width="2.5"/>' +
+      '</svg>';
+  }
+
+  /* Rond numéroté — placé dans le trajet. Le chiffre prend la couleur lisible du monde. */
+  function svgRondNum(coul, bord, ink, num, t) {
+    var r = t / 2 - 2;
+    return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 ' + t + ' ' + t + '">' +
+      '<circle cx="' + (t/2) + '" cy="' + (t/2) + '" r="' + r + '" fill="' + coul + '" stroke="' + bord + '" stroke-width="2.5"/>' +
+      '<text x="' + (t/2) + '" y="' + (t/2) + '" text-anchor="middle" dominant-baseline="central" ' +
+      'font-family="Inter,sans-serif" font-weight="800" font-size="' + Math.round(t*0.46) + '" fill="' + ink + '">' + num + '</text>' +
+      '</svg>';
+  }
+
+  /* Cœur — coup de cœur. Rempli couleur monde, liseré pour ressortir. */
+  function svgCoeur(coul, bord, t) {
+    /* path cœur normalisé sur une boîte 24x24, mis à l'échelle */
+    var s = t / 24;
+    return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 24 24">' +
+      '<path transform="scale(1)" d="M12 21s-7.5-4.9-10-9.2C.3 8.6 1.6 5 5 5c2 0 3.3 1.2 4 2.3C9.7 6.2 11 5 13 5c3.4 0 4.7 3.6 3 6.8C19.5 16.1 12 21 12 21z" ' +
+      'fill="' + coul + '" stroke="' + bord + '" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '</svg>';
+  }
+
+  /* Épingle — retenu, en attente. Goutte classique de carte, couleur monde. */
+  function svgEpingle(coul, bord, t) {
+    return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 24 24">' +
+      '<path d="M12 2c-3.9 0-7 3.1-7 7 0 5 7 13 7 13s7-8 7-13c0-3.9-3.1-7-7-7z" ' +
+      'fill="' + coul + '" stroke="' + bord + '" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<circle cx="12" cy="9" r="2.4" fill="' + bord + '"/>' +
+      '</svg>';
   }
 
   /* ── API PUBLIQUE ──────────────────────────────────────────────────
      icone(fiche, etat, opts?) → L.divIcon prêt à poser sur un marqueur.
-       fiche : la fiche (pour estCouchage)
-       etat  : { epingle, coeurMoi, coeurAutre } (rapport au lieu)
-       opts  : { taille } optionnel (défaut 16 ; l'épingle gagne +4 pour respirer)
+       fiche : la fiche (pour estCouchage → monde)
+       etat  : { epingle, coeurMoi, coeurAutre } (statut → forme)
+       opts  : { taille?, numero? } — numero présent → rond numéroté (placé)
   */
   function icone(fiche, etat, opts) {
     if (!global.L) return null;
@@ -102,41 +128,58 @@
     opts = opts || {};
     var c = couleurs();
     var nuit = estNuit(fiche);
-    var epingle = !!etat.epingle;
-    var taille = opts.taille || (epingle ? 20 : 16);
-    var html = pastilleHTML({
-      couleur: couleurDe(etat),
-      nuit: nuit,
-      taille: taille,
-      bord: c.bord,
-      epingle: epingle
-    });
-    var demi = Math.round(taille / 2);
+    var coul = nuit ? c.nuit : c.jour;
+    var ink  = nuit ? c.nuitInk : c.jourInk;
+    var statut = statutDe(etat, opts);
+
+    var taille, html;
+    if (statut === 'place') {
+      taille = opts.taille || 30;
+      html = svgRondNum(coul, c.bord, ink, opts.numero, taille);
+    } else if (statut === 'epingle') {
+      taille = opts.taille || 30;          /* la goutte a besoin de hauteur */
+      html = svgEpingle(coul, c.bord, taille);
+    } else if (statut === 'coeur') {
+      taille = opts.taille || 28;
+      html = svgCoeur(coul, c.bord, taille);
+    } else {
+      taille = opts.taille || 20;
+      html = svgRond(coul, c.bord, taille);
+    }
+
+    /* L'ancre dépend de la forme : goutte = pointe en bas, rond/cœur = centre. */
+    var anchor;
+    if (statut === 'epingle') anchor = [taille / 2, taille];   /* la pointe touche le sol */
+    else anchor = [taille / 2, taille / 2];
+
     return global.L.divIcon({
       className: 'rnr-mk',
       html: html,
       iconSize: [taille, taille],
-      iconAnchor: [demi, demi],
-      popupAnchor: [0, -demi - 2]
+      iconAnchor: anchor,
+      popupAnchor: [0, -Math.round(taille * 0.55)]
     });
   }
 
-  /* Légende prête à afficher (libellés courts) — pour un futur encart d'aide. */
+  /* Couleur du tracé reliant l'itinéraire (pour que les pages ne la codent pas en dur). */
+  function couleurTrace() { return couleurs().trace; }
+
+  /* Légende prête à afficher (libellés courts). */
   function legende() {
     return {
-      forme:   [{ forme: 'rond',  texte: 'Activité de jour' },
-                { forme: 'carre', texte: 'Lieu de nuit' }],
-      couleur: [{ cle: 'neutre',     texte: 'Pas encore aimée' },
-                { cle: 'coeurMoi',   texte: 'Mon coup de cœur' },
-                { cle: 'coeurAutre', texte: 'Coup de cœur des autres' },
-                { cle: 'epingle',    texte: 'Épingle — le voyage' }]
+      forme:   [{ forme: 'rond',    texte: 'Un lieu' },
+                { forme: 'coeur',   texte: 'Coup de cœur' },
+                { forme: 'epingle', texte: 'Retenu pour le voyage' },
+                { forme: 'rondNum', texte: 'Placé dans le trajet' }],
+      couleur: [{ cle: 'jour', texte: 'Activité (jour)' },
+                { cle: 'nuit', texte: 'Couchage (nuit)' }]
     };
   }
 
   global.RNR_MARQUEURS = {
     icone: icone,
     estNuit: estNuit,
-    couleurDe: couleurDe,
+    couleurTrace: couleurTrace,
     legende: legende,
     invalideCache: invalideCache
   };
