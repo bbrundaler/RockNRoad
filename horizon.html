@@ -2725,23 +2725,30 @@ function rendFinSwipe(){
       clearTimeout(HZ_FIN_TIMER);
       HZ_FIN_TIMER=setTimeout(()=>{ fermeExplo(); }, 1400);
     }else{
-      // des aimées → message positif + grand bouton valider
       vide.style.display='flex';
-      // Transition jour→nuit : proposer « où dormir » UNIQUEMENT si on explore des
-      // activités (pas déjà le couchage) ET s'il y a une région explorée à reprendre.
+      // ENCHAÎNEMENT AUTO jour→nuit (décision 28/06) : si on vient de finir les ACTIVITÉS
+      // et qu'il y a des couchages à proposer dans le coin, on ne s'arrête PAS sur un écran
+      // à boutons — on annonce d'un mot puis on bascule tout seul vers les fiches nuit.
       const proposerDormir = (HZ_THEME!=='nuit') && HZ_LIEUX.length>0;
-      vide.innerHTML='<span class="hz-swipe-empty-ic">🎉</span>'+
-        '<div style="font-size:15px;color:var(--ink);"><b>'+nb+' coup'+(nb>1?'s':'')+' de cœur</b> dans ce coin&nbsp;!</div>'+
-        '<div style="font-size:12.5px;">Prêt à les envoyer au Cockpit pour la suite&nbsp;?</div>'+
-        '<button class="hz-fin-valider" id="hz-fin-valider" type="button">✓ Valider la suite →</button>'+
-        (proposerDormir ? '<button class="hz-fin-dormir" id="hz-fin-dormir" type="button">🌙 Sinon, où dormir dans le coin&nbsp;?</button>' : '')+
-        '<button class="hz-swipe-rejouer" id="hz-fin-revoir" type="button">↺ Revoir ce coin</button>';
-      const v=document.getElementById('hz-fin-valider');
-      if(v) v.addEventListener('click',envoyerAimeesAuCockpit);
-      const dm=document.getElementById('hz-fin-dormir');
-      if(dm) dm.addEventListener('click',basculeVersDormir);
-      const rv=document.getElementById('hz-fin-revoir');
-      if(rv) rv.addEventListener('click',()=>{ HZ_SWIPE_I=0; rendSwipeCarte(); majSwipeProgres(); });
+      if(proposerDormir){
+        vide.innerHTML='<span class="hz-swipe-empty-ic" style="animation:hzSeuilPop .5s ease">🌙</span>'+
+          '<div style="font-size:15px;color:var(--ink);"><b>Et maintenant&nbsp;: où dormir&nbsp;?</b></div>'+
+          '<div style="font-size:12.5px;">Les couchages du coin vont défiler…</div>';
+        clearTimeout(HZ_FIN_TIMER);
+        HZ_FIN_TIMER=setTimeout(()=>{ basculeVersDormir(); }, 1600);
+      }else{
+        // Écran de fin (après la nuit, ou pas de couchage) — plus de « valider » : le ❤️
+        // a déjà tout envoyé au Cockpit. On récapitule et on offre la suite.
+        vide.innerHTML='<span class="hz-swipe-empty-ic">🎉</span>'+
+          '<div style="font-size:15px;color:var(--ink);"><b>'+nb+' coup'+(nb>1?'s':'')+' de cœur</b> dans ce coin&nbsp;!</div>'+
+          '<div style="font-size:12.5px;">Ils sont déjà au Cockpit — le groupe affine ensemble.</div>'+
+          '<button class="hz-fin-valider" id="hz-fin-cockpit" type="button">→ Voir au Cockpit</button>'+
+          '<button class="hz-swipe-rejouer" id="hz-fin-revoir" type="button">↺ Revoir ce coin</button>';
+        const c=document.getElementById('hz-fin-cockpit');
+        if(c) c.addEventListener('click',()=>{ window.location.href='cockpit.html'; });
+        const rv=document.getElementById('hz-fin-revoir');
+        if(rv) rv.addEventListener('click',()=>{ HZ_SWIPE_I=0; rendSwipeCarte(); majSwipeProgres(); });
+      }
     }
   }
 }
