@@ -133,6 +133,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hub-porte2 b{color:var(--gold-text);}
 /* marqueur cliquable « dans l'itinéraire » : halo or autour de la pastille du moteur */
 .hub-mk-choisi{filter:drop-shadow(0 0 0 2px var(--gold));}
+/* survol direct : la pastille réagit (grossit, ombre) — invite au clic, sans menu */
+#hub-map .rnr-mk{transition:transform .12s ease;cursor:pointer;}
+#hub-map .rnr-mk:hover{transform:scale(1.35);z-index:1000;}
 </style>
 </head>
 <body>
@@ -181,7 +184,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     <div class="hub-carte-cote">
       <div class="rr-surface">
         <h3>Mon itinéraire</h3>
-        <div class="hub-itin-aide" id="hub-itin-aide">Clique les points sur la carte, dans l'ordre du voyage.</div>
+        <div class="hub-itin-aide" id="hub-itin-aide">Survole un point pour le voir, clique pour l'ajouter — dans l'ordre du voyage.</div>
         <ol class="hub-itin-liste" id="hub-itin-liste"></ol>
       </div>
       <button class="rr-btn rr-btn-primary" id="hub-valider" style="width:100%;margin-top:10px;" disabled>Valider → Voyage</button>
@@ -358,6 +361,8 @@ async function loadHubData(userId){
    ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
    ════════════════════════════════════════════════════════════════════════ */
 let HUB_MAP=null, HUB_MARKERS={}, HUB_ITIN=[], HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_TRAIT=null, HUB_ETATS={};
+// Tactile : sur mobile le survol n'existe pas → on n'ouvre pas la fiche au survol (le tap ajoute direct).
+const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
 async function initHubCarte(fiches, groupeId, userId){
   HUB_GROUPE_ID=groupeId;
@@ -400,14 +405,17 @@ async function initHubCarte(fiches, groupeId, userId){
     const photo = f.photo_url
       ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHubHtml(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
       : '';
+    // La fiche d'identité (photo + nom + lieu) — montrée AU SURVOL (remplace l'ancien popup-au-clic).
     mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
       photo+
       '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
-      '<div style="font-size:11px;color:#888;padding:0 2px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
-      '<div style="font-size:12px;color:var(--gold-text,#8b6914);font-weight:700;margin-top:6px;padding:4px 2px;cursor:pointer;" '+
-      'onclick="hubTogglePoint(\''+f.id+'\')">＋ Ajouter à mon itinéraire</div>'+
-      '</div>', {maxWidth:240});
-    mk.on('click', ()=>{ /* le clic ouvre le popup ; l'ajout se fait via le lien du popup */ });
+      '<div style="font-size:11px;color:#888;padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '</div>', {maxWidth:240, autoPan:false, closeButton:false});
+    // SURVOL (desktop) : la fiche apparaît / disparaît. Pas de menu, pas de clic pour voir.
+    mk.on('mouseover', ()=>{ if(!HUB_TACTILE) mk.openPopup(); });
+    mk.on('mouseout',  ()=>{ if(!HUB_TACTILE) mk.closePopup(); });
+    // CLIC / TAP : ajoute ou retire DIRECT de l'itinéraire (1 geste, point allumé en teal).
+    mk.on('click', ()=>{ hubTogglePoint(f.id); });
     HUB_MARKERS[f.id]=mk;
     bounds.push([f.lat,f.lng]);
   });
@@ -440,10 +448,18 @@ function hubRendItin(){
   }).join('');
   if(aide) aide.style.display = HUB_ITIN.length ? 'none' : 'block';
   if(btn) btn.disabled = HUB_ITIN.length===0;
-  // halo or sur les marqueurs choisis + trait reliant
+  // Point dans l'itinéraire → allumé en TEAL (couleur officielle « dans le voyage »),
+  // via le moteur unique (zéro couleur en dur). Hors itinéraire → son état réel.
   Object.keys(HUB_MARKERS).forEach(id=>{
-    const el=HUB_MARKERS[id]._icon;
-    if(el) el.classList.toggle('hub-mk-choisi', HUB_ITIN.indexOf(id)>=0);
+    const mk=HUB_MARKERS[id]; const f=HUB_FICHES[id];
+    const dans = HUB_ITIN.indexOf(id)>=0;
+    if(window.RNR_MARQUEURS && f){
+      const etat = dans ? {epingle:true} : (HUB_ETATS[id]||{});
+      const ic = RNR_MARQUEURS.icone(f, etat, {taille:20});
+      if(ic) mk.setIcon(ic);
+    }
+    const el=mk._icon;
+    if(el) el.classList.toggle('hub-mk-choisi', dans);
   });
   hubTrace();
 }
