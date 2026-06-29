@@ -86,28 +86,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .vy-anim:hover{border-color:var(--gold-a35);}
 .vy-anim input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
 
-/* ── Grille du Hub ── */
-.hub-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;padding-bottom:90px;margin-top:6px;}
+/* ── Ligne du bas : Le groupe | Partager au groupe ── */
+.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding-bottom:90px;margin-top:6px;}
 @media(max-width:860px){.hub-grid{grid-template-columns:1fr;}}
-
-/* indicateurs */
-.inds{display:flex;gap:14px 26px;flex-wrap:wrap;}
-.ind{display:flex;flex-direction:column;min-width:70px;}
-.ind .n{font-family:var(--font-title);font-size:28px;font-weight:700;color:var(--gold-text);line-height:1;}
-.ind .l{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
-
-/* fiche vedette (carte papier) */
-.vedette{margin-top:16px;}
-.vedette .ph{
-  height:120px;border-radius:var(--r) var(--r) 0 0;display:grid;place-items:center;position:relative;overflow:hidden;
-  background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));
-  background-size:cover!important;background-position:center!important;
-}
-/* texte SUR IMAGE : invariant par nature */
-.vedette .ph .ev{font-family:var(--font-title);font-weight:700;font-size:22px;color:rgba(255,255,255,.94);text-shadow:0 2px 10px rgba(0,0,0,.55);z-index:2;}
-.vedette .corps{padding:14px 18px 16px;}
-.vedette .nm{font-family:var(--font-title);font-size:17px;font-weight:700;color:#1a1208;}
-.vedette .mt{font-size:12.5px;color:#6B5F4A;margin:3px 0 9px;}
 
 /* groupe */
 .gr-nom{font-size:14.5px;color:var(--ink);margin-bottom:10px;}
@@ -121,12 +102,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   .fil-step .lbl{font-size:11px;}
   .hub-grid{padding-bottom:130px;}
 }
-/* ── CARTE DE CONSTRUCTION (B16.1) ── */
-.hub-carte-zone{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin:6px 0 22px;}
+/* ── Le Hub respire en grand : la carte est le héros de la page ── */
+.rr-wrap{max-width:1480px;}
+/* ── CARTE DE CONSTRUCTION (B16.1) — héros en haut ── */
+.hub-carte-zone{display:grid;grid-template-columns:3fr 1fr;gap:16px;margin:6px 0 26px;}
 @media(max-width:860px){.hub-carte-zone{grid-template-columns:1fr;}}
 .hub-carte-wrap{position:relative;border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;
-  height:420px;background:var(--surface);}
-@media(max-width:860px){.hub-carte-wrap{height:320px;}}
+  height:540px;background:var(--surface);}
+@media(max-width:860px){.hub-carte-wrap{height:360px;}}
 #hub-map{width:100%;height:100%;}
 .hub-carte-vide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:8px;text-align:center;background:var(--surface);z-index:500;padding:20px;}
@@ -206,49 +189,22 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     </div>
   </div>
 
-  <div class="rr-section">Aujourd'hui</div>
+  <div class="rr-section">Le groupe</div>
 
   <div class="hub-grid">
 
-    <!-- ── Votre voyage prend forme + fiche vedette ── -->
-    <div>
-      <div class="rr-surface">
-        <h3>Votre voyage prend forme</h3>
-        <div class="inds">
-          <div class="ind"><span class="n" id="n-fiches">—</span><span class="l">Fiches rêvées</span></div>
-          <div class="ind"><span class="n" id="n-regions">—</span><span class="l">Régions</span></div>
-          <div class="ind"><span class="n" id="n-coeurs">—</span><span class="l">Coups de cœur</span></div>
-          <div class="ind"><span class="n" id="n-note">—</span><span class="l">Note moy.</span></div>
-        </div>
-      </div>
-
-      <div class="rr-paper rr-hover vedette" id="vedette" style="display:none;">
-        <div class="ph" id="vd-ph"><span class="ev" id="vd-region"></span></div>
-        <div class="corps">
-          <div class="nm" id="vd-nom"></div>
-          <div class="mt" id="vd-mt"></div>
-          <span class="rr-badge" id="vd-badge" style="display:none;">⭐ coup de cœur</span>
-          <div style="margin-top:12px;">
-            <a class="rr-btn rr-btn-primary rr-btn-sm" id="vd-lien" href="carnet.html">Ouvrir le carnet</a>
-          </div>
-        </div>
-      </div>
+    <!-- ── Le groupe ── -->
+    <div class="rr-surface">
+      <h3>Le groupe</h3>
+      <div class="gr-nom">🧑‍🤝‍🧑 <a href="onboarding.html" id="gr-lien" title="Régler mon groupe (nom, départ, membres)">Mon groupe ⚙️</a></div>
+      <div class="gr-compte" id="gr-compte">Chargement…</div>
     </div>
 
-    <!-- ── Le groupe ── -->
-    <div>
-      <div class="rr-surface">
-        <h3>Le groupe</h3>
-        <div class="gr-nom">🧑‍🤝‍🧑 <a href="onboarding.html" id="gr-lien" title="Régler mon groupe (nom, départ, membres)">Mon groupe ⚙️</a></div>
-        <div class="gr-compte" id="gr-compte">Chargement…</div>
-      </div>
-
-      <!-- ── Partager au groupe (fil unifié, discussion.js — invariant colonne droite, Master 4.18) ── -->
-      <div class="rr-surface" style="margin-top:18px;">
-        <h3>Partager au groupe</h3>
-        <div id="hub-discussion"></div>
-        <div class="gr-compte" style="margin-top:8px;">Informel · commun à tous les voyages · ne crée pas de fiche</div>
-      </div>
+    <!-- ── Partager au groupe (fil unifié, discussion.js — invariant, Master 4.18) ── -->
+    <div class="rr-surface">
+      <h3>Partager au groupe</h3>
+      <div id="hub-discussion"></div>
+      <div class="gr-compte" style="margin-top:8px;">Informel · commun à tous les voyages · ne crée pas de fiche</div>
     </div>
 
   </div>
@@ -382,33 +338,9 @@ async function loadHubData(userId){
     const fiches=lieux||[];
 
     const regions=new Set(fiches.map(f=>normalizeRegionKey(f.region)));
-    const notes=fiches.map(f=>Number(f.note_famille)).filter(n=>!isNaN(n)&&n>0);
-    const coeurs=notes.filter(n=>n>=4).length;
-    const noteMoy=notes.length?(notes.reduce((a,b)=>a+b,0)/notes.length):0;
 
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-    set('n-fiches',fiches.length);
-    set('n-regions',regions.size);
-    set('n-coeurs',coeurs);
-    set('n-note',noteMoy?noteMoy.toFixed(1):'—');
     set('fil-resume',fiches.length+' fiche'+(fiches.length>1?'s':'')+' rêvée'+(fiches.length>1?'s':'')+' dans '+regions.size+' région'+(regions.size>1?'s':'')+'.');
-
-    /* La fiche vedette : meilleure note, sinon la première */
-    const top=fiches.find(f=>Number(f.note_famille)>0)||fiches[0];
-    if(top){
-      const v=document.getElementById('vedette');
-      v.style.display='block';
-      document.getElementById('vd-nom').textContent=top.nom||'Sans nom';
-      document.getElementById('vd-region').textContent=(top.region||'').toUpperCase();
-      document.getElementById('vd-mt').textContent=
-        (top.region?cap(top.region)+' · ':'')+(top.note_famille?('noté '+top.note_famille+'/5'):'fiche du groupe');
-      if(Number(top.note_famille)>=4) document.getElementById('vd-badge').style.display='inline-block';
-      /* photo réelle si la galerie existe */
-      const ph=document.getElementById('vd-ph');
-      const urls=Array.isArray(top.photos_urls)?top.photos_urls:[];
-      if(urls.length){ ph.style.background="linear-gradient(to top,rgba(0,0,0,.35),transparent 60%),url('"+urls[0]+"')"; }
-      /* hash fixe vs #dyn-xxx indécidable d'ici : lien simple, robuste */
-    }
 
     /* ── CARTE DE CONSTRUCTION (B16.1) : porte « je sais où je vais » ── */
     initHubCarte(fiches, groupeId, userId);
