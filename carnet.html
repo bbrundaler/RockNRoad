@@ -391,6 +391,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
+<script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script></head>
 <body>
 
@@ -572,24 +573,19 @@ function requestIdleCallbackSafe(cb){
   const e=session.user.email;
   const ac=document.getElementById("auth-check");if(ac){ac.style.opacity="0";setTimeout(()=>ac.style.display="none",500);}
   const mc=document.getElementById("main-content");if(mc)mc.style.display="block";
-  // MOTEUR UNIQUE : les 4 régions de référence existent toujours, même vides.
-  // Les autres régions naissent des données (loadDynamicFiches).
-  ALL_SUPABASE_REGIONS.forEach(rk=>{
-    try{ createRegionTab('tab-'+rk, rk, REGION_META[rk].nom, []); }
-    catch(e){ console.error('createRegionTab '+rk, e); }
-  });
+  // Maille 22 régions : on charge le découpage GPS d'abord, puis les fiches
+  // créent dynamiquement leur région (aucun onglet fixe au démarrage).
+  await chargeDecoupage22();
   // Handle hash navigation from other pages
   const hash=window.location.hash.replace('#','');
   const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
   // Sans hash (clic « Carnet » du chrome) ou #overview → région par défaut.
-  // (L'ancienne vue d'ensemble reste détrônée par le Hub — décision v9. Défaut configurable via la future Console Admin.)
-  if(!hash || hash==='overview'){showTab('alsace');}
-  if(validTabs.includes(hash)){
-    showTab(hash);
-  } else if(hash.startsWith('dyn-')){
-    // Onglet dynamique : il n'existe pas encore (créé par loadDynamicFiches) → on mémorise.
-    window._pendingDynTab=hash;
-  }
+  // (L'ancienne vue d'ensemble reste détrônée par le Hub — décision v9.)
+  // Maille 22 : aucun onglet n'existe encore au démarrage. On mémorise le souhait
+  // (hash explicite, ou première région disponible par défaut) et loadDynamicFiches l'applique.
+  if(!hash || hash==='overview'){ window._pendingDefaultTab=true; }
+  else if(hash.startsWith('dyn-')){ window._pendingDynTab=hash; }
+  else if(validTabs.includes(hash)){ window._pendingDynTab='dyn-'+hash; }
   // Charger le profil groupe
   RNR_PERF.start('2 groupe');
   await loadGroupeProfil(session.user.id);
@@ -609,32 +605,33 @@ window.addEventListener('hashchange',function(){
   if(h && (validTabs.includes(h) || h.startsWith('dyn-'))){ showTab(h); }
 });
 
-// ── FICHES DYNAMIQUES SUPABASE v21 ───────────────────────────────────────
-// Régions désormais toutes dynamiques (Alsace + Pyrénées + Atlantique + Bourgogne)
-const ALL_SUPABASE_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
-// Alias : rk normalisé → région de référence (créée par createRegionTab au démarrage)
-const REGION_ALIASES = {
-  // Pyrénées / Sud-Ouest
-  'midipyrenees':'pyrenees',
-  'pyrenees':'pyrenees',
-  // Atlantique / Aquitaine
-  'aquitaine':'atlantique',
-  'atlantique':'atlantique',
-  'paysdelaloire':'atlantique',
-  // Bourgogne
-  'bourgogne':'bourgogne',
-  'bourgognefranchecomte':'bourgogne',
-  'franchecomte':'bourgogne',
-  // Alsace
-  'alsace':'alsace',
-  'alsacelorraine':'alsace',
-  'lorraine':'alsace',
-  'champagneardenne':'alsace',
-};
-function resolveRegionTab(rk){
-  if(REGION_ALIASES[rk]) return REGION_ALIASES[rk];
-  if(ALL_SUPABASE_REGIONS.includes(rk)) return rk;
-  return null; // région sans alias → onglet généré sous tab-dyn-<rk>
+// ── FICHES DYNAMIQUES SUPABASE — maille 22 régions (rattachement GPS) ─────────
+// Plus AUCUN onglet fixe ni alias de fusion : chaque région naît de ses fiches,
+// rattachées par leur GPS via carto.js (slug = région réelle, jamais la colonne
+// `region` de la base qui est obsolète). Une région n'apparaît que si elle a une fiche.
+const ALL_SUPABASE_REGIONS = []; // plus de régions de référence en dur
+function resolveRegionTab(rk){ return rk; } // chaque slug est son propre onglet (tab-dyn-<slug>)
+
+// ── Moteur de rattachement GPS (carto.js + découpage 22 régions) ──────────────
+let RNR_DECOUPAGE=null, RNR_DECOUPAGE_OK=false, RNR_CODE2SLUG={};
+async function chargeDecoupage22(){
+  try{
+    if(!window.RNR_CARTO_MOTEUR){ console.warn('Carnet: carto.js absent'); return; }
+    const rep=await fetch('decoupage-france-regions.json',{cache:'force-cache'});
+    if(!rep.ok){ console.warn('Carnet: découpage introuvable',rep.status); return; }
+    const geo=await rep.json();
+    geo.features.forEach(f=>{ RNR_CODE2SLUG[f.properties.code]=f.properties.slug; });
+    RNR_DECOUPAGE=window.RNR_CARTO_MOTEUR.creerDecoupage(geo);
+    RNR_DECOUPAGE_OK=true;
+  }catch(e){ console.warn('Carnet: rattachement GPS échoué',e); }
+}
+// Slug de région d'une fiche, par son GPS (vérité). Repli : ancienne colonne region.
+function regionSlugDe(l){
+  if(RNR_DECOUPAGE_OK && l && l.lat!=null && l.lng!=null){
+    const z=RNR_DECOUPAGE.zoneDe(+l.lat,+l.lng);
+    if(z) return RNR_CODE2SLUG[z.code]||null;
+  }
+  return normalizeRegionKey(l && l.region || 'Autre');
 }
 let allLieux = []; // cache global
 
@@ -933,43 +930,35 @@ async function loadDynamicFiches(){
       });
     });
 
-    // Grouper par région normalisée
+    // Grouper par région RÉELLE (GPS via carto.js → slug des 22). Plus jamais
+    // la colonne `region` de la base (obsolète). Pose aussi _regionSvg sur la fiche.
     const byRegion={};
     allLieux.forEach(l=>{
-      const rk=normalizeRegionKey(l.region||'Autre');
+      const rk=regionSlugDe(l);
+      l._regionSvg=rk;
       if(!byRegion[rk]) byRegion[rk]=[];
       byRegion[rk].push(l);
     });
 
-    const appMain=document.getElementById('carnet-main');
-
-    // ── Grouper par onglet de destination (pas par région source)
-    const byTab = {};
-    Object.keys(byRegion).forEach(rk=>{
-      const destTab = resolveRegionTab(rk) || rk;  // région inconnue → garde sa propre clé
-      if(!byTab[destTab]) byTab[destTab]=[];
-      byTab[destTab].push(...byRegion[rk]);
-    });
+    // ── Toutes les régions sont dynamiques (maille 22). destTab = le slug lui-même.
+    const byTab = byRegion;
 
     // ── Peupler les onglets : MOTEUR UNIQUE pour 100 % des régions
     Object.keys(byTab).forEach(tabRk=>{
       const lieux=byTab[tabRk];
-      const isRef=ALL_SUPABASE_REGIONS.includes(tabRk); // régions de référence (créées au démarrage)
-      const regionName=isRef?REGION_META[tabRk].nom:(lieux[0].region||tabRk);
-      const tabId=isRef?'tab-'+tabRk:'tab-dyn-'+tabRk;
+      const regionName=nomRegion22(tabRk);
+      const tabId='tab-dyn-'+tabRk;
       if(!document.getElementById(tabId)){
         try{ createRegionTab(tabId, tabRk, regionName, lieux); }
         catch(err){ console.error('createRegionTab '+tabRk, err); }
         console.log('✓ Onglet région créé:', tabRk, '('+regionName+')');
       }
-      if(!isRef){
-        try{ addDynRegionTopbar(regionName, tabRk); }
-        catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
-        try{ addCarteFilterBtn(regionName, lieux[0].region); }
-        catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
-        try{ addFicheSelectOption(regionName, lieux[0].region); }
-        catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
-      }
+      try{ addDynRegionTopbar(regionName, tabRk); }
+      catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
+      try{ addCarteFilterBtn(regionName, tabRk); }
+      catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
+      try{ addFicheSelectOption(regionName, tabRk); }
+      catch(err){ console.error('addFicheSelectOption '+tabRk, err); }
       // Mêmes moteurs de contenu pour toutes les régions, à chaque rechargement.
       try{ populateRegionContent(tabRk, regionName, lieux); }
       catch(err){ console.error('populateRegionContent '+tabRk, err); }
@@ -977,35 +966,40 @@ async function loadDynamicFiches(){
       catch(err){ console.error('buildRecapView '+tabRk, err); }
     });
 
-    // Re-passe d'équité : chaque barre (fixe ET dynamique) reçoit les boutons de TOUTES
-    // les régions dynamiques (idempotent — les premières créées manquaient chez les suivantes).
+    // Re-passe d'équité : chaque barre reçoit les boutons de TOUTES les régions
+    // (idempotent — les premières créées manquaient chez les suivantes).
     Object.keys(byTab).forEach(rk=>{
-      if(!ALL_SUPABASE_REGIONS.includes(rk) && byTab[rk] && byTab[rk].length){
-        try{ addDynRegionTopbar(byTab[rk][0].region || rk, rk); }catch(e){}
+      if(byTab[rk] && byTab[rk].length){
+        try{ addDynRegionTopbar(nomRegion22(rk), rk); }catch(e){}
       }
     });
 
-    // Ordre DÉTERMINISTE : dans chaque barre, les régions dynamiques sont triées
-    // alphabétiquement (après les 4 références). Sans ce tri, chaque barre gardait
-    // son ordre d'arrivée propre → les boutons « bougeaient » d'un onglet à l'autre.
+    // Ordre DÉTERMINISTE : dans chaque barre, les régions triées alphabétiquement.
+    // Sans ce tri, chaque barre gardait son ordre d'arrivée → boutons qui « bougeaient ».
     document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
       [...slot.children]
         .sort((a,b)=>(a.dataset.rname||a.textContent).localeCompare(b.dataset.rname||b.textContent,'fr'))
         .forEach(btn=>slot.appendChild(btn));
     });
 
-    // Régions devenues vides (dernière fiche supprimée) ou sans fiche : état vide propre
+    // Régions devenues vides (dernière fiche supprimée) : état vide propre
     document.querySelectorAll('[data-region-tab]').forEach(sec=>{
       const rk=sec.getAttribute('data-region-tab');
       if(!byTab[rk]){
-        const nom=(REGION_META[rk]&&REGION_META[rk].nom)||rk.charAt(0).toUpperCase()+rk.slice(1);
-        try{ populateRegionContent(rk, nom, []); }
+        try{ populateRegionContent(rk, nomRegion22(rk), []); }
         catch(err){ console.error('populateRegionContent (vide) '+rk, err); }
       }
     });
 
-    // Arrivée directe sur un onglet dynamique (#dyn-xxx au chargement) : l'appliquer
-    // maintenant que les onglets existent (avant : retombait sur la vue d'ensemble).
+    // Défaut : si aucun onglet demandé, afficher la première région (ordre alpha).
+    if(window._pendingDefaultTab){
+      const premier=Object.keys(byTab).sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr'))[0];
+      if(premier){ showTab('dyn-'+premier); }
+      window._pendingDefaultTab=false;
+    }
+
+    // Arrivée directe sur un onglet (#dyn-xxx ou région) : l'appliquer maintenant
+    // que les onglets existent (avant : retombait sur la vue d'ensemble).
     if(window._pendingDynTab && document.getElementById('tab-'+window._pendingDynTab)){
       showTab(window._pendingDynTab);
       window._pendingDynTab=null;
@@ -1311,7 +1305,7 @@ function initCarteGlobal(){
   carteGlobalMarkersByRegion={};
   allLieux.filter(l=>l.lat&&l.lng).forEach(l=>{
     const col=typeColor(l.type);
-    const rk=normalizeRegionKey(l.region||'Autre');
+    const rk=l._regionSvg||regionSlugDe(l);
     const noteF=l.note_famille?'★'.repeat(l.note_famille)+' ':'' ;
     const popup=`<div style="font-family:Inter,sans-serif;min-width:160px;">
       <strong style="font-size:13px;">${l.nom||'—'}</strong><br>
@@ -1320,7 +1314,7 @@ function initCarteGlobal(){
       ${noteF?`<span style="font-size:10px;color:var(--gold-deep);font-weight:700;">${noteF}🐾</span>`:''}
       <br><span style="font-size:10px;background:var(--bg);color:var(--ink-dim);padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
       <br><a href="https://www.google.com/maps?q=${l.lat},${l.lng}" target="_blank" style="font-size:10px;color:var(--gold);font-weight:700;text-decoration:none;">📍 Maps →</a>
-      <button onclick="showTab('${ALL_SUPABASE_REGIONS.includes(rk)?rk:'dyn-'+rk}')" style="font-size:9px;background:var(--chrome-bg);color:var(--gold);border:none;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:4px;">Voir fiche</button>
+      <button onclick="showTab('dyn-${rk}')" style="font-size:9px;background:var(--chrome-bg);color:var(--gold);border:none;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:4px;">Voir fiche</button>
     </div>`;
     const marker=L.marker([l.lat,l.lng],{icon:iconeCarnet(l)}).addTo(carteGlobalMap).bindPopup(popup);
     marker.on('mouseover click',()=>updateCarteInfoPanel(l));
@@ -1334,12 +1328,12 @@ function initCarteGlobal(){
 function carteFilterSelect(region){
   if(!carteGlobalMap) return;
   Object.entries(carteGlobalMarkersByRegion).forEach(([rk, markers])=>{
-    const match = region==='all' || rk===normalizeRegionKey(region);
+    const match = region==='all' || rk===region;
     markers.forEach(m=>{ if(match) m.addTo(carteGlobalMap); else carteGlobalMap.removeLayer(m); });
   });
   // Recentrer si filtre actif
   if(region!=='all'){
-    const rk=normalizeRegionKey(region);
+    const rk=region;
     const pts=[];
     (carteGlobalMarkersByRegion[rk]||[]).forEach(m=>{ const ll=m.getLatLng(); pts.push([ll.lat,ll.lng]); });
     if(pts.length) carteGlobalMap.fitBounds(pts,{padding:[32,32],maxZoom:11});
@@ -1354,7 +1348,7 @@ function carteFilter(region, btn){
   btn.classList.add('active');
   if(!carteGlobalMap) return;
   Object.entries(carteGlobalMarkersByRegion).forEach(([rk, markers])=>{
-    const match = region==='all' || rk===normalizeRegionKey(region);
+    const match = region==='all' || rk===region;
     markers.forEach(m=>{ if(match) m.addTo(carteGlobalMap); else carteGlobalMap.removeLayer(m); });
   });
 }
@@ -1385,7 +1379,7 @@ function initFicheGlobal(){
   ficheGlobalMarkersByRegion={};
   allLieux.filter(l=>l.lat&&l.lng).forEach(l=>{
     const col=typeColor(l.type);
-    const rk=normalizeRegionKey(l.region||'Autre');
+    const rk=l._regionSvg||regionSlugDe(l);
     const popup=`<div style="font-family:Inter,sans-serif;min-width:140px;">
       <strong style="font-size:12px;">${l.nom||'—'}</strong><br>
       <span style="font-size:9px;color:var(--ink-dim);">${l.type||''} ${l.sous_region?'· '+l.sous_region:''}</span><br>
@@ -1407,12 +1401,12 @@ function ficheSelectRegion(region){
   // Filtrer markers carte
   if(ficheGlobalMap){
     Object.entries(ficheGlobalMarkersByRegion).forEach(([rk,markers])=>{
-      const match=region==='all'||rk===normalizeRegionKey(region);
+      const match=region==='all'||rk===region;
       markers.forEach(m=>{ if(match) m.addTo(ficheGlobalMap); else ficheGlobalMap.removeLayer(m); });
     });
     // Recenter si filtre actif
     if(region!=='all'){
-      const rk=normalizeRegionKey(region);
+      const rk=region;
       const pts=(ficheGlobalMarkersByRegion[rk]||[]).map(m=>m.getLatLng());
       if(pts.length) ficheGlobalMap.fitBounds(pts.map(p=>[p.lat,p.lng]),{padding:[32,32],maxZoom:11});
     }
@@ -1424,34 +1418,24 @@ function ficheSelectRegion(region){
 function buildFicheContent(region){
   const contentEl=document.getElementById('fiche-content');
   if(!contentEl) return;
-  let lieux = region==='all' ? allLieux : allLieux.filter(l=>l.region===region);
+  let lieux = region==='all' ? allLieux : allLieux.filter(l=>(l._regionSvg||regionSlugDe(l))===region);
   if(!lieux.length){
     contentEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--ink-dim);font-size:13px;">Aucune fiche pour cette région — <a href="admin.html" style="color:var(--gold);">Créer une fiche</a></div>';
     return;
   }
-  // Grouper par région puis sous-région
+  // Grouper par région RÉELLE (slug GPS) puis sous-région
   const byRegion={};
   lieux.forEach(l=>{
-    const r=l.region||'Autre';
+    const r=l._regionSvg||regionSlugDe(l);
     if(!byRegion[r]) byRegion[r]=[];
     byRegion[r].push(l);
   });
 
-  const REGION_COLORS={
-    'Alsace':'#8B2020','Aquitaine':'#7B4B00','Auvergne':'#4a5a2a',
-    'Basse-Normandie':'#2a5a7a','Bourgogne':'#6B3288','Bretagne':'#1a6a5a',
-    'Centre':'#5a4a2a','Champagne-Ardenne':'#8B6914','Corse':'#2a7a4a',
-    'Franche-Comté':'#3a5a7a','Haute-Normandie':'#1a5a7a','Île-de-France':'#4a2a7a',
-    'Languedoc-Roussillon':'#7a6a1a','Limousin':'#3a6a3a','Lorraine':'#6a3a6a',
-    'Midi-Pyrénées':'#2C5016','Nord-Pas-de-Calais':'#1a3a6a','Pays de la Loire':'#1a6a6a',
-    'Picardie':'#5a5a2a','Poitou-Charentes':'#6a4a1a','Provence-Alpes-Côte-d-Azur':'#8B4a00',
-    'Rhône-Alpes':'#3a3a7a',
-    'Pyrenees':'#2C5016','Atlantique':'#1a5a7a'
-  };
   let html='';
-  Object.keys(byRegion).sort().forEach(regionName=>{
-    const col=REGION_COLORS[regionName]||'var(--ink-dim)';
-    const lx=byRegion[regionName];
+  Object.keys(byRegion).sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr')).forEach(slug=>{
+    const col=couleurRegion22(slug)||'var(--ink-dim)';
+    const regionName=nomRegion22(slug);
+    const lx=byRegion[slug];
     // Grouper par sous-région
     const bySR={};
     lx.forEach(l=>{ const sr=l.sous_region||'—'; if(!bySR[sr]) bySR[sr]=[]; bySR[sr].push(l); });
@@ -1536,83 +1520,71 @@ function switchRegionView(rk, view){
 // ── CARTE GLOBALE : lazy init when tab shown ──────────────────────────
 const _origShowTab = window.showTab;
 
-// ── MOTEUR UNIQUE DE PAGES RÉGION (décision Bruno 12/06 : 100 % dynamique) ──
-// REGION_META = DONNÉES d'identité visuelle des régions historiques (gradients,
-// emojis, sous-titres, chips). Les régions sans entrée reçoivent l'habillage
-// neutre or-anthracite. Ces données migreront vers carto.js à terme.
-const REGION_META={
-  alsace:{nom:"Alsace",emoji:"🥨",grad:"linear-gradient(135deg,#8B2020 0%,#5a1010 60%,#3a0808 100%)",
-    sub:"Depuis votre départ · Sur place · Votre région",
-    tags:["🥨 Alsace","🍷 Route des vins","🏰 Villages médiévaux"]},
-  pyrenees:{nom:"Pyrénées",emoji:"🏔️",grad:"linear-gradient(135deg,#2C5016dd 0%,#2C501688 60%,#2C501644 100%)",
-    sub:"Béarn · Hautes-Pyrénées · ≈ 860 km depuis votre départ · Via Pau",
-    tags:["🏔️ Béarn","🏰 Bigorre","🐕 Chien OK partout","🏘️ Lescun","🌊 Gavarnie"]},
-  atlantique:{nom:"Atlantique",emoji:"🌊",grad:"linear-gradient(135deg,#1a5a7add 0%,#1a5a7a88 60%,#1a5a7a44 100%)",
-    sub:"Gironde · Landes · ≈ 870 km depuis votre départ · Via Bordeaux",
-    tags:["🌊 Gironde","🌲 Landes","🦪 Huîtres","🚴 Forêt vélo","🏖️ Dune du Pilat"]},
-  bourgogne:{nom:"Bourgogne",emoji:"🍷",grad:"linear-gradient(135deg,#6B3288dd 0%,#6B328888 60%,#6B328844 100%)",
-    sub:"Côte-d'Or · Yonne · ≈ 280 km depuis votre départ · Via Dijon",
-    tags:["🍷 Côte-d'Or","🏰 Yonne","🚴 Canal","🏛️ Guédelon","⛷️ Jura proche"]},
+// ── MOTEUR UNIQUE DE PAGES RÉGION (100 % dynamique, maille 22 régions) ──
+// ── IDENTITÉ DES 22 RÉGIONS (maille unique du site) ───────────────────────────
+// Une région = un nom + une couleur signature. PAS d'emoji (choix design : sobre,
+// professionnel — l'identité passe par la couleur et la typo, pas le pictogramme).
+// La couleur « raconte » discrètement la région ; le bandeau la décline en dégradé
+// vers l'anthracite de la marque. Clé = slug du découpage (decoupage-france-regions.json).
+const RNR_REGIONS_22={
+  'alsace':              {nom:"Alsace",                    c:"#8B2E2E"}, // grès des Vosges
+  'aquitaine':           {nom:"Aquitaine",                 c:"#1F6F8B"}, // océan atlantique
+  'auvergne':            {nom:"Auvergne",                  c:"#6E3F23"}, // basalte des volcans
+  'basse-normandie':     {nom:"Basse-Normandie",           c:"#4E7A4E"}, // bocage
+  'bourgogne':           {nom:"Bourgogne",                 c:"#6B3288"}, // pourpre des grands crus
+  'bretagne':            {nom:"Bretagne",                  c:"#24407C"}, // bleu marine granit
+  'centre':              {nom:"Centre-Val de Loire",       c:"#9C5A14"}, // miel des châteaux
+  'champagne-ardenne':   {nom:"Champagne-Ardenne",         c:"#7A4B6B"}, // robe du champagne rosé
+  'corse':               {nom:"Corse",                     c:"#2C8C99"}, // mer & maquis
+  'franche-comte':       {nom:"Franche-Comté",             c:"#3F6E8C"}, // glaciers du Jura
+  'haute-normandie':     {nom:"Haute-Normandie",           c:"#5E8C31"}, // falaises et campagne
+  'languedoc-roussillon':{nom:"Languedoc-Roussillon",      c:"#C0492B"}, // terre cuite méditerranéenne
+  'limousin':            {nom:"Limousin",                  c:"#5F7A3A"}, // plateaux verts
+  'lorraine':            {nom:"Lorraine",                  c:"#46618C"}, // bleu des Vosges
+  'midi-pyrenees':       {nom:"Midi-Pyrénées",             c:"#2C5016"}, // vert des montagnes
+  'nord-pas-de-calais':  {nom:"Nord-Pas-de-Calais",        c:"#8F7820"}, // blé des Flandres
+  'pays-de-la-loire':    {nom:"Pays de la Loire",          c:"#1A6A6A"}, // estuaire & sel
+  'picardie':            {nom:"Picardie",                  c:"#7E8C3A"}, // baie de Somme
+  'poitou-charentes':    {nom:"Poitou-Charentes",          c:"#11806C"}, // turquoise des îles
+  'provence-alpes-cote-d-azur':{nom:"Provence-Alpes-Côte d'Azur",c:"#7B5EA7"}, // lavande
+  'rhone-alpes':         {nom:"Rhône-Alpes",               c:"#3F6E8C"}, // glacier alpin
+  'ile-de-france':       {nom:"Île-de-France",             c:"#A02C5A"}, // framboise capitale
 };
-const REGION_EMOJIS={
-  'iledefrance':'🗼','bretagne':'⛵','normandie':'🐄','provence':'🌻',
-  'provencealpescotedazur':'🌻','auvergne':'🌋','auvergnerhonealpes':'🌋',
-  'occitanie':'☀️','hautsdefrance':'🌾','nord':'🌾','corse':'🏝️',
-  'paysdelaloire':'🏰','centrevaldeloire':'🏰','loire':'🏰','centre':'🏰','jura':'⛰️',
-  'rhonealpes':'⛰️','alpes':'⛰️','grandest':'🥨','champagneardenne':'🍾',
-  'lorraine':'🌳','picardie':'🌾','limousin':'🐂','poitoucharentes':'🐚',
-};
-// REGION_COLORS = DONNÉES de couleur par région (même motif de gradient que les
-// 4 historiques : base dd → 88 → 44). Une région absente garde le neutre or.
-// Cette palette migrera vers carto.js avec le reste des identités régionales.
-const REGION_COLORS={
-  centre:'#9C5A14', centrevaldeloire:'#9C5A14', loire:'#9C5A14',      // miel des châteaux
-  poitoucharentes:'#11806C',                                          // turquoise océan
-  bretagne:'#24407C',                                                 // bleu marine granit
-  iledefrance:'#A02C5A',                                              // framboise
-  normandie:'#5E8C31',                                                // vert bocage
-  provence:'#7B5EA7', provencealpescotedazur:'#7B5EA7',               // lavande
-  occitanie:'#C0492B',                                                // brique toulousaine
-  corse:'#2C8C99',                                                    // mer & maquis
-  auvergne:'#6E3F23', auvergnerhonealpes:'#6E3F23',                   // basalte des volcans
-  hautsdefrance:'#8F7820', nord:'#8F7820', picardie:'#8F7820',        // blé
-  rhonealpes:'#3F6E8C', alpes:'#3F6E8C', jura:'#3F6E8C',              // glacier
-  limousin:'#8C2F2F',                                                 // vache limousine
-};
+// Nom affichable d'une région à partir de son slug (repli : slug capitalisé).
+function nomRegion22(slug){
+  const m=RNR_REGIONS_22[slug];
+  if(m) return m.nom;
+  return (slug||'').split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join('-');
+}
+// Couleur signature d'une région (repli : or de marque).
+function couleurRegion22(slug){
+  const m=RNR_REGIONS_22[slug];
+  return m?m.c:null;
+}
 function createRegionTab(tabId, rk, regionName, lieux){
   // Coquille COMPLÈTE et identique pour toutes les régions : barre de régions,
   // bandeau, commutateur Fiches / Carte & Récap. Le contenu vient de
   // populateRegionContent + buildRecapView (mêmes moteurs pour toutes).
   const appMain=document.getElementById('carnet-main');
   if(!appMain || document.getElementById(tabId)) return;
-  const meta=REGION_META[rk]||null;
-  const key=normalizeRegionKey(regionName||rk); // accents gérés (Île-de-France → iledefrance)
-  const emoji=meta?meta.emoji:(REGION_EMOJIS[key]||'🗺️');
-  const base=REGION_COLORS[key];
-  const grad=meta?meta.grad:(base
-    ? `linear-gradient(135deg,${base}dd 0%,${base}88 60%,${base}44 100%)`
-    : 'linear-gradient(135deg,rgba(200,168,75,.30) 0%,rgba(200,168,75,.10) 60%,rgba(200,168,75,.04) 100%),var(--chrome-bg)');
-  const sub=meta?meta.sub:'Vos découvertes · Votre région';
-  const tags=(meta?meta.tags:[]).map(t=>`<span style="background:rgba(255,255,255,.14);padding:3px 11px;border-radius:20px;font-size:10px;font-weight:600;">${t}</span>`).join('');
+  const couleur=couleurRegion22(rk)||'#8b6914';
+  // Bandeau : dégradé sobre de la couleur signature vers l'anthracite de marque.
+  const grad=`linear-gradient(135deg,${couleur} 0%,${couleur}cc 42%,#1a140c 100%)`;
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
     <div class="region-topbar visible" id="rtb-bar-${rk}">
-      <button class="rtb-btn" onclick="showTab('alsace')">🥨 Alsace</button>
-      <button class="rtb-btn" onclick="showTab('pyrenees')">🏔️ Pyrénées</button>
-      <button class="rtb-btn" onclick="showTab('atlantique')">🌊 Atlantique</button>
-      <button class="rtb-btn" onclick="showTab('bourgogne')">🍷 Bourgogne</button>
       <div id="rtb-dyn-${rk}" class="rtb-dyn-slot" style="display:contents;"></div>
     </div>
-    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:20px 26px;margin:16px 28px 0;position:relative;overflow:hidden;">
-      <div style="position:absolute;right:20px;top:10px;font-size:70px;opacity:.25;line-height:1;">${emoji}</div>
-      <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:6px;letter-spacing:-.5px;">${regionName}</h2>
-      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">${sub}</div>
-      ${tags?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${tags}</div>`:''}
+    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px 28px 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:2px;letter-spacing:-.5px;">${regionName}</h2>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);">${(lieux&&lieux.length)||0} ${((lieux&&lieux.length)||0)>1?'fiches':'fiche'} dans ce coin</div>
     </div>
     <div class="region-view-tabs">
-      <button class="rvt-btn active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">📋 Fiches</button>
-      <button class="rvt-btn" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">🗺️ Carte & Récap</button>
+      <button class="rvt-btn active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
+      <button class="rvt-btn" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">Carte &amp; Récap</button>
       <a class="rvt-btn rvt-add" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
     </div>
     <div class="region-view active" id="rv-${rk}-fiches">
@@ -1628,7 +1600,7 @@ function createRegionTab(tabId, rk, regionName, lieux){
         <div id="map-${rk}" style="height:380px;"></div>
       </div>
       <div class="recap-list" id="recap-list-${rk}">
-        <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte & récap disponibles après chargement des fiches.</div>
+        <div style="text-align:center;padding:24px;color:var(--ink-dim);font-size:12px;">Carte &amp; récap disponibles après chargement des fiches.</div>
       </div>
     </div>`;
   appMain.appendChild(tab);
@@ -1781,21 +1753,19 @@ function makeNuitCard(l){
 }
 
 function addDynRegionTopbar(regionName, regionKey){
-  // Add to all 3 French topbars
-  const regionEmojis2={'alsace':'🥨','bretagne':'🦞','normandie':'🐄','provence':'☀️','occitanie':'🌻','alpes':'⛷️','auvergne':'🌋','ardenne':'🍾','nord':'🌷','corse':'🏝️','loire':'🏰','jura':'🧀'};
-  const emoji=regionEmojis2[regionKey]||'📍';
+  const couleur=couleurRegion22(regionKey)||'var(--gold)';
   document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
     const parentId=slot.id.replace('rtb-dyn-','');
     if(!document.getElementById('rtb-dyn-'+parentId+'-'+regionKey)){
       const btn=document.createElement('button');
       btn.className='rtb-btn';btn.id='rtb-dyn-'+parentId+'-'+regionKey;
-      btn.innerHTML=`${emoji} ${regionName}`;
-      btn.dataset.rname=regionName; // clé de tri (sans l'émoji)
-      btn.setAttribute('onclick',"showTab('dyn-"+regionKey+"')"); // attribut (pas propriété) : requis par la sync d'état actif
+      // Pastille de couleur signature + nom (pas d'emoji : sobre, pro).
+      btn.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${couleur};margin-right:7px;vertical-align:middle;"></span>${regionName}`;
+      btn.dataset.rname=regionName; // clé de tri (sans la pastille)
+      btn.setAttribute('onclick',"showTab('dyn-"+regionKey+"')");
       slot.appendChild(btn);
     }
   });
-  return; // old function body below is now dead
 }
 
 // ── MODAL ÉDITION RAPIDE depuis carnet.html ───────────────────────────
