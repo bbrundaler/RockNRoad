@@ -118,6 +118,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hub-carte-vide .hcv-s{font-size:13px;color:var(--ink-dim);line-height:1.6;}
 .hub-carte-vide a{color:var(--gold-text);font-weight:600;}
 .hub-carte-cote{display:flex;flex-direction:column;}
+/* TABLEAU DE BORD du Hub — même grammaire que celui de Voyage (km / temps / étapes). */
+.hub-dashboard{display:flex;align-items:stretch;background:var(--gold-a10,rgba(200,168,75,.10));
+  border:1px solid var(--gold-a30,rgba(200,168,75,.35));border-radius:var(--r);margin-bottom:10px;overflow:hidden;}
+.hdb-cell{flex:1;text-align:center;padding:9px 4px;}
+.hdb-cell + .hdb-cell{border-left:1px solid var(--gold-a30,rgba(200,168,75,.30));}
+.hdb-val{font-family:var(--font-title);font-size:21px;font-weight:800;color:var(--gold-text);line-height:1;}
+.hdb-val .u{font-size:11px;font-weight:700;}
+.hdb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
 .hub-itin-aide{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:8px;}
 .hub-itin-liste{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0;padding:0;}
 .hub-itin-liste li{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);
@@ -182,6 +190,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       </div>
     </div>
     <div class="hub-carte-cote">
+      <div class="hub-dashboard" id="hub-dashboard" style="display:none;">
+        <div class="hdb-cell">
+          <div class="hdb-val" id="hubDist">—<span class="u"> km</span></div>
+          <div class="hdb-label">aller-retour</div>
+        </div>
+        <div class="hdb-cell">
+          <div class="hdb-val" id="hubDuree">—</div>
+          <div class="hdb-label">de route</div>
+        </div>
+        <div class="hdb-cell">
+          <div class="hdb-val" id="hubStops">0</div>
+          <div class="hdb-label">étapes</div>
+        </div>
+      </div>
       <div class="rr-surface">
         <h3>Comment ça marche</h3>
         <div class="hub-itin-aide">Survole un point pour le voir. <b>Clique pour le retenir</b> — il rejoint « Retenues pour ce voyage », prêt à être placé dans le trajet.</div>
@@ -516,13 +538,40 @@ function hubTraceVoyage(){
     const m=[HUB_DOMICILE.lat,HUB_DOMICILE.lng];
     pts=[m, ...ordonne, m];
   }
+  // Nombre d'étapes placées (pour le tableau de bord).
+  const nbEtapes=Object.keys(HUB_PLACEES).length;
+  hubMajDashboard({stops:nbEtapes});
+
   if(pts.length>=2){
     HUB_TRACE_VOYAGE=L.layerGroup().addTo(HUB_MAP);
     if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
-      RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, pts, {surl:SURL, skey:SKEY}).catch(()=>{});
+      RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, pts, {surl:SURL, skey:SKEY})
+        .then(r=>{ if(r && r.ok) hubMajDashboard(r); })
+        .catch(()=>{});
     } else {
       const col='#C8A84B';
       L.polyline(pts,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
+    }
+  }
+}
+
+// Tableau de bord du Hub : affiché dès qu'il y a au moins une étape ; rempli avec la
+// vraie distance/durée routières quand le tracé répond (mêmes valeurs que Voyage).
+function hubMajDashboard(d){
+  const box=document.getElementById('hub-dashboard');
+  if(!box) return;
+  if(d.stops!=null){
+    const el=document.getElementById('hubStops'); if(el) el.textContent=d.stops;
+    box.style.display = d.stops>0 ? 'flex' : 'none';
+  }
+  if(d.distance_km!=null){
+    const el=document.getElementById('hubDist'); if(el) el.innerHTML=d.distance_km+'<span class="u"> km</span>';
+  }
+  if(d.duree_h!=null){
+    const el=document.getElementById('hubDuree');
+    if(el){
+      const H=Math.floor(d.duree_h), M=Math.round((d.duree_h-H)*60);
+      el.innerHTML = H>0 ? (H+'<span class="u">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span class="u"> min</span>');
     }
   }
 }
