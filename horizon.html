@@ -858,7 +858,6 @@ function afficheReve(dataR, fiche){
 let HZ_FICHE_VEDETTE=null;
 
 // Régions de référence du carnet (mêmes clés) → navigation par #rk ; sinon #dyn-rk
-const CARNET_REF_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
 
 // BRIQUE 3 — la porte : ouvrir le chemin des fiches d'une région.
 // On vise la région RÉELLE des fiches de la zone (rattachement GPS, maille 22 régions)
@@ -866,9 +865,9 @@ const CARNET_REF_REGIONS = ['alsace','pyrenees','atlantique','bourgogne'];
 function ouvrirFichesRegion(dataR){
   const matches=fichesPourRegionCarte(dataR);
   if(matches.length){
-    const rk=normalizeRegionKey(matches[0].region||'');
-    const tab=CARNET_REF_REGIONS.includes(rk)?rk:('dyn-'+rk);
-    window.location.href='carnet.html#'+tab;
+    // dataR EST déjà le slug de la région cliquée (maille 22, commun au Carnet).
+    // On ouvre directement l'onglet de cette région dans le Carnet.
+    window.location.href='carnet.html#'+dataR;
   }else{
     // zone encore vide : on ouvre la carte du carnet pour inviter à créer une fiche
     window.location.href='carnet.html#carte';

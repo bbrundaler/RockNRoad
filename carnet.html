@@ -585,7 +585,8 @@ function requestIdleCallbackSafe(cb){
   // (hash explicite, ou première région disponible par défaut) et loadDynamicFiches l'applique.
   if(!hash || hash==='overview'){ window._pendingDefaultTab=true; }
   else if(hash.startsWith('dyn-')){ window._pendingDynTab=hash; }
-  else if(validTabs.includes(hash)){ window._pendingDynTab='dyn-'+hash; }
+  else if(hash==='carte'||hash==='fiche'||hash==='tips'){ window._pendingDynTab=null; window._pendingPlainTab=hash; }
+  else { window._pendingDynTab='dyn-'+hash; } // tout autre hash = un slug de région (maille 22)
   // Charger le profil groupe
   RNR_PERF.start('2 groupe');
   await loadGroupeProfil(session.user.id);
@@ -601,8 +602,11 @@ sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.
 
 window.addEventListener('hashchange',function(){
   const h=window.location.hash.replace('#','');
-  const validTabs=['alsace','pyrenees','atlantique','bourgogne','carte','fiche','tips','allemagne','suisse','autriche','italie','espagne','portugal','belgique','luxembourg','pays-bas','croatie','nepal','vietnam','egypte','afriquesud','srilanka','mexique'];
-  if(h && (validTabs.includes(h) || h.startsWith('dyn-'))){ showTab(h); }
+  if(!h||h==='overview') return;
+  // carte/fiche/tips : onglets directs. dyn-xxx : onglet dynamique. Tout autre = slug région.
+  if(h==='carte'||h==='fiche'||h==='tips'){ showTab(h); }
+  else if(h.startsWith('dyn-')){ if(document.getElementById('tab-'+h)) showTab(h); }
+  else { if(document.getElementById('tab-dyn-'+h)) showTab('dyn-'+h); }
 });
 
 // ── FICHES DYNAMIQUES SUPABASE — maille 22 régions (rattachement GPS) ─────────
@@ -1003,6 +1007,9 @@ async function loadDynamicFiches(){
     if(window._pendingDynTab && document.getElementById('tab-'+window._pendingDynTab)){
       showTab(window._pendingDynTab);
       window._pendingDynTab=null;
+    } else if(window._pendingPlainTab){
+      showTab(window._pendingPlainTab);
+      window._pendingPlainTab=null;
     }
 
     // ── Mise à jour overview cards avec compteurs réels
