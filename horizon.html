@@ -807,7 +807,7 @@ let HZ_REGIONS_SVG=[];   // slugs des régions présentes sur la carte
 async function chargeDecoupageEtRattache(fiches){
   try{
     if(!window.RNR_CARTO_MOTEUR){ console.warn('Horizon: carto.js absent'); return; }
-    const rep=await fetch('decoupage-france-regions.json',{cache:'force-cache'});
+    const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
     if(!rep.ok){ console.warn('Horizon: découpage introuvable',rep.status); return; }
     const geo=await rep.json();
     // index code → slug (pour traduire le verdict du moteur en slug SVG)

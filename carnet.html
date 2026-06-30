@@ -621,9 +621,17 @@ let RNR_DECOUPAGE=null, RNR_DECOUPAGE_OK=false, RNR_CODE2SLUG={};
 async function chargeDecoupage22(){
   try{
     if(!window.RNR_CARTO_MOTEUR){ console.warn('Carnet: carto.js absent'); return; }
-    const rep=await fetch('decoupage-france-regions.json',{cache:'force-cache'});
+    const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
     if(!rep.ok){ console.warn('Carnet: découpage introuvable',rep.status); return; }
     const geo=await rep.json();
+    // Garde-fou : on n'accepte le découpage QUE si c'est bien la maille 22
+    // (codes anciens, ex. 42=Alsace). Un JSON 13 en cache (code 44=Grand Est)
+    // est rejeté → on ne risque jamais d'afficher des noms du mauvais découpage.
+    const codes=geo.features.map(f=>String(f.properties.code));
+    if(codes.length!==22 || codes.includes('44')){
+      console.warn('Carnet: découpage inattendu ('+codes.length+' régions) — ignoré');
+      return;
+    }
     geo.features.forEach(f=>{ RNR_CODE2SLUG[f.properties.code]=f.properties.slug; });
     RNR_DECOUPAGE=window.RNR_CARTO_MOTEUR.creerDecoupage(geo);
     RNR_DECOUPAGE_OK=true;
