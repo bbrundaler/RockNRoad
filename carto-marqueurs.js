@@ -231,24 +231,31 @@
      Posées à intervalles réguliers pour qu'on lise l'aller du retour sans ambiguïté.
      Un chevron = un petit divIcon SVG tourné selon l'angle du segment. */
   function _capDeg(a, b) {
-    // cap (degrés, 0 = est) du point a vers b en [lat,lng].
-    var dLng = b[1] - a[1], dLat = b[0] - a[0];
+    // Angle écran (degrés, 0 = est) de a vers b en [lat,lng]. La longitude est
+    // compressée selon la latitude (projection Web Mercator) → on pondère dLng par
+    // cos(lat) pour que la flèche pointe vraiment dans le sens du tracé à l'écran.
+    var latMoy = (a[0] + b[0]) / 2 * Math.PI / 180;
+    var dLng = (b[1] - a[1]) * Math.cos(latMoy);
+    var dLat = b[0] - a[0];
     return Math.atan2(dLat, dLng) * 180 / Math.PI;
   }
   function _flechesSens(layer, trace) {
     if (!trace || trace.length < 2) return;
     var col = couleurTrace();
-    // Une flèche tous les ~N points, bornée pour éviter la surcharge (≈ 1 toutes les
-    // quelques dizaines de points de géométrie). On vise ~8-14 flèches au total.
-    var pas = Math.max(8, Math.floor(trace.length / 12));
+    // Une flèche à intervalles réguliers (~10 au total), jamais trop pour ne pas charger.
+    var pas = Math.max(6, Math.floor(trace.length / 10));
     for (var i = pas; i < trace.length - 1; i += pas) {
       var a = trace[i - 1], b = trace[i];
-      var ang = -_capDeg(a, b); // CSS rotate : sens horaire, donc on inverse le signe.
-      var html =
-        '<div style="transform:rotate(' + ang + 'deg);font-size:14px;line-height:1;color:' + col +
-        ';text-shadow:0 0 2px #fff,0 0 2px #fff;font-weight:900;">›</div>';
+      var ang = -_capDeg(a, b); // CSS rotate : sens horaire → on inverse le cap (0 = est).
+      // Triangle SVG plein, pointe vers la droite (est) avant rotation. Halo blanc pour
+      // ressortir sur le tracé doré. Taille généreuse pour être lisible à l'échelle carte.
+      var svg =
+        '<svg width="18" height="18" viewBox="0 0 18 18" style="transform:rotate(' + ang + 'deg);display:block;">' +
+        '<circle cx="9" cy="9" r="8" fill="#fff" opacity="0.9"/>' +
+        '<path d="M6 4 L13 9 L6 14 Z" fill="' + col + '"/>' +
+        '</svg>';
       L.marker(b, {
-        icon: L.divIcon({ html: html, className: 'rnr-mk-fleche', iconSize: [14, 14], iconAnchor: [7, 7] }),
+        icon: L.divIcon({ html: svg, className: 'rnr-mk-fleche', iconSize: [18, 18], iconAnchor: [9, 9] }),
         interactive: false,
         keyboard: false
       }).addTo(layer);
