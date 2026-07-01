@@ -197,21 +197,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-ov-bl{bottom:14px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .hz-ov-br{bottom:14px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
 .hz-ov-vote{left:12px;right:12px;bottom:14px;}
-.hz-ov-pill{display:inline-flex;align-items:center;gap:7px;background:var(--surface-a88,rgba(30,27,20,.86));
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);border:1px solid var(--gold-a35);
-  border-radius:11px;padding:7px 11px;box-shadow:0 3px 12px rgba(0,0,0,.28);}
-.hz-ov-titre{font-size:11px;color:var(--ink);}
+.hz-ov-pill{display:inline-flex;align-items:center;gap:7px;background:var(--surface);
+  border:1px solid var(--gold-a35);border-radius:11px;padding:7px 11px;
+  box-shadow:0 2px 10px rgba(0,0,0,.14);}
+.hz-ov-titre{font-size:11px;color:var(--ink);font-weight:500;}
 .hz-ov-ic{font-size:13px;}
 .hz-ov-stats{gap:13px;}
 .hz-ov-stats .ind{display:inline-flex;align-items:baseline;gap:4px;}
 .hz-ov-stats .n{font-size:15px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-ov-stats .l{font-size:9px;color:var(--ink-dim);font-style:normal;}
 .hz-ov-portes{display:flex;gap:8px;}
-.hz-ov-portes .hz-porte-btn{background:var(--surface-a88,rgba(30,27,20,.9));backdrop-filter:blur(7px);
-  -webkit-backdrop-filter:blur(7px);box-shadow:0 3px 10px rgba(0,0,0,.28);}
-.hz-ov-panneau{background:var(--surface-a94,rgba(30,27,20,.95));backdrop-filter:blur(9px);
-  -webkit-backdrop-filter:blur(9px);border:1px solid var(--gold-a35);border-radius:12px;padding:11px;
-  width:min(280px,60vw);box-shadow:0 8px 24px rgba(0,0,0,.4);margin-top:0;border-top:1px solid var(--gold-a35);}
+.hz-ov-portes .hz-porte-btn{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
+  box-shadow:0 2px 10px rgba(0,0,0,.14);font-weight:500;}
+.hz-ov-portes .hz-porte-btn:hover{background:var(--gold-a10);}
+.hz-ov-portes .hz-porte-btn.ouvert{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
+.hz-ov-portes .hz-porte-nuit{border-color:var(--nuit-a40,rgba(61,111,216,.45));}
+.hz-ov-panneau{background:var(--surface);border:1px solid var(--gold-a35);border-radius:12px;padding:12px;
+  width:min(300px,64vw);box-shadow:0 8px 24px rgba(0,0,0,.22);margin-top:0;}
 .hz-ov-br .hz-lieu-pick{justify-content:flex-end;min-height:0;}
 @media(max-width:880px){
   .hz-ov-stats{gap:9px;padding:6px 9px;}
@@ -229,16 +231,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    panneau (le bandeau qui zoome sur la région), le swipe juste dessous —
    exactement « carte rétrécie + swipe » demandé, mais sans overlay. */
 .hz-explo-overlay.hz-explo-inline{position:static;inset:auto;background:none;backdrop-filter:none;
-  z-index:auto;display:block;padding:0;margin-top:14px;animation:hzSeuilPop .28s ease;}
-.hz-explo-overlay.hz-explo-inline .hz-explo-modal{width:100%;height:auto;max-height:none;
-  box-shadow:none;animation:none;}
+  z-index:auto;display:block;padding:0;margin:0;animation:hzSeuilPop .28s ease;
+  grid-area:crew;align-self:stretch;min-height:0;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-modal{width:100%;height:100%;max-height:none;
+  box-shadow:var(--shadow);animation:none;border:1px solid var(--gold-a35);border-radius:var(--r-lg);}
+/* quand le swipe est ouvert dans la colonne droite, le groupe s'efface (il revient au close) */
+body.hz-explo-on .b-crew{display:none;}
 /* la carte du coin devient un vrai bandeau (hauteur fixe lisible sur mobile) */
 .hz-explo-overlay.hz-explo-inline .hz-explo-carte{height:230px;min-height:230px;}
 /* le swipe reprend une hauteur naturelle (plus de calage en % d'un plein écran) */
-.hz-explo-overlay.hz-explo-inline .hz-explo-bas{overflow:visible;}
-.hz-explo-overlay.hz-explo-inline .hz-explo-bas #hz-coin-swipe{height:auto;}
-.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-deck{min-height:340px;}
-.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-card .ph{height:auto;min-height:210px;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas{overflow:auto;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas #hz-coin-swipe{height:auto;grid-template-columns:1fr;gap:12px;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-deck{min-height:300px;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-card .ph{height:auto;aspect-ratio:4/3;min-height:0;}
 /* B18 · Inc. 2a-2bis — UNE SEULE CARTE : la carte du coin (Leaflet) est
    masquée. Le « wahoo » se fait sur la GRANDE carte de France (SVG) qui reste
    à l'écran et plonge sur la région (viewBox animé, cf. plongeCarteFrance).
@@ -775,10 +780,9 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
     </div>
     <button class="hz-seuil-go" id="hz-seuil-go" type="button">En avant <span>→</span></button>
   </div>
-</div>
 
-<!-- GRAND POPUP D'EXPLORATION (incrément 3d) : carte Leaflet zoomée en haut,
-     swipe en bas. La carte et le swipe se parlent (point mis en avant). -->
+<!-- GRAND POPUP D'EXPLORATION : le swipe, désormais DANS la scène (colonne droite,
+     au-dessus du groupe). -->
 <div class="hz-explo-overlay" id="hz-explo" style="display:none">
   <div class="hz-explo-modal">
     <div class="hz-explo-tete">
@@ -792,6 +796,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
       <!-- le swipe sera monté ici en 3d-2 -->
     </div>
   </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2608,14 +2613,10 @@ function ouvreExplo(){
   if(!HZ_COIN_PAQUET) return;
   const ov=document.getElementById('hz-explo');
   if(!ov) return;
-  // B18 · Inc. 2a-2 : plus de fenêtre plein écran → panneau DANS la page.
+  // Le swipe s'affiche dans la colonne droite (scène map-first), au-dessus du groupe.
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
-  // On garde la carte France (qui plonge) en haut de l'écran, le swipe apparaît
-  // dessous : on cadre sur le bloc carte, pas sur le panneau coin.
-  const bmap=document.querySelector('.b-map');
-  try{ (bmap||ov).scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
 
