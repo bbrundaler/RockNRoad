@@ -275,7 +275,7 @@ body.hz-explo-on .b-map .francemap{transition:none;}
   display:none;align-items:center;justify-content:center;padding:0 4px;}
 .hz-rail-badge.actif{display:flex;}
 
-.hz-drawer{position:fixed;top:64px;right:0;bottom:0;left:auto;width:min(380px,90vw);
+.hz-drawer{position:fixed;top:64px;right:0;bottom:0;left:auto;width:min(460px,90vw);
   background:var(--surface);border-left:1px solid var(--gold-a35);
   box-shadow:-8px 0 30px rgba(0,0,0,.22);z-index:9300;display:none;flex-direction:column;
   animation:hzSlideRight .3s ease;}
@@ -453,9 +453,10 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
-#hz-drawer-coeurs-corps .hz-aimee{gap:13px;padding:10px 12px;}
-#hz-drawer-coeurs-corps .hz-aimee .mini{width:64px;height:64px;border-radius:10px;}
-#hz-drawer-coeurs-corps .hz-aimee .nm{font-size:15px;white-space:normal;line-height:1.3;}
+#hz-drawer-coeurs-corps .hz-aimee{flex-wrap:wrap;gap:8px 14px;padding:12px;}
+#hz-drawer-coeurs-corps .hz-aimee .mini{width:72px;height:72px;border-radius:10px;}
+#hz-drawer-coeurs-corps .hz-aimee .nm{flex:1;min-width:180px;font-size:15px;font-weight:600;white-space:normal;line-height:1.35;}
+#hz-drawer-coeurs-corps .hz-aimee .hz-aimee-actions{flex:1 0 100%;justify-content:flex-end;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
@@ -1929,7 +1930,11 @@ async function chargerBlocGroupe(groupeId){
       if(moi){ monNom=moi.pseudo||moi.prenom||'Voyageur'; }
       RNRDiscussion.monter('hz-crew-msgs', {
         sb, groupeId, userId:HZ_USER_ID, userNom:monNom,
-        membres:HZ_MEMBRES, hauteur:'240px'
+        // B18 rail : le tiroir prend (quasi) toute la hauteur d'écran, plus la
+        // petite carte d'avant (240px, legacy). '100%'/'auto' sont refusés par
+        // discussion.js (bug connu si parent non borné) → on donne une valeur
+        // explicite bornée qui suit la vraie hauteur du tiroir.
+        membres:HZ_MEMBRES, hauteur:'clamp(300px, calc(100vh - 220px), 800px)'
       });
     }
   }catch(e){ console.warn('Horizon bloc groupe',e); }
@@ -2610,6 +2615,7 @@ function brancheClicExterieur(){
   if(HZ_CLIC_EXT_BRANCHE) return;
   HZ_CLIC_EXT_BRANCHE=true;
   document.addEventListener('click',(e)=>{
+    if(e.target.closest('.vmodal-bg')) return;   // modale de vote au-dessus : ne rien fermer derrière
     if(!e.target.closest('.hz-drawer') && !e.target.closest('#hz-rail')){
       document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
       document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
@@ -2621,6 +2627,10 @@ function brancheClicExterieur(){
       if(pd) pd.style.display='none';
       if(be) be.classList.remove('ouvert');
       if(bd) bd.classList.remove('ouvert');
+    }
+    const explo=document.getElementById('hz-explo');
+    if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo')){
+      fermeExplo();
     }
   });
 }
