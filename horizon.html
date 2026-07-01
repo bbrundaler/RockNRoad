@@ -28,12 +28,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:340px 1fr 400px;
-  grid-template-rows:auto auto auto;
+  grid-template-columns:1.5fr 1fr;
+  grid-template-rows:auto auto;
   grid-template-areas:
-    "ind   map   crew"
-    "vote  map   crew"
-    "carnet carnet carnet";
+    "vote   ind"
+    "map    carnet"
+    "map    crew";
   min-height:0;
 }
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
@@ -53,7 +53,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* carte : remplit sa zone SANS déborder ni scroller (sinon micro-tremblement).
    Plafonnée : on ne fait que désigner des régions, pas lire du détail → on
    laisse la bande Carnet du coin respirer juste en dessous. */
-.b-map{max-height:78vh;}
+.b-map{max-height:70vh;min-height:420px;}
 .b-map .bb{padding:5px;align-items:center;justify-content:center;overflow:hidden;max-height:none;}
 .francemap{width:100%;height:100%;max-height:78vh;display:block;overflow:visible;}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
@@ -226,7 +226,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
 .francemap.attend-lieu .region{cursor:pointer;}
 .francemap .region.lieu-choisi{fill:var(--gold)!important;}
 /* ── Bande Carnet du coin (§B4/B6) : vignettes format Carnet ── */
-.b-carnet .bb{max-height:42vh;}
+.b-carnet .bb{max-height:70vh;}
 .hz-coin-vide{font-size:13px;color:var(--ink-dim);padding:8px 2px;}
 .hz-coin-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:11px;margin-bottom:6px;}
 .hz-cf{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
@@ -496,7 +496,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
 
 @media(max-width:880px){
   html,body{overflow:auto;}
-  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"ind" "crew" "vote" "map" "carnet";}
+  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"vote" "map" "carnet" "crew" "ind";}
   .b-map{min-height:48vh;}
   .b-write .bb{flex-direction:column;}
 }
@@ -528,7 +528,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
     </div>
   </div>
   <div class="blk voteq b-vote">
-    <div class="bh"><span class="ic" id="hz-gauche-ic">🎯</span><h3 id="hz-gauche-titre">On part sur quelle envie&nbsp;?</h3><button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button><span class="pin">📌</span></div>
+    <div class="bh"><span class="ic" id="hz-gauche-ic">💡</span><h3 id="hz-gauche-titre">Un coup de pouce&nbsp;?</h3><button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button><span class="pin">📌</span></div>
     <div class="bb">
       <!-- VISAGE 1 : le vrai vote du groupe (si un vote macro est ouvert) -->
       <div id="hz-gauche-vote" style="display:none"></div>
@@ -539,10 +539,11 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
              Porte A = activités (7 thèmes) ; porte B = couchage (8e thème 'nuit').
              Même rendu, même rang : ce sont deux départs égaux, pas un principal + un à part. -->
         <div class="hz-geste-etape" id="hz-geste-themes">
-          <div class="hz-geste-lbl">1 · On choisit d'abord les activités&nbsp;?</div>
+          <div class="hz-geste-aide" style="margin-bottom:9px">Pas d'idée précise&nbsp;? Laisse-toi inspirer, ou clique directement une région sur la carte.</div>
+          <div class="hz-geste-lbl">Par envie</div>
           <div class="hz-themes-chips" id="hz-themes-chips"></div>
           <div class="hz-geste-ou">— ou —</div>
-          <div class="hz-geste-lbl">Ou d'abord où on dort&nbsp;?</div>
+          <div class="hz-geste-lbl">Où dormir</div>
           <div class="hz-themes-chips" id="hz-nuit-porte"></div>
         </div>
         <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le choix -->
