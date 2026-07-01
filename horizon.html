@@ -2451,7 +2451,8 @@ function rendCarnetCoin(paquet){
   const limitBox=document.getElementById('hz-coin-limit');
   const limitTt=document.getElementById('hz-coin-soustitre-limit');
   const compte=document.getElementById('hz-coin-compte');
-  if(!corps) return;
+  console.log('[RNR] rendCarnetCoin — corps?', !!corps, 'coeurBox?', !!coeurBox, 'limitBox?', !!limitBox, 'paquet.coeur=', paquet.coeur.length);
+  if(!corps){ console.log('[RNR] STOP rendCarnetCoin: pas de #hz-coin-corps'); return; }
 
   const lieuxLbl=HZ_LIEUX.map(labelRegionSvg).join(' & ');
   if(titre) titre.textContent='Coin · '+themeLibelle(HZ_THEME)+' autour de '+lieuxLbl;
@@ -2815,7 +2816,9 @@ function initSwipe(paquet){
   // panier de session sont préservés. Évite la boucle « chaque ❤️ → realtime →
   // rendCarnetCoin → initSwipe → swipe qui recommence + panier vidé ».
   const sig=signaturePaquet(paquet);
+  console.log('[RNR] initSwipe ENTRÉE — sig=', sig, 'sigPrec=', HZ_SWIPE_SIG, 'seqLen=', HZ_SWIPE_SEQ.length);
   if(sig && sig===HZ_SWIPE_SIG && HZ_SWIPE_SEQ.length){
+    console.log('[RNR] initSwipe: garde anti-rebuild → return (même coin)');
     return;   // même coin déjà monté : ne pas réinitialiser
   }
   HZ_SWIPE_SIG=sig;
