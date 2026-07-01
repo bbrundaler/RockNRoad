@@ -418,6 +418,9 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 .hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
+.hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-aimee-epingle:hover{background:var(--gold-a10);}
 .hz-aimees-pied{display:flex;flex-direction:row;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--surface-line);}
 .hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
 .hz-aimees-btn.refaire{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);}
@@ -3043,6 +3046,35 @@ async function hzRetireCandidate(lieuId){
   }catch(e){ console.warn('Horizon: retrait candidate',e); }
 }
 
+// ── POUVOIR DU LEADER, porté depuis cockpit.html (B18-Inc.A1) : le leader élu
+// épingle une fiche directement en 'retenue' (décision de groupe sans vote),
+// même geste que le Cockpit, rebranché sur les variables HZ_* d'Horizon.
+// HZ_LEADERS_ELUS (membre_id) est déjà chargé par chargeVoteLeader().
+function jeSuisLeaderHz(){
+  const moi = (typeof monMembreIdReel==='function') ? monMembreIdReel() : null;
+  return !!(moi && HZ_LEADERS_ELUS && HZ_LEADERS_ELUS.length && HZ_LEADERS_ELUS.includes(moi));
+}
+async function epinglerDirectementHz(fiche){
+  if(!jeSuisLeaderHz()) return;   // garde de sûreté (le bouton ne s'affiche déjà qu'au leader)
+  if(!HZ_VOYAGE_ID || !fiche || !fiche.id) return;
+  if(HZ_RETENUS.has(fiche.id)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
+  if(HZ_ECARTEES.has(fiche.id)){ alert('Cette fiche a été écartée par un vote du groupe.'); return; }
+  if(!confirm('Tu épingles « '+(fiche.nom||'cette fiche')+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.')) return;
+  try{
+    const {error}=await sb.from('voyage_fiches').upsert(
+      [{voyage_id:HZ_VOYAGE_ID, lieu_id:fiche.id, statut:'retenue', origine:'leader', maj_le:new Date().toISOString()}],
+      {onConflict:'voyage_id,lieu_id'});
+    if(error){ console.warn('Horizon: épingle directe',error); alert('Impossible d\'épingler pour le moment.'); return; }
+  }catch(e){ console.warn('Horizon: épingle directe',e); alert('Impossible d\'épingler pour le moment.'); return; }
+  HZ_RETENUS.add(fiche.id);
+  HZ_CANDIDATES.delete(fiche.id);
+  hzMajMarqueur(fiche.id, fiche.type);
+  rendAimees();
+  rendPanier();
+  majLigneCockpit();
+  marqueRegionsRetenues();
+}
+
 function brancheSwipeActions(){
   const map={'hz-swipe-pass':'pass','hz-swipe-later':'later','hz-swipe-love':'love'};
   Object.keys(map).forEach(id=>{
@@ -3094,9 +3126,15 @@ function rendAimees(){
   const carteFiche=(f)=>{
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
+    const btnLeader = jeSuisLeaderHz()
+      ? '<button class="hz-aimee-epingle" type="button" title="Épingler au voyage, au nom du groupe">📌 Épingler</button>'
+      : '';
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
       '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
-      '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button>';
+      '<div class="hz-aimee-actions">'+btnLeader+
+      '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
+    const be=d.querySelector('.hz-aimee-epingle');
+    if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
     return d;
   };
