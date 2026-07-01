@@ -251,10 +251,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    à l'écran et plonge sur la région (viewBox animé, cf. plongeCarteFrance).
    La carte Leaflet du coin reviendra en 2b (rond de précision, géo fine). */
 .hz-explo-overlay.hz-explo-inline .hz-explo-carte{display:none;}
-/* la carte France NE se replie plus : elle reste et zoome (retrait du collapse) */
+/* la carte France NE se replie plus : elle reste pleine (swipe en panneau latéral) */
 body.hz-explo-on .b-map .francemap{transition:none;}
-/* quand le coin est ouvert en page, la grande carte France se replie en bandeau */
-body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ease;}
 .hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
   box-shadow:var(--shadow);width:min(1040px,97vw);height:min(94vh,900px);display:flex;flex-direction:column;
   overflow:hidden;animation:hzSeuilPop .28s ease;}
@@ -673,7 +671,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
   </div>
   <!-- BANDE CARNET DU COIN : masquée au repos — le swipe s'ouvre dans l'overlay
        #hz-explo au clic région. (Étape 1 : on dégage la vue de repos.) -->
-  <div class="blk carnet b-carnet" style="display:none">
+  <div class="blk carnet b-carnet" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;">
     <div class="bh"><span class="ic">📓</span><h3 id="hz-coin-titre">Le Carnet du coin</h3><span class="pin">📌</span></div>
     <div class="bb">
       <div id="hz-coin-vide" class="hz-coin-vide">Choisissez une envie puis une région : les fiches du coin s'afficheront ici.</div>
