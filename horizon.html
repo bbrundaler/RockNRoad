@@ -453,6 +453,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
+#hz-drawer-coeurs-corps .hz-aimee{gap:13px;padding:10px 12px;}
+#hz-drawer-coeurs-corps .hz-aimee .mini{width:64px;height:64px;border-radius:10px;}
+#hz-drawer-coeurs-corps .hz-aimee .nm{font-size:15px;white-space:normal;line-height:1.3;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
@@ -460,8 +463,10 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
 .hz-pr-vote{flex-shrink:0;font-size:12px;line-height:1;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 6px;border-radius:8px;}
 .hz-pr-vote:hover{border-color:var(--gold);color:var(--gold-text);}
-.hz-aimee-tag-vote{font-size:10.5px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
-.hz-pr-tag-vote{flex-shrink:0;font-size:12px;line-height:1;color:var(--gold-text);background:var(--gold-a10);padding:3px 6px;border-radius:8px;}
+.hz-aimee-tag-vote{font-size:10.5px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;border:none;cursor:pointer;font-family:var(--font-body);}
+.hz-aimee-tag-vote:hover{background:var(--gold-a20);}
+.hz-pr-tag-vote{flex-shrink:0;font-size:12px;line-height:1;color:var(--gold-text);background:var(--gold-a10);padding:3px 6px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font-body);}
+.hz-pr-tag-vote:hover{background:var(--gold-a20);}
 /* ── Modale de création de vote, portée depuis cockpit.html (B18-Inc.A2) ── */
 .q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
 .q-close-btn:hover{background:var(--gold-a20);}
@@ -485,6 +490,13 @@ body.hz-explo-on #hz-rail{display:none;}
 .int-t{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
 .int-ex{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:3px;}
 .nv-select{width:100%;padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:9px;background:var(--paper);color:var(--ink);font-size:14px;}
+.q-opts{display:flex;gap:12px;flex-wrap:wrap;}
+.q-opt{flex:1;min-width:150px;display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:12px;
+  background:transparent;border:1.5px solid var(--gold-a35);cursor:pointer;transition:all .2s;}
+.q-opt:hover{background:var(--gold-a20);border-color:var(--gold);transform:translateY(-2px);}
+.q-opt .t{font-family:var(--font-title);font-size:17px;font-weight:600;color:var(--ink);}
+.q-opt .v{margin-left:auto;font-size:12px;color:var(--gold-text);font-weight:700;}
+.q-opt.q-chosen{background:var(--gold-a20);border-color:var(--gold);}
 .hz-aimees-pied{display:flex;flex-direction:row;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--surface-line);}
 .hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
 .hz-aimees-btn.refaire{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);}
@@ -2280,7 +2292,7 @@ function carteFicheDrawer(f){
     ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
     : '';
   const btnVote=enVote
-    ? '<span class="hz-aimee-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️ En vote</span>'
+    ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
     : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
   d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
     '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
@@ -2288,8 +2300,8 @@ function carteFicheDrawer(f){
     '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
   const be=d.querySelector('.hz-aimee-epingle');
   if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
-  const bv=d.querySelector('.hz-aimee-vote');
-  if(bv) bv.addEventListener('click',()=>lancerVoteSurFiche(f.id));
+  const bv=d.querySelector('.hz-aimee-vote,.hz-aimee-tag-vote');
+  if(bv) bv.addEventListener('click',()=>{ enVote ? ouvrirCarteVote(HZ_VOTE_DE_FICHE[f.id]) : lancerVoteSurFiche(f.id); });
   d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retirerCandidateVoyage(f.id));
   return d;
 }
@@ -2587,6 +2599,30 @@ function brancheRail(){
   if(fg && !fg._cable){ fg._cable=true; fg.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-groupe')); }
   const fc=document.getElementById('hz-drawer-coeurs-fermer');
   if(fc && !fc._cable){ fc._cable=true; fc.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-coeurs')); }
+  brancheClicExterieur();
+}
+
+// Fermer au clic en dehors (moins de clics que la croix systématique, retour
+// Bruno) : un seul écouteur document, posé une fois. Couvre le rail (tiroirs
+// Groupe / Cœurs & votes) et les panneaux dépliants Par envie / Où dormir.
+let HZ_CLIC_EXT_BRANCHE=false;
+function brancheClicExterieur(){
+  if(HZ_CLIC_EXT_BRANCHE) return;
+  HZ_CLIC_EXT_BRANCHE=true;
+  document.addEventListener('click',(e)=>{
+    if(!e.target.closest('.hz-drawer') && !e.target.closest('#hz-rail')){
+      document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
+      document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
+    }
+    if(!e.target.closest('.hz-ov-bl')){
+      const pe=document.getElementById('hz-panneau-envie'), pd=document.getElementById('hz-panneau-dormir');
+      const be=document.getElementById('hz-porte-envie'), bd=document.getElementById('hz-porte-dormir');
+      if(pe) pe.style.display='none';
+      if(pd) pd.style.display='none';
+      if(be) be.classList.remove('ouvert');
+      if(bd) bd.classList.remove('ouvert');
+    }
+  });
 }
 
 // Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
@@ -2707,7 +2743,7 @@ function rendPanier(){
           ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : '';
         const btnVote = enVote
-          ? '<span class="hz-pr-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️</span>'
+          ? '<button class="hz-pr-tag-vote" type="button" title="Voir et voter" onclick="ouvrirCarteVote(\''+HZ_VOTE_DE_FICHE[f.id]+'\')">🗳️</button>'
           : '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
         return '<div class="hz-pr-fiche"><span class="hz-pr-mini" style="background-image:'+ph+'"></span>'+
           '<span class="hz-pr-nom">'+escapeHtmlHz(f.nom||'—')+'</span>'+btnVote+btnLeader+'</div>';
@@ -3295,14 +3331,24 @@ function hzFichesAimeesListe(){
 // correspondance lieu_id → proposition ouverte (pas le flux complet des votes,
 // ça reste le lot du bloc « Votes en cours », Inc.C, à recaser en maquette).
 let HZ_VOTE_DE_FICHE={};   // { lieu_id: proposition_id }
+let HZ_PROPS_PAR_ID={};    // { proposition_id: proposition complète }
+let HZ_VOTES={};           // { proposition_id: [votes] }
+let HZ_NB_MEMBRES=1;
 async function hzChargerVotesOuverts(){
   if(!HZ_GROUPE_ID || !HZ_VOYAGE_ID) return;
   try{
-    const {data:props,error}=await sb.from('propositions').select('id,lieu_id')
+    const {count}=await sb.from('membres').select('*',{count:'exact',head:true}).eq('groupe_id',HZ_GROUPE_ID);
+    HZ_NB_MEMBRES=count||1;
+    const {data:props,error}=await sb.from('propositions').select('*')
       .eq('groupe_id',HZ_GROUPE_ID).eq('voyage_id',HZ_VOYAGE_ID).eq('statut','ouvert');
     if(error){ console.warn('Horizon: votes ouverts',error); return; }
-    HZ_VOTE_DE_FICHE={};
-    (props||[]).forEach(p=>{ if(p.lieu_id) HZ_VOTE_DE_FICHE[p.lieu_id]=p.id; });
+    HZ_VOTE_DE_FICHE={}; HZ_PROPS_PAR_ID={}; HZ_VOTES={};
+    (props||[]).forEach(p=>{ if(p.lieu_id) HZ_VOTE_DE_FICHE[p.lieu_id]=p.id; HZ_PROPS_PAR_ID[p.id]=p; });
+    if((props||[]).length){
+      const ids=props.map(p=>p.id);
+      const {data:vts}=await sb.from('votes').select('*').in('proposition_id',ids);
+      (vts||[]).forEach(v=>{ (HZ_VOTES[v.proposition_id]=HZ_VOTES[v.proposition_id]||[]).push(v); });
+    }
     rendAimees();
     rendPanier();
     if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
@@ -3357,7 +3403,7 @@ function choisirIntention(i){
       '<label>La question</label>'+
       '<input type="text" id="nv-titre" maxlength="120" placeholder="On garde cette fiche ?">'+
       '<div class="vhint" style="margin-top:8px">Le groupe répondra <b>Garder</b> ou <b>Écarter</b>.</div>'+
-      '<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+      '<label>Échéance (7 jours par défaut si vide)</label><input type="date" id="nv-date">'+
       '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>'+
       '<div class="vmodal-foot">'+
         '<button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button>'+
@@ -3373,7 +3419,7 @@ function choisirIntention(i){
   } else {
     champs+='<div class="vhint" style="margin-top:8px">'+escapeHtmlHz(aideIntention())+'</div>';
   }
-  champs+='<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+  champs+='<label>Échéance (7 jours par défaut si vide)</label><input type="date" id="nv-date">'+
           '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>';
   box.innerHTML='<h3>'+escapeHtmlHz(NV_intention.titre)+'</h3>'+champs+
     '<div class="vmodal-foot">'+
@@ -3427,7 +3473,10 @@ async function creerVote(){
   }
   const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:NV_intention.type, titre:titre, options:options, voyage_id:HZ_VOYAGE_ID };
   if(lieuId) row.lieu_id=lieuId;
-  if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
+  // Échéance : si rien de choisi, 7 jours par défaut (retour Bruno du 01/07 —
+  // un vote sans fin possible bloque le jeu si tout le monde ne vote pas).
+  row.ferme_le = dateStr ? new Date(dateStr+'T20:00:00').toISOString()
+                          : new Date(Date.now()+7*86400000).toISOString();
   try{
     const {error}=await sb.from('propositions').insert(row);
     if(error){ console.warn('Horizon: creerVote',error); alert('Vote non créé.'); return; }
@@ -3446,7 +3495,7 @@ let NV_FICHE_PREREMPLIE=null;
 function lancerVoteSurFiche(lieuId){
   if(HZ_RETENUS.has(lieuId)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
   if(HZ_ECARTEES.has(lieuId)){ alert('Cette fiche a déjà été écartée par un vote du groupe.'); return; }
-  if(HZ_VOTE_DE_FICHE[lieuId]){ alert('Un vote est déjà ouvert sur cette fiche — pas besoin d\'en relancer un.'); return; }
+  if(HZ_VOTE_DE_FICHE[lieuId]){ ouvrirCarteVote(HZ_VOTE_DE_FICHE[lieuId]); return; }
   const f=hzFichesAimeesListe().find(x=>x.id===lieuId); if(!f) return;
   NV_FICHE_PREREMPLIE=lieuId;
   ouvrirCreationVote();
@@ -3457,6 +3506,76 @@ function lancerVoteSurFiche(lieuId){
   if(sel){ sel.value=lieuId; }
   const t=document.getElementById('nv-titre');
   if(t){ t.value='On garde « '+f.nom+' » ?'; t.dataset.auto='1'; }
+}
+
+// ── VOIR ET VOTER LE VRAI VOTE (retour Bruno : « aucun endroit où tu vois le
+// vrai vote »). Porté de cockpit.html (carteVote/voter/cloreVote/
+// propagerVerdict), simplifié au seul type 'elimination' (Garder/Écarter) —
+// c'est le seul type que Horizon crée depuis une fiche. Ouvre dans la même
+// modale que la création de vote (vmodal), pas besoin d'un 2e système.
+function votesDeHz(pid){ return HZ_VOTES[pid]||[]; }
+function monVoteHz(pid){ return votesDeHz(pid).find(v=>v.votant_id===HZ_USER_ID); }
+function ouvrirCarteVote(pid){
+  const p=HZ_PROPS_PAR_ID[pid]; if(!p) return;
+  const bg=document.createElement('div');
+  bg.className='vmodal-bg'; bg.id='vmodal-bg';
+  bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
+  bg.innerHTML='<div class="vmodal" id="vmodal-inner"></div>';
+  document.body.appendChild(bg);
+  rendCarteVoteHz(pid);
+}
+function rendCarteVoteHz(pid){
+  const p=HZ_PROPS_PAR_ID[pid]; const box=document.getElementById('vmodal-inner');
+  if(!p || !box) return;
+  const mien=monVoteHz(pid), vts=votesDeHz(pid);
+  const c={}; vts.forEach(v=>{ c[v.valeur]=(c[v.valeur]||0)+1; });
+  const opts=['Garder','Écarter'];
+  const f=ficheParIdHz(p.lieu_id);
+  let html='<h3>'+escapeHtmlHz(p.titre)+'</h3>';
+  if(f) html+='<div class="vhint" style="margin-bottom:10px">Fiche : <b>'+escapeHtmlHz(f.nom||'')+'</b></div>';
+  html+='<div class="vhint" style="margin-bottom:10px">'+vts.length+' / '+HZ_NB_MEMBRES+' ont voté'+
+    (p.ferme_le?(' · ferme le '+new Date(p.ferme_le).toLocaleDateString('fr-FR')):' · pas d\'échéance')+'</div>';
+  html+='<div class="q-opts">'+opts.map(o=>{
+    const n=c[o]||0, chosen=(mien&&mien.valeur===o)?' q-chosen':'';
+    return '<div class="q-opt'+chosen+'" onclick="voterHz(\''+pid+'\',\''+o+'\')"><span class="t">'+o+'</span><span class="v">'+n+' voix'+(chosen?' ✓':'')+'</span></div>';
+  }).join('')+'</div>';
+  html+='<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Fermer</button>'+
+    (jeSuisLeaderHz()?'<button class="vbtn vbtn-go" onclick="cloreVoteHz(\''+pid+'\')">Clôturer &amp; trancher</button>':'')+'</div>';
+  box.innerHTML=html;
+}
+async function voterHz(pid, valeur){
+  if(!HZ_USER_ID) return;
+  const {error}=await sb.from('votes')
+    .upsert({proposition_id:pid, votant_id:HZ_USER_ID, valeur:valeur},{onConflict:'proposition_id,votant_id'});
+  if(error){ console.warn('Horizon: voter',error); alert('Vote non enregistré.'); return; }
+  const {data:vts}=await sb.from('votes').select('*').eq('proposition_id',pid);
+  HZ_VOTES[pid]=vts||[];
+  rendCarteVoteHz(pid);
+}
+async function cloreVoteHz(pid){
+  const p=HZ_PROPS_PAR_ID[pid]; if(!p) return;
+  if(!confirm('Clôturer ce vote ? Il n\'acceptera plus de voix, et la fiche part directement au résultat du vote. C\'est définitif.')) return;
+  try{
+    const {error}=await sb.from('propositions').update({statut:'clos'}).eq('id',pid);
+    if(error){ console.warn('Horizon: clore vote',error); alert('Clôture impossible.'); return; }
+    await propagerVerdictHz(p);
+  }catch(e){ console.warn('Horizon: clore vote',e); alert('Clôture impossible.'); return; }
+  fermerCreationVote();
+  await hzChargerCoeurs();          // HZ_RETENUS/ECARTEES à jour
+  await hzChargerVotesOuverts();    // la fiche n'est plus « en vote »
+}
+// Propage le verdict d'un vote clos vers voyage_fiches — même règle que le
+// Cockpit (majorité des VOTANTS, pas de tous les membres ; égalité → retenue).
+async function propagerVerdictHz(p){
+  const vts=votesDeHz(p.id);
+  if(!vts.length || p.type!=='elimination' || !p.lieu_id || !p.voyage_id) return;
+  let g=0,e=0;
+  vts.forEach(v=>{ if(v.valeur==='Garder') g++; else if(v.valeur==='Écarter') e++; });
+  const statut=(g>=e)?'retenue':'ecartee';
+  const {error}=await sb.from('voyage_fiches').upsert(
+    [{voyage_id:p.voyage_id, lieu_id:p.lieu_id, statut, origine:'vote', maj_le:new Date().toISOString()}],
+    {onConflict:'voyage_id,lieu_id'});
+  if(error) console.warn('Horizon: propager verdict',error);
 }
 
 function brancheSwipeActions(){
@@ -3515,7 +3634,7 @@ function rendAimees(){
       ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
       : '';
     const btnVote = enVote
-      ? '<span class="hz-aimee-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️ En vote</span>'
+      ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
       : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
       '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
@@ -3523,8 +3642,8 @@ function rendAimees(){
       '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
     const be=d.querySelector('.hz-aimee-epingle');
     if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
-    const bv=d.querySelector('.hz-aimee-vote');
-    if(bv) bv.addEventListener('click',()=>lancerVoteSurFiche(f.id));
+    const bv=d.querySelector('.hz-aimee-vote,.hz-aimee-tag-vote');
+    if(bv) bv.addEventListener('click',()=>{ enVote ? ouvrirCarteVote(HZ_VOTE_DE_FICHE[f.id]) : lancerVoteSurFiche(f.id); });
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
     return d;
   };
