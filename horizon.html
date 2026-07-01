@@ -31,7 +31,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   grid-template-columns:1.5fr 1fr;
   grid-template-rows:auto auto;
   grid-template-areas:
-    "vote   ind"
+    "vote   vote"
     "map    carnet"
     "map    crew";
   min-height:0;
@@ -163,6 +163,32 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-ligne-cockpit b{color:var(--gold-text);font-weight:700;}
 .hz-lc-ic{font-size:14px;}
 .hz-en-avant span{font-size:16px;}
+/* ── BANDEAU DE TÊTE COMPACT (B18 · progressive disclosure) ──
+   Bande fine : 2 boutons-portes qui déplient leurs propositions + compteurs
+   fondus. Le gros bloc stats a disparu ; la carte gagne la hauteur. */
+.b-vote{overflow:visible;}
+.hz-bandeau{padding:9px 13px;display:block;}
+.hz-bandeau-ligne{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.hz-bandeau-hint{font-size:11px;color:var(--ink-dim);}
+.hz-bandeau-spacer{flex:1;}
+.hz-porte-btn{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);
+  font-size:12.5px;padding:6px 13px;border-radius:999px;border:1px solid var(--gold-a35);
+  background:var(--gold-a10);color:var(--ink);cursor:pointer;transition:all .15s;}
+.hz-porte-btn:hover{background:var(--gold-a20);}
+.hz-porte-btn.ouvert{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
+.hz-porte-btn .ic-compass,.hz-porte-btn .ic-moon{font-size:14px;}
+.hz-porte-chev{font-size:11px;transition:transform .2s;}
+.hz-porte-btn.ouvert .hz-porte-chev{transform:rotate(180deg);}
+.hz-porte-nuit{border-color:var(--nuit-a40,rgba(61,111,216,.4));background:var(--nuit-a12,rgba(61,111,216,.12));}
+.hz-porte-nuit:hover{background:var(--nuit-a20,rgba(61,111,216,.2));}
+.hz-porte-nuit.ouvert{background:var(--nuit,#3d6fd8);color:#fff;border-color:var(--nuit,#3d6fd8);}
+.hz-stats-inline{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+.hz-stats-inline .ind{display:flex;align-items:baseline;gap:4px;}
+.hz-stats-inline .n{font-size:15px;font-weight:600;color:var(--gold-text);font-family:var(--font-title);}
+.hz-stats-inline .l{font-size:9.5px;color:var(--ink-dim);}
+.hz-porte-panneau{margin-top:10px;padding-top:9px;border-top:1px solid var(--gold-a20);}
+.hz-porte-sous{font-size:10.5px;color:var(--ink-dim);margin-bottom:8px;}
+
 /* ── GRAND POPUP D'EXPLORATION (3d) ── */
 .hz-explo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
   z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;}
@@ -496,7 +522,7 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
 
 @media(max-width:880px){
   html,body{overflow:auto;}
-  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"vote" "map" "carnet" "crew" "ind";}
+  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"vote" "map" "carnet" "crew";}
   .b-map{min-height:48vh;}
   .b-write .bb{flex-direction:column;}
 }
@@ -506,17 +532,8 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
 </head>
 <body>
 <div class="stage">
-  <div class="blk b-ind">
-    <div class="bh"><span class="ic">📊</span><h3>Votre voyage prend forme</h3><span class="pin">📌</span></div>
-    <div class="bb"><div class="inds">
-      <div class="ind"><span class="n" id="hz-n-fiches">…</span><span class="l">fiches rêvées</span></div>
-      <div class="ind"><span class="n" id="hz-n-regions">…</span><span class="l">régions</span></div>
-      <div class="ind"><span class="n" id="hz-n-visites">…</span><span class="l">visites</span></div>
-      <div class="ind"><span class="n" id="hz-n-coupdecoeur">…</span><span class="l">coups de cœur</span></div>
-      <div class="ind"><span class="n" id="hz-n-notemoy">…</span><span class="l">note moy.</span></div>
-    </div>
-    <div id="hz-ligne-cockpit" class="hz-ligne-cockpit" style="display:none"></div>
-    </div>
+  <div class="blk b-ind" style="display:none">
+    <div class="bb"><div id="hz-ligne-cockpit-old" style="display:none"></div></div>
   </div>
   <div class="blk crew b-crew">
     <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
@@ -528,32 +545,55 @@ body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ea
     </div>
   </div>
   <div class="blk voteq b-vote">
-    <div class="bh"><span class="ic" id="hz-gauche-ic">💡</span><h3 id="hz-gauche-titre">Un coup de pouce&nbsp;?</h3><button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button><span class="pin">📌</span></div>
-    <div class="bb">
-      <!-- VISAGE 1 : le vrai vote du groupe (si un vote macro est ouvert) -->
+    <div class="hz-bandeau">
+      <!-- VISAGE 1 : vrai vote du groupe (si un vote macro est ouvert) — remonte ici -->
       <div id="hz-gauche-vote" style="display:none"></div>
-      <!-- VISAGE 2 : LE GESTE FONDATEUR thème→lieu (Carnet du coin, doctrine §B2/B4) -->
+
+      <!-- VISAGE 2 : le terrain d'aide (2 portes + compteurs) -->
       <div id="hz-gauche-perso">
-        <!-- Temps 1 : DEUX PORTES ÉGALES (retour test réel 24/06 : une testeuse part
-             des activités, l'autre part du couchage — deux approches également logiques).
-             Porte A = activités (7 thèmes) ; porte B = couchage (8e thème 'nuit').
-             Même rendu, même rang : ce sont deux départs égaux, pas un principal + un à part. -->
-        <div class="hz-geste-etape" id="hz-geste-themes">
-          <div class="hz-geste-aide" style="margin-bottom:9px">Pas d'idée précise&nbsp;? Laisse-toi inspirer, ou clique directement une région sur la carte.</div>
-          <div class="hz-geste-lbl">Par envie</div>
-          <div class="hz-themes-chips" id="hz-themes-chips"></div>
-          <div class="hz-geste-ou">— ou —</div>
-          <div class="hz-geste-lbl">Où dormir</div>
-          <div class="hz-themes-chips" id="hz-nuit-porte"></div>
+      <!-- ligne compacte : aide (2 boutons dépliants) + compteurs fondus -->
+      <div class="hz-bandeau-ligne">
+        <span class="hz-bandeau-hint">Besoin d'inspiration&nbsp;?</span>
+        <button class="hz-porte-btn" id="hz-porte-envie" type="button" onclick="hzToggleporte('envie')">
+          <span class="ic-compass">◎</span> Par envie <span class="hz-porte-chev" id="hz-chev-envie">▾</span>
+        </button>
+        <button class="hz-porte-btn hz-porte-nuit" id="hz-porte-dormir" type="button" onclick="hzToggleporte('dormir')">
+          <span class="ic-moon">☾</span> Où dormir <span class="hz-porte-chev" id="hz-chev-dormir">▾</span>
+        </button>
+        <button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button>
+
+        <span class="hz-bandeau-spacer"></span>
+
+        <div class="hz-stats-inline">
+          <div class="ind"><span class="n" id="hz-n-fiches">…</span><span class="l">fiches</span></div>
+          <div class="ind"><span class="n" id="hz-n-regions">…</span><span class="l">régions</span></div>
+          <div class="ind"><span class="n" id="hz-n-visites">…</span><span class="l">visites</span></div>
+          <div class="ind"><span class="n" id="hz-n-coupdecoeur">…</span><span class="l">coups de cœur</span></div>
+          <div class="ind"><span class="n" id="hz-n-notemoy">…</span><span class="l">note moy.</span></div>
         </div>
-        <!-- Temps 2 : le lieu (1-2 régions sur la carte) — apparaît après le choix -->
-        <div class="hz-geste-etape" id="hz-geste-lieu" style="display:none">
-          <div class="hz-geste-lbl">2 · Et dans quelle région&nbsp;?</div>
-          <div class="hz-geste-aide">⚠️ Sans région, la carte ne bouge pas. Cliquez 1 ou 2 régions sur la carte (hésitation permise).</div>
-          <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
-        </div>
-        <div class="hz-geste-info" id="hz-geste-info">Choisissez d'abord une envie, puis le coin.</div>
-        <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">Explorer les fiches <span>→</span></button>
+      </div>
+
+      <!-- ligne cockpit (rappel « X fiches déjà au cockpit ») : discrète, sous la ligne -->
+      <div id="hz-ligne-cockpit" class="hz-ligne-cockpit" style="display:none"></div>
+
+      <!-- ENCART DÉPLIABLE — Par envie -->
+      <div class="hz-porte-panneau" id="hz-panneau-envie" style="display:none">
+        <div class="hz-porte-sous">Choisis une envie — les régions riches s'allument sur la carte.</div>
+        <div class="hz-themes-chips" id="hz-themes-chips"></div>
+      </div>
+      <!-- ENCART DÉPLIABLE — Où dormir -->
+      <div class="hz-porte-panneau" id="hz-panneau-dormir" style="display:none">
+        <div class="hz-porte-sous">Pars du couchage — où poser le van ou la teardrop.</div>
+        <div class="hz-themes-chips" id="hz-nuit-porte"></div>
+      </div>
+
+      <!-- Temps 2 (région choisie) + infos : restent, cachés par défaut -->
+      <div class="hz-geste-etape" id="hz-geste-lieu" style="display:none">
+        <div class="hz-geste-lbl">Région choisie</div>
+        <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
+      </div>
+      <div class="hz-geste-info" id="hz-geste-info" style="display:none"></div>
+      <button class="hz-en-avant" id="hz-en-avant" type="button" style="display:none">Explorer les fiches <span>→</span></button>
       </div>
     </div>
   </div>
@@ -1838,6 +1878,27 @@ const HZ_TAGS_THEME = {
 function labelRegionSvg(slug){
   const p=document.querySelector('.region[data-r="'+slug+'"] title');
   return p ? p.textContent : cap(slug.replace(/-/g,' '));
+}
+
+// B18 · bandeau de tête — dépliement d'une porte d'inspiration (progressive
+// disclosure). Un clic ouvre son panneau et referme l'autre ; re-clic referme.
+function hzToggleporte(which){
+  const panneaux={envie:'hz-panneau-envie', dormir:'hz-panneau-dormir'};
+  const boutons ={envie:'hz-porte-envie',   dormir:'hz-porte-dormir'};
+  const chevrons={envie:'hz-chev-envie',    dormir:'hz-chev-dormir'};
+  const autre = which==='envie' ? 'dormir' : 'envie';
+  const pan=document.getElementById(panneaux[which]);
+  const panAutre=document.getElementById(panneaux[autre]);
+  const btn=document.getElementById(boutons[which]);
+  const btnAutre=document.getElementById(boutons[autre]);
+  if(!pan) return;
+  const ouvert = pan.style.display!=='none';
+  // referme l'autre porte systématiquement
+  if(panAutre) panAutre.style.display='none';
+  if(btnAutre) btnAutre.classList.remove('ouvert');
+  // bascule celle-ci
+  pan.style.display = ouvert ? 'none' : 'block';
+  if(btn) btn.classList.toggle('ouvert', !ouvert);
 }
 
 // Rendu des 7 thèmes en chips, avec le nb de fiches qui les portent.
