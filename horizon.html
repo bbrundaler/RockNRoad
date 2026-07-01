@@ -657,8 +657,8 @@ body.hz-explo-on #hz-rail{display:none;}
 
   <div class="hz-drawer" id="hz-drawer-coeurs">
     <div class="hz-drawer-tete"><span class="ic">❤️</span><h3>Mes cœurs & votes</h3><button class="hz-drawer-fermer" id="hz-drawer-coeurs-fermer" type="button" title="fermer">✕</button></div>
-    <div class="hz-drawer-corps">
-      <div class="hz-drawer-vide">Bientôt ici : vos coups de cœur sur tout le voyage, avec vote et épingle — sans passer par le swipe.</div>
+    <div class="hz-drawer-corps" id="hz-drawer-coeurs-corps">
+      <div class="hz-drawer-vide">Chargement…</div>
     </div>
   </div>
 
@@ -2260,6 +2260,67 @@ function hzSparkBadge(lieuId){
   return txt?('<div class="hz-spark">'+escapeHtmlHz(txt)+'</div>'):'';
 }
 
+// ── TIROIR PERMANENT « MES CŒURS & VOTES » (B18-Inc.3) ──
+// Voyage ENTIER, pas juste la session de swipe en cours : source = HZ_FICHES
+// (toutes les fiches du groupe) filtré par HZ_CANDIDATES (déjà chargé depuis
+// voyage_fiches par hzChargerCoeurs, donc vrai même après fermeture du swipe
+// ou retour sur la page). Réutilise les mêmes actions que la liste mid-swipe
+// (vote, épingle, en-vote) — même geste, où qu'on soit dans Horizon.
+function hzMajBadgeCoeurs(n){
+  const b=document.getElementById('hz-rail-badge-coeurs');
+  if(!b) return;
+  if(n>0){ b.textContent=n>9?'9+':String(n); b.classList.add('actif'); }
+  else{ b.textContent=''; b.classList.remove('actif'); }
+}
+function carteFicheDrawer(f){
+  const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
+  const d=document.createElement('div'); d.className='hz-aimee';
+  const enVote=!!HZ_VOTE_DE_FICHE[f.id];
+  const btnLeader=jeSuisLeaderHz()
+    ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
+    : '';
+  const btnVote=enVote
+    ? '<span class="hz-aimee-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️ En vote</span>'
+    : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
+  d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
+    '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div class="hz-aimee-actions">'+btnVote+btnLeader+
+    '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
+  const be=d.querySelector('.hz-aimee-epingle');
+  if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
+  const bv=d.querySelector('.hz-aimee-vote');
+  if(bv) bv.addEventListener('click',()=>lancerVoteSurFiche(f.id));
+  d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retirerCandidateVoyage(f.id));
+  return d;
+}
+async function retirerCandidateVoyage(lieuId){
+  if(!confirm('Retirer cette fiche des coups de cœur du voyage ?')) return;
+  if(typeof hzRetireCandidate==='function') await hzRetireCandidate(lieuId);
+  rendDrawerCoeurs();
+  if(typeof rendAimees==='function') rendAimees();
+  if(typeof rendPanier==='function') rendPanier();
+}
+function rendDrawerCoeurs(){
+  const box=document.getElementById('hz-drawer-coeurs-corps');
+  if(!box) return;
+  const fiches=(HZ_FICHES||[]).filter(f=>HZ_CANDIDATES.has(f.id));
+  if(!fiches.length){
+    box.innerHTML='<div class="hz-drawer-vide">Aucun coup de cœur pour l\'instant. Swipez ❤️ dans un coin — les fiches apparaissent ici, sur tout le voyage, même après avoir fermé le swipe.</div>';
+    hzMajBadgeCoeurs(0);
+    return;
+  }
+  const parReg={};
+  fiches.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); });
+  box.innerHTML='';
+  Object.keys(parReg).forEach(slug=>{
+    const tt=document.createElement('div'); tt.className='hz-aimee-grp-tt';
+    tt.innerHTML='<span>📍 '+escapeHtmlHz(labelRegionSvg(slug))+'</span><span class="hz-aimee-grp-n">'+parReg[slug].length+'</span>';
+    box.appendChild(tt);
+    parReg[slug].forEach(f=>box.appendChild(carteFicheDrawer(f)));
+  });
+  hzMajBadgeCoeurs(fiches.length);
+}
+
 async function hzChargerCoeurs(){
   HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set(); HZ_CANDIDATES=new Set();
   if(!HZ_GROUPE_ID) return;
@@ -2288,6 +2349,7 @@ async function hzChargerCoeurs(){
       else if(r.statut==='candidate') HZ_CANDIDATES.add(r.lieu_id);
     });
   }
+  if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3140,6 +3202,7 @@ async function hzEnvoieCandidate(lieuId){
     if(error){ console.warn('Horizon: envoi candidate direct',error); return; }
     HZ_CANDIDATES.add(lieuId);
     majLigneCockpit();
+    if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
   }catch(e){ console.warn('Horizon: envoi candidate direct',e); }
 }
 
@@ -3155,6 +3218,7 @@ async function hzRetireCandidate(lieuId){
     if(error){ console.warn('Horizon: retrait candidate',error); return; }
     HZ_CANDIDATES.delete(lieuId);
     majLigneCockpit();
+    if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
   }catch(e){ console.warn('Horizon: retrait candidate',e); }
 }
 
@@ -3241,6 +3305,7 @@ async function hzChargerVotesOuverts(){
     (props||[]).forEach(p=>{ if(p.lieu_id) HZ_VOTE_DE_FICHE[p.lieu_id]=p.id; });
     rendAimees();
     rendPanier();
+    if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
   }catch(e){ console.warn('Horizon: votes ouverts',e); }
 }
 
@@ -3726,6 +3791,7 @@ async function loadHorizonData(userId){
     // la vérité est lat/lng, pas la colonne region en ancien découpage). Chaque fiche
     // reçoit _regionSvg = slug de sa région réelle sur la carte 13 régions.
     await chargeDecoupageEtRattache(fiches);
+    if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();   // HZ_CANDIDATES était déjà chargé, HZ_FICHES ne l'était pas encore
 
     // 3) Calculer les vrais compteurs
     const nFiches=fiches.length;
