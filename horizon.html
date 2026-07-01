@@ -230,13 +230,15 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    celle-ci se réduit en bandeau. La carte du coin (Leaflet) reste EN HAUT du
    panneau (le bandeau qui zoome sur la région), le swipe juste dessous —
    exactement « carte rétrécie + swipe » demandé, mais sans overlay. */
-.hz-explo-overlay.hz-explo-inline{position:static;inset:auto;background:none;backdrop-filter:none;
-  z-index:auto;display:block;padding:0;margin:0;animation:hzSeuilPop .28s ease;
-  grid-area:crew;align-self:stretch;min-height:0;}
+.hz-explo-overlay.hz-explo-inline{position:fixed;top:64px;right:0;bottom:0;left:auto;inset:auto 0 0 auto;
+  width:min(440px,94vw);background:none;backdrop-filter:none;z-index:9000;display:block;padding:0;margin:0;
+  animation:hzSlideRight .3s ease;box-shadow:-8px 0 30px rgba(0,0,0,.22);}
+@keyframes hzSlideRight{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 .hz-explo-overlay.hz-explo-inline .hz-explo-modal{width:100%;height:100%;max-height:none;
-  box-shadow:var(--shadow);animation:none;border:1px solid var(--gold-a35);border-radius:var(--r-lg);}
+  box-shadow:none;animation:none;border:none;border-left:1px solid var(--gold-a35);border-radius:0;
+  background:var(--surface);}
 /* quand le swipe est ouvert dans la colonne droite, le groupe s'efface (il revient au close) */
-body.hz-explo-on .b-crew{display:none;}
+/* le swipe flotte en panneau latéral : le groupe reste en place dessous */
 /* la carte du coin devient un vrai bandeau (hauteur fixe lisible sur mobile) */
 .hz-explo-overlay.hz-explo-inline .hz-explo-carte{height:230px;min-height:230px;}
 /* le swipe reprend une hauteur naturelle (plus de calage en % d'un plein écran) */
