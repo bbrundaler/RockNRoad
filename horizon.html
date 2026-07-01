@@ -166,6 +166,25 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* ── GRAND POPUP D'EXPLORATION (3d) ── */
 .hz-explo-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);
   z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;}
+/* B18 · Inc. 2a-2 — LE SWIPE DANS LA PAGE (plus de fenêtre plein écran).
+   Quand hz-explo-inline est posé sur l'overlay, il cesse d'être une modale :
+   il devient un panneau in-flow qui prend la place de la carte France, et
+   celle-ci se réduit en bandeau. La carte du coin (Leaflet) reste EN HAUT du
+   panneau (le bandeau qui zoome sur la région), le swipe juste dessous —
+   exactement « carte rétrécie + swipe » demandé, mais sans overlay. */
+.hz-explo-overlay.hz-explo-inline{position:static;inset:auto;background:none;backdrop-filter:none;
+  z-index:auto;display:block;padding:0;margin-top:14px;animation:hzSeuilPop .28s ease;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-modal{width:100%;height:auto;max-height:none;
+  box-shadow:none;animation:none;}
+/* la carte du coin devient un vrai bandeau (hauteur fixe lisible sur mobile) */
+.hz-explo-overlay.hz-explo-inline .hz-explo-carte{height:230px;min-height:230px;}
+/* le swipe reprend une hauteur naturelle (plus de calage en % d'un plein écran) */
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas{overflow:visible;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas #hz-coin-swipe{height:auto;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-deck{min-height:340px;}
+.hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-card .ph{height:auto;min-height:210px;}
+/* quand le coin est ouvert en page, la grande carte France se replie en bandeau */
+body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ease;}
 .hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
   box-shadow:var(--shadow);width:min(1040px,97vw);height:min(94vh,900px);display:flex;flex-direction:column;
   overflow:hidden;animation:hzSeuilPop .28s ease;}
@@ -2461,7 +2480,12 @@ function ouvreExplo(){
   if(!HZ_COIN_PAQUET) return;
   const ov=document.getElementById('hz-explo');
   if(!ov) return;
-  ov.style.display='flex';
+  // B18 · Inc. 2a-2 : plus de fenêtre plein écran → panneau DANS la page.
+  ov.classList.add('hz-explo-inline');
+  document.body.classList.add('hz-explo-on');
+  ov.style.display='block';
+  // on amène le regard sur le coin (la carte France s'est repliée au-dessus)
+  try{ ov.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
 
@@ -2480,7 +2504,8 @@ function majTitrePopup(slugActuel){
 }
 function fermeExplo(){
   const ov=document.getElementById('hz-explo');
-  if(ov) ov.style.display='none';
+  if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
+  document.body.classList.remove('hz-explo-on');   // la carte France se redéploie
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
   demonteSwipeVersBande();
@@ -2516,8 +2541,19 @@ function initExploCarte(){
     const premier=HZ_LIEUX[0];
     const ptsRegion=[...HZ_COIN_PAQUET.coeur, ...HZ_COIN_PAQUET.limitrophes]
       .filter(l=>(l._regionSvg||l.region)===premier && l.lat && l.lng).map(l=>[l.lat,l.lng]);
-    if(ptsRegion.length){ HZ_EXPLO_MAP.fitBounds(ptsRegion,{padding:[40,40],maxZoom:10}); HZ_EXPLO_REGION_ACTUELLE=premier; }
-    else HZ_EXPLO_MAP.fitBounds(bounds,{padding:[30,30],maxZoom:11});
+    // Effet « wahoo » : on part large (France) puis on PLONGE sur la région.
+    const cible = ptsRegion.length ? ptsRegion : bounds;
+    const zoomMax = ptsRegion.length ? 11 : 10;
+    HZ_EXPLO_MAP.setView([46.6,2.5],5,{animate:false});   // point de départ large
+    setTimeout(()=>{
+      if(!HZ_EXPLO_MAP) return;
+      if(HZ_EXPLO_MAP.flyToBounds){
+        HZ_EXPLO_MAP.flyToBounds(cible,{padding:[40,40],maxZoom:zoomMax,duration:1.4});
+      }else{
+        HZ_EXPLO_MAP.fitBounds(cible,{padding:[40,40],maxZoom:zoomMax});
+      }
+    }, 120);
+    if(ptsRegion.length) HZ_EXPLO_REGION_ACTUELLE=premier;
   } else HZ_EXPLO_MAP.setView([46.6,2.5],5);
   setTimeout(()=>{ if(HZ_EXPLO_MAP) HZ_EXPLO_MAP.invalidateSize(); }, 80);
 }
@@ -2585,7 +2621,7 @@ function brancheExplo(){
   const f=document.getElementById('hz-explo-fermer');
   if(f && !f._cable){ f._cable=true; f.addEventListener('click',fermeExplo); }
   const ov=document.getElementById('hz-explo');
-  if(ov && !ov._cable){ ov._cable=true; ov.addEventListener('click',e=>{ if(e.target===ov) fermeExplo(); }); }
+  if(ov && !ov._cable){ ov._cable=true; ov.addEventListener('click',e=>{ if(e.target===ov && !ov.classList.contains('hz-explo-inline')) fermeExplo(); }); }
   const li=document.getElementById('hz-explo-liste');
   if(li && !li._cable){ li._cable=true; li.addEventListener('click',()=>{
     fermeExplo();
