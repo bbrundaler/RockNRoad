@@ -230,9 +230,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    celle-ci se réduit en bandeau. La carte du coin (Leaflet) reste EN HAUT du
    panneau (le bandeau qui zoome sur la région), le swipe juste dessous —
    exactement « carte rétrécie + swipe » demandé, mais sans overlay. */
-.hz-explo-overlay.hz-explo-inline{position:fixed;top:64px;right:0;bottom:0;left:auto;inset:auto 0 0 auto;
-  width:min(440px,94vw);background:none;backdrop-filter:none;z-index:9000;display:block;padding:0;margin:0;
-  animation:hzSlideRight .3s ease;box-shadow:-8px 0 30px rgba(0,0,0,.22);}
+.hz-explo-overlay.hz-explo-inline{position:fixed;top:64px;right:0;bottom:0;left:auto;
+  width:min(440px,94vw);height:auto;background:none;backdrop-filter:none;z-index:9000;display:block;
+  padding:0;margin:0;animation:hzSlideRight .3s ease;box-shadow:-8px 0 30px rgba(0,0,0,.22);}
 @keyframes hzSlideRight{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 .hz-explo-overlay.hz-explo-inline .hz-explo-modal{width:100%;height:100%;max-height:none;
   box-shadow:none;animation:none;border:none;border-left:1px solid var(--gold-a35);border-radius:0;
@@ -2850,6 +2850,8 @@ function initSwipe(paquet){
     });
   }
   HZ_SWIPE_I=0;
+  console.log('[RNR] initSwipe — HZ_LIEUX=', JSON.stringify(HZ_LIEUX), 'coeur=', paquet.coeur.length, 'limit=', paquet.limitrophes.length, 'retenus=', HZ_RETENUS.size, '→ seq=', HZ_SWIPE_SEQ.length);
+  if(paquet.coeur.length){ const f0=paquet.coeur[0]; console.log('[RNR] 1re fiche coeur — region=', f0.region, '_regionSvg=', f0._regionSvg, 'id=', f0.id, 'retenue?', HZ_RETENUS.has(f0.id)); }
   brancheSwipeActions();
   appliqueModeBande();
   rendSwipeCarte();
