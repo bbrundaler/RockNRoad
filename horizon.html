@@ -183,6 +183,13 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-overlay.hz-explo-inline .hz-explo-bas #hz-coin-swipe{height:auto;}
 .hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-deck{min-height:340px;}
 .hz-explo-overlay.hz-explo-inline .hz-explo-bas .hz-swipe-card .ph{height:auto;min-height:210px;}
+/* B18 · Inc. 2a-2bis — UNE SEULE CARTE : la carte du coin (Leaflet) est
+   masquée. Le « wahoo » se fait sur la GRANDE carte de France (SVG) qui reste
+   à l'écran et plonge sur la région (viewBox animé, cf. plongeCarteFrance).
+   La carte Leaflet du coin reviendra en 2b (rond de précision, géo fine). */
+.hz-explo-overlay.hz-explo-inline .hz-explo-carte{display:none;}
+/* la carte France NE se replie plus : elle reste et zoome (retrait du collapse) */
+body.hz-explo-on .b-map .francemap{transition:none;}
 /* quand le coin est ouvert en page, la grande carte France se replie en bandeau */
 body.hz-explo-on .b-map .francemap{max-height:150px;transition:max-height .4s ease;}
 .hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
@@ -878,7 +885,45 @@ let HZ_FICHE_VEDETTE=null;
 
 // Régions de référence du carnet (mêmes clés) → navigation par #rk ; sinon #dyn-rk
 
-// BRIQUE 3 — LA PORTE (B18 · Inc. 2a) : le clic région ouvre le swipe SUR PLACE.
+// B18 · Inc. 2a-2bis — « LA FRANCE PLONGE » : on anime le viewBox du SVG
+// carte-reine pour zoomer sur la région cliquée (marge autour pour voir les
+// voisines). UNE SEULE carte : celle-ci reste à l'écran et plonge. Pas de 2e
+// carte. getBBox() donne la boîte exacte du tracé réel (repère SVG interne).
+const HZ_VB_PLEIN=[0,0,560,560];
+let HZ_VB_ANIM=null;
+function _svgFrance(){ return document.querySelector('.francemap'); }
+function _animViewBox(svg, to, dur){
+  if(!svg) return;
+  const from=(svg.getAttribute('viewBox')||HZ_VB_PLEIN.join(' ')).split(/[ ,]+/).map(Number);
+  const t0=performance.now();
+  if(HZ_VB_ANIM) cancelAnimationFrame(HZ_VB_ANIM);
+  function step(now){
+    let k=Math.min(1,(now-t0)/dur);
+    k=1-Math.pow(1-k,3);                       // easeOutCubic
+    const v=from.map((f,i)=>f+(to[i]-f)*k);
+    svg.setAttribute('viewBox', v.join(' '));
+    if(k<1) HZ_VB_ANIM=requestAnimationFrame(step); else HZ_VB_ANIM=null;
+  }
+  HZ_VB_ANIM=requestAnimationFrame(step);
+}
+function plongeCarteFrance(slug){
+  const svg=_svgFrance();
+  const path=svg && svg.querySelector('.region[data-r="'+slug+'"]');
+  if(!svg || !path || !path.getBBox) return;
+  const b=path.getBBox();                        // boîte du tracé réel
+  if(!b || !b.width || !b.height) return;         // rendu pas prêt → on ne casse rien
+  const marge=Math.max(b.width, b.height)*0.85;  // halo autour (voisines visibles)
+  let x=b.x-marge, y=b.y-marge, w=b.width+marge*2, h=b.height+marge*2;
+  // garder un cadre carré (le SVG est 560×560) pour ne pas déformer
+  const cote=Math.max(w,h);
+  x-=(cote-w)/2; y-=(cote-h)/2; w=cote; h=cote;
+  _animViewBox(svg, [x,y,w,h], 750);
+}
+function remonteCarteFrance(){
+  _animViewBox(_svgFrance(), HZ_VB_PLEIN.slice(), 650);
+}
+
+
 // Le geste fondateur = clic région → fiches du coin, sans quitter Horizon.
 // On construit le paquet de CETTE région (+ ses limitrophes, gérés par
 // construirePaquet via la maille 22) et on lance le swipe. Si une envie est
@@ -902,7 +947,8 @@ function ouvrirFichesRegion(dataR){
   }
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
-  ouvreExplo();   // le swipe s'ouvre SUR PLACE (modale plein écran pour l'instant)
+  plongeCarteFrance(dataR);   // « wahoo » : la grande carte France plonge sur la région
+  ouvreExplo();               // le swipe s'ouvre SUR PLACE, sous la carte
 }
 
 function afficheFicheDansCadre(f, contexteRegionLabel){
@@ -2484,8 +2530,10 @@ function ouvreExplo(){
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
-  // on amène le regard sur le coin (la carte France s'est repliée au-dessus)
-  try{ ov.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+  // On garde la carte France (qui plonge) en haut de l'écran, le swipe apparaît
+  // dessous : on cadre sur le bloc carte, pas sur le panneau coin.
+  const bmap=document.querySelector('.b-map');
+  try{ (bmap||ov).scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
 
@@ -2506,6 +2554,7 @@ function fermeExplo(){
   const ov=document.getElementById('hz-explo');
   if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
   document.body.classList.remove('hz-explo-on');   // la carte France se redéploie
+  if(typeof remonteCarteFrance==='function') remonteCarteFrance();   // dézoom du SVG
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
   demonteSwipeVersBande();
@@ -2516,6 +2565,14 @@ function fermeExplo(){
 }
 
 function initExploCarte(){
+  // B18 · Inc. 2a-2bis — UNE SEULE CARTE. La carte Leaflet du coin est
+  // désactivée : le zoom « wahoo » se fait sur la grande carte de France (SVG)
+  // via plongeCarteFrance(). On ne crée plus de 2e carte ici. (zoomCarteSurRegion
+  // et syncCarteSurFiche restent sans effet car HZ_EXPLO_MAP reste null.)
+  // → La carte du coin (avec points GPS) reviendra en 2b pour le rond de précision.
+  if(HZ_EXPLO_MAP){ HZ_EXPLO_MAP.remove(); HZ_EXPLO_MAP=null; }
+  return;
+  /* eslint-disable no-unreachable */
   const el=document.getElementById('hz-explo-carte');
   if(!el || !window.L || !HZ_COIN_PAQUET) return;
   if(HZ_EXPLO_MAP){ HZ_EXPLO_MAP.remove(); HZ_EXPLO_MAP=null; }
