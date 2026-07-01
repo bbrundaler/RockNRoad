@@ -389,11 +389,14 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
 .hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
 .hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
-.hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center;}
+.hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:flex-start;overflow:auto;}
 .hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
 .hz-swipe-card .nom{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);line-height:1.2;}
 .hz-swipe-card .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
 .hz-swipe-card .tags span{font-size:10px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 9px;border-radius:12px;}
+.hz-swipe-card .desc{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-top:4px;}
+.hz-swipe-card .infos{display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:11.5px;color:var(--ink-dim);}
+.hz-swipe-card .infos a{color:var(--gold-text);}
 /* MATCH / SPARK : l'étincelle nominative (or = âme de la marque). Pas un score. */
 .hz-spark{margin-top:7px;font-size:11.5px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:11px;padding:3px 10px;display:inline-block;line-height:1.3;}
 /* cartes de transition (Cap sur… / Juste à côté…) */
@@ -439,10 +442,6 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee{display:flex;align-items:center;gap:11px;padding:8px 10px;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-sm);}
 .hz-aimee .mini{width:52px;height:52px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--gold-a20);}
 .hz-aimee .nm{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#hz-swipe-aimees-liste .hz-aimee{flex-wrap:wrap;gap:8px 12px;padding:10px;}
-#hz-swipe-aimees-liste .hz-aimee .mini{width:60px;height:60px;border-radius:9px;}
-#hz-swipe-aimees-liste .hz-aimee .nm{flex:1;min-width:140px;font-size:14.5px;white-space:normal;line-height:1.3;}
-#hz-swipe-aimees-liste .hz-aimee .hz-aimee-actions{flex:1 0 100%;justify-content:flex-end;}
 .hz-aimee .ic{font-size:13px;}
 .hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
 .hz-aimee-grp-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -458,9 +457,14 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
 #hz-drawer-coeurs-corps .hz-aimee{flex-wrap:wrap;gap:8px 14px;padding:12px;}
-#hz-drawer-coeurs-corps .hz-aimee .mini{width:72px;height:72px;border-radius:10px;}
-#hz-drawer-coeurs-corps .hz-aimee .nm{flex:1;min-width:180px;font-size:15px;font-weight:600;white-space:normal;line-height:1.35;}
+#hz-drawer-coeurs-corps .hz-aimee .mini{width:88px;height:88px;border-radius:11px;}
+#hz-drawer-coeurs-corps .hz-aimee .nm{flex:1;min-width:180px;font-size:15.5px;font-weight:600;white-space:normal;line-height:1.35;}
 #hz-drawer-coeurs-corps .hz-aimee .hz-aimee-actions{flex:1 0 100%;justify-content:flex-end;}
+#hz-swipe-aimees-liste .hz-aimee{flex-wrap:wrap;gap:8px 14px;padding:12px;}
+#hz-swipe-aimees-liste .hz-aimee .mini{width:88px;height:88px;border-radius:11px;}
+#hz-swipe-aimees-liste .hz-aimee .nm{flex:1;min-width:150px;font-size:15px;white-space:normal;line-height:1.35;}
+#hz-swipe-aimees-liste .hz-aimee .hz-aimee-actions{flex:1 0 100%;justify-content:flex-end;}
+.hz-aimee .nm .st{font-size:12px;font-weight:400;color:var(--ink-dim);margin-top:2px;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
@@ -2292,6 +2296,17 @@ function hzMajBadgeCoeurs(n){
   if(n>0){ b.textContent=n>9?'9+':String(n); b.classList.add('actif'); }
   else{ b.textContent=''; b.classList.remove('actif'); }
 }
+// Sous-titre court réutilisé sur toutes les petites cartes (tiroir, liste
+// mid-swipe) : mêmes champs déjà éprouvés sur la grande carte du swipe
+// (rendSwipeCarte) — type, sous-région/région, note famille en étoiles.
+function hzSousTitreFiche(f){
+  const bits=[];
+  if(f.type) bits.push(f.type);
+  if(f.sous_region) bits.push(f.sous_region); else if(f.region) bits.push(f.region);
+  let s=bits.join(' · ');
+  if(f.note_famille>0) s+=(s?' · ':'')+'★'.repeat(Number(f.note_famille)||0);
+  return s;
+}
 function carteFicheDrawer(f){
   const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
   const d=document.createElement('div'); d.className='hz-aimee';
@@ -2302,8 +2317,9 @@ function carteFicheDrawer(f){
   const btnVote=enVote
     ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
     : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
+  const st=hzSousTitreFiche(f);
   d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
-    '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div class="nm">'+escapeHtmlHz(f.nom||'—')+(st?'<div class="st">'+escapeHtmlHz(st)+'</div>':'')+'</div>'+
     '<div class="hz-aimee-actions">'+btnVote+btnLeader+
     '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
   const be=d.querySelector('.hz-aimee-epingle');
@@ -3126,10 +3142,19 @@ function rendSwipeCarte(){
   const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(e.limit?' · à côté':'');
   const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
   const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
+  // Complète la carte avec ce que le Carnet sait déjà de la fiche — de la place
+  // sous le titre, retour Bruno du 01/07 : commentaire famille en priorité,
+  // sinon la description, puis adresse/site si renseignés.
+  const texte=(f.commentaire||f.description||'').trim();
+  const desc=texte?'<div class="desc">'+escapeHtmlHz(texte.length>220?texte.slice(0,220)+'…':texte)+'</div>':'';
+  const infosBits=[];
+  if(f.adresse) infosBits.push('📍 '+escapeHtmlHz(f.adresse));
+  if(f.site_web) infosBits.push('🔗 <a href="'+escapeHtmlHz(f.site_web)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+escapeHtmlHz(f.site_web.replace(/^https?:\/\//,'').replace(/\/$/,''))+'</a>');
+  const infos=infosBits.length?'<div class="infos">'+infosBits.join('')+'</div>':'';
   card.innerHTML=
     '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
-    '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+hzSparkBadge(f.id)+'</div>';
+    '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+desc+infos+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
   // dialogue carte↔swipe : zoom sur la région + point mis en avant
   syncCarteSurFiche();
@@ -3649,8 +3674,9 @@ function rendAimees(){
     const btnVote = enVote
       ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
       : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
+    const st = hzSousTitreFiche(f);
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
-      '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
+      '<div class="nm">'+escapeHtmlHz(f.nom||'—')+(st?'<div class="st">'+escapeHtmlHz(st)+'</div>':'')+'</div>'+
       '<div class="hz-aimee-actions">'+btnVote+btnLeader+
       '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
     const be=d.querySelector('.hz-aimee-epingle');
