@@ -2615,13 +2615,14 @@ let HZ_EXPLO_MAP=null;
 let HZ_EXPLO_MARQUEURS={};
 
 function ouvreExplo(){
-  if(!HZ_COIN_PAQUET) return;
+  console.log('[RNR] ouvreExplo — paquet?', !!HZ_COIN_PAQUET, 'seq len=', (window.HZ_SWIPE_SEQ||[]).length, 'idx=', window.HZ_SWIPE_I);
+  if(!HZ_COIN_PAQUET){ console.log('[RNR] STOP: pas de paquet'); return; }
   const ov=document.getElementById('hz-explo');
-  if(!ov) return;
-  // Le swipe s'affiche dans la colonne droite (scène map-first), au-dessus du groupe.
+  if(!ov){ console.log('[RNR] STOP: #hz-explo introuvable'); return; }
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
+  console.log('[RNR] panneau affiché — display=', getComputedStyle(ov).display, 'width=', ov.getBoundingClientRect().width);
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
 
@@ -2730,9 +2731,12 @@ function zoomCarteSurRegion(slug, anime){
 function monteSwipeDansExplo(){
   const swipe=document.getElementById('hz-coin-swipe');
   const bas=document.getElementById('hz-explo-bas');
-  if(swipe && bas && swipe.parentNode!==bas){ bas.appendChild(swipe); }
-  if(swipe) swipe.style.display='';   // réafficher (il est masqué dans la bande)
+  console.log('[RNR] monteSwipe — swipe?', !!swipe, 'bas?', !!bas, 'seq len=', (window.HZ_SWIPE_SEQ||[]).length);
+  if(swipe && bas && swipe.parentNode!==bas){ bas.appendChild(swipe); console.log('[RNR] swipe déplacé dans le panneau'); }
+  if(swipe) swipe.style.display='';
   rendSwipeCarte();
+  const deck=document.getElementById('hz-swipe-deck');
+  console.log('[RNR] après rendSwipeCarte — cartes dans le deck=', deck?deck.querySelectorAll('.hz-swipe-card,.hz-swipe-transition').length:'PAS DE DECK', 'deck hauteur=', deck?deck.getBoundingClientRect().height:'-');
   majSwipeProgres();
   syncCarteSurFiche();
   brancheAimeesActions();
