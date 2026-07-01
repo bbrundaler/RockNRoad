@@ -859,19 +859,31 @@ let HZ_FICHE_VEDETTE=null;
 
 // Régions de référence du carnet (mêmes clés) → navigation par #rk ; sinon #dyn-rk
 
-// BRIQUE 3 — la porte : ouvrir le chemin des fiches d'une région.
-// On vise la région RÉELLE des fiches de la zone (rattachement GPS, maille 22 régions)
-// → onglet du carnet 'alsace'). Si aucune fiche, on emmène vers la carte du carnet (invite à créer).
+// BRIQUE 3 — LA PORTE (B18 · Inc. 2a) : le clic région ouvre le swipe SUR PLACE.
+// Le geste fondateur = clic région → fiches du coin, sans quitter Horizon.
+// On construit le paquet de CETTE région (+ ses limitrophes, gérés par
+// construirePaquet via la maille 22) et on lance le swipe. Si une envie est
+// active (HZ_THEME), elle agit comme un ÉCLAIRAGE (filtre thématique) ; sinon
+// theme=null → toutes les fiches du coin. Plus de redirection vers le Carnet.
+// (2a-2 remplacera la modale ouvreExplo par le swipe dans la page, carte au centre.)
 function ouvrirFichesRegion(dataR){
-  const matches=fichesPourRegionCarte(dataR);
-  if(matches.length){
-    // dataR EST déjà le slug de la région cliquée (maille 22, commun au Carnet).
-    // On ouvre directement l'onglet de cette région dans le Carnet.
-    window.location.href='carnet.html#'+dataR;
-  }else{
-    // zone encore vide : on ouvre la carte du carnet pour inviter à créer une fiche
+  // la région cliquée devient le lieu du coin (maille 22, slug commun au Carnet)
+  HZ_LIEUX=[dataR];
+  if(typeof rendLieuxChoisis==='function') rendLieuxChoisis();
+  if(typeof peintLieuxSurCarte==='function') peintLieuxSurCarte();
+  const paquet=RNR_CARNET_COIN.construirePaquet(
+    HZ_FICHES, HZ_THEME||null, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME}
+  );
+  HZ_COIN_PAQUET=paquet;
+  const aDesFiches=!!(paquet && ((paquet.coeur&&paquet.coeur.length)||(paquet.limitrophes&&paquet.limitrophes.length)));
+  if(!aDesFiches){
+    // coin encore vide : on invite à créer une fiche (carte du Carnet)
     window.location.href='carnet.html#carte';
+    return;
   }
+  if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
+  if(typeof majEnAvant==='function') majEnAvant(paquet);
+  ouvreExplo();   // le swipe s'ouvre SUR PLACE (modale plein écran pour l'instant)
 }
 
 function afficheFicheDansCadre(f, contexteRegionLabel){
@@ -1506,13 +1518,16 @@ function brancheSurvolCarte(){
     // clic sur une région → ARBITRAGE selon l'état du geste fondateur :
     //  • un thème est choisi (on attend un lieu) → on (dé)sélectionne ce lieu
     //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
+    // clic sur une région → LE GESTE FONDATEUR (B18 · Inc. 2a) :
+    // clic région → fiches du coin sur place, TOUJOURS. Une envie active
+    // (HZ_THEME) n'intercepte plus le clic : elle devient un éclairage
+    // (filtre) appliqué dans ouvrirFichesRegion. Fini le détour toggleLieu.
     reg.addEventListener('click',()=>{
       if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
-      if(HZ_THEME){ toggleLieu(dataR); return; }        // GESTE : on pose le lieu
       const matches=fichesPourRegionCarte(dataR);
       const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
       afficheReve(dataR, best);     // au cas où le survol n'a pas eu lieu (mobile/tactile)
-      ouvrirFichesRegion(dataR);    // la porte, directement
+      ouvrirFichesRegion(dataR);    // la porte, directement — swipe sur place
     });
   });
   brancheModeTri();

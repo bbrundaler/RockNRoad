@@ -12,24 +12,41 @@
 (function () {
   'use strict';
 
-  /* Voisinages des 13 régions (slugs de decoupage-france-regions.json).
-     Donnée stable et factuelle : quelles régions se touchent. Sert à inclure
-     les fiches "limitrophes proches" (le château à 30 min de l'autre côté de
-     la frontière n'est pas exclu bêtement — Master 4.15bis). */
+  /* Voisinages des 22 anciennes régions (maille D-22, slugs de
+     decoupage-france-regions.json). Donnée stable et factuelle : quelles
+     régions se touchent. Sert à inclure les fiches "limitrophes proches"
+     (le château à 30 min de l'autre côté de la frontière n'est pas exclu
+     bêtement — Master 4.15bis).
+
+     CACHE DÉRIVÉ, PAS UNE 2e SOURCE : cette table est CALCULÉE une fois depuis
+     decoupage-france-regions.json (adjacence = ≥2 sommets de contour partagés).
+     Le JSON reste l'unique vérité de la maille. Pour régénérer après un
+     changement de découpage : recalculer l'adjacence des polygones du JSON.
+     (Historique : était restée en 13 régions après le réalignement D-22 —
+     la couche « juste à côté » était donc muette ; réparée ici.) */
   var VOISINS = {
-    'ile-de-france':            ['hauts-de-france','grand-est','bourgogne-franche-comte','centre-val-de-loire','normandie'],
-    'centre-val-de-loire':      ['ile-de-france','normandie','pays-de-la-loire','nouvelle-aquitaine','auvergne-rhone-alpes','bourgogne-franche-comte'],
-    'bourgogne-franche-comte':  ['ile-de-france','grand-est','auvergne-rhone-alpes','centre-val-de-loire'],
-    'normandie':                ['hauts-de-france','ile-de-france','centre-val-de-loire','pays-de-la-loire','bretagne'],
-    'hauts-de-france':          ['normandie','ile-de-france','grand-est'],
-    'grand-est':                ['hauts-de-france','ile-de-france','bourgogne-franche-comte'],
-    'pays-de-la-loire':         ['bretagne','normandie','centre-val-de-loire','nouvelle-aquitaine'],
-    'bretagne':                 ['normandie','pays-de-la-loire'],
-    'nouvelle-aquitaine':       ['pays-de-la-loire','centre-val-de-loire','auvergne-rhone-alpes','occitanie'],
-    'occitanie':                ['nouvelle-aquitaine','auvergne-rhone-alpes','provence-alpes-cote-d-azur'],
-    'auvergne-rhone-alpes':     ['bourgogne-franche-comte','centre-val-de-loire','nouvelle-aquitaine','occitanie','provence-alpes-cote-d-azur'],
-    'provence-alpes-cote-d-azur':['occitanie','auvergne-rhone-alpes'],
-    'corse':                    []  /* île : pas de limitrophe terrestre */
+    'ile-de-france':       ['bourgogne','centre','champagne-ardenne','haute-normandie','picardie'],
+    'champagne-ardenne':   ['bourgogne','franche-comte','ile-de-france','lorraine','picardie'],
+    'picardie':            ['champagne-ardenne','haute-normandie','ile-de-france','nord-pas-de-calais'],
+    'haute-normandie':     ['basse-normandie','centre','ile-de-france','picardie'],
+    'centre':              ['auvergne','basse-normandie','bourgogne','haute-normandie','ile-de-france','limousin','pays-de-la-loire','poitou-charentes'],
+    'basse-normandie':     ['bretagne','centre','haute-normandie','pays-de-la-loire'],
+    'bourgogne':           ['auvergne','centre','champagne-ardenne','franche-comte','ile-de-france','rhone-alpes'],
+    'nord-pas-de-calais':  ['picardie'],
+    'lorraine':            ['alsace','champagne-ardenne','franche-comte'],
+    'alsace':              ['franche-comte','lorraine'],
+    'franche-comte':       ['alsace','bourgogne','champagne-ardenne','lorraine','rhone-alpes'],
+    'pays-de-la-loire':    ['basse-normandie','bretagne','centre','poitou-charentes'],
+    'bretagne':            ['basse-normandie','pays-de-la-loire'],
+    'poitou-charentes':    ['aquitaine','centre','limousin','pays-de-la-loire'],
+    'aquitaine':           ['limousin','midi-pyrenees','poitou-charentes'],
+    'midi-pyrenees':       ['aquitaine','auvergne','languedoc-roussillon','limousin'],
+    'limousin':            ['aquitaine','auvergne','centre','midi-pyrenees','poitou-charentes'],
+    'rhone-alpes':         ['auvergne','bourgogne','franche-comte','languedoc-roussillon','provence-alpes-cote-d-azur'],
+    'auvergne':            ['bourgogne','centre','languedoc-roussillon','limousin','midi-pyrenees','rhone-alpes'],
+    'languedoc-roussillon':['auvergne','midi-pyrenees','provence-alpes-cote-d-azur','rhone-alpes'],
+    'provence-alpes-cote-d-azur':['languedoc-roussillon','rhone-alpes'],
+    'corse':               []  /* île : pas de limitrophe terrestre */
   };
 
   /* Région d'une fiche : on privilégie le rattachement GPS réel (_regionSvg,
