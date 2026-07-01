@@ -427,6 +427,8 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 .hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
 .hz-pr-vote{flex-shrink:0;font-size:12px;line-height:1;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 6px;border-radius:8px;}
 .hz-pr-vote:hover{border-color:var(--gold);color:var(--gold-text);}
+.hz-aimee-tag-vote{font-size:10.5px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-pr-tag-vote{flex-shrink:0;font-size:12px;line-height:1;color:var(--gold-text);background:var(--gold-a10);padding:3px 6px;border-radius:8px;}
 /* ── Modale de création de vote, portée depuis cockpit.html (B18-Inc.A2) ── */
 .q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
 .q-close-btn:hover{background:var(--gold-a20);}
@@ -2565,10 +2567,13 @@ function rendPanier(){
         ' <span class="hz-pr-n">'+fiches.length+'</span></div>';
       const items=fiches.map(f=>{
         const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
-        const btnLeader = jeSuisLeaderHz()
+        const enVote = !!HZ_VOTE_DE_FICHE[f.id];
+        const btnLeader = (!enVote && jeSuisLeaderHz())
           ? '<button class="hz-pr-epingle" type="button" title="Épingler au voyage, au nom du groupe" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : '';
-        const btnVote = '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
+        const btnVote = enVote
+          ? '<span class="hz-pr-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️</span>'
+          : '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
         return '<div class="hz-pr-fiche"><span class="hz-pr-mini" style="background-image:'+ph+'"></span>'+
           '<span class="hz-pr-nom">'+escapeHtmlHz(f.nom||'—')+'</span>'+btnVote+btnLeader+'</div>';
       }).join('');
@@ -3137,6 +3142,25 @@ function hzFichesAimeesListe(){
     .filter(f=>f && f.id && !HZ_RETENUS.has(f.id) && !HZ_ECARTEES.has(f.id));
 }
 
+// ── SUIVI « EN VOTE » PAR FICHE (B18-Inc.A3, pont vers Inc.C) ──
+// Sans ça, on peut relancer un vote en boucle sur la même fiche (bug remonté
+// par Bruno) : rien ne dit qu'un vote est déjà ouvert. On charge juste la
+// correspondance lieu_id → proposition ouverte (pas le flux complet des votes,
+// ça reste le lot du bloc « Votes en cours », Inc.C, à recaser en maquette).
+let HZ_VOTE_DE_FICHE={};   // { lieu_id: proposition_id }
+async function hzChargerVotesOuverts(){
+  if(!HZ_GROUPE_ID || !HZ_VOYAGE_ID) return;
+  try{
+    const {data:props,error}=await sb.from('propositions').select('id,lieu_id')
+      .eq('groupe_id',HZ_GROUPE_ID).eq('voyage_id',HZ_VOYAGE_ID).eq('statut','ouvert');
+    if(error){ console.warn('Horizon: votes ouverts',error); return; }
+    HZ_VOTE_DE_FICHE={};
+    (props||[]).forEach(p=>{ if(p.lieu_id) HZ_VOTE_DE_FICHE[p.lieu_id]=p.id; });
+    rendAimees();
+    rendPanier();
+  }catch(e){ console.warn('Horizon: votes ouverts',e); }
+}
+
 function ouvrirCreationVote(){
   NV_intention = null;
   const bg=document.createElement('div');
@@ -3262,8 +3286,7 @@ async function creerVote(){
   }catch(e){ console.warn('Horizon: creerVote',e); alert('Vote non créé.'); return; }
   fermerCreationVote();
   NV_FICHE_PREREMPLIE=null;
-  // Le suivi « en vote » (badge, blocage double-vote) arrive avec le bloc
-  // « Votes en cours » (Inc. C) — pour l'instant, confirmation simple.
+  await hzChargerVotesOuverts();   // la fiche passe aussitôt en « en vote » dans les listes
   alert('Vote lancé — le groupe peut voter dès maintenant.');
 }
 
@@ -3275,6 +3298,7 @@ let NV_FICHE_PREREMPLIE=null;
 function lancerVoteSurFiche(lieuId){
   if(HZ_RETENUS.has(lieuId)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
   if(HZ_ECARTEES.has(lieuId)){ alert('Cette fiche a déjà été écartée par un vote du groupe.'); return; }
+  if(HZ_VOTE_DE_FICHE[lieuId]){ alert('Un vote est déjà ouvert sur cette fiche — pas besoin d\'en relancer un.'); return; }
   const f=hzFichesAimeesListe().find(x=>x.id===lieuId); if(!f) return;
   NV_FICHE_PREREMPLIE=lieuId;
   ouvrirCreationVote();
@@ -3338,10 +3362,13 @@ function rendAimees(){
   const carteFiche=(f)=>{
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
-    const btnLeader = jeSuisLeaderHz()
+    const enVote = !!HZ_VOTE_DE_FICHE[f.id];
+    const btnLeader = (!enVote && jeSuisLeaderHz())
       ? '<button class="hz-aimee-epingle" type="button" title="Épingler au voyage, au nom du groupe">📌 Épingler</button>'
       : '';
-    const btnVote = '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
+    const btnVote = enVote
+      ? '<span class="hz-aimee-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️ En vote</span>'
+      : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
       '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
       '<div class="hz-aimee-actions">'+btnVote+btnLeader+
@@ -3673,6 +3700,10 @@ async function loadHorizonData(userId){
 
     // 7) Vote fondateur des leaders (a besoin de HZ_MEMBRES, donc après le bloc groupe)
     chargeVoteLeader();
+
+    // 7bis) Votes ouverts par fiche (B18-Inc.A3) : sait si une fiche est déjà
+    // « en vote » pour éviter les doublons + affiche l'état dans les listes.
+    hzChargerVotesOuverts();
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
