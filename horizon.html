@@ -28,10 +28,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
   padding:12px;display:grid;gap:11px;
-  grid-template-columns:1.7fr 1fr;
+  grid-template-columns:1fr;
   grid-template-rows:1fr;
   grid-template-areas:
-    "map    crew";
+    "map";
   min-height:0;
 }
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
@@ -258,6 +258,39 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-explo-overlay.hz-explo-inline .hz-explo-carte{display:none;}
 /* la carte France NE se replie plus : elle reste pleine (swipe en panneau latéral) */
 body.hz-explo-on .b-map .francemap{transition:none;}
+
+/* ── RAIL DROIT : onglets flottants (B18 · rail unifié, Inc.1) ──
+   Remplace la colonne « Le groupe » fixe. Un seul tiroir ouvert à la fois,
+   même langage visuel que les pastilles flottantes de la carte. */
+#hz-rail{position:fixed;top:50%;right:14px;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;z-index:9200;}
+.hz-rail-btn{position:relative;width:44px;height:44px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--surface-line);box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
+  transition:.15s;}
+.hz-rail-btn:hover{border-color:var(--gold-a35);}
+.hz-rail-btn.actif{background:var(--gold-a10);border-color:var(--gold-a35);}
+.hz-rail-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;
+  border-radius:9px;background:#d8456e;color:#fff;font-size:10px;font-weight:700;
+  display:none;align-items:center;justify-content:center;padding:0 4px;}
+.hz-rail-badge.actif{display:flex;}
+
+.hz-drawer{position:fixed;top:64px;right:0;bottom:0;left:auto;width:min(380px,90vw);
+  background:var(--surface);border-left:1px solid var(--gold-a35);
+  box-shadow:-8px 0 30px rgba(0,0,0,.22);z-index:9300;display:none;flex-direction:column;
+  animation:hzSlideRight .3s ease;}
+.hz-drawer.ouvert{display:flex;}
+.hz-drawer-tete{display:flex;align-items:center;gap:8px;padding:14px 16px;flex-shrink:0;
+  border-bottom:1px solid var(--surface-line);}
+.hz-drawer-tete h3{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);flex:1;}
+.hz-drawer-fermer{background:none;border:none;font-size:16px;color:var(--ink-dim);cursor:pointer;padding:4px;}
+.hz-drawer-fermer:hover{color:var(--ink);}
+.hz-drawer-corps{flex:1;overflow:auto;scrollbar-width:thin;padding:9px 16px 16px;min-height:0;}
+.hz-drawer-vide{font-size:13px;color:var(--ink-dim);line-height:1.6;padding:8px 2px;}
+@media(max-width:680px){
+  #hz-rail{right:10px;top:auto;bottom:90px;transform:none;}
+}
+body.hz-explo-on #hz-rail{display:none;}
 .hz-explo-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
   box-shadow:var(--shadow);width:min(1040px,97vw);height:min(94vh,900px);display:flex;flex-direction:column;
   overflow:hidden;animation:hzSeuilPop .28s ease;}
@@ -596,7 +629,7 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 
 @media(max-width:880px){
   html,body{overflow:auto;}
-  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"map" "crew";}
+  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"map";}
   .b-map{min-height:48vh;}
   .b-write .bb{flex-direction:column;}
 }
@@ -606,17 +639,31 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 </head>
 <body>
 <div class="stage">
-  <div class="blk b-ind" style="display:none">
-    <div class="bb"><div id="hz-ligne-cockpit-old" style="display:none"></div></div>
+  <!-- Rail droit unifié (B18, rail Inc.1) : onglets flottants, un seul tiroir ouvert. -->
+  <div id="hz-rail">
+    <button class="hz-rail-btn" id="hz-rail-groupe" type="button" title="Le groupe">👥<span class="hz-rail-badge" id="hz-rail-badge-groupe"></span></button>
+    <button class="hz-rail-btn" id="hz-rail-coeurs" type="button" title="Mes cœurs & votes">❤️<span class="hz-rail-badge" id="hz-rail-badge-coeurs"></span></button>
   </div>
-  <div class="blk crew b-crew">
-    <div class="bh"><span class="ic">👥</span><h3>Le groupe</h3><span class="pin">📌</span></div>
-    <div class="bb">
+
+  <div class="hz-drawer" id="hz-drawer-groupe">
+    <div class="hz-drawer-tete"><span class="ic">👥</span><h3>Le groupe</h3><button class="hz-drawer-fermer" id="hz-drawer-groupe-fermer" type="button" title="fermer">✕</button></div>
+    <div class="hz-drawer-corps">
       <div id="hz-leader" class="hz-leader" style="display:none"></div>
       <div id="hz-thermo" class="hz-thermo" style="display:none"></div>
       <div class="avts" id="hz-crew-avts"></div>
       <div id="hz-crew-msgs"></div>
     </div>
+  </div>
+
+  <div class="hz-drawer" id="hz-drawer-coeurs">
+    <div class="hz-drawer-tete"><span class="ic">❤️</span><h3>Mes cœurs & votes</h3><button class="hz-drawer-fermer" id="hz-drawer-coeurs-fermer" type="button" title="fermer">✕</button></div>
+    <div class="hz-drawer-corps">
+      <div class="hz-drawer-vide">Bientôt ici : vos coups de cœur sur tout le voyage, avec vote et épingle — sans passer par le swipe.</div>
+    </div>
+  </div>
+
+  <div class="blk b-ind" style="display:none">
+    <div class="bb"><div id="hz-ligne-cockpit-old" style="display:none"></div></div>
   </div>
   <!-- Bandeau vote supprimé : ses contrôles vivent désormais en overlays SUR la
        carte (map-first). On conserve ici, invisibles, les seuls ID encore
@@ -2452,6 +2499,32 @@ function brancheSeuil(){
   const av=document.getElementById('hz-en-avant');
   if(av) av.addEventListener('click', ouvreExplo);
   brancheExplo();
+  brancheRail();
+}
+
+// ── RAIL DROIT UNIFIÉ (B18, Inc.1) : un seul tiroir ouvert à la fois. Ouvrir
+// un tiroir ferme l'autre. Cliquer l'onglet déjà actif referme (toggle).
+function hzOuvrirDrawer(id){
+  const cible=document.getElementById(id);
+  if(!cible) return;
+  const dejaOuvert=cible.classList.contains('ouvert');
+  document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
+  document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
+  if(!dejaOuvert){
+    cible.classList.add('ouvert');
+    const btn=document.getElementById(id==='hz-drawer-groupe'?'hz-rail-groupe':'hz-rail-coeurs');
+    if(btn) btn.classList.add('actif');
+  }
+}
+function brancheRail(){
+  const bg=document.getElementById('hz-rail-groupe');
+  if(bg && !bg._cable){ bg._cable=true; bg.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-groupe')); }
+  const bc=document.getElementById('hz-rail-coeurs');
+  if(bc && !bc._cable){ bc._cable=true; bc.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-coeurs')); }
+  const fg=document.getElementById('hz-drawer-groupe-fermer');
+  if(fg && !fg._cable){ fg._cable=true; fg.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-groupe')); }
+  const fc=document.getElementById('hz-drawer-coeurs-fermer');
+  if(fc && !fc._cable){ fc._cable=true; fc.addEventListener('click',()=>hzOuvrirDrawer('hz-drawer-coeurs')); }
 }
 
 // Vignette de fiche dans la bande — format Carnet (photo, type, notes, nom,
@@ -2568,8 +2641,8 @@ function rendPanier(){
       const items=fiches.map(f=>{
         const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
         const enVote = !!HZ_VOTE_DE_FICHE[f.id];
-        const btnLeader = (!enVote && jeSuisLeaderHz())
-          ? '<button class="hz-pr-epingle" type="button" title="Épingler au voyage, au nom du groupe" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
+        const btnLeader = jeSuisLeaderHz()
+          ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : '';
         const btnVote = enVote
           ? '<span class="hz-pr-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️</span>'
@@ -2658,6 +2731,8 @@ function ouvreExplo(){
   if(!HZ_COIN_PAQUET) return;
   const ov=document.getElementById('hz-explo');
   if(!ov) return;
+  document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
+  document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
@@ -2987,15 +3062,14 @@ function rendFinSwipe(){
         clearTimeout(HZ_FIN_TIMER);
         HZ_FIN_TIMER=setTimeout(()=>{ basculeVersDormir(); }, 1600);
       }else{
-        // Écran de fin (après la nuit, ou pas de couchage) — plus de « valider » : le ❤️
-        // a déjà tout envoyé au Cockpit. On récapitule et on offre la suite.
+        // Écran de fin (après la nuit, ou pas de couchage). B18-Inc.A3 : on ne
+        // renvoie PLUS vers Cockpit — la liste juste en dessous (❤️ Mes coups
+        // de cœur / 🌙 Où dormir) porte déjà Vote + Épingler. Pointer vers
+        // Cockpit ici contredisait ce qu'on vient de construire (retour Bruno).
         vide.innerHTML='<span class="hz-swipe-empty-ic">🎉</span>'+
           '<div style="font-size:15px;color:var(--ink);"><b>'+nb+' coup'+(nb>1?'s':'')+' de cœur</b> dans ce coin&nbsp;!</div>'+
-          '<div style="font-size:12.5px;">Ils sont déjà au Cockpit — le groupe affine ensemble.</div>'+
-          '<button class="hz-fin-valider" id="hz-fin-cockpit" type="button">→ Voir au Cockpit</button>'+
+          '<div style="font-size:12.5px;">Vote ou épingle juste en dessous, ou explore un autre coin.</div>'+
           '<button class="hz-swipe-rejouer" id="hz-fin-revoir" type="button">↺ Revoir ce coin</button>';
-        const c=document.getElementById('hz-fin-cockpit');
-        if(c) c.addEventListener('click',()=>{ window.location.href='cockpit.html'; });
         const rv=document.getElementById('hz-fin-revoir');
         if(rv) rv.addEventListener('click',()=>{ HZ_SWIPE_I=0; rendSwipeCarte(); majSwipeProgres(); });
       }
@@ -3097,16 +3171,25 @@ async function epinglerDirectementHz(fiche){
   if(!HZ_VOYAGE_ID || !fiche || !fiche.id) return;
   if(HZ_RETENUS.has(fiche.id)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
   if(HZ_ECARTEES.has(fiche.id)){ alert('Cette fiche a été écartée par un vote du groupe.'); return; }
-  if(!confirm('Tu épingles « '+(fiche.nom||'cette fiche')+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.')) return;
+  const propId = HZ_VOTE_DE_FICHE[fiche.id];
+  const msg = propId
+    ? 'Un vote est en cours sur « '+(fiche.nom||'cette fiche')+' ».\n\nEn l\'épinglant, tu clôtures ce vote et tranches au nom du groupe — c\'est le rôle d\'arbitre du leader (le vote n\'attend plus de voix, mais reste consultable dans Cockpit).'
+    : 'Tu épingles « '+(fiche.nom||'cette fiche')+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.';
+  if(!confirm(msg)) return;
   try{
     const {error}=await sb.from('voyage_fiches').upsert(
       [{voyage_id:HZ_VOYAGE_ID, lieu_id:fiche.id, statut:'retenue', origine:'leader', maj_le:new Date().toISOString()}],
       {onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: épingle directe',error); alert('Impossible d\'épingler pour le moment.'); return; }
+    if(propId){
+      const {error:eClot}=await sb.from('propositions').update({statut:'clos'}).eq('id',propId);
+      if(eClot) console.warn('Horizon: clôture vote (arbitrage leader)',eClot);   // non bloquant
+    }
   }catch(e){ console.warn('Horizon: épingle directe',e); alert('Impossible d\'épingler pour le moment.'); return; }
   HZ_RETENUS.add(fiche.id);
   HZ_CANDIDATES.delete(fiche.id);
   hzMajMarqueur(fiche.id, fiche.type);
+  await hzChargerVotesOuverts();   // efface le tag « en vote » si le leader vient de trancher
   rendAimees();
   rendPanier();
   majLigneCockpit();
@@ -3363,8 +3446,8 @@ function rendAimees(){
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
     const enVote = !!HZ_VOTE_DE_FICHE[f.id];
-    const btnLeader = (!enVote && jeSuisLeaderHz())
-      ? '<button class="hz-aimee-epingle" type="button" title="Épingler au voyage, au nom du groupe">📌 Épingler</button>'
+    const btnLeader = jeSuisLeaderHz()
+      ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
       : '';
     const btnVote = enVote
       ? '<span class="hz-aimee-tag-vote" title="Un vote du groupe est déjà ouvert sur cette fiche">🗳️ En vote</span>'
