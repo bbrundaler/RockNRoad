@@ -36,11 +36,12 @@
     {id:'hub',      label:'Hub',      href:'home.html'},
     {id:'horizon',  label:'Horizon',  href:'horizon.html'},
     {id:'carnet',   label:'Carnet',   href:'carnet.html'},
-    {id:'cockpit',  label:'Cockpit',  href:'cockpit.html'},
+    /* Cockpit retiré (02/07, B18-Inc.D) : fusionné dans Horizon — le débat,
+       le vote et la main du leader vivent désormais sur la carte d'Horizon. */
     {id:'voyage',   label:'Voyage',   href:'voyage.html'},
     {id:'souvenir', label:'Souvenir', href:'souvenir.html'}
   ];
-  var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', cockpit:'🗳️', voyage:'🗺️', souvenir:'📸'};
+  var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', souvenir:'📸'};
 
   /* ── 1 · THÈME : posé IMMÉDIATEMENT (avant le rendu) ── */
   var theme = 'clair';

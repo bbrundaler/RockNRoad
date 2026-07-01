@@ -31,7 +31,7 @@
     souvenir: {href:'souvenir.html',     active:true},   // page Souvenir créée (05/06)
     creer:    {href:'admin.html',         active:true},
     fiches:   {href:'carnet.html#alsace', active:true},   // entrée carnet par régions (barre supérieure) — 05/06
-    cockpit:  {href:'cockpit.html',       active:true},   // page Cockpit créée (05/06)
+    /* cockpit retiré (02/07, B18-Inc.D) : fusionné dans Horizon */
     carte:    {href:'carnet.html#carte',  active:true}
   };
 
@@ -125,13 +125,12 @@
   var LABELS = {
     rever:'Alors,<br>on part où ?', creation:'On finalise<br>le voyage',
     roadbook:'Roadbook', souvenir:'Souvenir',
-    creer:'Création fiche', fiches:'Liste fiches', cockpit:'Cockpit', carte:'Carte'
+    creer:'Création fiche', fiches:'Liste fiches', carte:'Carte'
   };
   var ICONS = {
     hub:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/>',
     creer:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
     fiches:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
-    cockpit:'<path d="M3 13h4l2 5 4-12 2 7h6"/>',
     carte:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>'
   };
 
@@ -210,7 +209,7 @@
       + '<div class="bsl-dial">'+dialSVG+'</div>'
       + entry('hub','hub')
       + entry('rever','card') + entry('creation','card') + entry('roadbook','card') + entry('souvenir','card')
-      + entry('creer','diag') + entry('fiches','diag') + entry('cockpit','diag') + entry('carte','diag')
+      + entry('creer','diag') + entry('fiches','diag') + entry('carte','diag')
       + '</div>';
 
     document.body.appendChild(btn);

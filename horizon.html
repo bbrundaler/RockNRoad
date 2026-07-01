@@ -841,7 +841,7 @@ body.hz-explo-on #hz-rail{display:none;}
             <div class="hz-panier-explik">
               <b>Et après&nbsp;?</b> Chaque coup de cœur part <b>déjà</b> au <b>Cockpit</b>, où le groupe affine ensemble. Puis on construit le voyage dans <b>Voyage</b>. Rien n'est figé — on avance, tranquille&nbsp;!
             </div>
-            <button class="hz-panier-valider" id="hz-panier-suite" type="button">→ Voir au Cockpit</button>
+            <button class="hz-panier-valider" id="hz-panier-suite" type="button">→ Voir le voyage</button>
           </div>
         </div>
 
@@ -2017,9 +2017,22 @@ function labelRegionSvg(slug){
 // B18 · bandeau de tête — dépliement d'une porte d'inspiration (progressive
 // disclosure). Un clic ouvre son panneau et referme l'autre ; re-clic referme.
 function hzToggleporte(which){
+  // PORTE B « Où dormir » (correctif 02/07) : le bouton dit déjà l'intention —
+  // il active/désactive DIRECTEMENT le thème couchage (choisitTheme, moteur
+  // unique). L'ancien panneau à chip unique imposait un clic de plus, et si on
+  // le sautait le thème restait nul → fiches jour/nuit mélangées (bug Bruno).
+  if(which==='dormir'){
+    const panAutre=document.getElementById('hz-panneau-envie');
+    const btnAutre=document.getElementById('hz-porte-envie');
+    if(panAutre) panAutre.style.display='none';
+    if(btnAutre) btnAutre.classList.remove('ouvert');
+    choisitTheme('nuit');
+    const btn=document.getElementById('hz-porte-dormir');
+    if(btn) btn.classList.toggle('ouvert', HZ_THEME==='nuit');
+    return;
+  }
   const panneaux={envie:'hz-panneau-envie', dormir:'hz-panneau-dormir'};
   const boutons ={envie:'hz-porte-envie',   dormir:'hz-porte-dormir'};
-  const chevrons={envie:'hz-chev-envie',    dormir:'hz-chev-dormir'};
   const autre = which==='envie' ? 'dormir' : 'envie';
   const pan=document.getElementById(panneaux[which]);
   const panAutre=document.getElementById(panneaux[autre]);
@@ -2069,6 +2082,10 @@ function rendThemesChips(){
     chip.addEventListener('click',()=>choisitTheme('nuit'));
     boxNuit.appendChild(chip);
   }
+  // le bouton « Où dormir » reflète toujours l'état réel du thème couchage
+  // (il peut changer par un autre chemin : choisir une envie le désactive)
+  const btnDormir=document.getElementById('hz-porte-dormir');
+  if(btnDormir) btnDormir.classList.toggle('ouvert', HZ_THEME==='nuit');
 }
 
 // ── Coloration de la carte par THÈME (geste neuf, indépendant du vieux moteur) ──
@@ -2120,7 +2137,7 @@ function majLigneCockpit(){
   const nReg=regs.size;
   el.style.display='block';
   el.innerHTML='<span class="hz-lc-ic">🚀</span> <b>'+n+' fiche'+(n>1?'s':'')+'</b> déjà '+
-    (n>1?'envoyées':'envoyée')+' au Cockpit'+(nReg>1?(' sur <b>'+nReg+' régions</b>'):'')+
+    (n>1?'retenues ou en lice':'retenue ou en lice')+' pour ce voyage'+(nReg>1?(' sur <b>'+nReg+' régions</b>'):'')+
     ' — le voyage prend forme&nbsp;!';
 }
 // Marque visuellement les régions qui ont des fiches retenues (couleur spéciale
@@ -2789,7 +2806,7 @@ function branchePanier(){
   const rouvrir=document.getElementById('hz-panier-rouvrir');
   if(rouvrir && !rouvrir._cable){ rouvrir._cable=true; rouvrir.addEventListener('click',ouvreExplo); }
   const suite=document.getElementById('hz-panier-suite');
-  if(suite && !suite._cable){ suite._cable=true; suite.addEventListener('click',()=>{ window.location.href='cockpit.html'; }); }
+  if(suite && !suite._cable){ suite._cable=true; suite.addEventListener('click',()=>{ window.location.href='voyage.html'; }); }   // Inc.B : la sortie va au VOYAGE (le Cockpit n'existe plus)
 }
 
 // TRANSITION JOUR→NUIT (vécu testeuse 1 : « je fais d'abord, je dors après »).
