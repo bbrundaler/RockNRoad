@@ -423,6 +423,33 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
+.hz-aimee-vote{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
+.hz-pr-vote{flex-shrink:0;font-size:12px;line-height:1;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 6px;border-radius:8px;}
+.hz-pr-vote:hover{border-color:var(--gold);color:var(--gold-text);}
+/* ── Modale de création de vote, portée depuis cockpit.html (B18-Inc.A2) ── */
+.q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
+.q-close-btn:hover{background:var(--gold-a20);}
+.vmodal-bg{position:fixed;inset:0;background:rgba(10,7,3,.62);display:flex;align-items:center;justify-content:center;z-index:10500;padding:18px;}
+.vmodal{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);box-shadow:var(--shadow);width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:20px;}
+.vmodal h3{font-family:var(--font-title);font-size:18px;color:var(--ink);margin-bottom:14px;}
+.vmodal label{display:block;font-size:12px;color:var(--gold-text);font-weight:700;margin:11px 0 5px;text-transform:uppercase;letter-spacing:.5px;}
+.vmodal input,.vmodal select,.vmodal textarea{width:100%;padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:9px;background:var(--paper);color:#1a1208;font-family:var(--font-body);font-size:13px;}
+.vmodal input:focus,.vmodal select:focus,.vmodal textarea:focus{border-color:var(--gold);outline:none;}
+.vopt-row{display:flex;gap:6px;margin-bottom:6px;}
+.vopt-row input{flex:1;}
+.vopt-del{width:34px;border:1.5px solid var(--surface-line);background:none;border-radius:8px;cursor:pointer;color:var(--ink-dim);font-size:14px;}
+.vmodal-foot{display:flex;gap:9px;margin-top:18px;}
+.vbtn{flex:1;padding:11px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:13px;font-family:var(--font-body);}
+.vbtn-go{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;}
+.vbtn-no{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}
+.vhint{font-size:11px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
+.int-cards{display:flex;flex-direction:column;gap:9px;margin-top:6px;}
+.int-card{padding:13px 15px;border:1.5px solid var(--surface-line);border-radius:11px;cursor:pointer;transition:all .15s;background:var(--paper);}
+.int-card:hover{border-color:var(--gold);background:var(--gold-a10);transform:translateX(2px);}
+.int-t{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--ink);}
+.int-ex{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:3px;}
+.nv-select{width:100%;padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:9px;background:var(--paper);color:var(--ink);font-size:14px;}
 .hz-aimees-pied{display:flex;flex-direction:row;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--surface-line);}
 .hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
 .hz-aimees-btn.refaire{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);}
@@ -2541,8 +2568,9 @@ function rendPanier(){
         const btnLeader = jeSuisLeaderHz()
           ? '<button class="hz-pr-epingle" type="button" title="Épingler au voyage, au nom du groupe" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : '';
+        const btnVote = '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
         return '<div class="hz-pr-fiche"><span class="hz-pr-mini" style="background-image:'+ph+'"></span>'+
-          '<span class="hz-pr-nom">'+escapeHtmlHz(f.nom||'—')+'</span>'+btnLeader+'</div>';
+          '<span class="hz-pr-nom">'+escapeHtmlHz(f.nom||'—')+'</span>'+btnVote+btnLeader+'</div>';
       }).join('');
       return '<div class="hz-pr-grp">'+tete+items+'</div>';
     }).join('');
@@ -3089,6 +3117,176 @@ function epinglerDirectementHzId(lieuId){
   epinglerDirectementHz(fiche);
 }
 
+// ── VOTE DE GROUPE, porté depuis cockpit.html (B18-Inc.A2). Même modale par
+// INTENTION (langage humain), mêmes fonctions, juste rebranchées sur les
+// variables HZ_* d'Horizon au lieu des RNR_* du Cockpit. « Porter, pas
+// réinventer » (B18-Inc.4) : structure et noms de fonctions identiques.
+const INTENTIONS = [
+  { type:'choix',       titre:'Trancher entre des options', ex:'« Mer ou Montagne ? », « Quel camping ? »', besoinOptions:true },
+  { type:'pour_contre', titre:'Demander un oui ou un non',   ex:'« On part en août ? », « On garde 3 nuits ? »', besoinOptions:false },
+  { type:'note',        titre:'Faire noter une idée',        ex:'« Cette rando, vous la sentez comment ? » (note /5)', besoinOptions:false },
+  { type:'question',    titre:'Poser une question ouverte',  ex:'« Des idées pour les soirées ? »', besoinOptions:false },
+  { type:'elimination', titre:'Garder ou écarter une fiche', ex:'On tranche le sort d\'un lieu du carnet', besoinOptions:false, besoinFiche:true }
+];
+let NV_intention = null;
+
+// Fiches candidates au vote (mon panier cumulatif, hors tranchées) — équivalent
+// HZ_* de RNR_fichesAimees. Objets fiche complets déjà en mémoire (HZ_PANIER).
+function hzFichesAimeesListe(){
+  return [...HZ_PANIER.values()].map(e=>e.fiche)
+    .filter(f=>f && f.id && !HZ_RETENUS.has(f.id) && !HZ_ECARTEES.has(f.id));
+}
+
+function ouvrirCreationVote(){
+  NV_intention = null;
+  const bg=document.createElement('div');
+  bg.className='vmodal-bg'; bg.id='vmodal-bg';
+  bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
+  bg.innerHTML='<div class="vmodal" id="vmodal-inner"></div>';
+  document.body.appendChild(bg);
+  etapeIntention();
+}
+function fermerCreationVote(){ const b=document.getElementById('vmodal-bg'); if(b) b.remove(); }
+
+function etapeIntention(){
+  const box=document.getElementById('vmodal-inner');
+  box.innerHTML='<h3>Que veux-tu demander au groupe ?</h3>'+
+    '<div class="int-cards">'+
+    INTENTIONS.map((it,i)=>
+      '<div class="int-card" onclick="choisirIntention('+i+')">'+
+        '<div class="int-t">'+escapeHtmlHz(it.titre)+'</div>'+
+        '<div class="int-ex">'+escapeHtmlHz(it.ex)+'</div>'+
+      '</div>').join('')+
+    '</div>'+
+    '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Annuler</button></div>';
+}
+
+function choisirIntention(i){
+  NV_intention = INTENTIONS[i];
+  const box=document.getElementById('vmodal-inner');
+  if(NV_intention.besoinFiche){
+    const aimees=hzFichesAimeesListe();
+    if(!aimees.length){
+      box.innerHTML='<h3>'+escapeHtmlHz(NV_intention.titre)+'</h3>'+
+        '<div class="vhint" style="margin-top:8px">Aucune fiche aimée pour l\'instant. Swipez ❤️ ce qui vous tente, '+
+        'puis revenez lancer le vote depuis la liste.</div>'+
+        '<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button></div>';
+      return;
+    }
+    let opts='<option value="">— Choisis une fiche —</option>';
+    aimees.forEach(f=>{
+      const lbl = f.nom + (f.region ? ' · '+f.region : '');
+      const sel = (NV_FICHE_PREREMPLIE===f.id) ? ' selected' : '';
+      opts+='<option value="'+escapeHtmlHz(f.id)+'"'+sel+'>'+escapeHtmlHz(lbl)+'</option>';
+    });
+    box.innerHTML='<h3>'+escapeHtmlHz(NV_intention.titre)+'</h3>'+
+      '<label>Quelle fiche soumettre au groupe ?</label>'+
+      '<select id="nv-fiche" class="nv-select" onchange="majTitreFiche()">'+opts+'</select>'+
+      '<label>La question</label>'+
+      '<input type="text" id="nv-titre" maxlength="120" placeholder="On garde cette fiche ?">'+
+      '<div class="vhint" style="margin-top:8px">Le groupe répondra <b>Garder</b> ou <b>Écarter</b>.</div>'+
+      '<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+      '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>'+
+      '<div class="vmodal-foot">'+
+        '<button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button>'+
+        '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button>'+
+      '</div>';
+    majTitreFiche();
+    return;
+  }
+  let champs='<label>Ta question</label><input type="text" id="nv-titre" maxlength="120" placeholder="'+escapeHtmlHz(exemplePlaceholder())+'">';
+  if(NV_intention.besoinOptions){
+    champs+='<label>Les réponses possibles</label><div id="nv-opts">'+voptRow('','Ex. : La mer')+voptRow('','Ex. : La montagne')+'</div>'+
+            '<button class="q-close-btn" onclick="ajouterOpt()" style="margin-top:4px">+ ajouter une option</button>';
+  } else {
+    champs+='<div class="vhint" style="margin-top:8px">'+escapeHtmlHz(aideIntention())+'</div>';
+  }
+  champs+='<label>Échéance (optionnel)</label><input type="date" id="nv-date">'+
+          '<div class="vhint">Tout le monde peut voter. Tu pourras clôturer quand tu veux.</div>';
+  box.innerHTML='<h3>'+escapeHtmlHz(NV_intention.titre)+'</h3>'+champs+
+    '<div class="vmodal-foot">'+
+      '<button class="vbtn vbtn-no" onclick="etapeIntention()">← Retour</button>'+
+      '<button class="vbtn vbtn-go" onclick="creerVote()">Lancer</button>'+
+    '</div>';
+  const t=document.getElementById('nv-titre'); if(t) t.focus();
+}
+function majTitreFiche(){
+  const sel=document.getElementById('nv-fiche'), t=document.getElementById('nv-titre');
+  if(!sel||!t) return;
+  const f=hzFichesAimeesListe().find(x=>x.id===sel.value);
+  if(f && (!t.value || t.dataset.auto==='1')){ t.value='On garde « '+f.nom+' » ?'; t.dataset.auto='1'; }
+}
+function exemplePlaceholder(){
+  switch(NV_intention.type){
+    case 'choix': return 'Mer ou Montagne ?';
+    case 'pour_contre': return 'On part en août ?';
+    case 'note': return 'Cette idée de rando, vous en pensez quoi ?';
+    case 'question': return 'Des idées pour les soirées ?';
+    default: return 'Ta question…';
+  }
+}
+function aideIntention(){
+  switch(NV_intention.type){
+    case 'pour_contre': return 'Le groupe répondra simplement Pour ou Contre.';
+    case 'note': return 'Chacun donnera une note de 1 à 5. On affichera la moyenne.';
+    case 'question': return 'Chacun répondra librement, en texte.';
+    default: return '';
+  }
+}
+function voptRow(val, ph){ return '<div class="vopt-row"><input type="text" maxlength="60" placeholder="'+(ph||'Ex. : une réponse possible')+'" value="'+(val||'')+'"><button class="vopt-del" onclick="this.parentNode.remove()">✕</button></div>'; }
+function ajouterOpt(){ const c=document.getElementById('nv-opts'); if(c) c.insertAdjacentHTML('beforeend',voptRow('')); }
+
+async function creerVote(){
+  if(!NV_intention || !HZ_VOYAGE_ID || !HZ_GROUPE_ID) return;
+  const titreEl=document.getElementById('nv-titre');
+  const titre=(titreEl && titreEl.value || '').trim();
+  if(!titre){ alert('Donne une question au vote.'); return; }
+  const dateEl=document.getElementById('nv-date');
+  const dateStr=dateEl ? dateEl.value : '';
+  let options=[], lieuId=null;
+  if(NV_intention.besoinFiche){
+    const sel=document.getElementById('nv-fiche');
+    lieuId = sel ? sel.value : '';
+    if(!lieuId){ alert('Choisis une fiche à départager.'); return; }
+    options=['Garder','Écarter'];
+  } else if(NV_intention.besoinOptions){
+    options=[...document.querySelectorAll('#nv-opts input')].map(i=>i.value.trim()).filter(Boolean);
+    if(options.length<2){ alert('Mets au moins 2 options à départager.'); return; }
+  }
+  const row={ groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:NV_intention.type, titre:titre, options:options, voyage_id:HZ_VOYAGE_ID };
+  if(lieuId) row.lieu_id=lieuId;
+  if(dateStr) row.ferme_le=new Date(dateStr+'T20:00:00').toISOString();
+  try{
+    const {error}=await sb.from('propositions').insert(row);
+    if(error){ console.warn('Horizon: creerVote',error); alert('Vote non créé.'); return; }
+  }catch(e){ console.warn('Horizon: creerVote',e); alert('Vote non créé.'); return; }
+  fermerCreationVote();
+  NV_FICHE_PREREMPLIE=null;
+  // Le suivi « en vote » (badge, blocage double-vote) arrive avec le bloc
+  // « Votes en cours » (Inc. C) — pour l'instant, confirmation simple.
+  alert('Vote lancé — le groupe peut voter dès maintenant.');
+}
+
+// Raccourci : ouvre la modale pré-remplie sur UNE fiche précise (bouton
+// « Lancer le vote » de la liste des coups de cœur). Même fonction que
+// cockpit.html, adaptée : garde via HZ_RETENUS/HZ_ECARTEES au lieu de
+// RNR_statutFiche.
+let NV_FICHE_PREREMPLIE=null;
+function lancerVoteSurFiche(lieuId){
+  if(HZ_RETENUS.has(lieuId)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
+  if(HZ_ECARTEES.has(lieuId)){ alert('Cette fiche a déjà été écartée par un vote du groupe.'); return; }
+  const f=hzFichesAimeesListe().find(x=>x.id===lieuId); if(!f) return;
+  NV_FICHE_PREREMPLIE=lieuId;
+  ouvrirCreationVote();
+  const idx=INTENTIONS.findIndex(x=>x.besoinFiche);
+  if(idx<0) return;
+  choisirIntention(idx);
+  const sel=document.getElementById('nv-fiche');
+  if(sel){ sel.value=lieuId; }
+  const t=document.getElementById('nv-titre');
+  if(t){ t.value='On garde « '+f.nom+' » ?'; t.dataset.auto='1'; }
+}
+
 function brancheSwipeActions(){
   const map={'hz-swipe-pass':'pass','hz-swipe-later':'later','hz-swipe-love':'love'};
   Object.keys(map).forEach(id=>{
@@ -3143,12 +3341,15 @@ function rendAimees(){
     const btnLeader = jeSuisLeaderHz()
       ? '<button class="hz-aimee-epingle" type="button" title="Épingler au voyage, au nom du groupe">📌 Épingler</button>'
       : '';
+    const btnVote = '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
     d.innerHTML='<div class="mini" style="background-image:'+ph+'"></div>'+
       '<div class="nm">'+escapeHtmlHz(f.nom||'—')+'</div>'+
-      '<div class="hz-aimee-actions">'+btnLeader+
+      '<div class="hz-aimee-actions">'+btnVote+btnLeader+
       '<button class="hz-aimee-retirer" type="button" title="retirer">retirer</button></div>';
     const be=d.querySelector('.hz-aimee-epingle');
     if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
+    const bv=d.querySelector('.hz-aimee-vote');
+    if(bv) bv.addEventListener('click',()=>lancerVoteSurFiche(f.id));
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
     return d;
   };
