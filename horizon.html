@@ -602,8 +602,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-coin-revoir:hover{background:var(--gold-a10);}
 /* bouton Recommencer (reset du geste) dans l'en-tête du bloc envie */
 .hz-recommencer{margin-left:auto;font-family:var(--font-body);font-size:11.5px;cursor:pointer;
-  background:none;border:1px solid var(--gold-a35);color:var(--ink-dim);padding:4px 10px;
-  border-radius:var(--r-sm);display:inline-flex;align-items:center;gap:4px;transition:.15s;}
+  background:var(--surface);border:1px solid var(--gold-a35);color:var(--ink);padding:4px 10px;
+  border-radius:var(--r-sm);display:inline-flex;align-items:center;gap:4px;transition:.15s;
+  box-shadow:0 2px 10px rgba(0,0,0,.14);}
 .hz-recommencer:hover{border-color:var(--gold);color:var(--gold-text);}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
 .hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
@@ -795,8 +796,8 @@ body.hz-explo-on #hz-rail{display:none;}
         </div>
       </div>
       <div class="hz-ov hz-ov-br">
-        <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         <button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button>
+        <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
       </div>
       <!-- Rond de précision (2b-2/2b-3) : clic-glisser-relâcher directement sur
            la carte. Hint tant qu'aucun geste n'a eu lieu ; lecture rayon+compte
@@ -1161,8 +1162,8 @@ let HZ_REGION_LAYERS={};   // slug → layer Leaflet (référence directe, utile
 function hzInitCarteRepos(){
   const el=document.getElementById('hz-carte-repos');
   if(!el || !window.L || HZ_CARTE_REPOS || !HZ_GEOJSON_REGIONS) return;
-  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:true, scrollWheelZoom:true}).setView([46.6,2.4],6);
-  HZ_CARTE_REPOS.attributionControl.setPrefix(false);
+  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true}).setView([46.6,2.4],6);
+  L.control.attribution({position:'bottomleft', prefix:false}).addTo(HZ_CARTE_REPOS);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {attribution:'© OpenStreetMap', maxZoom:19, minZoom:5}).addTo(HZ_CARTE_REPOS);
   const geo=HZ_GEOJSON_REGIONS;
@@ -1223,18 +1224,29 @@ function _animViewBox(svg, to, dur){
 function plongeCarteFrance(slug){
   const svg=_svgFrance();
   const path=svg && svg.querySelector('.region[data-r="'+slug+'"]');
-  if(!svg || !path || !path.getBBox) return;
-  const b=path.getBBox();                        // boîte du tracé réel
-  if(!b || !b.width || !b.height) return;         // rendu pas prêt → on ne casse rien
-  const marge=Math.max(b.width, b.height)*0.85;  // halo autour (voisines visibles)
-  let x=b.x-marge, y=b.y-marge, w=b.width+marge*2, h=b.height+marge*2;
-  // garder un cadre carré (le SVG est 560×560) pour ne pas déformer
-  const cote=Math.max(w,h);
-  x-=(cote-w)/2; y-=(cote-h)/2; w=cote; h=cote;
-  _animViewBox(svg, [x,y,w,h], 750);
+  if(svg && path && path.getBBox){
+    const b=path.getBBox();                        // boîte du tracé réel
+    if(b && b.width && b.height){                  // rendu pas prêt → on ne casse rien
+      const marge=Math.max(b.width, b.height)*0.85;  // halo autour (voisines visibles)
+      let x=b.x-marge, y=b.y-marge, w=b.width+marge*2, h=b.height+marge*2;
+      // garder un cadre carré (le SVG est 560×560) pour ne pas déformer
+      const cote=Math.max(w,h);
+      x-=(cote-w)/2; y-=(cote-h)/2; w=cote; h=cote;
+      _animViewBox(svg, [x,y,w,h], 750);
+    }
+  }
+  // Temps 2a·étape2 (02/07) : le vrai zoom, sur la vraie carte — remplace l'à-coup
+  // SVG→Leaflet de 2b-1. flyToBounds vole en douceur jusqu'à la bbox GPS de la
+  // région (même bbox que celle qui cadre déjà la carte du coin en 2b-1).
+  if(HZ_CARTE_REPOS && HZ_BBOX_PAR_SLUG[slug]){
+    HZ_CARTE_REPOS.flyToBounds(HZ_BBOX_PAR_SLUG[slug], {padding:[40,40], duration:0.9});
+  }
 }
 function remonteCarteFrance(){
   _animViewBox(_svgFrance(), HZ_VB_PLEIN.slice(), 650);
+  if(HZ_CARTE_REPOS){
+    HZ_CARTE_REPOS.flyTo([46.6,2.4], 6, {duration:0.7});
+  }
 }
 
 // ── CARTE DU COIN (B18 · 2b-1) ──
