@@ -3235,7 +3235,15 @@ function ouvreExplo(){
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
-  setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
+  console.log('[Horizon] ouvreExplo : #hz-explo display =', ov.style.display, '· HZ_LIEUX =', HZ_LIEUX);
+  setTimeout(()=>{
+    try{
+      initExploCarte();
+      if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo();
+      majTitrePopup(HZ_LIEUX[0]);
+      console.log('[Horizon] ouvreExplo : montage swipe terminé sans erreur');
+    }catch(e){ console.error('[Horizon] échec montage swipe (ouvreExplo)', e); }
+  }, 60);
 }
 
 // Titre du popup : la région ACTUELLE en évidence (or, gras), les autres
