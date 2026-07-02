@@ -1231,6 +1231,7 @@ let HZ_ROND_MODE=false;        // true si le paquet affiché vient du rond
 let HZ_ROND_DERNIER_CENTRE=null;  // dernier centre figé (pour « élargir »)
 let HZ_ROND_SANS_NUIT=false;      // le rond figé ne contient aucune fiche couchage
 let HZ_ROND_NUIT_DIST_KM=null;    // distance du couchage le plus proche, hors du rond
+let HZ_ROND_VUES=new Set();       // ids déjà présentés dans CE coin (geste initial + élargissements) — jamais reproposés
 
 function hzTokenCouleur(nomVar, repli){
   const v=getComputedStyle(document.documentElement).getPropertyValue(nomVar).trim();
@@ -1285,6 +1286,7 @@ function hzRondDessine(centre, rayon_m){
 function hzRondDemarre(centre){
   if(!HZ_CARTE_COIN) return;
   HZ_ROND_EN_COURS=true;
+  HZ_ROND_VUES=new Set();   // nouveau geste = nouvelle exploration, on oublie ce qui a été vu avant
   HZ_CARTE_COIN.dragging.disable();   // le geste dessine le rond, ne balade plus la carte
   HZ_ROND_RAYON_M=HZ_ROND_RAYON_MIN_M;
   hzRondDessine(centre, HZ_ROND_RAYON_M);
@@ -1305,12 +1307,16 @@ function hzRondFigerEtLancer(){
   if(HZ_CARTE_COIN) HZ_CARTE_COIN.dragging.enable();
   if(!HZ_ROND_COIN) return;
   const centre=HZ_ROND_COIN.getLatLng();
-  const fiches=hzRondFichesDedans(centre, HZ_ROND_RAYON_M);
+  // toutes les fiches du rayon (jour+nuit) — sert à juger l'état réel de la
+  // zone (y a-t-il un couchage ?), INDÉPENDAMMENT de ce qui a déjà été vu.
+  const brutes=hzRondFichesDedans(centre, HZ_ROND_RAYON_M);
+  const fiches=brutes.filter(f=>!HZ_ROND_VUES.has(f.id));
   hzRondMajAffichage(centre);
-  if(!fiches.length) return;   // rond vide : on laisse le swipe tel quel, l'utilisateur retrace
+  if(!fiches.length) return;   // rien de neuf à montrer : on laisse le swipe tel quel
   HZ_ROND_MODE=true;
   HZ_ROND_DERNIER_CENTRE=centre;
-  HZ_ROND_SANS_NUIT=!fiches.some(f=>window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+  fiches.forEach(f=>HZ_ROND_VUES.add(f.id));
+  HZ_ROND_SANS_NUIT=!brutes.some(f=>window.RNR_TAGS && RNR_TAGS.estCouchage(f));
   HZ_ROND_NUIT_DIST_KM=HZ_ROND_SANS_NUIT?hzRondCouchageLePlusProche(centre):null;
   // régions couvertes par le rond (remplace HZ_LIEUX le temps de ce coin — le
   // rond n'est plus borné par le découpage régional, c'est tout son intérêt).
@@ -1322,14 +1328,34 @@ function hzRondFigerEtLancer(){
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();   // (re)monte/rafraîchit le panneau swipe avec ce nouveau paquet
 }
-// « Élargir le cercle » : ré-utilise le dernier centre, étire jusqu'au couchage
-// le plus proche (+ marge) puis refige et relance — même chemin que le geste.
+// « Élargir le cercle » : correctif 02/07 — la question posée était « pas de
+// quoi dormir », donc la réponse doit être UNIQUEMENT des couchages (pas tout
+// remélanger), et ne jamais représenter une fiche déjà vue dans ce coin
+// (HZ_ROND_VUES, alimenté par chaque figeage — geste initial ou élargissement).
 function hzRondElargirJusquauCamping(){
   if(!HZ_ROND_DERNIER_CENTRE || HZ_ROND_NUIT_DIST_KM==null || !HZ_CARTE_COIN) return;
+  const centre=HZ_ROND_DERNIER_CENTRE;
   HZ_ROND_RAYON_M=Math.round(HZ_ROND_NUIT_DIST_KM*1000)+500;
-  hzRondDessine(HZ_ROND_DERNIER_CENTRE, HZ_ROND_RAYON_M);
-  hzRondMajAffichage(HZ_ROND_DERNIER_CENTRE);
-  hzRondFigerEtLancer();
+  hzRondDessine(centre, HZ_ROND_RAYON_M);
+  hzRondMajAffichage(centre);
+  const fichesNuit=(HZ_FICHES||[]).filter(f=>{
+    if(f.lat==null||f.lng==null) return false;
+    if(!(window.RNR_TAGS && RNR_TAGS.estCouchage(f))) return false;
+    if(HZ_ROND_VUES.has(f.id)) return false;
+    return RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,+f.lat,+f.lng) <= HZ_ROND_RAYON_M/1000;
+  });
+  if(!fichesNuit.length) return;   // garde-fou (ne devrait pas arriver, la distance vient d'être mesurée dessus)
+  HZ_ROND_MODE=true;
+  HZ_ROND_SANS_NUIT=false;
+  HZ_ROND_NUIT_DIST_KM=null;
+  fichesNuit.forEach(f=>HZ_ROND_VUES.add(f.id));
+  const regions=[...new Set(fichesNuit.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  if(regions.length) HZ_LIEUX=regions;
+  const paquet={coeur:fichesNuit, limitrophes:[], toutes:fichesNuit, regionsCible:regions, regionsLimitrophes:[]};
+  HZ_COIN_PAQUET=paquet;
+  if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
+  if(typeof majEnAvant==='function') majEnAvant(paquet);
+  ouvreExplo();
 }
 function hzRondReset(){
   if(HZ_CARTE_COIN){
@@ -1339,6 +1365,7 @@ function hzRondReset(){
   }
   HZ_ROND_COIN=null; HZ_ROND_CENTRE_M=null; HZ_ROND_EN_COURS=false;
   HZ_ROND_MODE=false; HZ_ROND_DERNIER_CENTRE=null; HZ_ROND_SANS_NUIT=false; HZ_ROND_NUIT_DIST_KM=null;
+  HZ_ROND_VUES=new Set();
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
 }
