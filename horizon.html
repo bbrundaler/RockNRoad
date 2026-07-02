@@ -1317,6 +1317,11 @@ function hzPopupFicheHtml(f){
 // puis redessine le contenu de CETTE popup en place (pas de fermeture/réouverture).
 async function hzPopupToggleLove(lieuId){
   await hzToggleVote(lieuId,'love');
+  // Manquait (02/07) : la popup se redessinait, mais pas la PASTILLE elle-même
+  // sur la carte — elle restait un rond après un ❤️ tant que la page n'était
+  // pas rechargée. Un seul geste, deux affichages à tenir à jour ensemble.
+  const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null;
+  if(f && typeof hzMajMarqueur==='function') hzMajMarqueur(lieuId, f.type);
   hzRafraichitPopup(lieuId);
 }
 function hzRafraichitPopup(lieuId){
@@ -2957,7 +2962,19 @@ function carteFicheDrawer(f){
 }
 async function retirerCandidateVoyage(lieuId){
   if(!confirm('Retirer cette fiche des coups de cœur du voyage ?')) return;
-  if(typeof hzRetireCandidate==='function') await hzRetireCandidate(lieuId);
+  // Symétrie du geste (02/07) : avant, ce bouton ne retirait QUE la candidate,
+  // jamais le ❤️ — le cœur restait réellement vrai en base, invisible du
+  // tiroir mais toujours affiché sur la carte. Retirer ici doit défaire les
+  // deux à la fois, comme partout ailleurs sur le site (hzToggleVote, un seul
+  // endroit).
+  const slot=(typeof hzCoeursDe==='function')?hzCoeursDe(lieuId):null;
+  if(slot && slot.love && slot.love.mine && typeof hzToggleVote==='function'){
+    await hzToggleVote(lieuId,'love');
+  } else if(typeof hzRetireCandidate==='function'){
+    await hzRetireCandidate(lieuId);   // filet : candidate sans mon cœur (rare)
+  }
+  const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null;
+  if(f && typeof hzMajMarqueur==='function') hzMajMarqueur(lieuId, f.type);
   rendDrawerCoeurs();
   if(typeof rendAimees==='function') rendAimees();
   if(typeof rendPanier==='function') rendPanier();
