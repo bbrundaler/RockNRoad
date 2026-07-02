@@ -158,7 +158,9 @@
     VOISINS: VOISINS,
     voisinsDe: function (slug) { return (VOISINS[slug] || []).slice(); },
     regionDe: regionDe,
-    construirePaquet: construirePaquet
+    construirePaquet: construirePaquet,
+    distanceKm: distanceKm  /* exposée pour le rond de précision (2b-2, horizon.html) —
+                                un seul moteur Haversine, pas de 2e calcul de distance. */
   };
 
   if (typeof window !== 'undefined') {
