@@ -749,6 +749,33 @@ function applyVoteFilter(lieux) {
   });
 }
 
+// ENVOI/RETRAIT candidate (02/07) — même comportement qu'Horizon (hzEnvoieCandidate/
+// hzRetireCandidate), porté ici pour que le ❤️ du Carnet propose AUSSI le groupe
+// immédiatement, au lieu de rester un simple « amorce » sans suite (trou identifié :
+// zéro candidate n'avait jamais été créée depuis Carnet, faute de ce relais).
+async function envoieCandidate(lieuId){
+  let voyageActif=null;
+  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  if(!voyageActif || !lieuId) return;
+  if(retenus.has(lieuId)) return;   // déjà retenue : ne pas rétrograder en candidate
+  try{
+    const {error}=await sb.from('voyage_fiches').upsert(
+      [{voyage_id:voyageActif, lieu_id:lieuId, statut:'candidate', maj_le:new Date().toISOString()}],
+      {onConflict:'voyage_id,lieu_id'});
+    if(error){ console.warn('Carnet: envoi candidate',error); }
+  }catch(e){ console.warn('Carnet: envoi candidate',e); }
+}
+async function retireCandidate(lieuId){
+  let voyageActif=null;
+  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  if(!voyageActif || !lieuId) return;
+  if(retenus.has(lieuId)) return;   // décision de groupe : on n'y touche pas depuis Carnet
+  try{
+    const {error}=await sb.from('voyage_fiches').delete()
+      .eq('voyage_id',voyageActif).eq('lieu_id',lieuId).eq('statut','candidate');
+    if(error){ console.warn('Carnet: retrait candidate',error); }
+  }catch(e){ console.warn('Carnet: retrait candidate',e); }
+}
 /* Toggle d'un coup de cœur collectif (❤️ ou ✨) → table reactions.
    Unicité (cible_type,cible_id,membre_id,emoji) : on insère, ou on retire si déjà mis. */
 async function toggleVote(lieuId, type){
@@ -762,11 +789,13 @@ async function toggleVote(lieuId, type){
       .eq('cible_type','lieu').eq('cible_id',lieuId)
       .eq('membre_id',RNR_userId).eq('emoji',emoji);
     if(error){ console.warn('retrait coeur',error); return; }
+    if(type==='love') await retireCandidate(lieuId);
   } else {
     const {error} = await sb.from('reactions').insert({
       cible_type:'lieu', cible_id:lieuId, membre_id:RNR_userId, emoji:emoji
     });
     if(error){ console.warn('ajout coeur',error); return; }
+    if(type==='love') await envoieCandidate(lieuId);
   }
   await chargerCoeurs();
   refreshVoteBtns(lieuId);
