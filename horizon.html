@@ -3020,7 +3020,7 @@ function brancheClicExterieur(){
       if(bd) bd.classList.remove('ouvert');
     }
     const explo=document.getElementById('hz-explo');
-    if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo') && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-coin')){
+    if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo') && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-coin') && !e.target.closest('#hz-carte-repos')){
       fermeExplo();
     }
   });
