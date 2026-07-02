@@ -1346,9 +1346,12 @@ function hzAfficheTousLesPoints(){
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
     m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });   // toujours l'état le plus frais à l'ouverture
-    m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
-    m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
-    m.on('click', ()=>{ m.openPopup(); });   // le clic ouvre la fiche, jamais une décision directe
+    // Clic seulement (02/07, retour Bruno) : le survol fermait la fiche avant qu'on
+    // puisse l'atteindre pour cliquer un bouton — mauvais outil dès qu'il y a une
+    // action à faire, pas juste du texte à lire. Et pendant qu'un swipe est ouvert
+    // (body.hz-explo-on), les points restent visibles mais INERTES : un seul endroit
+    // de décision à la fois, jamais deux fiches concurrentes en même temps.
+    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
     HZ_CARTE_REPOS_MARQ.addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
   });
@@ -1479,9 +1482,7 @@ function afficheCarteCoin(slug){
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
     m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });
-    m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
-    m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
-    m.on('click', ()=>{ m.openPopup(); });
+    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
@@ -3490,6 +3491,9 @@ function ouvreExplo(){
   if(!ov) return;
   document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
   document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
+  // La carte devient inerte pendant le swipe (02/07) : si une fiche était déjà
+  // ouverte dessus, on la ferme aussi — un seul endroit de décision à la fois.
+  if(HZ_CARTE_REPOS) HZ_CARTE_REPOS.closePopup();
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
