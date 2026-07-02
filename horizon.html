@@ -1467,6 +1467,7 @@ function ouvrirFichesRegion(dataR){
   HZ_LIEUX=[dataR];
   if(typeof rendLieuxChoisis==='function') rendLieuxChoisis();
   if(typeof peintLieuxSurCarte==='function') peintLieuxSurCarte();
+  if(typeof majRecommencer==='function') majRecommencer();
   const paquet=RNR_CARNET_COIN.construirePaquet(
     HZ_FICHES, HZ_THEME||null, HZ_LIEUX, {tagsApi:HZ_TAGS_THEME}
   );
