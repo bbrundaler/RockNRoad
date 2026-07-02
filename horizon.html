@@ -235,6 +235,12 @@ body.hz-coin-carte .hz-ov-rond{display:flex;}
 #hz-carte-coin.leaflet-container{cursor:crosshair;}
 .hz-rond-poignee{width:10px;height:10px;border-radius:50%;background:var(--gold);
   border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);}
+/* Illumination du point courant pendant le swipe (correctif 02/07 — reprend
+   l'esprit du survol Hub, piloté ici par la progression du swipe). */
+.hz-marqueur-illumine{width:34px;height:34px;border-radius:50%;background:transparent;
+  border:3px solid var(--gold);box-shadow:0 0 0 5px var(--gold-a20);
+  animation:hzIllumine 1.1s ease-in-out infinite;pointer-events:none;}
+@keyframes hzIllumine{0%,100%{transform:scale(.82);opacity:1;}50%{transform:scale(1.08);opacity:.6;}}
 @media(max-width:880px){
   .hz-ov-stats{gap:9px;padding:6px 9px;}
   .hz-ov-stats .hz-stat-note{display:none;}
@@ -1046,6 +1052,8 @@ let HZ_REGIONS_SVG=[];   // slugs des régions présentes sur la carte
 let HZ_BBOX_PAR_SLUG={}; // bbox GPS par région (2b-1, cadre la carte IGN)
 let HZ_CARTE_COIN=null;  // instance Leaflet de la carte IGN du coin (2b)
 let HZ_CARTE_COIN_MARQ=null; // layerGroup des marqueurs de fiches
+let HZ_CARTE_COIN_MARQ_PAR_ID={};  // id fiche → {marker, latlng} (pour l'illumination pendant le swipe)
+let HZ_CARTE_COIN_HALO=null;       // halo pulsant posé sur la fiche actuellement swipée
 
 // Charge le fichier de découpage et rattache chaque fiche à sa région SVG réelle.
 async function chargeDecoupageEtRattache(fiches){
@@ -1178,6 +1186,8 @@ function afficheCarteCoin(slug){
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
   // capturer ; le zoom limite naturellement ce qu'on voit)
   HZ_CARTE_COIN_MARQ.clearLayers();
+  if(HZ_CARTE_COIN_HALO){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
+  HZ_CARTE_COIN_MARQ_PAR_ID={};
   (HZ_FICHES||[]).forEach(f=>{
     if(f.lat==null||f.lng==null) return;
     const ic=(typeof hzIcone==='function')?hzIcone(f):null;
@@ -1185,6 +1195,7 @@ function afficheCarteCoin(slug){
     m.bindPopup('<strong style="font-size:13px;">'+escapeHtmlHz(f.nom||'—')+'</strong>'+
       (f.type?('<br><span style="font-size:11px;color:#888;">'+escapeHtmlHz(f.type)+'</span>'):''));
     HZ_CARTE_COIN_MARQ.addLayer(m);
+    HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
   // cadrage : la bbox de la région cliquée (repli France entière si inconnue)
   const bbox=HZ_BBOX_PAR_SLUG[slug];
@@ -1212,6 +1223,14 @@ let HZ_ROND_RAYON_M=0;        // rayon courant en mètres
 let HZ_ROND_EN_COURS=false;   // un geste clic-glisser est actif
 let HZ_ROND_INIT=false;       // les listeners ne sont branchés qu'une fois
 const HZ_ROND_RAYON_MIN_M=1500;   // plancher : un simple tap donne un voisinage exploitable
+// Correctif 02/07 : le rond construit un swipe À PART (jour+nuit mélangés, un
+// seul passage) — il ne doit JAMAIS retomber sur l'ancien système région+
+// limitrophes ni sur l'enchaînement auto « et maintenant où dormir ? » (celui-ci
+// reste valable pour le clic-région classique, HZ_ROND_MODE=false à ce moment-là).
+let HZ_ROND_MODE=false;        // true si le paquet affiché vient du rond
+let HZ_ROND_DERNIER_CENTRE=null;  // dernier centre figé (pour « élargir »)
+let HZ_ROND_SANS_NUIT=false;      // le rond figé ne contient aucune fiche couchage
+let HZ_ROND_NUIT_DIST_KM=null;    // distance du couchage le plus proche, hors du rond
 
 function hzTokenCouleur(nomVar, repli){
   const v=getComputedStyle(document.documentElement).getPropertyValue(nomVar).trim();
@@ -1220,14 +1239,31 @@ function hzTokenCouleur(nomVar, repli){
 function hzRondFormatRayon(m){
   return m<1000 ? (Math.round(m/10)*10)+' m' : (m/1000).toFixed(m<10000?1:0)+' km';
 }
+// Fiches du rond : le filtre d'envie s'applique aux fiches JOUR, mais les
+// couchages restent TOUJOURS inclus s'ils sont dans le rayon — dormir n'est
+// pas une « envie » optionnelle, c'est le carnet qui mélange nativement jour+
+// nuit (retour Bruno 02/07). Un seul passage de swipe, plus de cycle séparé.
 function hzRondFichesDedans(centre, rayon_m){
   if(!centre || !window.RNR_CARNET_COIN) return [];
   const rayonKm=rayon_m/1000;
   return (HZ_FICHES||[]).filter(f=>{
     if(f.lat==null||f.lng==null) return false;
     if(RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,+f.lat,+f.lng) > rayonKm) return false;
+    if(window.RNR_TAGS && RNR_TAGS.estCouchage(f)) return true;
     return RNR_CARNET_COIN.correspondTheme(f, HZ_THEME||null, HZ_TAGS_THEME);
   });
+}
+// Couchage le plus proche du centre, dans TOUTES les fiches (pas juste celles
+// du rond) — sert au message « élargir le cercle » quand la zone n'en a aucun.
+function hzRondCouchageLePlusProche(centre){
+  if(!centre || !window.RNR_TAGS || !window.RNR_CARNET_COIN) return null;
+  let meilleure=null;
+  (HZ_FICHES||[]).forEach(f=>{
+    if(f.lat==null||f.lng==null || !RNR_TAGS.estCouchage(f)) return;
+    const d=RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,+f.lat,+f.lng);
+    if(meilleure===null || d<meilleure) meilleure=d;
+  });
+  return meilleure;
 }
 function hzRondMajAffichage(centre){
   const n=hzRondFichesDedans(centre, HZ_ROND_RAYON_M).length;
@@ -1236,16 +1272,22 @@ function hzRondMajAffichage(centre){
   if(txtR) txtR.textContent=hzRondFormatRayon(HZ_ROND_RAYON_M);
   if(txtN) txtN.textContent=n+' fiche'+(n>1?'s':'')+' dans le rond';
 }
+// Dessine (ou redessine) le cercle + sa pastille de centre — un seul endroit
+// pour ça, réemployé par le geste ET par « élargir le cercle ».
+function hzRondDessine(centre, rayon_m){
+  if(!HZ_CARTE_COIN) return;
+  if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
+  if(HZ_ROND_CENTRE_M) HZ_CARTE_COIN.removeLayer(HZ_ROND_CENTRE_M);
+  const coul=hzTokenCouleur('--gold','#C8A84B');
+  HZ_ROND_COIN=L.circle(centre,{radius:rayon_m,color:coul,weight:2,fillColor:coul,fillOpacity:.12,interactive:false}).addTo(HZ_CARTE_COIN);
+  HZ_ROND_CENTRE_M=L.marker(centre,{interactive:false,icon:L.divIcon({className:'hz-rond-poignee',iconSize:[10,10],iconAnchor:[5,5]})}).addTo(HZ_CARTE_COIN);
+}
 function hzRondDemarre(centre){
   if(!HZ_CARTE_COIN) return;
   HZ_ROND_EN_COURS=true;
   HZ_CARTE_COIN.dragging.disable();   // le geste dessine le rond, ne balade plus la carte
-  if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
-  if(HZ_ROND_CENTRE_M) HZ_CARTE_COIN.removeLayer(HZ_ROND_CENTRE_M);
-  const coul=hzTokenCouleur('--gold','#C8A84B');
   HZ_ROND_RAYON_M=HZ_ROND_RAYON_MIN_M;
-  HZ_ROND_COIN=L.circle(centre,{radius:HZ_ROND_RAYON_M,color:coul,weight:2,fillColor:coul,fillOpacity:.12,interactive:false}).addTo(HZ_CARTE_COIN);
-  HZ_ROND_CENTRE_M=L.marker(centre,{interactive:false,icon:L.divIcon({className:'hz-rond-poignee',iconSize:[10,10],iconAnchor:[5,5]})}).addTo(HZ_CARTE_COIN);
+  hzRondDessine(centre, HZ_ROND_RAYON_M);
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='none';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='inline-flex';
   hzRondMajAffichage(centre);
@@ -1266,6 +1308,10 @@ function hzRondFigerEtLancer(){
   const fiches=hzRondFichesDedans(centre, HZ_ROND_RAYON_M);
   hzRondMajAffichage(centre);
   if(!fiches.length) return;   // rond vide : on laisse le swipe tel quel, l'utilisateur retrace
+  HZ_ROND_MODE=true;
+  HZ_ROND_DERNIER_CENTRE=centre;
+  HZ_ROND_SANS_NUIT=!fiches.some(f=>window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+  HZ_ROND_NUIT_DIST_KM=HZ_ROND_SANS_NUIT?hzRondCouchageLePlusProche(centre):null;
   // régions couvertes par le rond (remplace HZ_LIEUX le temps de ce coin — le
   // rond n'est plus borné par le découpage régional, c'est tout son intérêt).
   const regions=[...new Set(fiches.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
@@ -1276,6 +1322,15 @@ function hzRondFigerEtLancer(){
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();   // (re)monte/rafraîchit le panneau swipe avec ce nouveau paquet
 }
+// « Élargir le cercle » : ré-utilise le dernier centre, étire jusqu'au couchage
+// le plus proche (+ marge) puis refige et relance — même chemin que le geste.
+function hzRondElargirJusquauCamping(){
+  if(!HZ_ROND_DERNIER_CENTRE || HZ_ROND_NUIT_DIST_KM==null || !HZ_CARTE_COIN) return;
+  HZ_ROND_RAYON_M=Math.round(HZ_ROND_NUIT_DIST_KM*1000)+500;
+  hzRondDessine(HZ_ROND_DERNIER_CENTRE, HZ_ROND_RAYON_M);
+  hzRondMajAffichage(HZ_ROND_DERNIER_CENTRE);
+  hzRondFigerEtLancer();
+}
 function hzRondReset(){
   if(HZ_CARTE_COIN){
     if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
@@ -1283,6 +1338,7 @@ function hzRondReset(){
     HZ_CARTE_COIN.dragging.enable();
   }
   HZ_ROND_COIN=null; HZ_ROND_CENTRE_M=null; HZ_ROND_EN_COURS=false;
+  HZ_ROND_MODE=false; HZ_ROND_DERNIER_CENTRE=null; HZ_ROND_SANS_NUIT=false; HZ_ROND_NUIT_DIST_KM=null;
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
 }
@@ -2703,6 +2759,7 @@ let HZ_COIN_PAQUET=null;   // dernier paquet calculé
 
 
 function construitCoin(){
+  HZ_ROND_MODE=false;   // ce chemin (clic région / envie) n'est jamais le rond
   const vide=document.getElementById('hz-coin-vide');
   const corps=document.getElementById('hz-coin-corps');
   const titre=document.getElementById('hz-coin-titre');
@@ -3091,6 +3148,7 @@ function majTitrePopup(slugActuel){
   titre.innerHTML='<span class="hz-titre-theme">'+escapeHtmlHz(theme)+'</span> — '+parts.join('<span class="hz-titre-sep"> &amp; </span>');
 }
 function fermeExplo(){
+  if(HZ_CARTE_COIN_HALO && HZ_CARTE_COIN){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
   const ov=document.getElementById('hz-explo');
   if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
   document.body.classList.remove('hz-explo-on');   // la carte France se redéploie
@@ -3156,10 +3214,19 @@ function initExploCarte(){
   setTimeout(()=>{ if(HZ_EXPLO_MAP) HZ_EXPLO_MAP.invalidateSize(); }, 80);
 }
 
+// Illumine le point de la fiche en cours de swipe sur la carte du coin
+// (celle réellement affichée — l'ancienne carte d'exploration HZ_EXPLO_MAP est
+// désactivée depuis l'unification « une seule carte-reine », ce point était
+// mort depuis. Même besoin que le survol sur le Hub : identifier le point dont
+// on parle, ici piloté par la progression du swipe plutôt que la souris.
 function exploHighlight(lieuId){
-  if(!HZ_EXPLO_MAP) return;
-  const m=HZ_EXPLO_MARQUEURS[lieuId];
-  if(m){ m.openPopup(); }
+  if(!HZ_CARTE_COIN) return;
+  if(HZ_CARTE_COIN_HALO){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
+  const entree=HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
+  if(!entree) return;
+  HZ_CARTE_COIN_HALO=L.marker(entree.latlng,{interactive:false,zIndexOffset:900,
+    icon:L.divIcon({className:'hz-marqueur-illumine',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(HZ_CARTE_COIN);
+  entree.marker.openPopup();
 }
 
 // Zoome la carte sur UNE région (bounds de ses points), avec effet animé.
@@ -3376,6 +3443,7 @@ function rendSwipeCarte(){
 //  - rien aimé   → on revient naturellement sur Horizon (ferme le popup)
 //  - des aimées  → message positif + GRAND bouton « Valider la suite »
 function rendFinSwipe(){
+  if(HZ_CARTE_COIN_HALO && HZ_CARTE_COIN){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
   const deck=document.getElementById('hz-swipe-deck');
   const vide=document.getElementById('hz-swipe-empty');
   const actions=document.getElementById('hz-swipe-actions');
@@ -3390,7 +3458,12 @@ function rendFinSwipe(){
   }
 
   if(vide){
-    if(nb===0){
+    // Mode rond (correctif 02/07) : un SEUL passage jour+nuit mélangé — jamais
+    // l'ancien enchaînement auto « et maintenant où dormir ? » qui relançait le
+    // système région+limitrophes. S'il n'y a aucun couchage dans le rond, on le
+    // dit et on propose d'élargir jusqu'au plus proche, plutôt que de boucler.
+    const sansNuitRond = HZ_ROND_MODE && HZ_ROND_SANS_NUIT;
+    if(nb===0 && !sansNuitRond){
       // rien aimé → retour AUTOMATIQUE à Horizon (petit message puis fermeture)
       vide.style.display='flex';
       vide.innerHTML='<span class="hz-swipe-empty-ic">🧭</span>'+
@@ -3399,16 +3472,26 @@ function rendFinSwipe(){
       HZ_FIN_TIMER=setTimeout(()=>{ fermeExplo(); }, 1400);
     }else{
       vide.style.display='flex';
-      // ENCHAÎNEMENT AUTO jour→nuit (décision 28/06) : si on vient de finir les ACTIVITÉS
-      // et qu'il y a des couchages à proposer dans le coin, on ne s'arrête PAS sur un écran
-      // à boutons — on annonce d'un mot puis on bascule tout seul vers les fiches nuit.
-      const proposerDormir = (HZ_THEME!=='nuit') && HZ_LIEUX.length>0;
+      // ENCHAÎNEMENT AUTO jour→nuit (décision 28/06) : réservé au clic-région
+      // classique (HZ_ROND_MODE=false). Le rond gère jour+nuit en un seul passage.
+      const proposerDormir = !HZ_ROND_MODE && (HZ_THEME!=='nuit') && HZ_LIEUX.length>0;
       if(proposerDormir){
         vide.innerHTML='<span class="hz-swipe-empty-ic" style="animation:hzSeuilPop .5s ease">🌙</span>'+
           '<div style="font-size:15px;color:var(--ink);"><b>Et maintenant&nbsp;: où dormir&nbsp;?</b></div>'+
           '<div style="font-size:12.5px;">Les couchages du coin vont défiler…</div>';
         clearTimeout(HZ_FIN_TIMER);
         HZ_FIN_TIMER=setTimeout(()=>{ basculeVersDormir(); }, 1600);
+      }else if(sansNuitRond){
+        const distTxt = (HZ_ROND_NUIT_DIST_KM!=null)
+          ? (' Le plus proche est à '+hzRondFormatRayon(HZ_ROND_NUIT_DIST_KM*1000)+' du centre de votre cercle.')
+          : '';
+        const titre = nb>0 ? (nb+' coup'+(nb>1?'s':'')+' de cœur — mais rien pour dormir dans cette zone') : 'Rien pour dormir dans cette zone';
+        vide.innerHTML='<span class="hz-swipe-empty-ic">⛺</span>'+
+          '<div style="font-size:15px;color:var(--ink);"><b>'+titre+'</b></div>'+
+          '<div style="font-size:12.5px;">'+(HZ_ROND_NUIT_DIST_KM!=null?('Pas de camping ni d\'hébergement dans le cercle.'+distTxt):'Pas de camping ni d\'hébergement connu à proximité.')+'</div>'+
+          (HZ_ROND_NUIT_DIST_KM!=null?'<button class="hz-swipe-rejouer" id="hz-rond-elargir" type="button">↺ Élargir le cercle jusqu\'au plus proche</button>':'');
+        const elg=document.getElementById('hz-rond-elargir');
+        if(elg) elg.addEventListener('click', hzRondElargirJusquauCamping);
       }else{
         // Écran de fin (après la nuit, ou pas de couchage). B18-Inc.A3 : on ne
         // renvoie PLUS vers Cockpit — la liste juste en dessous (❤️ Mes coups
