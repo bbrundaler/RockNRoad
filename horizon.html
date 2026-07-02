@@ -1265,6 +1265,20 @@ function hzTraceVoyage(){
   }
 }
 // ════════════════════════════════════════════════════════════════
+//  QUI A LA MAIN SUR LA CARTE (03/07) — un seul drapeau, lu par TOUS les
+//  gestes de carte (régions, points, rond). Avant : chaque geste avait sa
+//  propre logique de « je me tais si... », posée au coup par coup — les
+//  régions n'avaient jamais reçu cette consigne quand les points l'ont eue,
+//  d'où des clics qui tombaient sur la mauvaise couche. Protocole standard
+//  de toute carte interactive (Leaflet, Google Maps...) : une seule chose a
+//  la main à la fois. Ici : HZ_POPUP_OUVERTE (une fiche est affichée) et
+//  body.hz-explo-on (le swipe a pris le relais) sont les deux seules raisons
+//  valables pour qu'un geste de carte se taise — vérifiées à un seul endroit.
+let HZ_POPUP_OUVERTE=false;
+function hzCarteInerte(){
+  return HZ_POPUP_OUVERTE || document.body.classList.contains('hz-explo-on');
+}
+// ════════════════════════════════════════════════════════════════
 //  FICHE RICHE AU CLIC SUR LA CARTE (02/07) — remplace l'ancien clic direct
 //  vers epinglerDirectementHzId, qui décidait pour le groupe au premier
 //  contact avec un point, quel que soit son état (même neutre, même en
@@ -1350,12 +1364,14 @@ function hzAfficheTousLesPoints(){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
-    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });   // toujours l'état le plus frais à l'ouverture
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; });   // toujours l'état le plus frais à l'ouverture
+    m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
     // Clic seulement (02/07, retour Bruno) : le survol fermait la fiche avant qu'on
     // puisse l'atteindre pour cliquer un bouton — mauvais outil dès qu'il y a une
-    // action à faire, pas juste du texte à lire. Et pendant qu'un swipe est ouvert
-    // (body.hz-explo-on), les points restent visibles mais INERTES : un seul endroit
-    // de décision à la fois, jamais deux fiches concurrentes en même temps.
+    // action à faire, pas juste du texte à lire. Pendant qu'un swipe est ouvert,
+    // les points restent visibles mais n'ouvrent plus rien (un seul endroit de
+    // décision à la fois) — mais passer d'un point à un autre reste possible tant
+    // que seul un point (pas le swipe) a la main : Leaflet remplace la popup tout seul.
     m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
     HZ_CARTE_REPOS_MARQ.addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
@@ -1390,6 +1406,12 @@ function hzInitCarteRepos(){
           });
           layer.on('click',()=>{
             if(HZ_MODE_TRI) return;   // vieux mode tri : neutralisé aussi ici, cohérent avec le SVG
+            // Une région couvre presque toute la carte : un clic qui ne visait
+            // qu'à fermer une fiche ouverte (ou qui tombe pendant un swipe) ne
+            // doit JAMAIS aussi zoomer/ouvrir la région dessous — un seul geste,
+            // un seul effet (03/07, retour Bruno : « clic extérieur ferme la
+            // fiche MAIS zoome aussi »). Ce premier clic se contente de fermer.
+            if(hzCarteInerte()){ if(HZ_CARTE_REPOS) HZ_CARTE_REPOS.closePopup(); return; }
             const matches=fichesPourRegionCarte(slug);
             const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
             afficheReve(slug, best);
@@ -1486,7 +1508,8 @@ function afficheCarteCoin(slug){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
-    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; });
+    m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
     m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
