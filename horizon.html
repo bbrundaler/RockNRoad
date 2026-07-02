@@ -1268,7 +1268,12 @@ function hzTraceVoyage(){
 }
 function hzAfficheTousLesPoints(){
   if(!HZ_CARTE_REPOS) return;
-  if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup().addTo(HZ_CARTE_REPOS);
+  if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup();
+  // La couche a pu être détachée de la carte (afficheCarteCoin la retire pour
+  // laisser place aux points du coin) — on la raccroche à CHAQUE appel, pas
+  // seulement à sa création, sinon les points restent orphelins en mémoire
+  // après un passage par le coin (bug : la carte se vide, ne reste que la maison).
+  if(!HZ_CARTE_REPOS.hasLayer(HZ_CARTE_REPOS_MARQ)) HZ_CARTE_REPOS_MARQ.addTo(HZ_CARTE_REPOS);
   HZ_CARTE_REPOS_MARQ.clearLayers();
   HZ_CARTE_REPOS_MARQ_PAR_ID={};
   (HZ_FICHES||[]).forEach(f=>{
@@ -1598,6 +1603,22 @@ function hzRondReset(){
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
 }
+// Armement du rond (02/07, retour Bruno) : avant, tout mousedown en mode coin
+// coupait IMMÉDIATEMENT le déplacement natif de la carte — plus de double-clic
+// zoom possible, plus de glisser pour se balader une fois zoomé, puisque le
+// premier geste (même un simple clic) dessinait déjà un rond plancher.
+// Désormais : un appui bref MAINTENU sans bouger (HZ_ROND_DELAI_MS) arme le
+// rond ; avant ce délai, tout déplacement au-delà d'un petit seuil de pixels
+// (HZ_ROND_SEUIL_PX) est traité comme un geste natif de carte (glisser pour se
+// déplacer) et annule l'armement — la carte garde tout son comportement
+// habituel (double-clic, molette, glisser). Le geste du rond lui-même ne
+// change pas : presser, (tenir un instant), glisser, relâcher.
+let HZ_ROND_DOWN_PT=null, HZ_ROND_DOWN_LATLNG=null, HZ_ROND_TIMER=null;
+const HZ_ROND_SEUIL_PX=10, HZ_ROND_DELAI_MS=320;
+function hzRondAnnulePending(){
+  if(HZ_ROND_TIMER){ clearTimeout(HZ_ROND_TIMER); HZ_ROND_TIMER=null; }
+  HZ_ROND_DOWN_PT=null; HZ_ROND_DOWN_LATLNG=null;
+}
 function hzInitRondCoin(){
   if(HZ_ROND_INIT || !HZ_CARTE_COIN) return;
   HZ_ROND_INIT=true;
@@ -1605,13 +1626,31 @@ function hzInitRondCoin(){
   // geste du rond ne doit exister qu'EN mode coin (body.hz-coin-carte), sinon
   // un simple clic-glisser en vue régionale ferait naître un rond par erreur.
   const enModeCoin=()=>document.body.classList.contains('hz-coin-carte');
-  HZ_CARTE_COIN.on('mousedown', e=>{ if(enModeCoin()) hzRondDemarre(e.latlng); });
-  HZ_CARTE_COIN.on('mousemove', e=>{ if(enModeCoin()) hzRondEtire(e.latlng); });
-  HZ_CARTE_COIN.on('mouseup', ()=>{ if(enModeCoin()) hzRondFigerEtLancer(); });
+  HZ_CARTE_COIN.on('mousedown', e=>{
+    if(!enModeCoin() || HZ_ROND_EN_COURS) return;
+    HZ_ROND_DOWN_PT=e.containerPoint; HZ_ROND_DOWN_LATLNG=e.latlng;
+    HZ_ROND_TIMER=setTimeout(()=>{
+      HZ_ROND_TIMER=null;
+      if(HZ_ROND_DOWN_LATLNG) hzRondDemarre(HZ_ROND_DOWN_LATLNG);
+    }, HZ_ROND_DELAI_MS);
+  });
+  HZ_CARTE_COIN.on('mousemove', e=>{
+    if(!enModeCoin()) return;
+    if(HZ_ROND_EN_COURS){ hzRondEtire(e.latlng); return; }
+    if(HZ_ROND_TIMER && HZ_ROND_DOWN_PT){
+      const dx=e.containerPoint.x-HZ_ROND_DOWN_PT.x, dy=e.containerPoint.y-HZ_ROND_DOWN_PT.y;
+      if(Math.sqrt(dx*dx+dy*dy) > HZ_ROND_SEUIL_PX) hzRondAnnulePending();   // vrai glisser → carte native, pas de rond
+    }
+  });
+  HZ_CARTE_COIN.on('mouseup', ()=>{
+    if(!enModeCoin()) return;
+    hzRondAnnulePending();   // simple clic (jamais armé) : rien à figer, le natif a déjà agi
+    if(HZ_ROND_EN_COURS) hzRondFigerEtLancer();
+  });
   // filet : si le relâchement a lieu hors de la carte (doigt qui glisse dehors),
   // le mouseup Leaflet ne se déclenche pas toujours — on le rattrape au document.
-  document.addEventListener('mouseup', ()=>{ if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
-  document.addEventListener('touchend', ()=>{ if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
+  document.addEventListener('mouseup', ()=>{ hzRondAnnulePending(); if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
+  document.addEventListener('touchend', ()=>{ hzRondAnnulePending(); if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
 }
 
 
