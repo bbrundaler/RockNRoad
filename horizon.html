@@ -1153,7 +1153,39 @@ function _svgFrance(){ return document.querySelector('.francemap'); }
 // rendus). Survol et clic appellent les mêmes fonctions que le SVG (afficheReve,
 // ouvrirFichesRegion) — le geste fondateur ne change pas, seul le support change.
 let HZ_CARTE_REPOS=null;
+const HZ_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);   // repris du Hub : sur tactile, pas de survol
 let HZ_REGION_LAYERS={};   // slug → layer Leaflet (référence directe, utile aux étapes suivantes)
+let HZ_CARTE_REPOS_MARQ=null;         // layerGroup des points de fiches, visibles au repos par-dessus les régions
+let HZ_CARTE_REPOS_MARQ_PAR_ID={};    // id fiche → {marker} — pour rafraîchir l'icône (❤️, épingle) en direct
+// Report Hub → Horizon (02/07) : au repos, TOUS les points se voient — pas
+// seulement au clic région. Survol = mini-fiche (même geste que le Hub). Clic =
+// épingle directe, mais via la fonction PROPRE à Horizon (epinglerDirectementHzId,
+// déjà gardée au leader — B18-Inc.4) plutôt que celle du Hub (non gardée) : un
+// seul comportement d'épinglage, celui déjà tranché ici, pas un doublon importé.
+// Conséquence concrète et volontaire : les cœurs en attente (❤️ pas encore
+// tranchés) restent VISIBLES sur la carte de repos via le moteur D-MK unique —
+// le trou qu'on avait identifié (« on perd la zone au retour ») se referme tout
+// seul, sans mécanisme séparé à entretenir.
+function hzAfficheTousLesPoints(){
+  if(!HZ_CARTE_REPOS) return;
+  if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup().addTo(HZ_CARTE_REPOS);
+  HZ_CARTE_REPOS_MARQ.clearLayers();
+  HZ_CARTE_REPOS_MARQ_PAR_ID={};
+  (HZ_FICHES||[]).forEach(f=>{
+    if(f.lat==null||f.lng==null) return;
+    const ic=(typeof hzIcone==='function')?hzIcone(f):null;
+    const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
+    m.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
+      '<strong style="font-size:13px;">'+escapeHtmlHz(f.nom||'—')+'</strong>'+
+      (f.type?('<br><span style="font-size:11px;color:#888;">'+escapeHtmlHz(f.type)+'</span>'):'')+
+      '</div>');
+    m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
+    m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
+    m.on('click', ()=>{ if(typeof epinglerDirectementHzId==='function') epinglerDirectementHzId(f.id); });
+    HZ_CARTE_REPOS_MARQ.addLayer(m);
+    HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
+  });
+}
 function hzInitCarteRepos(){
   const el=document.getElementById('hz-carte-repos');
   if(!el || !window.L || HZ_CARTE_REPOS || !HZ_GEOJSON_REGIONS) return;
@@ -1200,6 +1232,7 @@ function hzInitCarteRepos(){
       // les mêmes fonctions que le SVG, elles trouvent maintenant les deux surfaces.
       if(HZ_THEME && typeof coloreCartePourTheme==='function') coloreCartePourTheme(HZ_THEME);
       else if(typeof marqueRegionsRetenues==='function') marqueRegionsRetenues();
+      hzAfficheTousLesPoints();   // report Hub→Horizon : tous les points visibles au repos
   }catch(e){ console.warn('Horizon: carte de repos, pose des régions', e); }
 }
 function _animViewBox(svg, to, dur){
@@ -1261,8 +1294,11 @@ function afficheCarteCoin(slug){
     HZ_CARTE_COIN_MARQ=L.layerGroup().addTo(HZ_CARTE_COIN);
     hzInitRondCoin();   // 2b-2 : geste clic-glisser-relâcher, branché une seule fois
   }
-  // sortie de la vue régionale : les polygones D-22 s'effacent, place aux fiches
+  // sortie de la vue régionale : les polygones D-22 s'effacent, place aux fiches.
+  // Les points « au repos » aussi (mêmes fiches que HZ_CARTE_COIN_MARQ ci-dessous
+  // — deux couches identiques superposées, un doublon, pas un enrichissement).
   Object.values(HZ_REGION_LAYERS).forEach(l=>{ if(HZ_CARTE_COIN.hasLayer(l)) HZ_CARTE_COIN.removeLayer(l); });
+  if(HZ_CARTE_REPOS_MARQ && HZ_CARTE_COIN.hasLayer(HZ_CARTE_REPOS_MARQ)) HZ_CARTE_COIN.removeLayer(HZ_CARTE_REPOS_MARQ);
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
   // capturer ; le zoom limite naturellement ce qu'on voit)
   HZ_CARTE_COIN_MARQ.clearLayers();
@@ -1285,9 +1321,12 @@ function masqueCarteCoin(){
   hzRondReset();   // le rond ne survit pas à la fermeture du coin (2b-2)
   if(HZ_CARTE_COIN_MARQ) HZ_CARTE_COIN_MARQ.clearLayers();
   if(HZ_CARTE_COIN_HALO && HZ_CARTE_REPOS){ HZ_CARTE_REPOS.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
-  // retour en vue régionale : les polygones D-22 reprennent leur place
+  // retour en vue régionale : les polygones D-22 reprennent leur place, les
+  // points au repos aussi — rafraîchis (un ❤️ posé pendant le coin doit se voir).
   if(HZ_CARTE_REPOS){
     Object.values(HZ_REGION_LAYERS).forEach(l=>{ if(!HZ_CARTE_REPOS.hasLayer(l)) l.addTo(HZ_CARTE_REPOS); });
+    if(typeof hzAfficheTousLesPoints==='function') hzAfficheTousLesPoints();
+    else if(HZ_CARTE_REPOS_MARQ && !HZ_CARTE_REPOS.hasLayer(HZ_CARTE_REPOS_MARQ)) HZ_CARTE_REPOS_MARQ.addTo(HZ_CARTE_REPOS);
   }
 }
 
@@ -3212,9 +3251,11 @@ function hzEtatLieu(lieuId){
 }
 // Retrouve la fiche complète d'un lieu (pour estCouchage : monde_nuit, famille…).
 function ficheParIdHz(lieuId){
-  if(!window.HZ_COIN_PAQUET) return null;
-  const tout=[...(HZ_COIN_PAQUET.coeur||[]), ...(HZ_COIN_PAQUET.limitrophes||[])];
-  return tout.find(f=>f && f.id===lieuId) || null;
+  if(window.HZ_COIN_PAQUET){
+    const dansCoin=[...(HZ_COIN_PAQUET.coeur||[]), ...(HZ_COIN_PAQUET.limitrophes||[])].find(f=>f && f.id===lieuId);
+    if(dansCoin) return dansCoin;
+  }
+  return (HZ_FICHES||[]).find(f=>f && f.id===lieuId) || null;   // repli : les points au repos couvrent tout le voyage, pas juste le coin ouvert
 }
 // Icône d'un lieu via le moteur unique (fiche nécessaire pour estCouchage).
 function hzIcone(fiche){
@@ -3224,12 +3265,14 @@ function hzIcone(fiche){
 // Repose la bonne icône d'un marqueur selon l'état courant du lieu. Appelé à
 // chaque ❤️ et à chaque retrait, pour que la carte suive les choix en direct.
 function hzMajMarqueur(lieuId, type){
-  const m=HZ_EXPLO_MARQUEURS&&HZ_EXPLO_MARQUEURS[lieuId];
-  if(!m) return;
   const fiche = (typeof ficheParIdHz==='function' ? ficheParIdHz(lieuId) : null)
              || {id:lieuId, type:type};
   const icon = hzIcone(fiche);
-  if(icon) m.setIcon(icon);
+  if(!icon) return;
+  const c=HZ_CARTE_COIN_MARQ_PAR_ID && HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
+  if(c && c.marker) c.marker.setIcon(icon);
+  const r=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[lieuId];
+  if(r && r.marker) r.marker.setIcon(icon);
 }
 
 let HZ_EXPLO_MAP=null;
