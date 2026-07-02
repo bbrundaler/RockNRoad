@@ -1158,14 +1158,75 @@ let HZ_REGION_LAYERS={};   // slug → layer Leaflet (référence directe, utile
 let HZ_CARTE_REPOS_MARQ=null;         // layerGroup des points de fiches, visibles au repos par-dessus les régions
 let HZ_CARTE_REPOS_MARQ_PAR_ID={};    // id fiche → {marker} — pour rafraîchir l'icône (❤️, épingle) en direct
 // Report Hub → Horizon (02/07) : au repos, TOUS les points se voient — pas
-// seulement au clic région. Survol = mini-fiche (même geste que le Hub). Clic =
-// épingle directe, mais via la fonction PROPRE à Horizon (epinglerDirectementHzId,
-// déjà gardée au leader — B18-Inc.4) plutôt que celle du Hub (non gardée) : un
-// seul comportement d'épinglage, celui déjà tranché ici, pas un doublon importé.
+// seulement au clic région. Survol = mini-fiche AVEC PHOTO (même gabarit que
+// le Hub — avant, seul le titre s'affichait ici). Clic = épingle directe, mais
+// via la fonction PROPRE à Horizon (epinglerDirectementHzId, déjà gardée au
+// leader — B18-Inc.4) plutôt que celle du Hub (non gardée) : un seul
+// comportement d'épinglage, celui déjà tranché ici, pas un doublon importé.
 // Conséquence concrète et volontaire : les cœurs en attente (❤️ pas encore
 // tranchés) restent VISIBLES sur la carte de repos via le moteur D-MK unique —
 // le trou qu'on avait identifié (« on perd la zone au retour ») se referme tout
 // seul, sans mécanisme séparé à entretenir.
+let HZ_DOMICILE=null;        // point de départ/retour du groupe (groupes.lat_depart/lng_depart)
+let HZ_MAISON_MK=null;       // marqueur Leaflet de la maison
+let HZ_PLACEES={};           // lieu_id → numéro d'ordre (voyage_itineraire) — rond numéroté + tracé
+let HZ_TRACE_VOYAGE=null;    // layerGroup du tracé routier (reflet de Voyage, même moteur)
+const HZ_SURL="https://cazqllstxhuecoqpktwm.supabase.co";
+const HZ_SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
+
+// Charge le domicile du groupe + l'itinéraire déjà ordonné (voyage_itineraire).
+// Horizon LIT cette table (miroir, comme le Hub) mais ne l'écrit jamais — la
+// construction du trajet reste le rôle de Voyage (D-MK).
+async function hzChargeDomicileEtPlacees(){
+  HZ_PLACEES={};
+  try{
+    if(HZ_GROUPE_ID){
+      const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',HZ_GROUPE_ID).single();
+      HZ_DOMICILE=(g && g.lat_depart!=null && g.lng_depart!=null)
+        ? {lat:Number(g.lat_depart), lng:Number(g.lng_depart), nom:(g.ville||g.adresse_depart||'la maison')}
+        : null;
+    }
+    if(HZ_VOYAGE_ID){
+      const {data:ri}=await sb.from('voyage_itineraire').select('lieu_id,ordre').eq('voyage_id',HZ_VOYAGE_ID).order('ordre',{ascending:true});
+      let n=0; (ri||[]).forEach(r=>{ if(HZ_PLACEES[r.lieu_id]==null){ HZ_PLACEES[r.lieu_id]=(++n); } });
+    }
+  }catch(e){ console.warn('Horizon: domicile/itinéraire',e); }
+}
+// Le point maison (départ/retour) — même icône que le Hub et Voyage (D-MK),
+// posée une seule fois, jamais dupliquée en cas de rappel.
+function hzAfficheMaison(){
+  if(!HZ_CARTE_REPOS || !HZ_DOMICILE || !window.RNR_MARQUEURS || !RNR_MARQUEURS.iconeMaison) return;
+  if(HZ_MAISON_MK){ HZ_CARTE_REPOS.removeLayer(HZ_MAISON_MK); HZ_MAISON_MK=null; }
+  HZ_MAISON_MK=L.marker([HZ_DOMICILE.lat,HZ_DOMICILE.lng],
+    {icon:RNR_MARQUEURS.iconeMaison({taille:32}), zIndexOffset:1000}).addTo(HZ_CARTE_REPOS)
+    .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHtmlHz(HZ_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div></div>',
+    {maxWidth:220, autoPan:false, closeButton:false});
+  if(!HZ_TACTILE){
+    HZ_MAISON_MK.on('mouseover', ()=>HZ_MAISON_MK.openPopup());
+    HZ_MAISON_MK.on('mouseout',  ()=>HZ_MAISON_MK.closePopup());
+  }
+}
+// Tracé routier des fiches déjà placées (reflet permanent de Voyage) — même
+// moteur unique que le Hub : Edge Function → OpenRouteService, flèches de sens
+// incluses, repli ligne droite si indisponible (RNR_MARQUEURS.traceRoute).
+function hzTraceVoyage(){
+  if(!HZ_CARTE_REPOS) return;
+  if(HZ_TRACE_VOYAGE){ HZ_CARTE_REPOS.removeLayer(HZ_TRACE_VOYAGE); HZ_TRACE_VOYAGE=null; }
+  const ordonne=Object.keys(HZ_PLACEES)
+    .sort((a,b)=>HZ_PLACEES[a]-HZ_PLACEES[b])
+    .map(id=>(HZ_FICHES||[]).find(f=>f.id===id))
+    .filter(f=>f && f.lat!=null && f.lng!=null)
+    .map(f=>[+f.lat,+f.lng]);
+  let pts=ordonne;
+  if(HZ_DOMICILE && ordonne.length>=1){
+    const m=[HZ_DOMICILE.lat,HZ_DOMICILE.lng];
+    pts=[m, ...ordonne, m];   // boucle départ/retour, même langage que Voyage
+  }
+  if(pts.length>=2 && window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+    HZ_TRACE_VOYAGE=L.layerGroup().addTo(HZ_CARTE_REPOS);
+    RNR_MARQUEURS.traceRoute(HZ_CARTE_REPOS, HZ_TRACE_VOYAGE, pts, {surl:HZ_SURL, skey:HZ_SKEY}).catch(()=>{});
+  }
+}
 function hzAfficheTousLesPoints(){
   if(!HZ_CARTE_REPOS) return;
   if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup().addTo(HZ_CARTE_REPOS);
@@ -1173,12 +1234,19 @@ function hzAfficheTousLesPoints(){
   HZ_CARTE_REPOS_MARQ_PAR_ID={};
   (HZ_FICHES||[]).forEach(f=>{
     if(f.lat==null||f.lng==null) return;
-    const ic=(typeof hzIcone==='function')?hzIcone(f):null;
+    const num=HZ_PLACEES[f.id];
+    const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
+    const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
+    const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+    const photo=f.photo_url
+      ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+      : '';
     m.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
-      '<strong style="font-size:13px;">'+escapeHtmlHz(f.nom||'—')+'</strong>'+
-      (f.type?('<br><span style="font-size:11px;color:#888;">'+escapeHtmlHz(f.type)+'</span>'):'')+
-      '</div>');
+      photo+
+      '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+      '<div style="font-size:11px;color:#888;padding:0 2px 4px;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+      '</div>', {maxWidth:240, autoPan:false, closeButton:false});
     m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
     m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
     m.on('click', ()=>{ if(typeof epinglerDirectementHzId==='function') epinglerDirectementHzId(f.id); });
@@ -1306,7 +1374,9 @@ function afficheCarteCoin(slug){
   HZ_CARTE_COIN_MARQ_PAR_ID={};
   (HZ_FICHES||[]).forEach(f=>{
     if(f.lat==null||f.lng==null) return;
-    const ic=(typeof hzIcone==='function')?hzIcone(f):null;
+    const num=HZ_PLACEES[f.id];
+    const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
+    const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup('<strong style="font-size:13px;">'+escapeHtmlHz(f.nom||'—')+'</strong>'+
       (f.type?('<br><span style="font-size:11px;color:#888;">'+escapeHtmlHz(f.type)+'</span>'):''));
@@ -3258,8 +3328,10 @@ function ficheParIdHz(lieuId){
   return (HZ_FICHES||[]).find(f=>f && f.id===lieuId) || null;   // repli : les points au repos couvrent tout le voyage, pas juste le coin ouvert
 }
 // Icône d'un lieu via le moteur unique (fiche nécessaire pour estCouchage).
-function hzIcone(fiche){
-  if(window.RNR_MARQUEURS) return RNR_MARQUEURS.icone(fiche, hzEtatLieu(fiche.id));
+// opts optionnel : {numero, taille} pour les fiches déjà placées dans le
+// trajet (rond numéroté, comme sur le Hub et Voyage — même moteur, D-MK).
+function hzIcone(fiche, opts){
+  if(window.RNR_MARQUEURS) return RNR_MARQUEURS.icone(fiche, hzEtatLieu(fiche.id), opts);
   return null;
 }
 // Repose la bonne icône d'un marqueur selon l'état courant du lieu. Appelé à
@@ -3267,7 +3339,9 @@ function hzIcone(fiche){
 function hzMajMarqueur(lieuId, type){
   const fiche = (typeof ficheParIdHz==='function' ? ficheParIdHz(lieuId) : null)
              || {id:lieuId, type:type};
-  const icon = hzIcone(fiche);
+  const num=HZ_PLACEES[lieuId];
+  const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
+  const icon = hzIcone(fiche, opts);
   if(!icon) return;
   const c=HZ_CARTE_COIN_MARQ_PAR_ID && HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
   if(c && c.marker) c.marker.setIcon(icon);
@@ -4401,6 +4475,10 @@ async function loadHorizonData(userId){
     // reçoit _regionSvg = slug de sa région réelle sur la carte 13 régions.
     await chargeDecoupageEtRattache(fiches);
     hzInitCarteRepos();   // Temps 2a·étape1 : la vraie carte Leaflet + régions D-22 prend le relais visuel
+    await hzChargeDomicileEtPlacees();   // report Hub→Horizon : domicile + itinéraire déjà placé
+    hzAfficheMaison();
+    hzTraceVoyage();
+    hzAfficheTousLesPoints();   // re-rendu : les numéros de trajet sont maintenant connus
     if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();   // HZ_CANDIDATES était déjà chargé, HZ_FICHES ne l'était pas encore
 
     // 3) Calculer les vrais compteurs
