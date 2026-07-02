@@ -2975,6 +2975,7 @@ async function retirerCandidateVoyage(lieuId){
   }
   const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null;
   if(f && typeof hzMajMarqueur==='function') hzMajMarqueur(lieuId, f.type);
+  if(typeof hzRafraichitPopup==='function') hzRafraichitPopup(lieuId);   // une fiche ouverte sur cette même fiche doit suivre
   rendDrawerCoeurs();
   if(typeof rendAimees==='function') rendAimees();
   if(typeof rendPanier==='function') rendPanier();
