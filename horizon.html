@@ -4481,6 +4481,10 @@ async function initGesteFondateur(){
   rejoueGeste();             // ne repeint que les régions du geste restauré (≤2)
   marqueRegionsRetenues();   // signaler d'emblée les régions ayant des fiches déjà prises
   majLigneCockpit();         // ligne positive : fiches déjà au Cockpit
+  // Les points de la carte de repos ont été dessinés AVANT ce chargement (HZ_RETENUS
+  // était encore vide à ce moment-là) — on les redessine maintenant que l'état réel
+  // (épingle, cœurs) est connu, sinon une fiche retenue reste affichée en rond simple.
+  if(typeof hzAfficheTousLesPoints==='function') hzAfficheTousLesPoints();
 }
 
 async function loadHorizonData(userId){
