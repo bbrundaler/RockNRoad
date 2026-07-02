@@ -194,9 +194,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    Le SVG France reste la carte-reine au repos — deux états de la même zone,
    pas deux cartes empilées. z-index 4 : sous les overlays flottants (5). */
 #hz-carte-coin{position:absolute;inset:0;display:none;z-index:4;background:var(--bg);}
-body.hz-coin-ign #hz-carte-coin{display:block;}
-body.hz-coin-ign .b-map .francemap{visibility:hidden;}  /* garde sa place, invisible */
-body.hz-coin-ign .hz-ov-tl{display:none;}  /* « Clique une région » parle du SVG, pas de l'IGN */
+body.hz-coin-carte #hz-carte-coin{display:block;}
+body.hz-coin-carte .b-map .francemap{visibility:hidden;}  /* garde sa place, invisible */
+body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle du SVG, pas de la carte du coin */
 #hz-carte-coin .leaflet-container{height:100%;width:100%;background:#e8e4d4;}
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
@@ -1024,7 +1024,6 @@ let HZ_REGIONS_SVG=[];   // slugs des régions présentes sur la carte
 let HZ_BBOX_PAR_SLUG={}; // bbox GPS par région (2b-1, cadre la carte IGN)
 let HZ_CARTE_COIN=null;  // instance Leaflet de la carte IGN du coin (2b)
 let HZ_CARTE_COIN_MARQ=null; // layerGroup des marqueurs de fiches
-let HZ_FONDS_COIN=null;  // fonds candidats (sélecteur temporaire, choix Bruno)
 
 // Charge le fichier de découpage et rattache chaque fiche à sa région SVG réelle.
 async function chargeDecoupageEtRattache(fiches){
@@ -1134,28 +1133,23 @@ function remonteCarteFrance(){
   _animViewBox(_svgFrance(), HZ_VB_PLEIN.slice(), 650);
 }
 
-// ── CARTE IGN DU COIN (B18 · 2b-1) ──
-// Quand un coin est ouvert, la zone carte devient une vraie carte IGN (tuiles
-// Géoplateforme data.geopf.fr, gratuites, licence ouverte, attribution © IGN
-// obligatoire — garde Gardien : PAS de routage IGN, ORS reste). Points des
-// fiches via le MOTEUR UNIQUE carto-marqueurs.js (grammaire D-MK). Le rond de
-// précision (2b-2) viendra vivre sur cette carte.
-function afficheCarteCoinIGN(slug){
+// ── CARTE DU COIN (B18 · 2b-1) ──
+// Quand un coin est ouvert, la zone carte devient une vraie carte à tuiles.
+// Matière : OSM, la même que le Hub — CHOIX BRUNO 02/07 en comparant en prod
+// OSM / IGN Plan / Voyager (IGN écartée : couverture France seule = vide côté
+// Allemagne pour l'Alsace, et rendu jugé moins beau). La piste « fond IGN pour
+// différencier Horizon » est close ; Panoramax (photos) reste ouverte, à part.
+// Points des fiches via le MOTEUR UNIQUE carto-marqueurs.js (grammaire D-MK).
+// Le rond de précision (2b-2) viendra vivre sur cette carte.
+function afficheCarteCoin(slug){
   const el=document.getElementById('hz-carte-coin');
   if(!el || !window.L) return;
-  document.body.classList.add('hz-coin-ign');
+  document.body.classList.add('hz-coin-carte');
   if(!HZ_CARTE_COIN){
     HZ_CARTE_COIN=L.map(el,{zoomControl:true, attributionControl:true});
     HZ_CARTE_COIN.attributionControl.setPrefix(false);
-    // ── SÉLECTEUR TEMPORAIRE DE MATIÈRE (choix Bruno en voyant, puis on grave
-    // et on retire le sélecteur). 3 candidates :
-    HZ_FONDS_COIN={
-      'IGN':L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',{attribution:'© IGN — Géoplateforme',maxZoom:18,minZoom:5}),
-      'OSM':L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19,minZoom:5}),
-      'Voyager':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',maxZoom:19,minZoom:5})
-    };
-    HZ_FONDS_COIN['Voyager'].addTo(HZ_CARTE_COIN);   // candidate par défaut
-    L.control.layers(HZ_FONDS_COIN,null,{position:'topleft',collapsed:false}).addTo(HZ_CARTE_COIN);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap', maxZoom:19, minZoom:5}).addTo(HZ_CARTE_COIN);
     HZ_CARTE_COIN_MARQ=L.layerGroup().addTo(HZ_CARTE_COIN);
   }
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
@@ -1177,8 +1171,8 @@ function afficheCarteCoinIGN(slug){
     else HZ_CARTE_COIN.setView([46.6,2.4],6);
   });
 }
-function masqueCarteCoinIGN(){
-  document.body.classList.remove('hz-coin-ign');
+function masqueCarteCoin(){
+  document.body.classList.remove('hz-coin-carte');
 }
 
 
@@ -1206,7 +1200,7 @@ function ouvrirFichesRegion(dataR){
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   plongeCarteFrance(dataR);   // « wahoo » : la grande carte France plonge sur la région
-  setTimeout(()=>{ if(document.body.classList.contains('hz-explo-on')) afficheCarteCoinIGN(dataR); }, 780);   // 2b-1 : la vue zoomée devient la vraie carte IGN (après l'anim, 750ms)
+  setTimeout(()=>{ if(document.body.classList.contains('hz-explo-on')) afficheCarteCoin(dataR); }, 780);   // 2b-1 : la vue zoomée devient la vraie carte IGN (après l'anim, 750ms)
   ouvreExplo();               // le swipe s'ouvre SUR PLACE, sous la carte
 }
 
@@ -2977,7 +2971,7 @@ function fermeExplo(){
   const ov=document.getElementById('hz-explo');
   if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
   document.body.classList.remove('hz-explo-on');   // la carte France se redéploie
-  masqueCarteCoinIGN();                              // 2b-1 : l'IGN s'efface, le SVG revient
+  masqueCarteCoin();                                 // 2b-1 : la carte du coin s'efface, le SVG revient
   if(typeof remonteCarteFrance==='function') remonteCarteFrance();   // dézoom du SVG
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
