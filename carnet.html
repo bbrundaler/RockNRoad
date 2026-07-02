@@ -26,14 +26,10 @@
 /* APP MAIN */
 
 /* La barre du haut vient de chrome.js (la couverture). La topbar locale est supprimée.
-   Le compteur d'itinéraire devient une pastille flottante (bas-gauche, en face de la Boussole). */
-.top-voyage-btn{display:none;position:fixed;bottom:20px;left:20px;z-index:900;align-items:center;gap:6px;
-  background:var(--chrome-bg);color:var(--gold);font-size:10.5px;font-weight:700;padding:8px 16px;
-  border-radius:var(--r-pill);border:1px solid var(--gold-a35);cursor:pointer;transition:all .2s;
-  box-shadow:0 4px 18px rgba(0,0,0,.35);} /* ombre sur flottant : invariant */
-.top-voyage-btn.visible{display:flex;}
-@media (max-width:700px){.top-voyage-btn{bottom:84px;}} /* au-dessus de la tabbar mobile, comme la Boussole */
-.top-voyage-btn:hover{background:var(--gold);color:var(--chrome-bg);}
+   Le compteur « Mon Voyage » (localStorage) a été retiré le 02/07 : système d'avant
+   Supabase, déconnecté depuis que voyage.html lit voyage_fiches — il continuait
+   à afficher un compteur (le popup « Voyage · N lieux ») qui ne menait nulle part
+   de réel, source de confusion. Le ❤️ (réparé le 02/07) fait ce travail, en vrai. */
 
 /* SECTIONS */
 .section{display:none;flex:1;}
@@ -94,9 +90,6 @@
 .maps-btn:hover{background:#333;} /* bouton maps sombre : invariant */
 .google-btn{display:inline-flex;align-items:center;gap:3px;background:var(--st-na-bg);border:1px solid var(--gold-a35);color:var(--gold-deep);font-size:9.5px;font-weight:600;padding:5px 9px;border-radius:5px;text-decoration:none;cursor:pointer;transition:all .15s;}
 .google-btn:hover{background:var(--gold-a20);}
-.voyage-add-btn{display:inline-flex;align-items:center;gap:3px;background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:9.5px;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
-.voyage-add-btn:hover{background:var(--gold-a20);}
-.voyage-add-btn.in-voyage{background:var(--green)!important;color:white!important;border-color:var(--green)!important;}
 
 /* CAMP CARD */
 .camp-card{background:var(--paper);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--surface-line);transition:all .2s;display:flex;flex-direction:column;}
@@ -114,9 +107,6 @@
 .tel-btn:hover{color:var(--st-link);}
 .web-btn{display:inline-flex;align-items:center;gap:3px;background:var(--st-link-bg);border:1px solid var(--st-link-line);color:var(--st-link);font-size:8.5px;font-weight:700;padding:4px 8px;border-radius:5px;text-decoration:none;transition:all .15s;}
 .web-btn:hover{background:var(--st-link-bg);}
-.camp-voyage-btn,.voyage-add-btn.camp-voyage{display:inline-flex;align-items:center;gap:3px;background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:8.5px;font-weight:700;padding:4px 8px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;margin-left:auto;}
-.camp-voyage-btn:hover{background:var(--gold-a20);}
-.camp-voyage-btn.in-voyage{background:var(--green)!important;color:white!important;border-color:var(--green)!important;}
 
 /* CARD NUIT — Monde 2 : Où on dort */
 /* ── MONDE NUIT (où dormir) : reste SOMBRE dans les deux thèmes — identité de contenu, couleurs invariantes ── */
@@ -155,11 +145,6 @@
   color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;
   border:1px solid var(--gold-a20);text-decoration:none;transition:all .15s;}
 .nuit-maps-btn:hover{background:rgba(200,168,75,.3);}
-.nuit-voyage-btn{display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:9.5px;font-weight:700;
-  padding:5px 9px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
-.nuit-voyage-btn:hover{background:rgba(255,255,255,.12);color:white;}
-.nuit-voyage-btn.in-voyage{background:#2C5016!important;color:white!important;border-color:#2C5016!important;}
 /* MODALE ÉDITION INLINE */
 #edit-overlay{position:fixed;inset:0;background:rgba(15,13,9,.88); /* scrim : invariant */z-index:3000;
   display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
@@ -303,7 +288,7 @@
   .sites-grid,.camps-grid,.dgrid{grid-template-columns:1fr!important;}
   .sh-compact{margin:14px 14px 0;}
 }
-@media print{.rnrc-nav,.rnrc-tabbar,.bsl-btn,.top-voyage-btn{display:none!important;}.section{display:block!important;}}
+@media print{.rnrc-nav,.rnrc-tabbar,.bsl-btn{display:none!important;}.section{display:block!important;}}
 
 /* TIPS / CONSEILS */
 .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:4px;}
@@ -521,9 +506,6 @@
 <div id="carnet-main"> <!-- ex app-main : renommé pour échapper au Template A legacy d'app.css (marge sidebar) -->
 
   <!-- Barre de navigation : injectée par chrome.js. Quitter → window.logout() (défini plus bas). -->
-  <button class="top-voyage-btn" id="top-voyage-btn" onclick="window.location.href='voyage.html'">
-    🧭 <span id="top-voyage-count">0</span> lieu(x) · Voir l'itinéraire
-  </button>
 
 <!-- (Vue d'ensemble v1 supprimée — détrônée par le Hub, décision v9. Arrivée sans hash → région par défaut.) -->
 
@@ -1705,10 +1687,6 @@ function makeDynCard(l, cardType){
       <div class="site-actions" onclick="event.stopPropagation()">
         <a href="${mapsUrl}" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="google-btn">🌐 Site</a>`:`<a href="https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}" target="_blank" class="google-btn">🔍 Google</a>`}
-        <button class="voyage-add-btn${inVoyage('dyn-'+l.id)?' in-voyage':''}" id="vcard-dyn-${l.id}"
-          data-id="dyn-${l.id}" data-nom="${(l.nom||'').replace(/"/g,'&quot;')}" data-lat="${l.lat||0}" data-lng="${l.lng||0}"
-          data-region="${(l.region||'').replace(/"/g,'&quot;')}" data-type="${(l.type||'Site').replace(/"/g,'&quot;')}"
-          onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">${inVoyage('dyn-'+l.id)?'✓ OK':'🧭 Mon Voyage'}</button>
         <button data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)" style="background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">✏️</button>
       </div>
     </div>
@@ -1786,10 +1764,6 @@ function makeNuitCard(l){
         <a href="${mapsUrl}" target="_blank" class="nuit-maps-btn">📍 Maps</a>
         ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="nuit-maps-btn">🌐 Site</a>`:''}
-        <button class="nuit-voyage-btn${inVoyage('dyn-'+l.id)?' in-voyage':''}" id="vcard-dyn-${l.id}"
-          data-id="dyn-${l.id}" data-nom="${(l.nom||'').replace(/"/g,'&quot;')}" data-lat="${l.lat||0}" data-lng="${l.lng||0}"
-          data-region="${(l.region||'').replace(/"/g,'&quot;')}" data-type="${(l.type||'Camping').replace(/"/g,'&quot;')}"
-          onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">${inVoyage('dyn-'+l.id)?'✓ OK':'🧭 Voyage'}</button>
         <button class="nuit-edit-btn" data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)">✏️</button>
       </div>
     </div>
@@ -1918,7 +1892,6 @@ function openGrandeFiche(id){
       <div class="gf-votebar">${makeVoteBar(l)}</div>
       <div class="gf-actions">
         <a href="${mapsUrl}" target="_blank" class="gf-btn-gold">📍 Voir sur Maps</a>
-        <button class="gf-btn-dark${inVoyage('dyn-'+l.id)?' in-voyage':''}" data-id="dyn-${l.id}" data-nom="${(l.nom||'').replace(/"/g,'&quot;')}" data-lat="${l.lat||0}" data-lng="${l.lng||0}" data-region="${(l.region||'').replace(/"/g,'&quot;')}" data-type="${(l.type||'Site').replace(/"/g,'&quot;')}" onclick="var b=this;toggleVoyageCard(b.dataset.id,b.dataset.nom,+b.dataset.lat,+b.dataset.lng,b.dataset.region,b.dataset.type)">${inVoyage('dyn-'+l.id)?'✓ OK':'🧭 Mon Voyage'}</button>
         <button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️</button>
       </div>
     </div>`;
@@ -2123,61 +2096,12 @@ window.showTab=function(id){
 };
 
 
-let rnrVoyage=JSON.parse(localStorage.getItem("rr_voyage_full")||"[]");
-function inVoyage(id){ return rnrVoyage.some(v=>v.id===id); }
-function setVoyageBtns(id,actif){
-  // Tous les boutons du lieu (carte jour/nuit + grande fiche) suivent l'état
-  document.querySelectorAll('[data-id="'+id+'"]').forEach(btn=>{
-    btn.classList.toggle('in-voyage',actif);
-    btn.textContent=actif?'✓ OK':'🧭 Mon Voyage';
-  });
-}
-// Retour sur la page via l'historique (bfcache) : relire le voyage et resynchroniser
-window.addEventListener('pageshow',e=>{
-  if(e.persisted){
-    rnrVoyage=JSON.parse(localStorage.getItem("rr_voyage_full")||"[]");
-    document.querySelectorAll('[data-id^="dyn-"]').forEach(btn=>{
-      const actif=inVoyage(btn.dataset.id);
-      btn.classList.toggle('in-voyage',actif);
-      btn.textContent=actif?'✓ OK':(btn.classList.contains('nuit-voyage-btn')?'🧭 Voyage':'🧭 Mon Voyage');
-    });
-    if(typeof updateVoyageCount==='function')try{updateVoyageCount()}catch(_){}
-  }
-});
-function toggleVoyageCard(id,nom,lat,lng,region,type){
-  const exists=rnrVoyage.find(v=>v.id===id);
-  if(exists){
-    rnrVoyage=rnrVoyage.filter(v=>v.id!==id);
-    setVoyageBtns(id,false);
-    showToast('"'+nom+'" retiré');
-  }else{
-    rnrVoyage.push({id,nom,lat,lng,region:region||"",type:type||"Site",uid:(Date.now()+Math.random()).toString(36)});
-    setVoyageBtns(id,true);
-    showToast('"'+nom+'" ajouté !');
-  }
-  localStorage.setItem("rr_voyage_full",JSON.stringify(rnrVoyage));
-  localStorage.setItem("rr_voyage",JSON.stringify(rnrVoyage.map(v=>v.id)));
-  updateVoyageBtn();
-}
-function updateVoyageBtn(){
-  const btn=document.getElementById("top-voyage-btn");
-  const cnt=document.getElementById("top-voyage-count");
-  if(btn&&cnt){if(rnrVoyage.length>0){btn.classList.add("visible");cnt.textContent=rnrVoyage.length;}else btn.classList.remove("visible");}
-  let fl=document.getElementById("voyage-floater");
-  if(!fl){fl=document.createElement("div");fl.id="voyage-floater";
-    fl.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--chrome-bg);color:var(--gold);border:1.5px solid var(--gold);border-radius:30px;padding:10px 24px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.35);white-space:nowrap;display:none;font-family:Inter,sans-serif;";
-    fl.onclick=()=>window.location.href="voyage.html";
-    document.body.appendChild(fl);}
-  if(rnrVoyage.length>0){fl.style.display="block";fl.textContent="Voyage · "+rnrVoyage.length+" lieu"+(rnrVoyage.length>1?"x":"")+" →";}else fl.style.display="none";
-}
 function showToast(msg){
   let t=document.getElementById("rnr-toast");
   if(!t){t=document.createElement("div");t.id="rnr-toast";t.style.cssText="position:fixed;top:56px;right:16px;z-index:9999;padding:9px 14px;background:var(--green);color:white;border-radius:6px;font-size:11.5px;font-weight:600;transform:translateY(-14px);opacity:0;transition:all .22s;pointer-events:none;font-family:Inter,sans-serif;";document.body.appendChild(t);}
   t.textContent=msg;t.style.transform="translateY(0)";t.style.opacity="1";
   setTimeout(()=>{t.style.transform="translateY(-14px)";t.style.opacity="0";},2000);
 }
-rnrVoyage.forEach(v=>{const btn=document.getElementById("vcard-"+v.id);if(btn){btn.classList.add("in-voyage");btn.textContent="✓ OK";}});
-updateVoyageBtn();
 
 </script>
 
@@ -2216,7 +2140,6 @@ updateVoyageBtn();
 .gf-votebar{border-top:1px solid var(--gold-a20);padding-top:8px;margin-bottom:12px;}
 .gf-actions{display:flex;gap:8px;}
 .gf-btn-gold{flex:1;background:var(--gold);color:#0f0d09;font-weight:700;font-size:13px;padding:10px;border:none;border-radius:8px;cursor:pointer;text-align:center;text-decoration:none;}
-.gf-btn-dark.in-voyage{background:var(--green)!important;color:white!important;border-color:var(--green)!important;}
 .gf-btn-dark{background:var(--chrome-bg);border:1px solid var(--gold-a35);color:var(--gold-light);font-size:13px;padding:10px 14px;border-radius:8px;cursor:pointer;}
 </style>
 
