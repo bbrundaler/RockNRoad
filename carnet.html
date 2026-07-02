@@ -248,8 +248,6 @@
 .vote-btn.love.active{background:rgba(220,60,100,.12);border-color:rgba(220,60,100,.4);}
 .vote-btn.top{border-color:var(--gold-a20);color:var(--gold-deep);}
 .vote-btn.top.active{background:var(--gold-a20);border-color:var(--gold-a35);}
-.vote-btn.later{border-color:var(--gold-a20);color:var(--gold-deep);}
-.vote-btn.later.active{background:var(--gold-a20);border-color:var(--gold-a35);}
 .vote-btn.save{border-color:rgba(44,80,160,.2);color:var(--st-save);}
 .vote-btn.save.active{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
 .vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
@@ -257,7 +255,6 @@
 /* 📌 Retenu = indicateur DÉRIVÉ (verdict d'un vote), pas un bouton : non cliquable, atténué tant qu'inactif */
 .vote-btn.derived{cursor:default;opacity:.5;}
 .vote-btn.derived.active{opacity:1;background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
-.vote-filter-btn.active-later{background:var(--gold-a20);border-color:var(--gold);color:var(--gold-text);}
 .vote-count{font-size:9.5px;font-weight:600;}
 /* nuit card vote — couleurs adaptées fond sombre */
 .nuit-card .vote-bar{border-top-color:rgba(200,168,75,.1);}
@@ -644,39 +641,38 @@ const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🐕 Chien sous conditions',no
    PREMIER CHOIX DANS LA FICHE — collectif, partagé au groupe (v14).
    Avant : 3 boutons en localStorage (perso, non partagé). Désormais :
    - ❤️ J'adore  → geste individuel COLLECTIF (table reactions, emoji ❤️)
-                   amorce le vote : « 4 du groupe l'adorent ».
-   - ✨ Une prochaine fois → idem (reactions, emoji ✨) : le filet de réalité.
+                   propose la fiche au groupe (candidate immédiate, 02/07).
    - 📌 Retenu   → INDICATEUR DÉRIVÉ, non cliquable : allumé quand un vote
                    « garder/écarter » s'est clos sur « Garder » (propositions).
    Cap : entonnoir de décision (Master 1.7) — ❤️ amorce, vote tranche,
    📌 reflète le verdict du groupe. RLS reactions déjà scopée lieu (prouvée).
+   « ✨ Une prochaine fois » retiré (02/07) : n'a jamais mené nulle part dans
+   le parcours réel — ni vote, ni candidate, ni trace ailleurs sur le site.
    ════════════════════════════════════════════════════════════════ */
 const EMOJI_LOVE = '❤️';
-const EMOJI_LATER = '✨';
 let RNR_userId = null;
-/* coeurs[lieu_id] = { love:{count,mine}, later:{count,mine} }  (compteurs collectifs) */
+/* coeurs[lieu_id] = { love:{count,mine} }  (compteur collectif) */
 let coeurs = {};
 /* retenus = Set des lieu_id retenus pour le voyage actif (📌) ; ecartees = écartés (frère D-ECH-12) */
 let retenus = new Set();
 let ecartees = new Set();
-let activeVoteFilter = null; // null=tous, 'love', 'later', 'save'
+let activeVoteFilter = null; // null=tous, 'love', 'save'
 
-/* Charge l'état collectif : réactions ❤️/✨ du groupe + fiches retenues par vote.
+/* Charge l'état collectif : réactions ❤️ du groupe + fiches retenues par vote.
    Une seule passe au chargement ; rafraîchi après chaque toggle. */
 async function chargerCoeurs(){
   coeurs = {}; retenus = new Set(); ecartees = new Set();
   if(!currentGroupeId) return;
-  /* (1) réactions ❤️/✨ sur les lieux — RLS limite déjà au groupe (scope via lieux) */
+  /* (1) réactions ❤️ sur les lieux — RLS limite déjà au groupe (scope via lieux) */
   const {data:reacs,error:eR} = await sb.from('reactions')
     .select('cible_id,membre_id,emoji')
     .eq('cible_type','lieu');
   if(eR){ console.warn('coeurs',eR); }
   (reacs||[]).forEach(r=>{
-    const slot = coeurs[r.cible_id] || (coeurs[r.cible_id]={love:{count:0,mine:false},later:{count:0,mine:false}});
-    const k = r.emoji===EMOJI_LATER ? 'later' : (r.emoji===EMOJI_LOVE ? 'love' : null);
-    if(!k) return;
-    slot[k].count++;
-    if(r.membre_id && r.membre_id===RNR_userId) slot[k].mine=true;
+    if(r.emoji!==EMOJI_LOVE) return;
+    const slot = coeurs[r.cible_id] || (coeurs[r.cible_id]={love:{count:0,mine:false}});
+    slot.love.count++;
+    if(r.membre_id && r.membre_id===RNR_userId) slot.love.mine=true;
   });
   /* (2) Statut par voyage : on lit voyage_fiches (source de vérité, maj D-ECH-12 du 19/06)
      FILTRÉ par le voyage actif — fini le recalcul global qui mélangeait les voyages. */
@@ -696,15 +692,14 @@ async function chargerCoeurs(){
 }
 
 function coeursDe(lieuId){
-  return coeurs[lieuId] || {love:{count:0,mine:false},later:{count:0,mine:false}};
+  return coeurs[lieuId] || {love:{count:0,mine:false}};
 }
 
 
 function getVoteCount(type) {
   // compteur de FICHES portant ce marqueur (pour la barre de filtre)
   if(type==='save') return Object.keys(coeurs).length ? [...retenus].length : retenus.size;
-  const key = type==='later' ? 'later' : 'love';
-  return Object.values(coeurs).filter(c=>c[key] && c[key].count>0).length;
+  return Object.values(coeurs).filter(c=>c.love && c.love.count>0).length;
 }
 
 function setVoteFilter(type, btn) {
@@ -714,7 +709,7 @@ function setVoteFilter(type, btn) {
   // Mettre à jour les boutons
   document.querySelectorAll('.vote-filter-btn').forEach(b=>b.className='vote-filter-btn');
   if(activeVoteFilter) {
-    const map = {love:'active-love',later:'active-later',save:'active-save'};
+    const map = {love:'active-love',save:'active-save'};
     if(btn) btn.className = 'vote-filter-btn '+map[activeVoteFilter];
   }
   // Rafraîchir l'affichage
@@ -726,8 +721,7 @@ function applyVoteFilter(lieux) {
   return lieux.filter(l => {
     if(activeVoteFilter==='save') return retenus.has(l.id);
     const c = coeurs[l.id];
-    const key = activeVoteFilter==='later' ? 'later' : 'love';
-    return c && c[key] && c[key].count>0;
+    return c && c.love && c.love.count>0;
   });
 }
 
@@ -758,26 +752,26 @@ async function retireCandidate(lieuId){
     if(error){ console.warn('Carnet: retrait candidate',error); }
   }catch(e){ console.warn('Carnet: retrait candidate',e); }
 }
-/* Toggle d'un coup de cœur collectif (❤️ ou ✨) → table reactions.
+/* Toggle du coup de cœur collectif (❤️) → table reactions.
    Unicité (cible_type,cible_id,membre_id,emoji) : on insère, ou on retire si déjà mis. */
 async function toggleVote(lieuId, type){
   if(!RNR_userId){ return; }
-  const emoji = type==='later' ? EMOJI_LATER : EMOJI_LOVE;
+  const emoji = EMOJI_LOVE;
   const slot = coeursDe(lieuId);
-  const dejaMis = (type==='later' ? slot.later.mine : slot.love.mine);
+  const dejaMis = slot.love.mine;
   // maj optimiste de l'affichage
   if(dejaMis){
     const {error} = await sb.from('reactions').delete()
       .eq('cible_type','lieu').eq('cible_id',lieuId)
       .eq('membre_id',RNR_userId).eq('emoji',emoji);
     if(error){ console.warn('retrait coeur',error); return; }
-    if(type==='love') await retireCandidate(lieuId);
+    await retireCandidate(lieuId);
   } else {
     const {error} = await sb.from('reactions').insert({
       cible_type:'lieu', cible_id:lieuId, membre_id:RNR_userId, emoji:emoji
     });
     if(error){ console.warn('ajout coeur',error); return; }
-    if(type==='love') await envoieCandidate(lieuId);
+    await envoieCandidate(lieuId);
   }
   await chargerCoeurs();
   refreshVoteBtns(lieuId);
@@ -785,14 +779,9 @@ async function toggleVote(lieuId, type){
 function refreshVoteBtns(lieuId){
   const c = coeursDe(lieuId);
   const loveBtn = document.getElementById('vote-love-'+lieuId);
-  const laterBtn = document.getElementById('vote-later-'+lieuId);
   if(loveBtn){
     loveBtn.classList.toggle('active', c.love.mine);
     const n=loveBtn.querySelector('.vote-count'); if(n) n.textContent = c.love.count>0 ? 'J\'adore · '+c.love.count : 'J\'adore';
-  }
-  if(laterBtn){
-    laterBtn.classList.toggle('active', c.later.mine);
-    const n=laterBtn.querySelector('.vote-count'); if(n) n.textContent = c.later.count>0 ? 'Une prochaine fois · '+c.later.count : 'Une prochaine fois';
   }
 }
 function makeVoteBar(l){
@@ -800,15 +789,10 @@ function makeVoteBar(l){
   const estRetenu = retenus.has(l.id);
   const estEcartee = ecartees.has(l.id);
   const loveLbl = c.love.count>0 ? 'J\'adore · '+c.love.count : 'J\'adore';
-  const laterLbl = c.later.count>0 ? 'Une prochaine fois · '+c.later.count : 'Une prochaine fois';
   return `<div class="vote-bar">
     <button class="vote-btn love ${c.love.mine?'active':''}" id="vote-love-${l.id}"
       onclick="event.stopPropagation();toggleVote('${l.id}','love')" title="J'adore — la proposer au groupe">
       ❤️ <span class="vote-count">${loveLbl}</span>
-    </button>
-    <button class="vote-btn later ${c.later.mine?'active':''}" id="vote-later-${l.id}"
-      onclick="event.stopPropagation();toggleVote('${l.id}','later')" title="À garder pour une prochaine fois">
-      ✨ <span class="vote-count">${laterLbl}</span>
     </button>
     <span class="vote-btn save derived ${estRetenu?'active':''}" id="vote-save-${l.id}"
       title="${estRetenu?'Retenue par un vote du groupe pour ce voyage':'Sera allumé quand un vote la retient'}">
@@ -1068,7 +1052,6 @@ function populateRegionContent(rk, regionName, lieux){
 
   // Compter pour les badges filtres (collectif : nb de fiches portant le marqueur, sur cette vue)
   const loveCount = lieux.filter(l=>{const c=coeurs[l.id];return c&&c.love.count>0;}).length;
-  const topCount  = lieux.filter(l=>{const c=coeurs[l.id];return c&&c.later.count>0;}).length;
   const saveCount = lieux.filter(l=>retenus.has(l.id)).length;
 
   // Sous-groupes Activités
@@ -1077,7 +1060,7 @@ function populateRegionContent(rk, regionName, lieux){
   const autres     = activites.filter(l=>!['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation','Camping','Halte','Restaurant','Brasserie'].includes(l.type)&&l.type);
 
   // Barre de filtres votes (si au moins 1 vote dans cette région)
-  const hasVotes = loveCount>0||topCount>0||saveCount>0;
+  const hasVotes = loveCount>0||saveCount>0;
   let html = '';
   if(hasVotes) {
     html += `<div class="vote-filters">
@@ -1085,10 +1068,6 @@ function populateRegionContent(rk, regionName, lieux){
       <button class="vote-filter-btn ${activeVoteFilter==='love'?'active-love':''}"
         onclick="setVoteFilter('love',this)">
         ❤️ J'adore <span class="vote-filter-count">${loveCount}</span>
-      </button>
-      <button class="vote-filter-btn ${activeVoteFilter==='later'?'active-later':''}"
-        onclick="setVoteFilter('later',this)">
-        ✨ Une prochaine fois <span class="vote-filter-count">${topCount}</span>
       </button>
       <button class="vote-filter-btn ${activeVoteFilter==='save'?'active-save':''}"
         onclick="setVoteFilter('save',this)">
@@ -1100,9 +1079,9 @@ function populateRegionContent(rk, regionName, lieux){
 
   // Message si filtre actif mais aucun résultat
   if(activeVoteFilter && lieuxFiltres.length===0) {
-    const labels={love:"❤️ J'adore",later:"✨ Une prochaine fois",save:"📌 Retenu"};
+    const labels={love:"❤️ J'adore",save:"📌 Retenu"};
     html += `<div style="text-align:center;padding:32px 20px;color:var(--ink-dim);">
-      <div style="font-size:36px;margin-bottom:10px;">${activeVoteFilter==='love'?'❤️':activeVoteFilter==='later'?'✨':'📌'}</div>
+      <div style="font-size:36px;margin-bottom:10px;">${activeVoteFilter==='love'?'❤️':'📌'}</div>
       <p style="font-size:13px;color:var(--ink-dim);">Aucun lieu marqué <strong>${labels[activeVoteFilter]}</strong> dans cette région.</p>
       <button onclick="setVoteFilter(null,null)" style="margin-top:12px;padding:8px 18px;background:var(--chrome-bg);color:var(--gold);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Voir tous les lieux</button>
     </div>`;

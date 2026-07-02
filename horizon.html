@@ -465,16 +465,14 @@ body.hz-explo-on #hz-rail{display:none;}
    les boutons ni compris quoi faire. On nomme l'action attendue. */
 .hz-swipe-consigne{font-size:12px;font-weight:600;color:var(--gold-text);text-align:center;margin-bottom:8px;letter-spacing:.3px;}
 .hz-swipe-actions{display:flex;align-items:flex-start;justify-content:center;gap:22px;padding:4px 0;}
-/* Chaque action = icône ronde + un MOT dessous (✕ J'écarte · ✨ Plus tard · ❤️ Je
-   retiens). Le mot lève l'ambiguïté ; la pastille ronde rend le bouton évident. */
+/* Chaque action = icône ronde + un MOT dessous (✕ J'écarte · ❤️ Je retiens).
+   Le mot lève l'ambiguïté ; la pastille ronde rend le bouton évident. */
 .hz-swipe-act{display:flex;flex-direction:column;align-items:center;gap:5px;border:none;background:none;cursor:pointer;padding:0;transition:transform .12s;}
 .hz-swipe-act:active{transform:scale(.9);}
 .hz-swipe-act .hz-act-ic{width:60px;height:60px;border-radius:50%;border:1.5px solid var(--surface-line);background:var(--surface);font-size:27px;display:flex;align-items:center;justify-content:center;}
 .hz-swipe-act .hz-act-lbl{font-size:13px;font-weight:600;color:var(--ink-dim);}
 .hz-swipe-act.love .hz-act-ic{border-color:rgba(216,69,110,.45);}
 .hz-swipe-act.love .hz-act-lbl{color:var(--love-text,#d8456e);}
-.hz-swipe-act.later .hz-act-ic{border-color:var(--gold-a35);}
-.hz-swipe-act.later .hz-act-lbl{color:var(--gold-text);}
 /* barre de progression (remplace les onglets) */
 .hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
 .hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
@@ -567,8 +565,6 @@ body.hz-explo-on #hz-rail{display:none;}
 .vote-btn:hover{transform:scale(1.06);}
 .vote-btn.love{border-color:rgba(220,60,100,.2);color:#d8456e;}
 .vote-btn.love.active{background:rgba(220,60,100,.12);border-color:rgba(220,60,100,.4);}
-.vote-btn.later{border-color:var(--gold-a20);color:var(--gold-deep);}
-.vote-btn.later.active{background:var(--gold-a20);border-color:var(--gold-a35);}
 .vote-btn.derived{cursor:default;opacity:.55;border-color:rgba(44,80,160,.2);color:#4a70b0;}
 .vote-btn.derived.active{opacity:1;background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
 .vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
@@ -863,7 +859,6 @@ body.hz-explo-on #hz-rail{display:none;}
             </div>
             <div class="hz-swipe-actions" id="hz-swipe-actions">
               <button class="hz-swipe-act pass" id="hz-swipe-pass" type="button" title="j'écarte"><span class="hz-act-ic">✕</span><span class="hz-act-lbl">J'écarte</span></button>
-              <button class="hz-swipe-act later" id="hz-swipe-later" type="button" title="plus tard"><span class="hz-act-ic">✨</span><span class="hz-act-lbl">Plus tard</span></button>
               <button class="hz-swipe-act love" id="hz-swipe-love" type="button" title="je retiens"><span class="hz-act-ic">❤️</span><span class="hz-act-lbl">Je retiens</span></button>
             </div>
           </div>
@@ -2809,13 +2804,13 @@ function themeLibelle(cle){
 //  (voyage_fiches) → lecture seule ici. On garde la philosophie
 //  fiche → Cockpit → Voyage : pas d'envoi en bloc.
 // ════════════════════════════════════════════════════════════════
-const HZ_EMOJI_LOVE='❤️', HZ_EMOJI_LATER='✨';
+const HZ_EMOJI_LOVE='❤️';
 let HZ_COEURS={}, HZ_RETENUS=new Set(), HZ_ECARTEES=new Set();
 // A6 : candidates = coups de cœur envoyés au Cockpit, en attente de vote. NE sont
 // PAS retenues (pas exclues du swipe, pas badgées « déjà prise ») — sert au compteur.
 let HZ_CANDIDATES=new Set();
 
-function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false,qui:[]},later:{count:0,mine:false,qui:[]}}; }
+function hzCoeursDe(id){ return HZ_COEURS[id]||{love:{count:0,mine:false,qui:[]}}; }
 
 // ════════════════════════════════════════════════════════════════
 //  MATCH / SPARK — l'étincelle quand 2+ membres aiment la même fiche.
@@ -2927,19 +2922,18 @@ function rendDrawerCoeurs(){
 async function hzChargerCoeurs(){
   HZ_COEURS={}; HZ_RETENUS=new Set(); HZ_ECARTEES=new Set(); HZ_CANDIDATES=new Set();
   if(!HZ_GROUPE_ID) return;
-  // (1) réactions ❤️/✨ sur les lieux (RLS limite déjà au groupe via lieux)
+  // (1) réactions ❤️ sur les lieux (RLS limite déjà au groupe via lieux)
   const {data:reacs,error:eR}=await sb.from('reactions')
     .select('cible_id,membre_id,emoji').eq('cible_type','lieu');
   if(eR){ console.warn('Horizon: coeurs',eR); }
   const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
   (reacs||[]).forEach(r=>{
-    const slot=HZ_COEURS[r.cible_id]||(HZ_COEURS[r.cible_id]={love:{count:0,mine:false,qui:[]},later:{count:0,mine:false,qui:[]}});
-    const k=r.emoji===HZ_EMOJI_LATER?'later':(r.emoji===HZ_EMOJI_LOVE?'love':null);
-    if(!k) return;
-    slot[k].count++;
-    if(!slot[k].qui) slot[k].qui=[];
-    if(r.membre_id) slot[k].qui.push(r.membre_id);   // user_id auth des likeurs (pour le spark nominatif)
-    if(r.membre_id && r.membre_id===moi) slot[k].mine=true;
+    if(r.emoji!==HZ_EMOJI_LOVE) return;
+    const slot=HZ_COEURS[r.cible_id]||(HZ_COEURS[r.cible_id]={love:{count:0,mine:false,qui:[]}});
+    slot.love.count++;
+    if(!slot.love.qui) slot.love.qui=[];
+    if(r.membre_id) slot.love.qui.push(r.membre_id);   // user_id auth des likeurs (pour le spark nominatif)
+    if(r.membre_id && r.membre_id===moi) slot.love.mine=true;
   });
   // (2) statut par voyage (voyage_fiches, source de vérité D-ECH-12) — lecture seule
   if(HZ_VOYAGE_ID){
@@ -3006,9 +3000,9 @@ window.addEventListener('beforeunload',function(){
 async function hzToggleVote(lieuId,type){
   const moi=HZ_USER_ID;   // reactions.membre_id = user_id auth (contrat Carnet/Cockpit)
   if(!moi){ alert('Connexion requise.'); return; }
-  const emoji=type==='later'?HZ_EMOJI_LATER:HZ_EMOJI_LOVE;
+  const emoji=HZ_EMOJI_LOVE;
   const slot=hzCoeursDe(lieuId);
-  const dejaMis=(type==='later'?slot.later.mine:slot.love.mine);
+  const dejaMis=slot.love.mine;
   if(dejaMis){
     const {error}=await sb.from('reactions').delete()
       .eq('cible_type','lieu').eq('cible_id',lieuId).eq('membre_id',moi).eq('emoji',emoji);
@@ -3017,11 +3011,11 @@ async function hzToggleVote(lieuId,type){
     // au retrait d'un ❤️ — un cœur retiré depuis la bande, le tiroir, ou Carnet
     // laissait une candidate orpheline. Maintenant hzToggleVote porte les deux
     // effets ensemble, peu importe l'écran d'où le geste part.
-    if(type==='love') await hzRetireCandidate(lieuId);
+    await hzRetireCandidate(lieuId);
   }else{
     const {error}=await sb.from('reactions').insert({cible_type:'lieu',cible_id:lieuId,membre_id:moi,emoji:emoji});
     if(error){ console.warn('Horizon: ajout coeur',error); return; }
-    if(type==='love') await hzEnvoieCandidate(lieuId);   // tout ❤️ propose au groupe, immédiatement (décision 28/06, B17)
+    await hzEnvoieCandidate(lieuId);   // tout ❤️ propose au groupe, immédiatement (décision 28/06, B17)
   }
   await hzChargerCoeurs();
   hzRefreshVoteBtns(lieuId);
@@ -3030,14 +3024,9 @@ async function hzToggleVote(lieuId,type){
 function hzRefreshVoteBtns(lieuId){
   const c=hzCoeursDe(lieuId);
   const loveBtn=document.getElementById('hz-vote-love-'+lieuId);
-  const laterBtn=document.getElementById('hz-vote-later-'+lieuId);
   if(loveBtn){
     loveBtn.classList.toggle('active',c.love.mine);
     const n=loveBtn.querySelector('.vote-count'); if(n) n.textContent=c.love.count>0?'J\'adore · '+c.love.count:'J\'adore';
-  }
-  if(laterBtn){
-    laterBtn.classList.toggle('active',c.later.mine);
-    const n=laterBtn.querySelector('.vote-count'); if(n) n.textContent=c.later.count>0?'Une prochaine fois · '+c.later.count:'Une prochaine fois';
   }
 }
 
@@ -3047,14 +3036,10 @@ function hzMakeVoteBar(l){
   const estRetenu=HZ_RETENUS.has(l.id);
   const estEcartee=HZ_ECARTEES.has(l.id);
   const loveLbl=c.love.count>0?'J\'adore · '+c.love.count:'J\'adore';
-  const laterLbl=c.later.count>0?'Une prochaine fois · '+c.later.count:'Une prochaine fois';
   return '<div class="vote-bar">'+
     '<button class="vote-btn love '+(c.love.mine?'active':'')+'" id="hz-vote-love-'+l.id+'" '+
       'onclick="event.stopPropagation();hzToggleVote(\''+l.id+'\',\'love\')" title="J\'adore — la proposer au groupe">'+
       '❤️ <span class="vote-count">'+loveLbl+'</span></button>'+
-    '<button class="vote-btn later '+(c.later.mine?'active':'')+'" id="hz-vote-later-'+l.id+'" '+
-      'onclick="event.stopPropagation();hzToggleVote(\''+l.id+'\',\'later\')" title="À garder pour une prochaine fois">'+
-      '✨ <span class="vote-count">'+laterLbl+'</span></button>'+
     (estRetenu?'<span class="vote-btn save derived active" title="Retenue par un vote du groupe pour ce voyage">📌 <span class="vote-count">Retenu</span></span>':'')+
     (estEcartee?'<span class="vote-btn ecartee derived active" title="Écartée par un vote du groupe (la fiche reste dans le carnet)">🚫 <span class="vote-count">Écartée</span></span>':'')+
   '</div>';
@@ -3837,7 +3822,7 @@ function avanceSwipe(direction){
   },260);
 }
 
-// les 3 gestes (sur une fiche)
+// les 2 gestes (sur une fiche)
 async function swipeGeste(type){
   const f=ficheCourante(); if(!f){ return; }
   if(type==='pass'){
@@ -3853,20 +3838,17 @@ async function swipeGeste(type){
     }
     avanceSwipe('pass'); return;
   }
-  if(type==='love' || type==='later'){
+  if(type==='love'){
     const slot=hzCoeursDe(f.id);
-    const deja=(type==='love')?slot.love.mine:slot.later.mine;
-    if(!deja){ await hzToggleVote(f.id, type); }
-    if(type==='love'){
-      HZ_AIMEES_SESSION.add(f.id);   // ❤️ de CETTE session (pour la garde anti-rebuild)
-      // PANIER CUMULATIF : on ajoute la fiche avec son marqueur jour/nuit (le thème
-      // courant). Ainsi le panier garde les fiches jour même après bascule en nuit.
-      const estNuit=(HZ_THEME==='nuit');
-      HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
-      hzMajMarqueur(f.id, f.type);   // la carte suit : le point passe en cœur rose
-      // La candidate est déjà créée par hzToggleVote ci-dessus (un seul endroit, 02/07) —
-      // avant, cet appel était dupliqué ici ET déjà géré par le retrait symétrique.
-    }
+    if(!slot.love.mine){ await hzToggleVote(f.id, type); }
+    HZ_AIMEES_SESSION.add(f.id);   // ❤️ de CETTE session (pour la garde anti-rebuild)
+    // PANIER CUMULATIF : on ajoute la fiche avec son marqueur jour/nuit (le thème
+    // courant). Ainsi le panier garde les fiches jour même après bascule en nuit.
+    const estNuit=(HZ_THEME==='nuit');
+    HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
+    hzMajMarqueur(f.id, f.type);   // la carte suit : le point passe en cœur rose
+    // La candidate est déjà créée par hzToggleVote ci-dessus (un seul endroit, 02/07) —
+    // avant, cet appel était dupliqué ici ET déjà géré par le retrait symétrique.
     rendAimees();
     avanceSwipe('like');
   }
@@ -4226,7 +4208,7 @@ async function propagerVerdictHz(p){
 }
 
 function brancheSwipeActions(){
-  const map={'hz-swipe-pass':'pass','hz-swipe-later':'later','hz-swipe-love':'love'};
+  const map={'hz-swipe-pass':'pass','hz-swipe-love':'love'};
   Object.keys(map).forEach(id=>{
     const b=document.getElementById(id);
     if(b && !b._cable){ b._cable=true; b.addEventListener('click',()=>swipeGeste(map[id])); }
