@@ -196,6 +196,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 #hz-carte-coin{position:absolute;inset:0;display:none;z-index:4;background:var(--bg);}
 body.hz-coin-ign #hz-carte-coin{display:block;}
 body.hz-coin-ign .b-map .francemap{visibility:hidden;}  /* garde sa place, invisible */
+body.hz-coin-ign .hz-ov-tl{display:none;}  /* « Clique une région » parle du SVG, pas de l'IGN */
 #hz-carte-coin .leaflet-container{height:100%;width:100%;background:#e8e4d4;}
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
@@ -1154,7 +1155,7 @@ function afficheCarteCoinIGN(slug){
       'Voyager':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',maxZoom:19,minZoom:5})
     };
     HZ_FONDS_COIN['Voyager'].addTo(HZ_CARTE_COIN);   // candidate par défaut
-    L.control.layers(HZ_FONDS_COIN,null,{position:'topright',collapsed:false}).addTo(HZ_CARTE_COIN);
+    L.control.layers(HZ_FONDS_COIN,null,{position:'topleft',collapsed:false}).addTo(HZ_CARTE_COIN);
     HZ_CARTE_COIN_MARQ=L.layerGroup().addTo(HZ_CARTE_COIN);
   }
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
