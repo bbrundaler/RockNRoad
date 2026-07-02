@@ -159,8 +159,10 @@
     voisinsDe: function (slug) { return (VOISINS[slug] || []).slice(); },
     regionDe: regionDe,
     construirePaquet: construirePaquet,
-    distanceKm: distanceKm  /* exposée pour le rond de précision (2b-2, horizon.html) —
-                                un seul moteur Haversine, pas de 2e calcul de distance. */
+    distanceKm: distanceKm,  /* exposée pour le rond de précision (2b-2, horizon.html) —
+                                 un seul moteur Haversine, pas de 2e calcul de distance. */
+    correspondTheme: correspondTheme  /* idem : le rond réutilise le même filtre d'envie
+                                          que le pont région+limitrophes, pas de doublon. */
   };
 
   if (typeof window !== 'undefined') {

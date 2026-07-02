@@ -224,21 +224,17 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 .hz-ov-panneau{background:var(--surface);border:1px solid var(--gold-a35);border-radius:12px;padding:12px;
   width:min(300px,64vw);box-shadow:0 8px 24px rgba(0,0,0,.22);margin-top:0;}
 .hz-ov-br .hz-lieu-pick{justify-content:flex-end;min-height:0;}
-/* ── Rond de précision (2b-2) : pastille flottante haut-centre, visible
-   seulement quand la carte du coin (Leaflet) est ouverte. ── */
+/* ── Rond de précision (2b-2/2b-3) : geste clic-glisser-relâcher directement
+   sur la carte du coin — pas de curseur séparé à aller chercher. Pastille
+   flottante haut-centre, visible seulement carte du coin ouverte. ── */
 .hz-ov-rond{display:none;top:12px;left:50%;transform:translateX(-50%);}
 body.hz-coin-carte .hz-ov-rond{display:flex;}
-.hz-rond-ctrl{gap:10px;}
-.hz-rond-ctrl input[type=range]{width:150px;accent-color:var(--gold);}
-.hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);min-width:54px;text-align:center;}
+.hz-rond-ctrl{gap:9px;}
+.hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
-.hz-rond-poignee{width:16px;height:16px;border-radius:50%;background:var(--gold);
-  border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:grab;}
-.hz-rond-poignee:active{cursor:grabbing;}
-@media(max-width:880px){
-  .hz-rond-ctrl input[type=range]{width:96px;}
-  .hz-rond-compte{display:none;}
-}
+#hz-carte-coin.leaflet-container{cursor:crosshair;}
+.hz-rond-poignee{width:10px;height:10px;border-radius:50%;background:var(--gold);
+  border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);}
 @media(max-width:880px){
   .hz-ov-stats{gap:9px;padding:6px 9px;}
   .hz-ov-stats .hz-stat-note{display:none;}
@@ -785,14 +781,13 @@ body.hz-explo-on #hz-rail{display:none;}
         <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
         <button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button>
       </div>
-      <!-- Rond de précision (2b-2) : naît au clic sur la carte du coin, pas de
-           centre imposé. Hint tant qu'il n'existe pas ; slider log + compteur
-           une fois posé. -->
+      <!-- Rond de précision (2b-2/2b-3) : clic-glisser-relâcher directement sur
+           la carte. Hint tant qu'aucun geste n'a eu lieu ; lecture rayon+compte
+           pendant le geste et une fois la zone figée. -->
       <div class="hz-ov hz-ov-rond" id="hz-ov-rond">
-        <span class="hz-ov-pill" id="hz-rond-hint"><span class="hz-ov-ic">◎</span> Touchez la carte pour délimiter votre zone</span>
+        <span class="hz-ov-pill" id="hz-rond-hint"><span class="hz-ov-ic">◎</span> Clique-glisse sur la carte pour délimiter ta zone</span>
         <span class="hz-ov-pill hz-rond-ctrl" id="hz-rond-ctrl" style="display:none">
           <span class="hz-ov-ic">◎</span>
-          <input type="range" id="hz-rond-slider" min="0" max="100" value="50" step="1">
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
           <span class="hz-rond-compte" id="hz-rond-compte-txt">—</span>
         </span>
@@ -1204,80 +1199,103 @@ function masqueCarteCoin(){
   hzRondReset();   // le rond ne survit pas à la fermeture du coin (2b-2)
 }
 
-// ── ROND DE PRÉCISION (2b-2) ──
-// Naît là où on clique/tape sur la carte du coin — AUCUN centre imposé (ni
-// région, ni centroïde), conforme au cadrage de Bruno. Se déplace en glissant
-// sa poignée ; un clic ailleurs sur la carte le fait sauter au nouvel endroit
-// (jamais de repositionnement automatique). Rayon piloté par un slider LOG
-// (500m→150km — un slider linéaire serait inutilisable sous 10km, la zone où
-// on veut le plus de contrôle). Distance via RNR_CARNET_COIN.distanceKm : même
-// moteur Haversine que le pont région+limitrophes, un seul endroit qui calcule.
-let HZ_ROND_COIN=null;       // L.circle
-let HZ_ROND_POIGNEE=null;    // L.marker draggable qui pilote le centre du cercle
-let HZ_ROND_RAYON_M=8660;    // défaut ~8,7km = position slider 50
-let HZ_ROND_INIT=false;      // le clic carte n'est branché qu'une fois
+// ── ROND DE PRÉCISION (2b-2 + pont 2b-3) ──
+// Geste unique, pro, zéro clic superflu (retour Bruno 02/07) : on presse sur la
+// carte du coin (le point pressé = le centre, jamais imposé par la région ou un
+// centroïde), on glisse pour étirer le rayon, on relâche → la zone est figée ET
+// le swipe repart aussitôt avec les fiches qu'elle contient — à la place du
+// système région+limitrophes. Un nouveau geste ailleurs remplace le précédent.
+// Distance et filtre d'envie réemploient RNR_CARNET_COIN (un seul moteur).
+let HZ_ROND_COIN=null;        // L.circle affiché pendant/après le geste
+let HZ_ROND_CENTRE_M=null;    // L.marker (pastille) qui matérialise le centre
+let HZ_ROND_RAYON_M=0;        // rayon courant en mètres
+let HZ_ROND_EN_COURS=false;   // un geste clic-glisser est actif
+let HZ_ROND_INIT=false;       // les listeners ne sont branchés qu'une fois
+const HZ_ROND_RAYON_MIN_M=1500;   // plancher : un simple tap donne un voisinage exploitable
 
 function hzTokenCouleur(nomVar, repli){
   const v=getComputedStyle(document.documentElement).getPropertyValue(nomVar).trim();
   return v||repli;
 }
-function hzRondRayonDe(pos){          // position slider 0-100 → mètres (log)
-  return Math.round(500*Math.pow(300,pos/100));
-}
 function hzRondFormatRayon(m){
   return m<1000 ? (Math.round(m/10)*10)+' m' : (m/1000).toFixed(m<10000?1:0)+' km';
 }
-function hzRondCompteFiches(centre, rayon_m){
-  if(!centre || !window.RNR_CARNET_COIN) return 0;
+function hzRondFichesDedans(centre, rayon_m){
+  if(!centre || !window.RNR_CARNET_COIN) return [];
   const rayonKm=rayon_m/1000;
   return (HZ_FICHES||[]).filter(f=>{
     if(f.lat==null||f.lng==null) return false;
-    return RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,+f.lat,+f.lng)<=rayonKm;
-  }).length;
+    if(RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,+f.lat,+f.lng) > rayonKm) return false;
+    return RNR_CARNET_COIN.correspondTheme(f, HZ_THEME||null, HZ_TAGS_THEME);
+  });
 }
-function hzRondMajAffichage(){
-  const centre=HZ_ROND_COIN?HZ_ROND_COIN.getLatLng():null;
-  const n=hzRondCompteFiches(centre,HZ_ROND_RAYON_M);
+function hzRondMajAffichage(centre){
+  const n=hzRondFichesDedans(centre, HZ_ROND_RAYON_M).length;
   const txtR=document.getElementById('hz-rond-rayon-txt');
   const txtN=document.getElementById('hz-rond-compte-txt');
   if(txtR) txtR.textContent=hzRondFormatRayon(HZ_ROND_RAYON_M);
   if(txtN) txtN.textContent=n+' fiche'+(n>1?'s':'')+' dans le rond';
 }
-function hzRondPose(latlng){
+function hzRondDemarre(centre){
   if(!HZ_CARTE_COIN) return;
-  if(!HZ_ROND_COIN){
-    const coul=hzTokenCouleur('--gold','#C8A84B');
-    HZ_ROND_COIN=L.circle(latlng,{radius:HZ_ROND_RAYON_M,color:coul,weight:2,fillColor:coul,fillOpacity:.12}).addTo(HZ_CARTE_COIN);
-    HZ_ROND_POIGNEE=L.marker(latlng,{draggable:true,icon:L.divIcon({className:'hz-rond-poignee',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(HZ_CARTE_COIN);
-    HZ_ROND_POIGNEE.on('drag',ev=>{ HZ_ROND_COIN.setLatLng(ev.target.getLatLng()); hzRondMajAffichage(); });
-    const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='none';
-    const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='inline-flex';
-    const slider=document.getElementById('hz-rond-slider'); if(slider) slider.value=50;
-  }else{
-    HZ_ROND_COIN.setLatLng(latlng);
-    HZ_ROND_POIGNEE.setLatLng(latlng);
-  }
-  hzRondMajAffichage();
+  HZ_ROND_EN_COURS=true;
+  HZ_CARTE_COIN.dragging.disable();   // le geste dessine le rond, ne balade plus la carte
+  if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
+  if(HZ_ROND_CENTRE_M) HZ_CARTE_COIN.removeLayer(HZ_ROND_CENTRE_M);
+  const coul=hzTokenCouleur('--gold','#C8A84B');
+  HZ_ROND_RAYON_M=HZ_ROND_RAYON_MIN_M;
+  HZ_ROND_COIN=L.circle(centre,{radius:HZ_ROND_RAYON_M,color:coul,weight:2,fillColor:coul,fillOpacity:.12,interactive:false}).addTo(HZ_CARTE_COIN);
+  HZ_ROND_CENTRE_M=L.marker(centre,{interactive:false,icon:L.divIcon({className:'hz-rond-poignee',iconSize:[10,10],iconAnchor:[5,5]})}).addTo(HZ_CARTE_COIN);
+  const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='none';
+  const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='inline-flex';
+  hzRondMajAffichage(centre);
+}
+function hzRondEtire(point){
+  if(!HZ_ROND_EN_COURS || !HZ_ROND_COIN) return;
+  const centre=HZ_ROND_COIN.getLatLng();
+  const rayon_m=Math.max(HZ_ROND_RAYON_MIN_M, RNR_CARNET_COIN.distanceKm(centre.lat,centre.lng,point.lat,point.lng)*1000);
+  HZ_ROND_RAYON_M=rayon_m;
+  HZ_ROND_COIN.setRadius(rayon_m);
+  hzRondMajAffichage(centre);
+}
+function hzRondFigerEtLancer(){
+  HZ_ROND_EN_COURS=false;
+  if(HZ_CARTE_COIN) HZ_CARTE_COIN.dragging.enable();
+  if(!HZ_ROND_COIN) return;
+  const centre=HZ_ROND_COIN.getLatLng();
+  const fiches=hzRondFichesDedans(centre, HZ_ROND_RAYON_M);
+  hzRondMajAffichage(centre);
+  if(!fiches.length) return;   // rond vide : on laisse le swipe tel quel, l'utilisateur retrace
+  // régions couvertes par le rond (remplace HZ_LIEUX le temps de ce coin — le
+  // rond n'est plus borné par le découpage régional, c'est tout son intérêt).
+  const regions=[...new Set(fiches.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  if(regions.length) HZ_LIEUX=regions;
+  const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
+  HZ_COIN_PAQUET=paquet;
+  if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);   // rebâtit aussi HZ_SWIPE_SEQ (initSwipe)
+  if(typeof majEnAvant==='function') majEnAvant(paquet);
+  ouvreExplo();   // (re)monte/rafraîchit le panneau swipe avec ce nouveau paquet
 }
 function hzRondReset(){
   if(HZ_CARTE_COIN){
     if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
-    if(HZ_ROND_POIGNEE) HZ_CARTE_COIN.removeLayer(HZ_ROND_POIGNEE);
+    if(HZ_ROND_CENTRE_M) HZ_CARTE_COIN.removeLayer(HZ_ROND_CENTRE_M);
+    HZ_CARTE_COIN.dragging.enable();
   }
-  HZ_ROND_COIN=null; HZ_ROND_POIGNEE=null;
+  HZ_ROND_COIN=null; HZ_ROND_CENTRE_M=null; HZ_ROND_EN_COURS=false;
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
 }
 function hzInitRondCoin(){
   if(HZ_ROND_INIT || !HZ_CARTE_COIN) return;
   HZ_ROND_INIT=true;
-  HZ_CARTE_COIN.on('click', e=>hzRondPose(e.latlng));
-  const slider=document.getElementById('hz-rond-slider');
-  if(slider) slider.addEventListener('input', e=>{
-    HZ_ROND_RAYON_M=hzRondRayonDe(+e.target.value);
-    if(HZ_ROND_COIN) HZ_ROND_COIN.setRadius(HZ_ROND_RAYON_M);
-    hzRondMajAffichage();
-  });
+  HZ_CARTE_COIN.on('mousedown', e=>hzRondDemarre(e.latlng));
+  HZ_CARTE_COIN.on('mousemove', e=>hzRondEtire(e.latlng));
+  HZ_CARTE_COIN.on('mouseup', ()=>hzRondFigerEtLancer());
+  // filet : si le relâchement a lieu hors de la carte (doigt qui glisse dehors),
+  // le mouseup Leaflet ne se déclenche pas toujours — on le rattrape au document.
+  document.addEventListener('mouseup', ()=>{ if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
+  document.addEventListener('touchend', ()=>{ if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
 }
 
 
