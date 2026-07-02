@@ -1023,6 +1023,7 @@ let HZ_REGIONS_SVG=[];   // slugs des régions présentes sur la carte
 let HZ_BBOX_PAR_SLUG={}; // bbox GPS par région (2b-1, cadre la carte IGN)
 let HZ_CARTE_COIN=null;  // instance Leaflet de la carte IGN du coin (2b)
 let HZ_CARTE_COIN_MARQ=null; // layerGroup des marqueurs de fiches
+let HZ_FONDS_COIN=null;  // fonds candidats (sélecteur temporaire, choix Bruno)
 
 // Charge le fichier de découpage et rattache chaque fiche à sa région SVG réelle.
 async function chargeDecoupageEtRattache(fiches){
@@ -1145,12 +1146,15 @@ function afficheCarteCoinIGN(slug){
   if(!HZ_CARTE_COIN){
     HZ_CARTE_COIN=L.map(el,{zoomControl:true, attributionControl:true});
     HZ_CARTE_COIN.attributionControl.setPrefix(false);
-    L.tileLayer(
-      'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'+
-      '&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png'+
-      '&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',
-      {attribution:'© IGN — Géoplateforme', maxZoom:18, minZoom:5}
-    ).addTo(HZ_CARTE_COIN);
+    // ── SÉLECTEUR TEMPORAIRE DE MATIÈRE (choix Bruno en voyant, puis on grave
+    // et on retire le sélecteur). 3 candidates :
+    HZ_FONDS_COIN={
+      'IGN':L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}',{attribution:'© IGN — Géoplateforme',maxZoom:18,minZoom:5}),
+      'OSM':L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19,minZoom:5}),
+      'Voyager':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',maxZoom:19,minZoom:5})
+    };
+    HZ_FONDS_COIN['Voyager'].addTo(HZ_CARTE_COIN);   // candidate par défaut
+    L.control.layers(HZ_FONDS_COIN,null,{position:'topright',collapsed:false}).addTo(HZ_CARTE_COIN);
     HZ_CARTE_COIN_MARQ=L.layerGroup().addTo(HZ_CARTE_COIN);
   }
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
@@ -1168,7 +1172,7 @@ function afficheCarteCoinIGN(slug){
   const bbox=HZ_BBOX_PAR_SLUG[slug];
   requestAnimationFrame(()=>{
     HZ_CARTE_COIN.invalidateSize();
-    if(bbox) HZ_CARTE_COIN.fitBounds(bbox,{padding:[24,24]});
+    if(bbox) HZ_CARTE_COIN.fitBounds(bbox,{padding:[60,60]});
     else HZ_CARTE_COIN.setView([46.6,2.4],6);
   });
 }
