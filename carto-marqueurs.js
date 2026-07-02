@@ -100,10 +100,13 @@
 
   /* Cœur — coup de cœur. Rempli couleur monde, liseré pour ressortir. */
   function svgCoeur(coul, bord, t) {
-    /* path cœur normalisé sur une boîte 24x24, mis à l'échelle */
+    /* path cœur normalisé sur une boîte 24x24, mis à l'échelle. Tracé corrigé
+       02/07 : l'ancien était asymétrique (lobe gauche trop large, pointe
+       décalée à droite) — repéré par Bruno sur une maquette à fond plat où
+       ça sautait aux yeux. Ce tracé est symétrique autour de x=12. */
     var s = t / 24;
     return '<svg width="' + t + '" height="' + t + '" viewBox="0 0 24 24">' +
-      '<path transform="scale(1)" d="M12 21s-7.5-4.9-10-9.2C.3 8.6 1.6 5 5 5c2 0 3.3 1.2 4 2.3C9.7 6.2 11 5 13 5c3.4 0 4.7 3.6 3 6.8C19.5 16.1 12 21 12 21z" ' +
+      '<path transform="scale(1)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" ' +
       'fill="' + coul + '" stroke="' + bord + '" stroke-width="1.6" stroke-linejoin="round"/>' +
       '</svg>';
   }

@@ -3013,9 +3013,15 @@ async function hzToggleVote(lieuId,type){
     const {error}=await sb.from('reactions').delete()
       .eq('cible_type','lieu').eq('cible_id',lieuId).eq('membre_id',moi).eq('emoji',emoji);
     if(error){ console.warn('Horizon: retrait coeur',error); return; }
+    // UN SEUL ENDROIT (02/07) : avant, seul le swipe savait retirer la candidate
+    // au retrait d'un ❤️ — un cœur retiré depuis la bande, le tiroir, ou Carnet
+    // laissait une candidate orpheline. Maintenant hzToggleVote porte les deux
+    // effets ensemble, peu importe l'écran d'où le geste part.
+    if(type==='love') await hzRetireCandidate(lieuId);
   }else{
     const {error}=await sb.from('reactions').insert({cible_type:'lieu',cible_id:lieuId,membre_id:moi,emoji:emoji});
     if(error){ console.warn('Horizon: ajout coeur',error); return; }
+    if(type==='love') await hzEnvoieCandidate(lieuId);   // tout ❤️ propose au groupe, immédiatement (décision 28/06, B17)
   }
   await hzChargerCoeurs();
   hzRefreshVoteBtns(lieuId);
@@ -3839,8 +3845,7 @@ async function swipeGeste(type){
     //  réversibilité décidée le 28/06). Sinon, simple passage.
     const slot=hzCoeursDe(f.id);
     if(slot.love.mine){
-      await hzToggleVote(f.id,'love');   // retire le ❤️
-      await hzRetireCandidate(f.id);     // retire la candidate au Cockpit
+      await hzToggleVote(f.id,'love');   // retire le ❤️ ET la candidate (les deux vivent dans hzToggleVote depuis le 02/07)
       HZ_AIMEES_SESSION.delete(f.id);
       HZ_PANIER.delete(f.id);
       hzMajMarqueur(f.id, f.type);       // le point reprend sa pastille de type
@@ -3859,7 +3864,8 @@ async function swipeGeste(type){
       const estNuit=(HZ_THEME==='nuit');
       HZ_PANIER.set(f.id, {fiche:f, nuit:estNuit});
       hzMajMarqueur(f.id, f.type);   // la carte suit : le point passe en cœur rose
-      hzEnvoieCandidate(f.id);       // ENVOI DIRECT : le ❤️ crée la candidate au Cockpit (plus de panier à valider)
+      // La candidate est déjà créée par hzToggleVote ci-dessus (un seul endroit, 02/07) —
+      // avant, cet appel était dupliqué ici ET déjà géré par le retrait symétrique.
     }
     rendAimees();
     avanceSwipe('like');
@@ -4317,11 +4323,11 @@ function rendAimees(){
   if(pied) pied.style.display='none';   // « 2ème vote » retiré : le pied ne sert plus à rien (01/07)
 }
 
-// retire une fiche des aimées (enlève le ❤️ dans reactions)
+// retire une fiche des aimées (enlève le ❤️ dans reactions, et la candidate avec — hzToggleVote porte les deux depuis le 02/07)
 async function retireAimee(lieuId){
   const slot=hzCoeursDe(lieuId);
-  if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire
-  await hzRetireCandidate(lieuId);    // ❤️ direct : retirer le cœur retire la candidate (réversible)
+  if(slot.love.mine){ await hzToggleVote(lieuId,'love'); }  // toggle = retire le ❤️ ET la candidate
+  else { await hzRetireCandidate(lieuId); }   // filet : pas mon cœur, mais une candidate qui traînerait quand même
   HZ_AIMEES_SESSION.delete(lieuId);   // retirer de la session
   HZ_PANIER.delete(lieuId);           // retirer du panier cumulatif (jour+nuit)
   // la carte suit : le point reprend sa pastille de type (ou reste vert si retenu en base)
