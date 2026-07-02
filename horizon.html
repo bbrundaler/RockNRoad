@@ -56,7 +56,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .francemap{width:100%;height:100%;max-height:calc(100vh - 150px);display:block;overflow:visible;}
 .region{fill:var(--gold-a10);stroke:var(--gold-a35);stroke-width:1;cursor:pointer;
   transition:fill .35s,opacity .5s,filter .4s,transform .3s cubic-bezier(.34,1.56,.64,1);transform-box:fill-box;transform-origin:center;}
-.region:hover{fill:var(--gold);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
+.region:hover{fill:var(--gold-a35);stroke:var(--gold-light);stroke-width:1.5;transform:translateY(-3px) scale(1.012);filter:drop-shadow(0 6px 13px var(--gold-a35));}
 /* Brique 2 — région ÉTEINTE : estompée et grisée, JAMAIS supprimée (réversible) */
 .region.eteinte{fill:var(--surface-line,#3a352a);stroke:var(--surface-line,#3a352a);opacity:.32;filter:grayscale(.7);}
 .region.a-fiches{fill:var(--gold-a20);stroke:var(--gold);stroke-width:1.5;}
@@ -209,7 +209,17 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
 .hz-ov>*{pointer-events:auto;}                                     /* seuls les contrôles captent */
-.hz-ov-tl{top:12px;left:12px;}
+.hz-ov-tl{top:12px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+/* Report Hub → Horizon (02/07) : même tableau de bord km/temps/étapes, même
+   grammaire visuelle, juste au-dessus du hint « Clique une région ». Cachée
+   tant qu'aucune étape n'est placée dans le trajet (comme sur le Hub). */
+.hz-dashboard{display:flex;align-items:stretch;background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:11px;overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,.14);}
+.hz-db-cell{text-align:center;padding:6px 11px;}
+.hz-db-cell+.hz-db-cell{border-left:1px solid var(--gold-a35);}
+.hz-db-cell b{display:block;font-family:var(--font-title);font-size:15px;font-weight:800;color:var(--gold-text);line-height:1;}
+.hz-db-cell i{display:block;font-size:8.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-dim);font-style:normal;margin-top:3px;}
 .hz-ov-tr{top:12px;right:12px;}
 .hz-ov-bl{bottom:14px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .hz-ov-br{bottom:14px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
@@ -760,6 +770,11 @@ body.hz-explo-on #hz-rail{display:none;}
            position absolue par-dessus la scène ; pointer-events gérés pour
            laisser passer le clic région dans les zones vides. -->
       <div class="hz-ov hz-ov-tl">
+        <div class="hz-dashboard" id="hz-dashboard" style="display:none;">
+          <span class="hz-db-cell"><b id="hz-db-dist">—<span style="font-size:9px;">km</span></b><i>aller-retour</i></span>
+          <span class="hz-db-cell"><b id="hz-db-duree">—</b><i>de route</i></span>
+          <span class="hz-db-cell"><b id="hz-db-etapes">0</b><i>étapes</i></span>
+        </div>
         <span class="hz-ov-pill hz-ov-titre"><span class="hz-ov-ic">🗺️</span> Clique une région</span>
       </div>
       <div class="hz-ov hz-ov-tr">
@@ -1209,6 +1224,27 @@ function hzAfficheMaison(){
 // Tracé routier des fiches déjà placées (reflet permanent de Voyage) — même
 // moteur unique que le Hub : Edge Function → OpenRouteService, flèches de sens
 // incluses, repli ligne droite si indisponible (RNR_MARQUEURS.traceRoute).
+// Tableau de bord km/temps/étapes — report du Hub, même moteur (traceRoute
+// renvoie {ok, distance_km, duree_h}), juste rebranché sur les ids d'Horizon.
+function hzMajDashboard(d){
+  const box=document.getElementById('hz-dashboard');
+  if(!box) return;
+  if(d.stops!=null){
+    const el=document.getElementById('hz-db-etapes'); if(el) el.textContent=d.stops;
+    box.style.display = d.stops>0 ? 'flex' : 'none';
+  }
+  if(d.distance_km!=null){
+    const el=document.getElementById('hz-db-dist');
+    if(el) el.innerHTML=d.distance_km+'<span style="font-size:9px;"> km</span>';
+  }
+  if(d.duree_h!=null){
+    const el=document.getElementById('hz-db-duree');
+    if(el){
+      const H=Math.floor(d.duree_h), M=Math.round((d.duree_h-H)*60);
+      el.innerHTML = H>0 ? (H+'<span style="font-size:9px;">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span style="font-size:9px;"> min</span>');
+    }
+  }
+}
 function hzTraceVoyage(){
   if(!HZ_CARTE_REPOS) return;
   if(HZ_TRACE_VOYAGE){ HZ_CARTE_REPOS.removeLayer(HZ_TRACE_VOYAGE); HZ_TRACE_VOYAGE=null; }
@@ -1222,9 +1258,12 @@ function hzTraceVoyage(){
     const m=[HZ_DOMICILE.lat,HZ_DOMICILE.lng];
     pts=[m, ...ordonne, m];   // boucle départ/retour, même langage que Voyage
   }
+  hzMajDashboard({stops:Object.keys(HZ_PLACEES).length});
   if(pts.length>=2 && window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
     HZ_TRACE_VOYAGE=L.layerGroup().addTo(HZ_CARTE_REPOS);
-    RNR_MARQUEURS.traceRoute(HZ_CARTE_REPOS, HZ_TRACE_VOYAGE, pts, {surl:HZ_SURL, skey:HZ_SKEY}).catch(()=>{});
+    RNR_MARQUEURS.traceRoute(HZ_CARTE_REPOS, HZ_TRACE_VOYAGE, pts, {surl:HZ_SURL, skey:HZ_SKEY})
+      .then(r=>{ if(r && r.ok) hzMajDashboard(r); })
+      .catch(()=>{});
   }
 }
 function hzAfficheTousLesPoints(){
