@@ -512,6 +512,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
 .hz-aimee-vote{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
+/* Badge d'état de la fiche riche au clic sur la carte (02/07) — un seul badge,
+   couleur = ce que la fiche vit (pas le monde jour/nuit, déjà dit par le marqueur). */
+.hz-pop-badge{display:inline-block;font-size:10px;font-weight:700;color:#fff;padding:3px 9px;border-radius:12px;}
 .hz-pr-vote{flex-shrink:0;font-size:12px;line-height:1;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 6px;border-radius:8px;}
 .hz-pr-vote:hover{border-color:var(--gold);color:var(--gold-text);}
 .hz-aimee-tag-vote{font-size:10.5px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;border:none;cursor:pointer;font-family:var(--font-body);}
@@ -1261,6 +1264,70 @@ function hzTraceVoyage(){
       .catch(()=>{});
   }
 }
+// ════════════════════════════════════════════════════════════════
+//  FICHE RICHE AU CLIC SUR LA CARTE (02/07) — remplace l'ancien clic direct
+//  vers epinglerDirectementHzId, qui décidait pour le groupe au premier
+//  contact avec un point, quel que soit son état (même neutre, même en
+//  plein vote). Le clic ouvre maintenant TOUJOURS la même fiche ; seuls les
+//  boutons À L'INTÉRIEUR changent selon ce qu'elle vit réellement. Pattern
+//  standard (Google Maps, Airbnb...) : le clic ouvre une info-carte, jamais
+//  une action engageante directe. Un seul endroit pour ce gabarit, réutilisé
+//  par la carte de repos ET la carte du coin (même marqueurs, D-24).
+// ════════════════════════════════════════════════════════════════
+function hzPopupFicheHtml(f){
+  const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+  const retenu=HZ_RETENUS.has(f.id);
+  const ecartee=HZ_ECARTEES.has(f.id);
+  const enVote=!!HZ_VOTE_DE_FICHE[f.id];
+  const c=hzCoeursDe(f.id).love;
+  const estLeader=(typeof jeSuisLeaderHz==='function') && jeSuisLeaderHz();
+
+  let badge='', actions='';
+  const propId=HZ_VOTE_DE_FICHE[f.id];
+  if(retenu){
+    badge='<span class="hz-pop-badge" style="background:var(--mk-epingle)">📌 Retenue pour ce voyage</span>';
+  } else if(ecartee){
+    badge='<span class="hz-pop-badge" style="background:var(--ink-dim)">🚫 Écartée par le groupe</span>';
+  } else {
+    if(enVote){
+      badge='<span class="hz-pop-badge" style="background:#DC3C64">🗳️ En vote</span>';
+      actions+='<button class="hz-aimee-tag-vote" type="button" onclick="event.stopPropagation();ouvrirCarteVote(\''+propId+'\')">🗳️ Voir et voter</button>';
+    } else if(c.count>0){
+      badge='<span class="hz-pop-badge" style="background:var(--mk-coeur-moi,#DC3C64)">❤️ Coup de cœur</span>';
+      actions+='<button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();lancerVoteSurFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
+    }
+    actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="event.stopPropagation();hzPopupToggleLove(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
+    if(estLeader){
+      actions+='<button class="hz-aimee-epingle" type="button" onclick="event.stopPropagation();epinglerDirectementHzId(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
+    }
+  }
+
+  const photo=f.photo_url
+    ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+    : '';
+  return '<div class="hz-pop" style="font-family:Inter,sans-serif;min-width:200px;max-width:250px;">'+
+    photo+
+    (badge?'<div style="padding:0 2px 4px;">'+badge+'</div>':'')+
+    '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+    (actions?'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 2px 2px;">'+actions+'</div>':'')+
+  '</div>';
+}
+// ❤️ cliqué DEPUIS la fiche riche : agit (hzToggleVote porte déjà tout, 02/07),
+// puis redessine le contenu de CETTE popup en place (pas de fermeture/réouverture).
+async function hzPopupToggleLove(lieuId){
+  await hzToggleVote(lieuId,'love');
+  hzRafraichitPopup(lieuId);
+}
+function hzRafraichitPopup(lieuId){
+  const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null; if(!f) return;
+  const html=hzPopupFicheHtml(f);
+  const r=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[lieuId];
+  if(r && r.marker && r.marker.getPopup && r.marker.getPopup()) r.marker.setPopupContent(html);
+  const cc=HZ_CARTE_COIN_MARQ_PAR_ID && HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
+  if(cc && cc.marker && cc.marker.getPopup && cc.marker.getPopup()) cc.marker.setPopupContent(html);
+}
+
 function hzAfficheTousLesPoints(){
   if(!HZ_CARTE_REPOS) return;
   if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup();
@@ -1277,18 +1344,11 @@ function hzAfficheTousLesPoints(){
     const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
-    const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
-    const photo=f.photo_url
-      ? '<div style="height:120px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
-      : '';
-    m.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
-      photo+
-      '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-      '<div style="font-size:11px;color:#888;padding:0 2px 4px;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
-      '</div>', {maxWidth:240, autoPan:false, closeButton:false});
+    m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });   // toujours l'état le plus frais à l'ouverture
     m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
     m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
-    m.on('click', ()=>{ if(typeof epinglerDirectementHzId==='function') epinglerDirectementHzId(f.id); });
+    m.on('click', ()=>{ m.openPopup(); });   // le clic ouvre la fiche, jamais une décision directe
     HZ_CARTE_REPOS_MARQ.addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
   });
@@ -1417,8 +1477,11 @@ function afficheCarteCoin(slug){
     const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
-    m.bindPopup('<strong style="font-size:13px;">'+escapeHtmlHz(f.nom||'—')+'</strong>'+
-      (f.type?('<br><span style="font-size:11px;color:#888;">'+escapeHtmlHz(f.type)+'</span>'):''));
+    m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); });
+    m.on('mouseover', ()=>{ if(!HZ_TACTILE) m.openPopup(); });
+    m.on('mouseout',  ()=>{ if(!HZ_TACTILE) m.closePopup(); });
+    m.on('click', ()=>{ m.openPopup(); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
