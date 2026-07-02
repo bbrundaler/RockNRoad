@@ -1186,11 +1186,14 @@ function hzInitCarteRepos(){
             afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
           });
           layer.on('click',()=>{
-            if(HZ_MODE_TRI) return;   // vieux mode tri : neutralisé aussi ici, cohérent avec le SVG
-            const matches=fichesPourRegionCarte(slug);
-            const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-            afficheReve(slug, best);
-            ouvrirFichesRegion(slug);
+            console.log('[Horizon] clic région carte de repos →', slug);
+            try{
+              if(HZ_MODE_TRI) return;
+              const matches=fichesPourRegionCarte(slug);
+              const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+              afficheReve(slug, best);
+              ouvrirFichesRegion(slug);
+            }catch(e){ console.error('[Horizon] échec ouverture région', slug, e); }
           });
         }
       }).addTo(HZ_CARTE_REPOS);
