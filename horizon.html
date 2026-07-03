@@ -245,8 +245,15 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 /* ── Rond de précision (2b-2/2b-3) : geste clic-glisser-relâcher directement
    sur la carte du coin — pas de curseur séparé à aller chercher. Pastille
    flottante haut-centre, visible seulement carte du coin ouverte. ── */
-.hz-ov-rond{display:none;top:12px;left:50%;transform:translateX(-50%);}
+.hz-ov-rond{display:none;top:12px;left:50%;transform:translateX(-50%);gap:8px;align-items:center;}
 body.hz-coin-carte .hz-ov-rond{display:flex;}
+/* Q2 (03/07) : le swipe ne s'ouvre plus au clic région — ce bouton est sa 2ᵉ
+   porte (avec le rond). Même matière que les pastilles portes ; disparaît
+   quand le swipe a déjà la main. */
+#hz-btn-revue{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
+  box-shadow:0 3px 12px rgba(0,0,0,.18);font-size:12.5px;padding:9px 14px;white-space:nowrap;}
+#hz-btn-revue:hover{background:var(--gold-a10);}
+body.hz-explo-on #hz-btn-revue{display:none;}
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
@@ -813,6 +820,8 @@ body.hz-explo-on #hz-rail{display:none;}
            pendant le geste et une fois la zone figée. -->
       <div class="hz-ov hz-ov-rond" id="hz-ov-rond">
         <span class="hz-ov-pill" id="hz-rond-hint"><span class="hz-ov-ic">◎</span> Clique-glisse sur la carte pour délimiter ta zone</span>
+        <button class="hz-porte-btn" id="hz-btn-revue" type="button" onclick="ouvreExplo()"
+          title="Voir toutes les fiches du coin, une par une">Passer les fiches en revue</button>
         <span class="hz-ov-pill hz-rond-ctrl" id="hz-rond-ctrl" style="display:none">
           <span class="hz-ov-ic">◎</span>
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
@@ -1329,6 +1338,21 @@ function hzPopupFicheHtml(f){
 }
 // ❤️ cliqué DEPUIS la fiche riche : agit (hzToggleVote porte déjà tout, 02/07),
 // puis redessine le contenu de CETTE popup en place (pas de fermeture/réouverture).
+// Q1 gravée (03/07, Charte B0) : le SURVOL est une mini-info LECTURE SEULE
+// (nom, photo, région — aucun bouton), qui disparaît toute seule en quittant
+// le point. C'est le tooltip natif Leaflet — le clic, lui, ouvre la vraie
+// fiche (popup) avec les actions. Deux mécanismes distincts, jamais en
+// conflit : le pattern standard tooltip=lire / popup=agir.
+function hzTooltipFicheHtml(f){
+  const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+  const photo=f.photo_url
+    ? '<div style="height:64px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:6px 6px 0 0;margin:-4px -6px 5px;"></div>'
+    : '';
+  return '<div style="font-family:Inter,sans-serif;max-width:170px;">'+photo+
+    '<div style="font-weight:700;font-size:12px;line-height:1.25;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div style="font-size:10px;color:#888;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+  '</div>';
+}
 async function hzPopupToggleLove(lieuId){
   await hzToggleVote(lieuId,'love');
   // Manquait (02/07) : la popup se redessinait, mais pas la PASTILLE elle-même
@@ -1364,7 +1388,12 @@ function hzAfficheTousLesPoints(){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
-    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; });   // toujours l'état le plus frais à l'ouverture
+    // Q1 (03/07) : survol = tooltip LECTURE seule, disparaît tout seul ; clic = fiche
+    // complète avec actions. Le tooltip se tait si une fiche est ouverte ou si le
+    // swipe a la main (Charte : survol en R1/S → rien).
+    m.bindTooltip(()=>hzTooltipFicheHtml(f), {direction:'top', offset:[0,-10], opacity:1});
+    m.on('tooltipopen', ()=>{ if(hzCarteInerte()) m.closeTooltip(); });
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; m.closeTooltip(); });   // toujours l'état le plus frais à l'ouverture
     m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
     // Clic seulement (02/07, retour Bruno) : le survol fermait la fiche avant qu'on
     // puisse l'atteindre pour cliquer un bouton — mauvais outil dès qu'il y a une
@@ -1513,9 +1542,11 @@ function afficheCarteCoin(slug){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
-    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; });
+    m.bindTooltip(()=>hzTooltipFicheHtml(f), {direction:'top', offset:[0,-10], opacity:1});
+    m.on('tooltipopen', ()=>{ if(hzCarteInerte()||HZ_ROND_EN_COURS) m.closeTooltip(); });
+    m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; m.closeTooltip(); });
     m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
-    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
+    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS) return; m.openPopup(); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
@@ -1742,7 +1773,30 @@ function hzInitRondCoin(){
   // filet : si le relâchement a lieu hors de la carte (doigt qui glisse dehors),
   // le mouseup Leaflet ne se déclenche pas toujours — on le rattrape au document.
   document.addEventListener('mouseup', ()=>{ hzRondAnnulePending(); if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
-  document.addEventListener('touchend', ()=>{ hzRondAnnulePending(); if(HZ_ROND_EN_COURS) hzRondFigerEtLancer(); });
+  document.addEventListener('touchend', (e)=>{
+    // 2 doigts → 1 doigt (fin de pincement) : ne SURTOUT pas figer un rond ici.
+    if(e.touches && e.touches.length>0) return;
+    hzRondAnnulePending();
+    if(HZ_ROND_EN_COURS) hzRondFigerEtLancer();
+  });
+  // LOI L7 (Charte, 03/07) — le pincement à deux doigts est PRIORITAIRE sur le
+  // rond : dès qu'un 2ᵉ doigt touche l'écran, l'intention est un zoom, jamais
+  // un rond. On annule tout (l'armement en attente ET un rond déjà commencé,
+  // sans le figer ni le lancer) et on rend la main au pincement natif de
+  // Leaflet. C'était la cause du zoom saccadé : nos écouteurs et le pincement
+  // se disputaient les mêmes doigts.
+  const elCarte=HZ_CARTE_COIN.getContainer();
+  if(elCarte){
+    elCarte.addEventListener('touchstart', (e)=>{
+      if(e.touches && e.touches.length>=2){
+        hzRondAnnulePending();
+        if(HZ_ROND_EN_COURS){
+          HZ_ROND_EN_COURS=false;
+          if(typeof hzRondReset==='function') hzRondReset();   // efface le rond entamé, réactive le drag
+        }
+      }
+    }, {passive:true});
+  }
 }
 
 
@@ -1771,8 +1825,12 @@ function ouvrirFichesRegion(dataR){
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   plongeCarteFrance(dataR);   // « wahoo » : la grande carte France plonge sur la région
-  setTimeout(()=>{ if(document.body.classList.contains('hz-explo-on')) afficheCarteCoin(dataR); }, 780);   // 2b-1 : la vue zoomée devient la vraie carte IGN (après l'anim, 750ms)
-  ouvreExplo();               // le swipe s'ouvre SUR PLACE, sous la carte
+  // Q2 gravée (03/07, Charte L1/L3) : un clic = UNE navigation. Le clic région
+  // PLONGE sur le coin, c'est tout — le swipe ne s'ouvre plus tout seul. Il
+  // s'ouvre par le rond (2b-2) ou par le bouton « Passer les fiches en revue »
+  // (hz-btn-revue, visible en mode coin). Avant : plonge + swipe d'un coup,
+  // deux effets pour un geste — source des ouvertures de swipe non voulues.
+  setTimeout(()=>{ afficheCarteCoin(dataR); }, 780);   // la vue zoomée devient la vraie carte (après l'anim)
 }
 
 function afficheFicheDansCadre(f, contexteRegionLabel){
