@@ -206,6 +206,10 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 .francemap{visibility:hidden;}
 #hz-carte-repos{position:absolute;inset:0;z-index:1;}
 #hz-carte-repos .leaflet-container{height:100%;width:100%;background:#e8e4d4;}
+/* Q1 (03/07) : le tooltip Leaflet interdit nativement le retour à la ligne
+   (white-space:nowrap) — les noms longs traversaient le cadre et s'écrivaient
+   sur la carte. On libère le retour à la ligne et on borne la largeur. */
+#hz-carte-repos .leaflet-tooltip{white-space:normal;max-width:180px;}
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
 .hz-ov>*{pointer-events:auto;}                                     /* seuls les contrôles captent */
@@ -1415,6 +1419,13 @@ function hzInitCarteRepos(){
   // zoom + swipe fantôme). Maintenant c'est le clic région (ci-dessous) qui ferme
   // lui-même, explicitement, et RIEN d'autre — un seul endroit qui décide.
   HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false}).setView([46.6,2.4],6);
+  // A1 de la Charte (03/07, retour Bruno) : après un GLISSER, le relâchement de
+  // la souris tombe forcément sur une région (elles couvrent toute la carte) —
+  // et le « clic » région se déclenchait alors qu'il n'y avait pas eu de clic,
+  // juste une fin de glisser → plongée non voulue. On horodate chaque fin de
+  // glisser ; le clic région (plus bas) ignore tout clic qui suit un glisser de
+  // trop près. Loi L1 : naviguer et agir ne se croisent jamais.
+  HZ_CARTE_REPOS.on('dragend', ()=>{ window.HZ_DERNIER_DRAG=Date.now(); });
   L.control.attribution({position:'bottomleft', prefix:false}).addTo(HZ_CARTE_REPOS);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {attribution:'© OpenStreetMap', maxZoom:19, minZoom:5}).addTo(HZ_CARTE_REPOS);
@@ -1440,6 +1451,9 @@ function hzInitCarteRepos(){
           });
           layer.on('click',()=>{
             if(HZ_MODE_TRI) return;   // vieux mode tri : neutralisé aussi ici, cohérent avec le SVG
+            // Fin de glisser ≠ clic (A1, loi L1) : si un drag vient de se
+            // terminer, ce « clic » n'en est pas un — on l'ignore.
+            if(window.HZ_DERNIER_DRAG && Date.now()-window.HZ_DERNIER_DRAG<250) return;
             // Une région couvre presque toute la carte : un clic qui ne visait
             // qu'à fermer une fiche ouverte (ou qui tombe pendant un swipe) ne
             // doit JAMAIS aussi zoomer/ouvrir la région dessous — un seul geste,
