@@ -255,7 +255,8 @@ body.hz-coin-carte .hz-ov-rond{display:flex;}
    porte (avec le rond). Même matière que les pastilles portes ; disparaît
    quand le swipe a déjà la main. */
 #hz-btn-revue{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
-  box-shadow:0 3px 12px rgba(0,0,0,.18);font-size:12.5px;padding:9px 14px;white-space:nowrap;}
+  box-shadow:0 3px 12px rgba(0,0,0,.18);font-size:12.5px;padding:9px 14px;white-space:nowrap;
+  pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
 #hz-btn-revue:hover{background:var(--gold-a10);}
 body.hz-explo-on #hz-btn-revue{display:none;}
 .hz-rond-ctrl{gap:9px;}
@@ -1287,9 +1288,23 @@ function hzTraceVoyage(){
 //  la main à la fois. Ici : HZ_POPUP_OUVERTE (une fiche est affichée) et
 //  body.hz-explo-on (le swipe a pris le relais) sont les deux seules raisons
 //  valables pour qu'un geste de carte se taise — vérifiées à un seul endroit.
-let HZ_POPUP_OUVERTE=false;
+let HZ_POPUP_OUVERTE=false;   // posé par popupopen/popupclose (informateur secondaire)
+// Filet du bouton « Passer les fiches en revue » (A6, rapport tests) : écouteur
+// en phase de CAPTURE au niveau document — le clic est attrapé avant tout autre
+// gestionnaire qui pourrait l'avaler en route (overlays de carte, propagation
+// stoppée...). Le rond, lui, ouvrait déjà le swipe sans souci (D2 ✓) : c'est le
+// chemin du clic vers le bouton qui était en cause, pas l'ouverture elle-même.
+document.addEventListener('click', (e)=>{
+  const btn=e.target && (e.target.id==='hz-btn-revue' ? e.target : (e.target.closest && e.target.closest('#hz-btn-revue')));
+  if(btn && typeof ouvreExplo==='function'){ e.preventDefault(); e.stopPropagation(); ouvreExplo(); }
+}, true);
 function hzCarteInerte(){
-  return HZ_POPUP_OUVERTE || document.body.classList.contains('hz-explo-on');
+  // Lire le RÉEL, pas un drapeau maison (03/07, rapport tests B3) : le drapeau
+  // pouvait se désynchroniser (marqueurs reconstruits sous une popup ouverte →
+  // pas d'événement de fermeture → drapeau fantôme). Leaflet sait toujours si
+  // une popup est réellement ouverte : on lui demande, à lui.
+  const p=(HZ_CARTE_REPOS && HZ_CARTE_REPOS._popup);
+  return !!(p && p.isOpen && p.isOpen()) || document.body.classList.contains('hz-explo-on');
 }
 // ════════════════════════════════════════════════════════════════
 //  FICHE RICHE AU CLIC SUR LA CARTE (02/07) — remplace l'ancien clic direct
@@ -1392,6 +1407,11 @@ function hzAfficheTousLesPoints(){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
+    // RACINE E1 (03/07, rapport tests) : bindPopup attache SON PROPRE gestionnaire
+    // de clic (interne Leaflet) en plus du nôtre — nos gardes (« pas pendant le
+    // swipe »...) ne s'appliquaient qu'au nôtre, l'interne ouvrait les fiches en
+    // douce. On le débranche : NOTRE gestionnaire de clic est le seul maître.
+    m.off('click', m._openPopup, m);
     // Q1 (03/07) : survol = tooltip LECTURE seule, disparaît tout seul ; clic = fiche
     // complète avec actions. Le tooltip se tait si une fiche est ouverte ou si le
     // swipe a la main (Charte : survol en R1/S → rien).
@@ -1418,7 +1438,27 @@ function hzInitCarteRepos(){
   // de vitesse entre deux systèmes, parfois perdue (la région agissait quand même,
   // zoom + swipe fantôme). Maintenant c'est le clic région (ci-dessous) qui ferme
   // lui-même, explicitement, et RIEN d'autre — un seul endroit qui décide.
-  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false}).setView([46.6,2.4],6);
+  // Moteur de zoom FLUIDE (03/07, rapport tests A2/A4) : par défaut Leaflet zoome
+  // par crans ENTIERS (zoomSnap:1) — c'est ça le « saccadé », et le petit recul en
+  // fin de pincement (la carte « snape » au niveau entier le plus proche). Les
+  // cartes fluides (Google Maps...) zooment en fractions : zoomSnap 0.25 garde
+  // les tuiles nettes tout en lissant molette ET pincement. bounceAtZoomLimits
+  // coupe le rebond élastique aux extrêmes.
+  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false,
+    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:120, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
+  // Garde anti-glisser (A1) : on mémorise le point d'appui ; le clic région (plus
+  // bas) ignorera tout « clic » dont le relâchement est loin de l'appui (= un
+  // glisser, pas un clic). Complète l'horodatage dragend, qui seul ne suffisait pas.
+  HZ_CARTE_REPOS.on('mousedown', e=>{ window.HZ_DOWN_PT=e.containerPoint; });
+  // Fermeur du fond vide (B3, rapport tests) : closePopupOnClick est coupé (c'est
+  // nous qui décidons), mais l'océan/l'étranger n'ont AUCUN polygone région pour
+  // fermer la fiche — le clic n'y faisait donc plus rien du tout. Le clic sur la
+  // carte elle-même (partout où aucun marqueur ne l'intercepte) ferme la fiche
+  // ouverte, et rien d'autre. Loi L2.
+  HZ_CARTE_REPOS.on('click', ()=>{
+    const p=HZ_CARTE_REPOS._popup;
+    if(p && p.isOpen && p.isOpen()) HZ_CARTE_REPOS.closePopup();
+  });
   // A1 de la Charte (03/07, retour Bruno) : après un GLISSER, le relâchement de
   // la souris tombe forcément sur une région (elles couvrent toute la carte) —
   // et le « clic » région se déclenchait alors qu'il n'y avait pas eu de clic,
@@ -1449,21 +1489,38 @@ function hzInitCarteRepos(){
             if(fl) fl.textContent='🏰';
             afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
           });
-          layer.on('click',()=>{
+          layer.on('click',(e)=>{
             if(HZ_MODE_TRI) return;   // vieux mode tri : neutralisé aussi ici, cohérent avec le SVG
-            // Fin de glisser ≠ clic (A1, loi L1) : si un drag vient de se
-            // terminer, ce « clic » n'en est pas un — on l'ignore.
+            // Fin de glisser ≠ clic (A1, loi L1) : deux gardes complémentaires —
+            // l'horodatage du dernier drag, ET la distance appui→relâchement
+            // (si la souris a parcouru plus de 8px, c'était un glisser, pas un clic).
             if(window.HZ_DERNIER_DRAG && Date.now()-window.HZ_DERNIER_DRAG<250) return;
+            if(window.HZ_DOWN_PT && e.containerPoint){
+              const dx=e.containerPoint.x-HZ_DOWN_PT.x, dy=e.containerPoint.y-HZ_DOWN_PT.y;
+              if(Math.sqrt(dx*dx+dy*dy)>8) return;
+            }
             // Une région couvre presque toute la carte : un clic qui ne visait
             // qu'à fermer une fiche ouverte (ou qui tombe pendant un swipe) ne
             // doit JAMAIS aussi zoomer/ouvrir la région dessous — un seul geste,
             // un seul effet (03/07, retour Bruno : « clic extérieur ferme la
             // fiche MAIS zoome aussi »). Ce premier clic se contente de fermer.
             if(hzCarteInerte()){ if(HZ_CARTE_REPOS) HZ_CARTE_REPOS.closePopup(); return; }
-            const matches=fichesPourRegionCarte(slug);
-            const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-            afficheReve(slug, best);
-            ouvrirFichesRegion(slug);
+            // Simple clic ≠ double-clic (A3, loi L3) : le double-clic appartient
+            // au ZOOM natif. On attend un souffle (270ms) avant de plonger ; si
+            // un second clic arrive entre-temps, la plongée est annulée et le
+            // zoom natif fait son travail.
+            if(window.HZ_REGION_CLICK_TIMER) clearTimeout(window.HZ_REGION_CLICK_TIMER);
+            window.HZ_REGION_CLICK_TIMER=setTimeout(()=>{
+              window.HZ_REGION_CLICK_TIMER=null;
+              const matches=fichesPourRegionCarte(slug);
+              const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+              afficheReve(slug, best);
+              ouvrirFichesRegion(slug);
+            }, 270);
+          });
+          layer.on('dblclick',()=>{
+            if(window.HZ_REGION_CLICK_TIMER){ clearTimeout(window.HZ_REGION_CLICK_TIMER); window.HZ_REGION_CLICK_TIMER=null; }
+            // rien d'autre : l'événement remonte à la carte, le zoom natif s'applique
           });
         }
       }).addTo(HZ_CARTE_REPOS);
@@ -1556,6 +1613,11 @@ function afficheCarteCoin(slug){
     const ic=(typeof hzIcone==='function')?hzIcone(f,opts):null;
     const m=ic?L.marker([+f.lat,+f.lng],{icon:ic}):L.marker([+f.lat,+f.lng]);
     m.bindPopup(hzPopupFicheHtml(f), {maxWidth:260, autoPan:true, closeButton:true});
+    // RACINE E1 (03/07, rapport tests) : bindPopup attache SON PROPRE gestionnaire
+    // de clic (interne Leaflet) en plus du nôtre — nos gardes (« pas pendant le
+    // swipe »...) ne s'appliquaient qu'au nôtre, l'interne ouvrait les fiches en
+    // douce. On le débranche : NOTRE gestionnaire de clic est le seul maître.
+    m.off('click', m._openPopup, m);
     m.bindTooltip(()=>hzTooltipFicheHtml(f), {direction:'top', offset:[0,-10], opacity:1});
     m.on('tooltipopen', ()=>{ if(hzCarteInerte()||HZ_ROND_EN_COURS) m.closeTooltip(); });
     m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; m.closeTooltip(); });
