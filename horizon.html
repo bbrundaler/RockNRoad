@@ -1380,7 +1380,12 @@ function hzAfficheTousLesPoints(){
 function hzInitCarteRepos(){
   const el=document.getElementById('hz-carte-repos');
   if(!el || !window.L || HZ_CARTE_REPOS || !HZ_GEOJSON_REGIONS) return;
-  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true}).setView([46.6,2.4],6);
+  // closePopupOnClick:false (03/07) : Leaflet fermait lui-même une fiche ouverte
+  // au clic, EN MÊME TEMPS que la région dessous réagissait au même clic — course
+  // de vitesse entre deux systèmes, parfois perdue (la région agissait quand même,
+  // zoom + swipe fantôme). Maintenant c'est le clic région (ci-dessous) qui ferme
+  // lui-même, explicitement, et RIEN d'autre — un seul endroit qui décide.
+  HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false}).setView([46.6,2.4],6);
   L.control.attribution({position:'bottomleft', prefix:false}).addTo(HZ_CARTE_REPOS);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {attribution:'© OpenStreetMap', maxZoom:19, minZoom:5}).addTo(HZ_CARTE_REPOS);
