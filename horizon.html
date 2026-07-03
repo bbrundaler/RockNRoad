@@ -207,9 +207,13 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 #hz-carte-repos{position:absolute;inset:0;z-index:1;}
 #hz-carte-repos .leaflet-container{height:100%;width:100%;background:#e8e4d4;}
 /* Q1 (03/07) : le tooltip Leaflet interdit nativement le retour à la ligne
-   (white-space:nowrap) — les noms longs traversaient le cadre et s'écrivaient
-   sur la carte. On libère le retour à la ligne et on borne la largeur. */
-#hz-carte-repos .leaflet-tooltip{white-space:normal !important;max-width:190px;}
+   (white-space:nowrap) — les noms longs traversaient le cadre. B0 du rapport
+   tests : habillage complet — largeur fixe, photo pleine largeur bord à bord,
+   coins arrondis, la petite flèche masquée (elle décalait le cadre). */
+#hz-carte-repos .leaflet-tooltip{white-space:normal !important;width:180px;max-width:180px;
+  padding:0;border-radius:11px;overflow:hidden;border:1px solid var(--gold-a35);
+  box-shadow:0 6px 20px rgba(0,0,0,.22);}
+#hz-carte-repos .leaflet-tooltip::before{display:none;}
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
 .hz-ov>*{pointer-events:auto;}                                     /* seuls les contrôles captent */
@@ -485,6 +489,8 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-act .hz-act-lbl{font-size:13px;font-weight:600;color:var(--ink-dim);}
 .hz-swipe-act.love .hz-act-ic{border-color:rgba(216,69,110,.45);}
 .hz-swipe-act.love .hz-act-lbl{color:var(--love-text,#d8456e);}
+/* E4 (03/07) : fiche déjà aimée — le bouton le montre au lieu de faire l'innocent */
+.hz-swipe-act.love.deja-aimee .hz-act-ic{background:rgba(216,69,110,.14);border-color:#d8456e;}
 /* barre de progression (remplace les onglets) */
 .hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
 .hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
@@ -1365,11 +1371,13 @@ function hzPopupFicheHtml(f){
 function hzTooltipFicheHtml(f){
   const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
   const photo=f.photo_url
-    ? '<div style="height:64px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:6px 6px 0 0;margin:-4px -6px 5px;"></div>'
+    ? '<div style="height:86px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');"></div>'
     : '';
-  return '<div style="font-family:Inter,sans-serif;max-width:170px;white-space:normal;">'+photo+
-    '<div style="font-weight:700;font-size:12px;line-height:1.25;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-    '<div style="font-size:10px;color:#888;white-space:normal;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+  return '<div style="font-family:Inter,sans-serif;white-space:normal;">'+photo+
+    '<div style="padding:8px 10px 9px;">'+
+      '<div style="font-weight:700;font-size:12.5px;line-height:1.3;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+      '<div style="font-size:10.5px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+    '</div>'+
   '</div>';
 }
 async function hzPopupToggleLove(lieuId){
@@ -1630,6 +1638,8 @@ function afficheCarteCoin(slug){
   // pas de 2e mouvement de caméra ici, on ne fait qu'ajouter les points dessus.
 }
 function masqueCarteCoin(){
+  // toute sortie du coin tue une bascule retardée encore en vol (jeton 03/07)
+  if(window.HZ_PLONGEE_TIMER){ clearTimeout(window.HZ_PLONGEE_TIMER); window.HZ_PLONGEE_TIMER=null; }
   document.body.classList.remove('hz-coin-carte');
   hzRondReset();   // le rond ne survit pas à la fermeture du coin (2b-2)
   if(HZ_CARTE_COIN_MARQ) HZ_CARTE_COIN_MARQ.clearLayers();
@@ -1906,7 +1916,14 @@ function ouvrirFichesRegion(dataR){
   // s'ouvre par le rond (2b-2) ou par le bouton « Passer les fiches en revue »
   // (hz-btn-revue, visible en mode coin). Avant : plonge + swipe d'un coup,
   // deux effets pour un geste — source des ouvertures de swipe non voulues.
-  setTimeout(()=>{ afficheCarteCoin(dataR); }, 780);   // la vue zoomée devient la vraie carte (après l'anim)
+  // JETON DE PLONGÉE (03/07, « trucs bizarres » après sortie) : la bascule en
+  // mode coin part avec 780ms de retard (le temps de l'anim). Si on ressort
+  // pendant cette fenêtre, la bascule s'exécutait APRÈS la sortie → carte
+  // France avec le mode coin encore actif (rond partout, glisser coupé). Le
+  // jeton est annulé par toute sortie (masqueCarteCoin) et remplacé à chaque
+  // nouveau clic région.
+  if(window.HZ_PLONGEE_TIMER) clearTimeout(window.HZ_PLONGEE_TIMER);
+  window.HZ_PLONGEE_TIMER=setTimeout(()=>{ window.HZ_PLONGEE_TIMER=null; afficheCarteCoin(dataR); }, 780);
 }
 
 function afficheFicheDansCadre(f, contexteRegionLabel){
@@ -3677,6 +3694,24 @@ function ouvreExplo(){
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
+  // C5 de la Charte (03/07, rapport tests) : le panneau du swipe (440px, à
+  // droite) peut recouvrir la zone du rond si celui-ci a été dessiné à droite
+  // de l'écran. On regarde où tombe le centre du rond et, s'il finit sous le
+  // panneau, on glisse la carte juste ce qu'il faut pour le ramener au milieu
+  // de la partie restée visible. Un pan doux, pas un zoom — loi L1 respectée
+  // (recadrage de visibilité, comme l'autoPan d'une popup).
+  if(HZ_ROND_COIN && HZ_CARTE_COIN){
+    try{
+      const centre=HZ_ROND_COIN.getLatLng();
+      const pt=HZ_CARTE_COIN.latLngToContainerPoint(centre);
+      const largeur=HZ_CARTE_COIN.getSize().x;
+      const largPanneau=Math.min(440, window.innerWidth*0.94);
+      const visible=largeur-largPanneau;
+      if(visible>120 && pt.x>visible-40){
+        HZ_CARTE_COIN.panBy([pt.x-Math.round(visible/2), 0], {animate:true, duration:0.5});
+      }
+    }catch(e){ /* jamais bloquant : au pire le pan n'a pas lieu */ }
+  }
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
 
@@ -3697,9 +3732,12 @@ function fermeExplo(){
   if(HZ_CARTE_COIN_HALO && HZ_CARTE_COIN){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
   const ov=document.getElementById('hz-explo');
   if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
-  document.body.classList.remove('hz-explo-on');   // la carte France se redéploie
-  masqueCarteCoin();                                 // les points de fiches s'effacent, les polygones région reviennent (même caméra, Temps 2a·étape3)
-  if(typeof remonteCarteFrance==='function') remonteCarteFrance();   // dézoom du SVG
+  document.body.classList.remove('hz-explo-on');
+  // E3 de la Charte (03/07, rapport tests) : fermer le swipe ne fait QUE fermer
+  // le panneau — on RESTE dans le coin, caméra intacte, points visibles. Avant,
+  // cette fonction sortait aussi du coin et dézoomait sur la France entière
+  // (« dézoom surprise »). La sortie complète du coin vit désormais dans
+  // recommenceGeste (bouton ↺ Recommencer), le seul geste qui remonte.
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
   demonteSwipeVersBande();
@@ -3981,6 +4019,19 @@ function rendSwipeCarte(){
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+desc+infos+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
+  // E4 de la Charte (03/07, rapport tests) : le bouton ❤️ du swipe reflète
+  // l'ÉTAT RÉEL de la fiche affichée. Une fiche déjà aimée (depuis la carte, le
+  // Carnet, une session passée...) montre « Retenue ✓ » allumé — avant, le swipe
+  // proposait « Je retiens » comme si de rien n'était, alors que le cœur existait.
+  {
+    const loveBtn=document.getElementById('hz-swipe-love');
+    if(loveBtn){
+      const dejaAimee=hzCoeursDe(f.id).love.mine || HZ_AIMEES_SESSION.has(f.id);
+      loveBtn.classList.toggle('deja-aimee', dejaAimee);
+      const lbl=loveBtn.querySelector('.hz-act-lbl');
+      if(lbl) lbl.textContent=dejaAimee?'Retenue ✓':'Je retiens';
+    }
+  }
   // dialogue carte↔swipe : zoom sur la région + point mis en avant
   syncCarteSurFiche();
 }
@@ -4690,6 +4741,10 @@ function recommenceGeste(){
   HZ_PANIER=new Map();           // panier cumulatif jour+nuit vidé (nouveau parcours)
   fermeSeuil();                  // fermer l'ancien seuil
   if(typeof fermeExplo==='function') fermeExplo();   // fermer le popup d'exploration
+  // Depuis E3 (03/07) fermeExplo ne quitte plus le coin : c'est ICI, et seulement
+  // ici, que la sortie complète se fait (coin fermé + remontée France).
+  if(typeof masqueCarteCoin==='function') masqueCarteCoin();
+  if(typeof remonteCarteFrance==='function') remonteCarteFrance();
   HZ_SEUIL_VU_SIG=null;          // le seuil pourra se rouvrir au prochain coin
   oublieGeste();
   // nettoyer aussi le résidu du VIEUX système (envies/cascade en localStorage)
