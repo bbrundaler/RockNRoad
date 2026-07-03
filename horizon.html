@@ -209,7 +209,7 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 /* Q1 (03/07) : le tooltip Leaflet interdit nativement le retour à la ligne
    (white-space:nowrap) — les noms longs traversaient le cadre et s'écrivaient
    sur la carte. On libère le retour à la ligne et on borne la largeur. */
-#hz-carte-repos .leaflet-tooltip{white-space:normal;max-width:180px;}
+#hz-carte-repos .leaflet-tooltip{white-space:normal !important;max-width:190px;}
 .francemap{position:relative;z-index:1;}
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
 .hz-ov>*{pointer-events:auto;}                                     /* seuls les contrôles captent */
@@ -1352,9 +1352,9 @@ function hzTooltipFicheHtml(f){
   const photo=f.photo_url
     ? '<div style="height:64px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:6px 6px 0 0;margin:-4px -6px 5px;"></div>'
     : '';
-  return '<div style="font-family:Inter,sans-serif;max-width:170px;">'+photo+
-    '<div style="font-weight:700;font-size:12px;line-height:1.25;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-    '<div style="font-size:10px;color:#888;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+  return '<div style="font-family:Inter,sans-serif;max-width:170px;white-space:normal;">'+photo+
+    '<div style="font-weight:700;font-size:12px;line-height:1.25;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div style="font-size:10px;color:#888;white-space:normal;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
   '</div>';
 }
 async function hzPopupToggleLove(lieuId){
