@@ -255,7 +255,11 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
    sur la carte du coin — pas de curseur séparé à aller chercher. Pastille
    flottante haut-centre, visible seulement carte du coin ouverte. ── */
 .hz-ov-rond{display:flex;top:12px;left:50%;transform:translateX(-50%);gap:8px;align-items:center;}
-body.hz-explo-on .hz-ov-rond{display:none;}
+/* Le pill rayon+compte (hz-rond-ctrl) doit rester visible PENDANT le swipe —
+   c'est justement là qu'il sert (retour Bruno 05/07, régression de ma faute :
+   j'avais caché tout le bloc, y compris ce pill utile). Le hint "clique-
+   glisse" se cache déjà tout seul en JS (hzRondDemarre) une fois le rond armé,
+   pas besoin d'une règle CSS globale qui masque tout. */
 /* Q2 (03/07) : le swipe ne s'ouvre plus au clic région — ce bouton est sa 2ᵉ
    porte (avec le rond). Même matière que les pastilles portes ; disparaît
    quand le swipe a déjà la main. */
@@ -398,6 +402,7 @@ body.hz-explo-on #hz-rail{display:none;}
   box-shadow:var(--shadow);width:min(1040px,97vw);height:min(94vh,900px);display:flex;flex-direction:column;
   overflow:hidden;animation:hzSeuilPop .28s ease;}
 .hz-explo-tete{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
+#hz-explo-titre{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hz-explo-tete h3{font-family:var(--font-title);font-size:17px;color:var(--gold-text);margin:0;flex-shrink:0;}
 .hz-titre-theme{color:var(--gold-text);font-weight:700;}
 .hz-titre-reg{color:var(--ink-dim);font-weight:500;transition:all .4s;}
@@ -881,8 +886,8 @@ body.hz-explo-on #hz-rail{display:none;}
            pendant le geste et une fois la zone figée. -->
       <div class="hz-ov hz-ov-rond" id="hz-ov-rond">
         <span class="hz-ov-pill" id="hz-rond-hint"><span class="hz-ov-ic">◎</span> Clique-glisse sur la carte pour délimiter ta zone</span>
-        <button class="hz-porte-btn" id="hz-btn-revue" type="button" onclick="ouvreExplo()"
-          title="Voir toutes les fiches du coin, une par une">Passer les fiches en revue</button>
+        <button class="hz-porte-btn" id="hz-btn-revue" type="button" onclick="hzRevueZoneVisible()"
+          title="Voir les fiches visibles à l'écran en ce moment, une par une">Passer les fiches en revue</button>
         <span class="hz-ov-pill hz-rond-ctrl" id="hz-rond-ctrl" style="display:none">
           <span class="hz-ov-ic">◎</span>
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
@@ -1811,6 +1816,36 @@ function hzRondFichesDedans(centre, rayon_m){
     if(window.RNR_TAGS && RNR_TAGS.estCouchage(f)) return true;
     return RNR_CARNET_COIN.correspondTheme(f, HZ_THEME||null, HZ_TAGS_THEME);
   });
+}
+// Sujet (05/07, retour Bruno) : « Passer les fiches en revue » rouvrait
+// simplement ouvreExplo() — donc soit rien (aucun paquet encore construit),
+// soit un paquet PÉRIMÉ d'un geste précédent ailleurs sur la carte, jamais
+// marqué nulle part sur l'écran actuel. Périmètre maintenant explicite et
+// SANS AMBIGUÏTÉ : les fiches VISIBLES À L'ÉCRAN à l'instant du clic (viewport
+// réel de la carte), même filtre jour/nuit que le rond (couchage toujours
+// inclus, fiches jour filtrées par l'envie active) — un seul comportement de
+// filtrage, réemployé, pas réinventé.
+function hzFichesDansViewport(){
+  if(!HZ_CARTE_COIN || !window.RNR_CARNET_COIN) return [];
+  const bounds=HZ_CARTE_COIN.getBounds();
+  return (HZ_FICHES||[]).filter(f=>{
+    if(f.lat==null||f.lng==null) return false;
+    if(!bounds.contains([+f.lat,+f.lng])) return false;
+    if(window.RNR_TAGS && RNR_TAGS.estCouchage(f)) return true;
+    return RNR_CARNET_COIN.correspondTheme(f, HZ_THEME||null, HZ_TAGS_THEME);
+  });
+}
+function hzRevueZoneVisible(){
+  const fiches=hzFichesDansViewport();
+  if(!fiches.length) return;   // rien de visible à l'écran pour l'instant : rien à ouvrir
+  HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
+  const regions=[...new Set(fiches.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  if(regions.length) HZ_LIEUX=regions;
+  const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
+  HZ_COIN_PAQUET=paquet;
+  if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
+  if(typeof majEnAvant==='function') majEnAvant(paquet);
+  ouvreExplo();
 }
 // Couchage le plus proche du centre, dans TOUTES les fiches (pas juste celles
 // du rond) — sert au message « élargir le cercle » quand la zone n'en a aucun.
