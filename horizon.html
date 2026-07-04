@@ -1816,6 +1816,7 @@ function hzRondEtire(point){
   hzRondMajAffichage(centre);
 }
 function hzRondFigerEtLancer(){
+  console.log('[DEBUG rond] hzRondFigerEtLancer() appelé, HZ_ROND_COIN=', !!HZ_ROND_COIN);
   hzRondSignalerFin();
   HZ_ROND_EN_COURS=false;
   if(HZ_CARTE_COIN) HZ_CARTE_COIN.dragging.enable();
@@ -1827,6 +1828,7 @@ function hzRondFigerEtLancer(){
   const fiches=brutes.filter(f=>!HZ_ROND_VUES.has(f.id));
   hzRondMajAffichage(centre);
   const swipeDejaOuvert=document.body.classList.contains('hz-explo-on');
+  console.log('[DEBUG rond] fiches neuves=', fiches.length, ' brutes=', brutes.length, ' swipeDejaOuvert=', swipeDejaOuvert, ' HZ_COIN_PAQUET avant=', !!HZ_COIN_PAQUET);
   if(!fiches.length){
     // « rien de neuf » ne doit sauter que si un swipe est DÉJÀ ouvert (évite
     // de le vider pour rien sur un micro-mouvement) — sinon (premier lancer,
@@ -1934,6 +1936,7 @@ function hzInitBarreRond(){
     majThumb(HZ_ROND_RAYON_M/1000);
   }
   barre.addEventListener('pointerdown', e=>{
+    console.log('[DEBUG rond] pointerdown sur la barre, HZ_CARTE_COIN=', !!HZ_CARTE_COIN);
     if(!HZ_CARTE_COIN) return;
     actif=true;
     try{ barre.setPointerCapture(e.pointerId); }catch(err){}
@@ -1945,6 +1948,7 @@ function hzInitBarreRond(){
     appliqueKm(depuisY(e.clientY));
   });
   function relacher(e){
+    console.log('[DEBUG rond] relacher() appelé sur la barre, actif=', actif, ' HZ_ROND_EN_COURS=', HZ_ROND_EN_COURS, ' type événement=', e&&e.type);
     if(!actif) return;
     actif=false;
     if(e && e.pointerId!=null){ try{ barre.releasePointerCapture(e.pointerId); }catch(err){} }
@@ -3865,9 +3869,10 @@ let HZ_EXPLO_MAP=null;
 let HZ_EXPLO_MARQUEURS={};
 
 function ouvreExplo(){
-  if(!HZ_COIN_PAQUET) return;
+  console.log('[DEBUG rond] ouvreExplo() appelé, HZ_COIN_PAQUET=', !!HZ_COIN_PAQUET);
+  if(!HZ_COIN_PAQUET){ console.log('[DEBUG rond] ouvreExplo() STOP : HZ_COIN_PAQUET est vide'); return; }
   const ov=document.getElementById('hz-explo');
-  if(!ov) return;
+  if(!ov){ console.log('[DEBUG rond] ouvreExplo() STOP : #hz-explo introuvable dans le DOM'); return; }
   document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
   document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
   // La carte devient inerte pendant le swipe (02/07) : si une fiche était déjà
