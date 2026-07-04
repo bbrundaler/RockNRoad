@@ -1369,15 +1369,15 @@ function hzTraceVoyage(){
 //  body.hz-explo-on (le swipe a pris le relais) sont les deux seules raisons
 //  valables pour qu'un geste de carte se taise — vérifiées à un seul endroit.
 let HZ_POPUP_OUVERTE=false;   // posé par popupopen/popupclose (informateur secondaire)
-// Filet du bouton « Passer les fiches en revue » (A6, rapport tests) : écouteur
-// en phase de CAPTURE au niveau document — le clic est attrapé avant tout autre
-// gestionnaire qui pourrait l'avaler en route (overlays de carte, propagation
-// stoppée...). Le rond, lui, ouvrait déjà le swipe sans souci (D2 ✓) : c'est le
-// chemin du clic vers le bouton qui était en cause, pas l'ouverture elle-même.
-document.addEventListener('click', (e)=>{
-  const btn=e.target && (e.target.id==='hz-btn-revue' ? e.target : (e.target.closest && e.target.closest('#hz-btn-revue')));
-  if(btn && typeof ouvreExplo==='function'){ e.preventDefault(); e.stopPropagation(); ouvreExplo(); }
-}, true);
+// Sujet (05/07, retour Bruno) : cet écouteur (03/07, filet pour un vieux souci
+// d'atteignabilité du bouton) interceptait TOUS les clics en phase de capture
+// et, pour ce bouton précis, coupait l'événement (stopPropagation) puis
+// appelait l'ANCIENNE ouvreExplo() directement — empêchant le nouvel
+// onclick="hzRevueZoneVisible()" du bouton de jamais s'exécuter. C'est ce qui
+// rendait le bouton silencieux au clic réel ET à .click(), alors que l'appel
+// direct de la fonction en console fonctionnait (il ne passe pas par le clic).
+// Le bouton est aujourd'hui atteignable normalement (bloc toujours visible,
+// pas de recouvrement) : ce filet est retiré plutôt que corrigé en doublon.
 function hzCarteInerte(){
   // Lire le RÉEL, pas un drapeau maison (03/07, rapport tests B3) : le drapeau
   // pouvait se désynchroniser (marqueurs reconstruits sous une popup ouverte →
