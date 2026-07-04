@@ -28,6 +28,13 @@
   --gold-a20:    rgba(200,168,75,.20);   /* rgba(200,168,75,…) en dur  */
   --gold-a35:    rgba(200,168,75,.35);
 
+  /* — Terracotta (Sujet 1, marqueur de rayon Horizon, 04/07) — dédié à ce
+     contrôle pour ne pas emprunter une couleur qui a déjà un sens dans la
+     grammaire des marqueurs (or=jour, bleu=nuit, teal=épingle, rose=cœur). */
+  --terracotta:       #D85A30;
+  --terracotta-light: #F5C4B3;
+  --terracotta-deep:  #712B13;
+
   /* — Autres couleurs de marque — */
   --green:       #2C5016;   /* vert action / succès */
 

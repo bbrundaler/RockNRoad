@@ -277,32 +277,34 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-armement .fond{fill:none;stroke:rgba(0,0,0,.15);stroke-width:3;}
 .hz-rond-armement .prog{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;
   stroke-dasharray:100.53;stroke-dashoffset:100.53;}
-/* Sujet 1 (04/07, v3) : réglette biseautée, retour Bruno — coins carrés (plus
-   de border-radius), chiffre imprimé SUR le remplissage (plus de badge qui
-   flotte par-dessus les autres blocs de droite), calibrage 0-100km. Le
-   plancher gravé de 1,5km (D-2b-2/2b-3) reste appliqué au moment du calcul
-   du rayon réel, même si l'affichage descend visuellement jusqu'à 0. */
-.hz-rond-marqueur{display:none;position:absolute;top:50%;right:14px;transform:translateY(-50%);
+/* Sujet 1 (04/07, v4 — final) : terracotta (pas de collision avec la
+   grammaire D-MK), barre compacte (2/3 de la taille précédente), positionnée
+   sous le bloc stats "fiches/régions/visites/cœurs" (hz-ov-tr) plutôt que
+   centrée sur le bord droit (évite la collision signalée par Bruno). Marques
+   fixes 25/50/75 à gauche, valeur en direct à droite — jamais tronquée
+   (colonnes dédiées avec marge, la valeur ne sort jamais de son propre bloc). */
+.hz-rond-marqueur{display:none;position:absolute;top:96px;right:12px;
   flex-direction:column;align-items:center;z-index:6;}
 body.hz-coin-carte .hz-rond-marqueur{display:flex;}
 body.hz-explo-on .hz-rond-marqueur{display:none;}
-.hz-rond-marqueur-ic{width:30px;height:30px;border-radius:50%;background:var(--gold-a20);
-  border:1px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;
-  font-size:15px;color:var(--gold-text);margin-bottom:8px;}
-.hz-rond-marqueur-corps{display:flex;align-items:stretch;gap:7px;}
-.hz-ov-barre-rond{position:relative;width:36px;height:150px;border-radius:0;
-  border:1px solid var(--gold-a35);
-  background:linear-gradient(to top, var(--gold-deep), var(--gold-light));
+.hz-rond-marqueur-ic{width:22px;height:22px;border-radius:50%;background:var(--terracotta-light);
+  border:1px solid var(--terracotta-deep);display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--terracotta-deep);margin-bottom:6px;}
+.hz-rond-marqueur-corps{display:flex;align-items:flex-start;gap:6px;padding:7px 0;}
+.hz-rond-marqueur-ticks{position:relative;width:16px;height:100px;}
+.hz-rond-marqueur-ticks span{position:absolute;left:0;font-size:9.5px;font-weight:500;
+  color:var(--ink);transform:translateY(50%);white-space:nowrap;}
+.hz-ov-barre-rond{position:relative;width:22px;height:100px;border-radius:0;
+  border:1px solid var(--terracotta-deep);
+  background:linear-gradient(to top, var(--terracotta-deep), var(--terracotta-light));
   touch-action:none;cursor:pointer;}
-.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-5px;right:-5px;height:20px;
-  border-radius:0;background:linear-gradient(to bottom, var(--gold-light), var(--gold-deep));
-  border:1px solid var(--gold-deep);box-shadow:0 2px 5px rgba(0,0,0,.3),
-  inset 0 1px 1px rgba(255,255,255,.55), inset 0 -2px 2px rgba(0,0,0,.25);box-sizing:border-box;}
-.hz-rond-marqueur-ticks{display:flex;flex-direction:column-reverse;justify-content:space-between;
-  height:150px;padding:2px 0;}
-.hz-rond-marqueur-ticks span{font-size:9.5px;color:var(--ink-dim);white-space:nowrap;}
-.hz-barre-txt{position:absolute;left:0;right:0;text-align:center;
-  font-size:11.5px;font-weight:700;font-family:var(--font-title);pointer-events:none;}
+.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-4px;right:-4px;height:12px;
+  border-radius:0;background:linear-gradient(to bottom, var(--terracotta-light), var(--terracotta-deep));
+  border:1px solid var(--terracotta-deep);box-shadow:0 2px 4px rgba(0,0,0,.3),
+  inset 0 1px 1px rgba(255,255,255,.5);box-sizing:border-box;}
+.hz-rond-marqueur-livewrap{position:relative;width:36px;height:100px;}
+.hz-barre-txt{position:absolute;left:0;font-size:11px;font-weight:700;
+  font-family:var(--font-title);color:var(--terracotta-deep);white-space:nowrap;}
 /* Illumination du point courant pendant le swipe (correctif 02/07 — reprend
    l'esprit du survol Hub, piloté ici par la progression du swipe). */
 .hz-marqueur-illumine{width:34px;height:34px;border-radius:50%;background:transparent;
@@ -873,17 +875,22 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-rond-compte" id="hz-rond-compte-txt">—</span>
         </span>
       </div>
-      <!-- Sujet 1 (04/07, v2) : marqueur de rayon enrichi — icône cible,
-           dégradé, graduations km, badge flottant. Visible seulement en coin. -->
+      <!-- Sujet 1 (04/07, v4 — final) : marqueur de rayon terracotta, compact,
+           sous le bloc stats. Graduations fixes à gauche (position réelle,
+           pas espacées uniformément), valeur en direct à droite. -->
       <div class="hz-rond-marqueur" id="hz-rond-marqueur">
         <div class="hz-rond-marqueur-ic" aria-hidden="true">◎</div>
         <div class="hz-rond-marqueur-corps">
+          <div class="hz-rond-marqueur-ticks">
+            <span style="bottom:75%">75</span>
+            <span style="bottom:50%">50</span>
+            <span style="bottom:25%">25</span>
+          </div>
           <div class="hz-ov-barre-rond" id="hz-barre-rond">
             <div class="hz-barre-thumb" id="hz-barre-thumb"></div>
-            <span class="hz-barre-txt" id="hz-barre-txt">1,5 km</span>
           </div>
-          <div class="hz-rond-marqueur-ticks">
-            <span>0</span><span>25</span><span>50</span><span>75</span><span>100 km</span>
+          <div class="hz-rond-marqueur-livewrap">
+            <span class="hz-barre-txt" id="hz-barre-txt">0 km</span>
           </div>
         </div>
       </div>
@@ -1875,12 +1882,13 @@ function hzInitBarreRond(){
   let actif=false;
   function majThumb(km){
     const t=Math.max(0,Math.min(1,(km-KM_MIN)/(KM_MAX-KM_MIN)));
-    const topPct=(1-t)*100;
-    thumb.style.top=topPct+'%';
-    thumb.style.marginTop='-10px';
-    txt.style.bottom=(t*100)+'%';
-    txt.style.marginBottom='-6px';
-    txt.style.color= t>0.5 ? 'var(--ink)' : 'var(--chrome-bg)';
+    const hauteur=barre.clientHeight||100;
+    const yPx=(1-t)*hauteur;
+    thumb.style.top=yPx+'px';
+    thumb.style.marginTop='-6px';
+    const yTxt=Math.max(6, Math.min(hauteur-6, yPx));
+    txt.style.top=yTxt+'px';
+    txt.style.marginTop='-7px';
     txt.textContent=hzRondFormatRayon(km*1000);
   }
   majThumb(KM_MIN);
@@ -1898,6 +1906,7 @@ function hzInitBarreRond(){
   barre.addEventListener('pointerdown', e=>{
     if(!HZ_CARTE_COIN) return;
     actif=true;
+    try{ barre.setPointerCapture(e.pointerId); }catch(err){}
     hzRondDemarre(HZ_CARTE_COIN.getCenter());
     appliqueKm(depuisY(e.clientY));
   });
@@ -1905,11 +1914,15 @@ function hzInitBarreRond(){
     if(!actif || !HZ_ROND_EN_COURS) return;
     appliqueKm(depuisY(e.clientY));
   });
-  document.addEventListener('pointerup', ()=>{
+  function relacher(e){
     if(!actif) return;
     actif=false;
+    if(e && e.pointerId!=null){ try{ barre.releasePointerCapture(e.pointerId); }catch(err){} }
     if(HZ_ROND_EN_COURS) hzRondFigerEtLancer();
-  });
+  }
+  barre.addEventListener('pointerup', relacher);
+  barre.addEventListener('pointercancel', relacher);
+  document.addEventListener('pointerup', relacher);
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitBarreRond);
 else hzInitBarreRond();
