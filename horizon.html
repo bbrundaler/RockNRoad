@@ -1699,6 +1699,22 @@ function hzRecentrerVuePleine(){
   if(document.body.classList.contains('hz-explo-on') && typeof fermeExplo==='function'){
     fermeExplo();
   }
+  // Sujet (05/07 v3, retour Bruno) : le nettoyage précédent ne passait que par
+  // fermeExplo() — donc RIEN n'était nettoyé si aucun swipe n'avait pu
+  // s'ouvrir (ex. une envie sans fiche dans la zone, HZ_ROND_MODE jamais posé
+  // à true) : le thème restait actif, les régions restaient coloriées. Et une
+  // fiche ouverte HORS swipe (simple clic sur un point) ne se fermait jamais.
+  // "Vue complète" doit être un vrai reset visuel complet, à chaque fois —
+  // toujours sauf le panier/session, qui restent (contrairement à Recommencer).
+  if(HZ_CARTE_COIN && HZ_CARTE_COIN.closePopup) HZ_CARTE_COIN.closePopup();
+  if(typeof hzRondReset==='function') hzRondReset();
+  if(HZ_THEME){
+    HZ_THEME=null;
+    if(typeof rallumeToutesRegions==='function') rallumeToutesRegions();
+    if(typeof rendThemesChips==='function') rendThemesChips();
+    const info=document.getElementById('hz-geste-info');
+    if(info) info.textContent='';
+  }
   if(document.body.classList.contains('hz-coin-carte') && typeof masqueCarteCoin==='function'){
     masqueCarteCoin();
   }
@@ -3145,6 +3161,11 @@ function hzToggleporte(which){
   // bascule celle-ci
   pan.style.display = ouvert ? 'none' : 'block';
   if(btn) btn.classList.toggle('ouvert', !ouvert);
+  // Sujet (05/07 v2, retour Bruno) : le filet moveend/zoomend ne rafraîchit
+  // que si le panneau est DÉJÀ ouvert pendant qu'on bouge — mais rien ne
+  // recalculait à l'OUVERTURE elle-même, donc un zoom fait AVANT le clic
+  // laissait les anciens chiffres. On rafraîchit systématiquement ici aussi.
+  if(!ouvert && which==='envie' && typeof rendThemesChips==='function') rendThemesChips();
 }
 
 // Rendu des 7 thèmes en chips, avec le nb de fiches qui les portent.
