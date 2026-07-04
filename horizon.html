@@ -1839,7 +1839,7 @@ function hzRevueZoneVisible(){
   const fiches=hzFichesDansViewport();
   if(!fiches.length) return;   // rien de visible à l'écran pour l'instant : rien à ouvrir
   HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
-  const regions=[...new Set(fiches.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  const regions=[...new Set(fiches.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
@@ -1928,7 +1928,7 @@ function hzRondFigerEtLancer(){
   HZ_ROND_NUIT_DIST_KM=HZ_ROND_SANS_NUIT?hzRondCouchageLePlusProche(centre):null;
   // régions couvertes par le rond (remplace HZ_LIEUX le temps de ce coin — le
   // rond n'est plus borné par le découpage régional, c'est tout son intérêt).
-  const regions=[...new Set(fiches.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  const regions=[...new Set(fiches.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
@@ -1957,7 +1957,7 @@ function hzRondElargirJusquauCamping(){
   HZ_ROND_SANS_NUIT=false;
   HZ_ROND_NUIT_DIST_KM=null;
   fichesNuit.forEach(f=>HZ_ROND_VUES.add(f.id));
-  const regions=[...new Set(fichesNuit.map(f=>RNR_CARNET_COIN.regionDe(f)).filter(Boolean))];
+  const regions=[...new Set(fichesNuit.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fichesNuit, limitrophes:[], toutes:fichesNuit, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
@@ -4105,9 +4105,16 @@ function initExploCarte(){
 function exploHighlight(lieuId){
   if(!HZ_CARTE_COIN) return;
   if(HZ_CARTE_COIN_HALO){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
-  const entree=HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
-  if(!entree) return;
-  HZ_CARTE_COIN_HALO=L.marker(entree.latlng,{interactive:false,zIndexOffset:900,
+  // Sujet (05/07, retour Bruno) : cette fonction ne regardait QUE l'index coin
+  // (HZ_CARTE_COIN_MARQ_PAR_ID) — jamais peuplé pour un rond/revue lancé
+  // depuis le repos (le nouveau chemin du jour). Même motif de secours déjà
+  // utilisé par hzRafraichitPopup : chercher dans les DEUX index.
+  const entree=(HZ_CARTE_COIN_MARQ_PAR_ID && HZ_CARTE_COIN_MARQ_PAR_ID[lieuId])
+    || (HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[lieuId]);
+  if(!entree || !entree.marker) return;
+  const latlng=entree.latlng || (entree.marker.getLatLng && entree.marker.getLatLng());
+  if(!latlng) return;
+  HZ_CARTE_COIN_HALO=L.marker(latlng,{interactive:false,zIndexOffset:900,
     icon:L.divIcon({className:'hz-marqueur-illumine',iconSize:[34,34],iconAnchor:[17,17]})}).addTo(HZ_CARTE_COIN);
   entree.marker.openPopup();
 }
