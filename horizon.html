@@ -267,6 +267,10 @@ body.hz-explo-on #hz-btn-revue{display:none;}
 /* Sujet (05/07, retour Bruno) : ce bouton doit rester une échappatoire
    disponible MÊME pendant le swipe — un rond raté doit pouvoir se relancer
    sans devoir d'abord fermer le panneau. Ne plus le masquer sur hz-explo-on. */
+#hz-btn-vue-pleine{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
+  box-shadow:0 3px 12px rgba(0,0,0,.18);font-size:12.5px;padding:9px 14px;white-space:nowrap;
+  pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
+#hz-btn-vue-pleine:hover{background:var(--gold-a10);}
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
@@ -3945,8 +3949,11 @@ function ouvreExplo(){
       const largPanneauMesuree=ov.getBoundingClientRect().width;
       const largPanneau=largPanneauMesuree>40 ? largPanneauMesuree : Math.min(440, window.innerWidth*0.94);
       const visible=largeur-largPanneau;
+      const decalage=centreRondX-Math.round(visible/2);
+      console.log('[DEBUG recentrage] centreRondX=',Math.round(centreRondX),' largeurCarte=',largeur,
+        ' largPanneauMesuree=',Math.round(largPanneauMesuree),' visible=',Math.round(visible),
+        ' decalage=',Math.round(decalage));
       if(visible>120){
-        const decalage=centreRondX-Math.round(visible/2);
         if(Math.abs(decalage)>4){
           HZ_CARTE_COIN.panBy([decalage, 0], {animate:true, duration:0.65, easeLinearity:0.15});
         }
