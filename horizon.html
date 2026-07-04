@@ -277,10 +277,11 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-armement .fond{fill:none;stroke:rgba(0,0,0,.15);stroke-width:3;}
 .hz-rond-armement .prog{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;
   stroke-dasharray:100.53;stroke-dashoffset:100.53;}
-/* Sujet 1 (04/07, v2) : marqueur de rayon enrichi — icône cible (◎, distincte
-   d'un zoom +/−), dégradé --gold franc, graduations km toujours lisibles,
-   badge flottant qui suit la poignée. Taille réelle ~3,5cm de haut (barre),
-   pas la hauteur totale de l'écran — corrigé après retour Bruno (« énorme »). */
+/* Sujet 1 (04/07, v3) : réglette biseautée, retour Bruno — coins carrés (plus
+   de border-radius), chiffre imprimé SUR le remplissage (plus de badge qui
+   flotte par-dessus les autres blocs de droite), calibrage 0-100km. Le
+   plancher gravé de 1,5km (D-2b-2/2b-3) reste appliqué au moment du calcul
+   du rayon réel, même si l'affichage descend visuellement jusqu'à 0. */
 .hz-rond-marqueur{display:none;position:absolute;top:50%;right:14px;transform:translateY(-50%);
   flex-direction:column;align-items:center;z-index:6;}
 body.hz-coin-carte .hz-rond-marqueur{display:flex;}
@@ -289,20 +290,19 @@ body.hz-explo-on .hz-rond-marqueur{display:none;}
   border:1px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;
   font-size:15px;color:var(--gold-text);margin-bottom:8px;}
 .hz-rond-marqueur-corps{display:flex;align-items:stretch;gap:7px;}
-.hz-ov-barre-rond{position:relative;width:30px;height:132px;border-radius:15px;
-  border:1px solid var(--gold-a35);box-shadow:0 3px 12px rgba(0,0,0,.18);
-  background:linear-gradient(to top, var(--gold-light), var(--gold-deep));
+.hz-ov-barre-rond{position:relative;width:36px;height:150px;border-radius:0;
+  border:1px solid var(--gold-a35);
+  background:linear-gradient(to top, var(--gold-deep), var(--gold-light));
   touch-action:none;cursor:pointer;}
-.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-5px;right:-5px;height:18px;
-  border-radius:50%;background:var(--surface);border:3px solid var(--gold-deep);
-  box-shadow:0 2px 6px rgba(0,0,0,.22);box-sizing:border-box;}
+.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-5px;right:-5px;height:20px;
+  border-radius:0;background:linear-gradient(to bottom, var(--gold-light), var(--gold-deep));
+  border:1px solid var(--gold-deep);box-shadow:0 2px 5px rgba(0,0,0,.3),
+  inset 0 1px 1px rgba(255,255,255,.55), inset 0 -2px 2px rgba(0,0,0,.25);box-sizing:border-box;}
 .hz-rond-marqueur-ticks{display:flex;flex-direction:column-reverse;justify-content:space-between;
-  height:132px;padding:2px 0;}
+  height:150px;padding:2px 0;}
 .hz-rond-marqueur-ticks span{font-size:9.5px;color:var(--ink-dim);white-space:nowrap;}
-.hz-barre-txt{position:absolute;left:44px;transform:translateY(-50%);
-  background:var(--gold-deep);color:var(--gold-light);font-size:12.5px;font-weight:700;
-  padding:4px 10px;border-radius:11px;white-space:nowrap;font-family:var(--font-title);
-  box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hz-barre-txt{position:absolute;left:0;right:0;text-align:center;
+  font-size:11.5px;font-weight:700;font-family:var(--font-title);pointer-events:none;}
 /* Illumination du point courant pendant le swipe (correctif 02/07 — reprend
    l'esprit du survol Hub, piloté ici par la progression du swipe). */
 .hz-marqueur-illumine{width:34px;height:34px;border-radius:50%;background:transparent;
@@ -883,7 +883,7 @@ body.hz-explo-on #hz-rail{display:none;}
             <span class="hz-barre-txt" id="hz-barre-txt">1,5 km</span>
           </div>
           <div class="hz-rond-marqueur-ticks">
-            <span>1,5</span><span>5</span><span>10</span><span>20</span><span>30 km</span>
+            <span>0</span><span>25</span><span>50</span><span>75</span><span>100 km</span>
           </div>
         </div>
       </div>
@@ -1871,15 +1871,16 @@ function hzInitBarreRond(){
   const thumb=document.getElementById('hz-barre-thumb');
   const txt=document.getElementById('hz-barre-txt');
   if(!barre || !thumb || !txt) return;
-  const KM_MIN=HZ_ROND_RAYON_MIN_M/1000, KM_MAX=30;
+  const KM_MIN=0, KM_MAX=100;
   let actif=false;
   function majThumb(km){
     const t=Math.max(0,Math.min(1,(km-KM_MIN)/(KM_MAX-KM_MIN)));
     const topPct=(1-t)*100;
     thumb.style.top=topPct+'%';
-    thumb.style.marginTop='-9px';
-    txt.style.top=topPct+'%';
-    txt.style.marginTop='0px';
+    thumb.style.marginTop='-10px';
+    txt.style.bottom=(t*100)+'%';
+    txt.style.marginBottom='-6px';
+    txt.style.color= t>0.5 ? 'var(--ink)' : 'var(--chrome-bg)';
     txt.textContent=hzRondFormatRayon(km*1000);
   }
   majThumb(KM_MIN);
