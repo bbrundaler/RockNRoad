@@ -147,7 +147,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* Séparateur « — ou — » entre les deux portes (activités / couchage). Marque le
    choix de départ égal, sans hiérarchie. */
 .hz-geste-ou{font-size:11px;color:var(--ink-dim);text-align:center;margin:10px 0 8px;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
-.hz-lieu-pick{display:flex;flex-wrap:wrap;gap:8px;min-height:24px;}
 .hz-lieu-tag{display:inline-flex;align-items:center;gap:7px;font-size:14.5px;padding:8px 14px;border-radius:var(--r-sm);
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
 .hz-lieu-tag .x{cursor:pointer;opacity:.8;font-weight:700;font-size:15px;}
@@ -250,7 +249,6 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 .hz-ov-portes .hz-porte-nuit{border-color:var(--nuit-a40,rgba(61,111,216,.45));}
 .hz-ov-panneau{background:var(--surface);border:1px solid var(--gold-a35);border-radius:12px;padding:12px;
   width:min(300px,64vw);box-shadow:0 8px 24px rgba(0,0,0,.22);margin-top:0;}
-.hz-ov-br .hz-lieu-pick{justify-content:flex-end;min-height:0;}
 /* ── Rond de précision (2b-2/2b-3) : geste clic-glisser-relâcher directement
    sur la carte du coin — pas de curseur séparé à aller chercher. Pastille
    flottante haut-centre, visible seulement carte du coin ouverte. ── */
@@ -879,7 +877,6 @@ body.hz-explo-on #hz-rail{display:none;}
       </div>
       <div class="hz-ov hz-ov-br">
         <button class="hz-recommencer" id="hz-recommencer" type="button" style="display:none">↺ Recommencer</button>
-        <div class="hz-lieu-pick" id="hz-lieu-pick"></div>
       </div>
       <!-- Rond de précision (2b-2/2b-3) : clic-glisser-relâcher directement sur
            la carte. Hint tant qu'aucun geste n'a eu lieu ; lecture rayon+compte
