@@ -1043,6 +1043,7 @@ body.hz-explo-on #hz-rail{display:none;}
     <div class="hz-explo-tete">
       <h3 id="hz-explo-titre">Exploration</h3>
       <div class="hz-explo-progres-wrap"><div class="hz-explo-progres" id="hz-explo-progres"></div></div>
+      <button class="hz-explo-liste" id="hz-explo-carnet" type="button" onclick="hzOuvreLienCarnet()" title="Voir cette région dans le Carnet">📓 Carnet</button>
       <button class="hz-explo-liste" id="hz-explo-liste" type="button">▦ Liste</button>
       <button class="hz-explo-fermer" id="hz-explo-fermer" type="button" title="fermer">✕</button>
     </div>
@@ -4196,6 +4197,14 @@ function ouvreExplo(){
 
 // Titre du popup : la région ACTUELLE en évidence (or, gras), les autres
 // atténuées. À chaque transition, l'évidence se déplace (point 4).
+// Lien contextuel (05/07) : depuis la région explorée, voir ses fiches dans le
+// Carnet — même slug D-22 des deux côtés (carto.js), pas de renormalisation
+// séparée (la leçon du bug "tombé sur du vide" du 05/07, admin.html).
+function hzOuvreLienCarnet(){
+  const slug=HZ_LIEUX && HZ_LIEUX[0];
+  if(!slug) return;
+  window.open('carnet.html#'+slug, '_blank', 'noopener');
+}
 function majTitrePopup(slugActuel){
   const titre=document.getElementById('hz-explo-titre');
   if(!titre) return;
@@ -5424,6 +5433,16 @@ async function loadHorizonData(userId){
     // 7bis) Votes ouverts par fiche (B18-Inc.A3) : sait si une fiche est déjà
     // « en vote » pour éviter les doublons + affiche l'état dans les listes.
     hzChargerVotesOuverts();
+
+    // 8) Lien contextuel depuis le Carnet (05/07) : ?region=<slug> plonge
+    // directement dans la région au chargement — même geste qu'un double-clic
+    // sur la carte (ouvrirFichesRegion fait tout : paquet, plongée, coin).
+    try{
+      const regionParam=new URLSearchParams(window.location.search).get('region');
+      if(regionParam && typeof ouvrirFichesRegion==='function'){
+        setTimeout(()=>ouvrirFichesRegion(regionParam), 300);
+      }
+    }catch(e){ console.warn('Horizon: lien région depuis Carnet', e); }
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}

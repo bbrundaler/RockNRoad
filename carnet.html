@@ -1571,6 +1571,8 @@ function createRegionTab(tabId, rk, regionName, lieux){
     </div>
     <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px 28px 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
       <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
+      <a href="horizon.html?region=${rk}" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon"
+        style="position:absolute;right:20px;top:20px;font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,.28);padding:6px 12px;border-radius:8px;text-decoration:none;">🧭 Explorer sur Horizon</a>
       <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
       <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:2px;letter-spacing:-.5px;">${regionName}</h2>
       <div style="font-size:12px;color:rgba(255,255,255,.6);">${(lieux&&lieux.length)||0} ${((lieux&&lieux.length)||0)>1?'fiches':'fiche'} dans ce coin</div>
