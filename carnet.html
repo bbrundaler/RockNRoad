@@ -280,21 +280,24 @@
 .camp-intro{background:rgba(44,80,22,.05);border-left:3px solid var(--pyr);border-radius:0 6px 6px 0;padding:9px 13px;font-size:12px;color:var(--green);line-height:1.6;margin-bottom:14px;}
 @media(max-width:900px){.tips-grid{grid-template-columns:1fr!important;}}
 
-/* BANDEAU RÉGION FIXE */
-/* barre de région : bandeau sombre permanent (invariant, comme le chrome) */
-.region-topbar{display:none;position:sticky;top:56px;z-index:150;background:rgba(15,13,9,.97);
+/* MENU RÉGIONS UNIQUE (05/07) : mini-carte + recherche, remplace la barre des
+   22 onglets — un seul endroit, sticky, pas une copie par page-région. */
+.rnr-nav-wrap{position:sticky;top:56px;z-index:150;background:rgba(15,13,9,.97);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--gold-a20);
-  padding:0 20px;height:44px;align-items:center;overflow-x:auto;scrollbar-width:none;
-  white-space:nowrap;gap:4px;box-shadow:0 2px 12px rgba(0,0,0,.4);}
-.region-topbar::-webkit-scrollbar{display:none;}
-.region-topbar.visible{display:flex;}
-.rtb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:none;
-  border:1.5px solid rgba(255,255,255,.08);border-radius:20px;color:rgba(245,239,224,.45);
-  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;
-  white-space:nowrap;transition:all .18s;flex-shrink:0;}
-.rtb-btn:hover{border-color:var(--gold-a35);color:rgba(245,239,224,.8);}
-.rtb-btn.active{border-color:var(--gold);background:var(--gold-a10);color:var(--gold);}
+  border-bottom:1px solid var(--gold-a20);box-shadow:0 2px 12px rgba(0,0,0,.4);
+  padding:12px 20px;}
+.rnr-nav-search input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--surface-line);
+  background:var(--paper);color:var(--ink);font-size:13px;margin-bottom:10px;}
+.rnr-nav-body{display:flex;gap:14px;max-height:220px;}
+#rnr-nav-map{width:160px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);}
+#rnr-nav-liste{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+.rnr-nav-row{display:flex;align-items:center;padding:6px 12px;background:none;
+  border:1.5px solid rgba(255,255,255,.08);border-radius:20px;color:rgba(245,239,224,.65);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;
+  transition:all .18s;text-align:left;}
+.rnr-nav-row:hover{border-color:var(--gold-a35);color:rgba(245,239,224,.9);}
+.rnr-nav-row.active{border-color:var(--gold);background:var(--gold-a10);color:var(--gold);}
+.rnr-nav-count{font-size:10px;font-weight:700;opacity:.6;margin-left:8px;}
 
 /* Panneau info dynamique carte */
 #carte-info-panel{background:var(--paper);border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
@@ -494,6 +497,12 @@
 
   <!-- Barre de navigation : injectée par chrome.js. Quitter → window.logout() (défini plus bas). -->
 
+  <!-- NOUVEAU MENU RÉGIONS (05/07, retour Bruno) : mini-carte qui illumine +
+       recherche, à la place de la barre des 22 onglets (illisible à mesure que
+       le Carnet se remplit). Un seul endroit, construit une fois — plus de
+       copie par onglet (ancien système : addDynRegionTopbar). -->
+  <div id="rnr-nav-regions"></div>
+
 <!-- (Vue d'ensemble v1 supprimée — détrônée par le Hub, décision v9. Arrivée sans hash → région par défaut.) -->
 
 <!-- ══ RÉGIONS : 100 %% dynamiques (décision Bruno 12/06) — toutes générées par createRegionTab. ══ -->
@@ -604,6 +613,7 @@ async function chargeDecoupage22(){
     geo.features.forEach(f=>{ RNR_CODE2SLUG[f.properties.code]=f.properties.slug; });
     RNR_DECOUPAGE=window.RNR_CARTO_MOTEUR.creerDecoupage(geo);
     RNR_DECOUPAGE_OK=true;
+    window.RNR_GEOJSON_22=geo;   // conservé pour la mini-carte du menu régions (même donnée, pas une 2e copie)
   }catch(e){ console.warn('Carnet: rattachement GPS échoué',e); }
 }
 // Slug de région d'une fiche, par son GPS (vérité). Repli : ancienne colonne region.
@@ -948,8 +958,6 @@ async function loadDynamicFiches(){
         catch(err){ console.error('createRegionTab '+tabRk, err); }
         console.log('✓ Onglet région créé:', tabRk, '('+regionName+')');
       }
-      try{ addDynRegionTopbar(regionName, tabRk); }
-      catch(err){ console.error('addDynRegionTopbar '+tabRk, err); }
       try{ addCarteFilterBtn(regionName, tabRk); }
       catch(err){ console.error('addCarteFilterBtn '+tabRk, err); }
       try{ addFicheSelectOption(regionName, tabRk); }
@@ -961,21 +969,11 @@ async function loadDynamicFiches(){
       catch(err){ console.error('buildRecapView '+tabRk, err); }
     });
 
-    // Re-passe d'équité : chaque barre reçoit les boutons de TOUTES les régions
-    // (idempotent — les premières créées manquaient chez les suivantes).
-    Object.keys(byTab).forEach(rk=>{
-      if(byTab[rk] && byTab[rk].length){
-        try{ addDynRegionTopbar(nomRegion22(rk), rk); }catch(e){}
-      }
-    });
-
-    // Ordre DÉTERMINISTE : dans chaque barre, les régions triées alphabétiquement.
-    // Sans ce tri, chaque barre gardait son ordre d'arrivée → boutons qui « bougeaient ».
-    document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
-      [...slot.children]
-        .sort((a,b)=>(a.dataset.rname||a.textContent).localeCompare(b.dataset.rname||b.textContent,'fr'))
-        .forEach(btn=>slot.appendChild(btn));
-    });
+    // Sujet (05/07, retour Bruno) : la barre des 22 onglets devenait illisible
+    // à mesure que le Carnet se remplissait — remplacée par UNE mini-carte qui
+    // illumine + recherche, construite une seule fois (pas une copie par onglet
+    // comme l'ancien addDynRegionTopbar).
+    try{ construitMenuRegionsUnique(byTab); }catch(err){ console.error('construitMenuRegionsUnique',err); }
 
     // Régions devenues vides (dernière fiche supprimée) : état vide propre
     document.querySelectorAll('[data-region-tab]').forEach(sec=>{
@@ -1566,9 +1564,6 @@ function createRegionTab(tabId, rk, regionName, lieux){
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
-    <div class="region-topbar visible" id="rtb-bar-${rk}">
-      <div id="rtb-dyn-${rk}" class="rtb-dyn-slot" style="display:contents;"></div>
-    </div>
     <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px 28px 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
       <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
       <a href="horizon.html?region=${rk}" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon"
@@ -1739,19 +1734,72 @@ function makeNuitCard(l){
   </div>`;
 }
 
-function addDynRegionTopbar(regionName, regionKey){
-  const couleur=couleurRegion22(regionKey)||'var(--gold)';
-  document.querySelectorAll('.rtb-dyn-slot').forEach(slot=>{
-    const parentId=slot.id.replace('rtb-dyn-','');
-    if(!document.getElementById('rtb-dyn-'+parentId+'-'+regionKey)){
+// ═══ NOUVEAU MENU RÉGIONS (05/07, retour Bruno) : mini-carte + recherche ═══
+// Remplace la barre des 22 onglets, devenue illisible à mesure que le Carnet
+// se remplit. Construit UNE FOIS (pas une copie par onglet comme l'ancien
+// addDynRegionTopbar) — réutilise le MÊME GeoJSON que le rattachement GPS
+// (window.RNR_GEOJSON_22), pas une 2e donnée à maintenir.
+let RNR_NAV_MAP=null, RNR_NAV_LAYERS={};
+function construitMenuRegionsUnique(byTab){
+  const host=document.getElementById('rnr-nav-regions');
+  if(!host || host.dataset.built) return;   // une seule fois — les rechargements de fiches ne reconstruisent pas le menu
+  host.dataset.built='1';
+  const regionsAvecFiches=Object.keys(byTab).filter(rk=>byTab[rk]&&byTab[rk].length);
+  host.innerHTML=`
+    <div class="rnr-nav-wrap">
+      <div class="rnr-nav-search">
+        <input type="text" id="rnr-nav-search-input" placeholder="🔎 Chercher une région…" oninput="rnrNavFiltre(this.value)">
+      </div>
+      <div class="rnr-nav-body">
+        <div id="rnr-nav-map"></div>
+        <div id="rnr-nav-liste"></div>
+      </div>
+    </div>`;
+  const liste=document.getElementById('rnr-nav-liste');
+  regionsAvecFiches
+    .sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr'))
+    .forEach(rk=>{
+      const col=couleurRegion22(rk)||'var(--gold)';
       const btn=document.createElement('button');
-      btn.className='rtb-btn';btn.id='rtb-dyn-'+parentId+'-'+regionKey;
-      // Pastille de couleur signature + nom (pas d'emoji : sobre, pro).
-      btn.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${couleur};margin-right:7px;vertical-align:middle;"></span>${regionName}`;
-      btn.dataset.rname=regionName; // clé de tri (sans la pastille)
-      btn.setAttribute('onclick',"showTab('dyn-"+regionKey+"')");
-      slot.appendChild(btn);
-    }
+      btn.className='rnr-nav-row';
+      btn.dataset.rname=nomRegion22(rk);
+      btn.dataset.rk=rk;
+      btn.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:8px;flex-shrink:0;"></span>`+
+        `<span style="flex:1;text-align:left;">${nomRegion22(rk)}</span>`+
+        `<span class="rnr-nav-count">${byTab[rk].length}</span>`;
+      btn.onclick=()=>{ showTab('dyn-'+rk); rnrNavSurbrille(rk); };
+      liste.appendChild(btn);
+    });
+  if(window.RNR_GEOJSON_22 && window.L){
+    RNR_NAV_MAP=L.map('rnr-nav-map',{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false});
+    const layer=L.geoJSON(window.RNR_GEOJSON_22,{
+      style: f=>{
+        const rk=f.properties.slug;
+        const aDesFiches=regionsAvecFiches.includes(rk);
+        return {fillColor: aDesFiches?(couleurRegion22(rk)||'#c8a84b'):'#888888', fillOpacity: aDesFiches?0.55:0.12, color:'#1a1510', weight:1};
+      },
+      onEachFeature:(f,lyr)=>{
+        const rk=f.properties.slug;
+        RNR_NAV_LAYERS[rk]=lyr;
+        if(regionsAvecFiches.includes(rk)){
+          lyr.on('click',()=>{ showTab('dyn-'+rk); rnrNavSurbrille(rk); });
+          lyr.on('mouseover',()=>lyr.setStyle({fillOpacity:0.85}));
+          lyr.on('mouseout',()=>lyr.setStyle({fillOpacity:0.55}));
+          lyr.bindTooltip(nomRegion22(rk)+' · '+byTab[rk].length+' fiche'+(byTab[rk].length>1?'s':''));
+        }
+      }
+    }).addTo(RNR_NAV_MAP);
+    try{ RNR_NAV_MAP.fitBounds(layer.getBounds(), {padding:[4,4]}); }catch(e){}
+  }
+}
+function rnrNavSurbrille(rk){
+  document.querySelectorAll('.rnr-nav-row').forEach(b=>b.classList.toggle('active', b.dataset.rk===rk));
+}
+function rnrNavFiltre(texte){
+  const q=(texte||'').toLowerCase().trim();
+  document.querySelectorAll('.rnr-nav-row').forEach(b=>{
+    const match=!q || (b.dataset.rname||'').toLowerCase().includes(q);
+    b.style.display=match?'flex':'none';
   });
 }
 
@@ -2049,13 +2097,8 @@ window.showTab=function(id){
   if(id==='carte' && allLieux.length) setTimeout(()=>initCarteGlobal(),80);
   if(id==='fiche'){ setTimeout(()=>{ initFicheGlobal(); buildFicheContent(currentFicheRegion); },80); }
 
-  // Sync de l'état actif sur TOUTES les barres de régions (fixes + dynamiques)
-  document.querySelectorAll('.region-topbar').forEach(tb=>{
-    tb.querySelectorAll('.rtb-btn').forEach(btn=>{
-      const oc=btn.getAttribute('onclick')||'';
-      btn.classList.toggle('active', oc.includes("'"+id+"'"));
-    });
-  });
+  // Sync de l'état actif sur le nouveau menu régions (mini-carte + liste)
+  if(id.startsWith('dyn-')) rnrNavSurbrille(id.slice(4));
 };
 
 
