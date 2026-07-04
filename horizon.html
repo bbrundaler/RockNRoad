@@ -3654,7 +3654,14 @@ function brancheClicExterieur(){
       if(bd) bd.classList.remove('ouvert');
     }
     const explo=document.getElementById('hz-explo');
-    if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo') && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-repos')){
+    // Sujet 1 (04/07) : la barre de rayon vient d'ouvrir le swipe — le clic qui
+    // suit son relâchement (natif du navigateur, juste après notre pointerup)
+    // ne doit pas le refermer aussitôt. Deux filets : la barre est un endroit
+    // légitime (comme #hz-explo/#hz-carte-repos), ET le drapeau temporisé
+    // HZ_ROND_VIENT_DE_FINIR couvre toute zone future ajoutée près de la carte.
+    if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo')
+       && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-repos')
+       && !e.target.closest('.hz-rond-marqueur') && !HZ_ROND_VIENT_DE_FINIR){
       fermeExplo();
     }
   });
