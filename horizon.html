@@ -1839,12 +1839,7 @@ function hzFichesDansViewport(){
 function hzRevueZoneVisible(){
   hzRondSignalerFin();
   const fiches=hzFichesDansViewport();
-  const b=(HZ_CARTE_COIN && HZ_CARTE_COIN.getBounds) ? HZ_CARTE_COIN.getBounds() : null;
-  console.log('[DEBUG revue] fiches trouvées =', fiches.length,
-    ' HZ_FICHES total =', (HZ_FICHES||[]).length,
-    ' hz-coin-carte =', document.body.classList.contains('hz-coin-carte'),
-    ' bounds =', b ? (b.getSouthWest().lat.toFixed(2)+','+b.getSouthWest().lng.toFixed(2)+' → '+b.getNorthEast().lat.toFixed(2)+','+b.getNorthEast().lng.toFixed(2)) : 'aucune');
-  if(!fiches.length) return;   // rien de visible à l'écran pour l'instant : rien à ouvrir
+  if(!fiches.length) return false;   // rien de visible à l'écran pour l'instant : rien à ouvrir
   HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
   const regions=[...new Set(fiches.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
   if(regions.length) HZ_LIEUX=regions;
@@ -1861,6 +1856,7 @@ function hzRevueZoneVisible(){
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();
+  return true;
 }
 // Couchage le plus proche du centre, dans TOUTES les fiches (pas juste celles
 // du rond) — sert au message « élargir le cercle » quand la zone n'en a aucun.
@@ -3274,21 +3270,24 @@ function choisitTheme(cle){
     peintLieuxSurCarte();
   }
   rendThemesChips();
-  const etapeLieu=document.getElementById('hz-geste-lieu');
-  const carte=document.querySelector('.francemap');
+  const info=document.getElementById('hz-geste-info');
   if(HZ_THEME){
-    if(etapeLieu) etapeLieu.style.display='block';
-    if(carte) carte.classList.add('attend-lieu');
+    // Sujet envie/dormir (05/07, feu vert Bruno) : plus d'étape « choisissez
+    // 1 ou 2 régions » — l'envie filtre directement la ZONE courante (rond si
+    // un est tracé, sinon ce qui est visible à l'écran), même logique que
+    // « Passer les fiches en revue » (réemployée telle quelle, un seul
+    // comportement). Message clair si rien dans cette zone plutôt qu'un bouton
+    // caché ou un silence — l'utilisateur sait quoi faire (zoomer, se déplacer).
     coloreCartePourTheme(HZ_THEME);   // estompe les régions sans fiche du thème
+    const trouve=hzRevueZoneVisible();
+    if(info) info.textContent = trouve ? '' : 'Aucune fiche « '+themeLibelle(HZ_THEME)+' » visible dans cette zone — zoome arrière ou déplace-toi.';
   }else{
-    if(etapeLieu) etapeLieu.style.display='none';
-    if(carte) carte.classList.remove('attend-lieu');
     rallumeToutesRegions();           // plus de thème → carte entièrement vivante
     HZ_LIEUX=[]; rendLieuxChoisis(); peintLieuxSurCarte();
     construitCoin();   // thème retiré → la bande se vide
+    if(info) info.textContent='';
   }
   sauveGeste();
-  majGesteInfo();
   majRecommencer();
 }
 
@@ -5109,17 +5108,12 @@ function majRecommencer(){
 function rejoueGeste(){
   rendThemesChips();
   if(HZ_THEME){
-    const etapeLieu=document.getElementById('hz-geste-lieu');
-    const carte=document.querySelector('.francemap');
-    if(etapeLieu) etapeLieu.style.display='block';
-    if(carte) carte.classList.add('attend-lieu');
     coloreCartePourTheme(HZ_THEME);   // recolorer selon le thème restauré
     rendLieuxChoisis();
     peintLieuxSurCarte();
     HZ_SEUIL_VU_SIG=HZ_THEME;
     if(HZ_LIEUX.length) construitCoin();
   }
-  majGesteInfo();
   majRecommencer();
 }
 
