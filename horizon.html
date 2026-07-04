@@ -1836,6 +1836,11 @@ function hzFichesDansViewport(){
   });
 }
 function hzRevueZoneVisible(){
+  // Même filet que le rond (05/07 v2, retour Bruno) : ce bouton vit hors de
+  // .hz-rond-marqueur, donc le clic natif qui suit son activation n'était pas
+  // couvert par le filet anti-fermeture posé pour la barre — le swipe
+  // s'ouvrait puis se refermait aussitôt (le fameux "flash").
+  hzRondSignalerFin();
   const fiches=hzFichesDansViewport();
   if(!fiches.length) return;   // rien de visible à l'écran pour l'instant : rien à ouvrir
   HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
@@ -3768,7 +3773,7 @@ function brancheClicExterieur(){
     // HZ_ROND_VIENT_DE_FINIR couvre toute zone future ajoutée près de la carte.
     if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo')
        && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-repos')
-       && !e.target.closest('.hz-rond-marqueur') && !HZ_ROND_VIENT_DE_FINIR){
+       && !e.target.closest('.hz-rond-marqueur') && !e.target.closest('.hz-ov-rond') && !HZ_ROND_VIENT_DE_FINIR){
       fermeExplo();
     }
   });
