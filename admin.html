@@ -229,40 +229,13 @@ input.auto-filled{background:var(--gold-a10);border-color:rgba(200,168,75,.4);}
         </select>
       </div>
       <div class="fg">
-        <label>Région *</label>
-        <select id="region" onchange="updatePreview()">
-          <option value="">— Choisir —</option>
-          <option value="Alsace">🥨 Alsace</option>
-          <option value="Aquitaine">🍷 Aquitaine</option>
-          <option value="Auvergne">🌋 Auvergne</option>
-          <option value="Basse-Normandie">🏰 Basse-Normandie</option>
-          <option value="Bourgogne">🍇 Bourgogne</option>
-          <option value="Bretagne">🦞 Bretagne</option>
-          <option value="Centre">🏰 Centre</option>
-          <option value="Champagne-Ardenne">🥂 Champagne-Ardenne</option>
-          <option value="Corse">🏝️ Corse</option>
-          <option value="Franche-Comté">⛰️ Franche-Comté</option>
-          <option value="Haute-Normandie">⛵ Haute-Normandie</option>
-          <option value="Île-de-France">🗼 Île-de-France</option>
-          <option value="Languedoc-Roussillon">🌻 Languedoc-Roussillon</option>
-          <option value="Limousin">🌿 Limousin</option>
-          <option value="Lorraine">⚜️ Lorraine</option>
-          <option value="Midi-Pyrénées">🏔️ Midi-Pyrénées</option>
-          <option value="Nord-Pas-de-Calais">🌷 Nord-Pas-de-Calais</option>
-          <option value="Pays de la Loire">🌊 Pays de la Loire</option>
-          <option value="Picardie">🌾 Picardie</option>
-          <option value="Poitou-Charentes">🐚 Poitou-Charentes</option>
-          <option value="Provence-Alpes-Côte-d-Azur">☀️ Provence-Alpes-Côte d'Azur</option>
-          <option value="Rhône-Alpes">⛷️ Rhône-Alpes</option>
-          <option value="Pyrenees">🏔️ Pyrénées (multi-régions)</option>
-          <option value="Atlantique">🌊 Atlantique (multi-régions)</option>
-        </select>
+        <label>Région (calculée depuis le GPS)</label>
+        <div id="regionCalculee" style="padding:9px 11px;border:1.5px solid var(--surface-line);border-radius:8px;color:var(--ink-dim);font-size:13px;">— renseigne la position ci-dessous —</div>
       </div>
-      <div class="fg"><label>Sous-région / Dept</label><input type="text" id="sousRegion" placeholder="Haut-Rhin (68), Gironde (33)..." oninput="autoRegionFromDept();updatePreview()"></div>
+      <div class="fg"><label>Sous-région / Dept</label><input type="text" id="sousRegion" placeholder="Haut-Rhin (68), Gironde (33)..." oninput="updatePreview()"></div>
       <div class="fg full"><label>Description</label><textarea id="description" placeholder="Ce qu'on y fait, pourquoi c'est sympa, les bons plans..." oninput="updatePreview()"></textarea></div>
       <div class="fg full"><label>💬 Commentaire famille — pourquoi ce lieu est dans notre carnet</label><textarea id="commentaire" placeholder="Ex: Découvert lors d'un article sur les plus beaux campings d'Alsace, idéal avec le Teardrop car grands emplacements ombragés..." oninput="updatePreview()" style="min-height:65px;"></textarea></div>
       <div class="fg full"><label>💡 Conseil pratique</label><input type="text" id="conseil" placeholder="Partir tôt le matin, parking gratuit 500m..." oninput="updatePreview()"></div>
-      <div class="fg"><label>Tag badge (affiché sur photo)</label><input type="text" id="badge" placeholder="Camping 2★ · Haut-Rhin" oninput="updatePreview()"></div>
     </div>
   </div>
 
@@ -462,8 +435,8 @@ input.auto-filled{background:var(--gold-a10);border-color:rgba(200,168,75,.4);}
   <div class="form-card">
     <div class="fc-title">📍 GPS <span style="font-size:9px;color:var(--gold);font-weight:600;margin-left:4px;">AUTO si import</span></div>
     <div class="gps-row">
-      <div class="fg"><label>Latitude</label><input type="number" id="lat" placeholder="48.045" step="0.000001" onchange="refreshMap()"></div>
-      <div class="fg"><label>Longitude</label><input type="number" id="lng" placeholder="7.178" step="0.000001" onchange="refreshMap()"></div>
+      <div class="fg"><label>Latitude</label><input type="number" id="lat" placeholder="48.045" step="0.000001" onchange="refreshMap();updatePreview()"></div>
+      <div class="fg"><label>Longitude</label><input type="number" id="lng" placeholder="7.178" step="0.000001" onchange="refreshMap();updatePreview()"></div>
       <button class="gps-btn" onclick="geocodeAddress()">📍 Geocoder</button>
     </div>
     <div class="map-mini" id="mapMini"><iframe id="mapFrame" loading="lazy"></iframe></div>
@@ -755,7 +728,7 @@ async function importFromMaps(){
   });
   const ar=document.getElementById('accesRemorque'); if(ar) ar.checked=true;
 
-  ['nom','adresse','tel','siteWeb','description','dogInfo','badge','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
+  ['nom','adresse','tel','siteWeb','description','dogInfo','sousRegion','lat','lng','noteGoogle'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.value='';el.classList.remove('auto-filled');}
   });
@@ -1104,114 +1077,12 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
       else if(dept&&dept.length<30) fillField('sousRegion',dept);
     }
 
-    // ── Auto-région depuis GPS ────────────────────────────────────────────────
-
-// ── TABLE DÉPARTEMENT → ANCIENNE RÉGION (source officielle) ─────────────
-const DEPT_TO_REGION = {
-  // Alsace
-  '67':'Alsace','68':'Alsace',
-  // Aquitaine
-  '24':'Aquitaine','33':'Aquitaine','40':'Aquitaine','47':'Aquitaine','64':'Aquitaine',
-  // Auvergne
-  '03':'Auvergne','15':'Auvergne','43':'Auvergne','63':'Auvergne',
-  // Basse-Normandie
-  '14':'Basse-Normandie','50':'Basse-Normandie','61':'Basse-Normandie',
-  // Bourgogne
-  '21':'Bourgogne','58':'Bourgogne','71':'Bourgogne','89':'Bourgogne',
-  // Bretagne
-  '22':'Bretagne','29':'Bretagne','35':'Bretagne','56':'Bretagne',
-  // Centre
-  '18':'Centre','28':'Centre','36':'Centre','37':'Centre','41':'Centre','45':'Centre',
-  // Champagne-Ardenne
-  '08':'Champagne-Ardenne','10':'Champagne-Ardenne','51':'Champagne-Ardenne','52':'Champagne-Ardenne',
-  // Corse
-  '2A':'Corse','2B':'Corse',
-  // Franche-Comté
-  '25':'Franche-Comté','39':'Franche-Comté','70':'Franche-Comté','90':'Franche-Comté',
-  // Haute-Normandie
-  '27':'Haute-Normandie','76':'Haute-Normandie',
-  // Île-de-France
-  '75':'Île-de-France','77':'Île-de-France','78':'Île-de-France','91':'Île-de-France',
-  '92':'Île-de-France','93':'Île-de-France','94':'Île-de-France','95':'Île-de-France',
-  // Languedoc-Roussillon
-  '11':'Languedoc-Roussillon','30':'Languedoc-Roussillon','34':'Languedoc-Roussillon',
-  '48':'Languedoc-Roussillon','66':'Languedoc-Roussillon',
-  // Limousin
-  '19':'Limousin','23':'Limousin','87':'Limousin',
-  // Lorraine
-  '54':'Lorraine','55':'Lorraine','57':'Lorraine','88':'Lorraine',
-  // Midi-Pyrénées
-  '09':'Midi-Pyrénées','12':'Midi-Pyrénées','31':'Midi-Pyrénées','32':'Midi-Pyrénées',
-  '46':'Midi-Pyrénées','65':'Midi-Pyrénées','81':'Midi-Pyrénées','82':'Midi-Pyrénées',
-  // Nord-Pas-de-Calais
-  '59':'Nord-Pas-de-Calais','62':'Nord-Pas-de-Calais',
-  // Pays de la Loire
-  '44':'Pays de la Loire','49':'Pays de la Loire','53':'Pays de la Loire',
-  '72':'Pays de la Loire','85':'Pays de la Loire',
-  // Picardie
-  '02':'Picardie','60':'Picardie','80':'Picardie',
-  // Poitou-Charentes
-  '16':'Poitou-Charentes','17':'Poitou-Charentes','79':'Poitou-Charentes','86':'Poitou-Charentes',
-  // Provence-Alpes-Côte d'Azur
-  '04':'Provence-Alpes-Côte-d-Azur','05':'Provence-Alpes-Côte-d-Azur',
-  '06':'Provence-Alpes-Côte-d-Azur','13':'Provence-Alpes-Côte-d-Azur',
-  '83':'Provence-Alpes-Côte-d-Azur','84':'Provence-Alpes-Côte-d-Azur',
-  // Rhône-Alpes
-  '01':'Rhône-Alpes','07':'Rhône-Alpes','26':'Rhône-Alpes','38':'Rhône-Alpes',
-  '42':'Rhône-Alpes','69':'Rhône-Alpes','73':'Rhône-Alpes','74':'Rhône-Alpes',
-  // DOM
-  '971':'Guadeloupe','972':'Martinique','973':'Guyane','974':'La Réunion','976':'Mayotte'
-};
-
-// Détecte le numéro de département depuis le texte de sous-région
-function deptToRegion(sousRegionText){
-  if(!sousRegionText) return '';
-  // Cherche un numéro entre parenthèses : ex "Hautes-Pyrénées (65)"
-  const m=sousRegionText.match(/\((\d{1,3}[AB]?)\)/);
-  if(m){
-    const num=m[1].padStart(2,'0');
-    return DEPT_TO_REGION[num]||DEPT_TO_REGION[m[1]]||'';
-  }
-  return '';
-}
 
     if(p.geometry?.location){
-      const lat=p.geometry.location.lat, lng=p.geometry.location.lng;
-      const regionEl=document.getElementById('region');
-      if(!regionEl.value){
-        let autoRegion='';
-        // Bounding boxes par ancienne région (fallback si pas de département)
-        if(lng>6.5&&lng<8.3&&lat>47.3&&lat<49.2) autoRegion='Alsace';
-        else if(lng>6&&lng<7.7&&lat>47&&lat<49) autoRegion='Lorraine';
-        else if(lng>5.5&&lat>45&&lat<48&&lng<7.5) autoRegion='Franche-Comté';
-        else if(lat<43.5&&lng>-2&&lng<3.5) autoRegion='Midi-Pyrénées';
-        else if(lng<-0.5&&lat>43&&lat<46.5) autoRegion='Aquitaine';
-        else if(lng>3.5&&lat>46.5&&lat<48&&lng<5.5) autoRegion='Bourgogne';
-        else if(lat>50&&lng>1.5&&lng<4) autoRegion='Nord-Pas-de-Calais';
-        else if(lat>49&&lng<4&&lat<50) autoRegion='Picardie';
-        else if(lat>48.5&&lng>1.5&&lng<3.5) autoRegion='Île-de-France';
-        else if(lng>5.5&&lat>44&&lat<46.5) autoRegion='Rhône-Alpes';
-        else if(lng>2&&lat>43&&lat<46&&lng<5) autoRegion='Languedoc-Roussillon';
-        else if(lng>4.5&&lat>43&&lat<45) autoRegion='Provence-Alpes-Côte-d-Azur';
-        else if(lat>47.5&&lng>-5&&lng<-0.5) autoRegion='Bretagne';
-        else if(lat>48.5&&lng>-2&&lng<2) autoRegion='Haute-Normandie';
-        else if(lat>48&&lng>-2&&lng<1) autoRegion='Basse-Normandie';
-        else if(lng>0&&lat>47&&lat<48.5&&lng<3) autoRegion='Centre';
-        else if(lng>1&&lat>46&&lat<48&&lng<3) autoRegion='Centre';
-        else if(lat>45&&lat<47&&lng>1&&lng<3) autoRegion='Auvergne';
-        else if(lng<1&&lat>45&&lat<47.5) autoRegion='Poitou-Charentes';
-        else if(lng>1&&lat>45&&lat<46.5&&lng<3) autoRegion='Limousin';
-        // Priorité 1 : mapping département depuis sous-région
-        const sousRegionVal=document.getElementById('sousRegion')?.value||'';
-        const regionFromDept=deptToRegion(sousRegionVal);
-        if(regionFromDept){
-          regionEl.value=regionFromDept;
-        } else if(autoRegion){
-          for(const opt of regionEl.options){
-            if(opt.value===autoRegion||opt.text.includes(autoRegion)){regionEl.value=opt.value;break;}
-          }
-        }
-      }
+      // Sujet (05/07, cohérence création/crayon) : plus de devinette par
+      // rectangles ni de dropdown — la région affichée vient UNIQUEMENT du
+      // calcul GPS (RNR_DECOUPAGE, même moteur que carnet.html/horizon.html).
+      // Voir updatePreview() pour le recalcul live.
     }
 
     // ── Description auto (phrase maison via tags.js — remplace editorial_summary) ──
@@ -1337,14 +1208,6 @@ function deptToRegion(sousRegionText){
     if(p.opening_hours?.open_now!==undefined) b.innerHTML+=`<span class="ir-badge">${p.opening_hours.open_now?'✅ Ouvert':'🔴 Fermé'}</span>`;
     if(autoTags.length) b.innerHTML+=`<span class="ir-badge">🏷️ ${[...new Set(autoTags)].length} tags auto</span>`;
     if(document.getElementById('description').value) b.innerHTML+=`<span class="ir-badge">📝 Description</span>`;
-
-    // ── Badge auto ────────────────────────────────────────────────────────────
-    if(!document.getElementById('badge').value){
-      const sous=document.getElementById('sousRegion').value;
-      const t=document.getElementById('type').value;
-      const tl={Site:'Site',Camping:'Camping',Plage:'Plage',Randonnee:'Randonnée',Restaurant:'Restaurant',Halte:'Halte'};
-      document.getElementById('badge').value=(tl[t]||t)+(sous?' · '+sous:'');
-    }
 
     updatePreview();
     return true;
@@ -1531,22 +1394,23 @@ function previewPhoto(e){
 
 // ── PRÉVISUALISATION ─────────────────────────────────────────────────────────
 
-// ── Auto-région depuis département saisi manuellement ───────────────────
-function autoRegionFromDept(){
-  const sousRegionVal=document.getElementById('sousRegion')?.value||'';
-  const regionEl=document.getElementById('region');
-  if(!regionEl||regionEl.value) return; // ne pas écraser si déjà choisi
-  const r=deptToRegion(sousRegionVal);
-  if(r) regionEl.value=r;
-}
-
 function updatePreview(){
   const nom=document.getElementById('nom').value||'Nom du lieu';
-  const region=document.getElementById('region').value||'Région';
   const type=document.getElementById('type').value||'Type';
   const desc=document.getElementById('description').value;
   const comment=document.getElementById('commentaire').value;
-  const badge=document.getElementById('badge').value||(type+' · '+region);
+  // Région calculée EN DIRECT depuis le GPS (RNR_DECOUPAGE, même moteur que
+  // carnet.html/horizon.html) — plus de dropdown à choisir ni de texte figé.
+  const latVal=parseFloat(document.getElementById('lat').value);
+  const lngVal=parseFloat(document.getElementById('lng').value);
+  let region='Région à géolocaliser';
+  if(RNR_DECOUPAGE && Number.isFinite(latVal) && Number.isFinite(lngVal)){
+    const zone=RNR_DECOUPAGE.zoneDe(latVal,lngVal);
+    if(zone) region=zone.nom;
+  }
+  const rcEl=document.getElementById('regionCalculee');
+  if(rcEl) rcEl.textContent=region;
+  const badge=type+' · '+region;
   const noteG=document.getElementById('noteGoogle').value;
   const col=RC[region]||'var(--ink-dim)';
 
@@ -1583,9 +1447,8 @@ function updatePreview(){
 // ── SAVE ──────────────────────────────────────────────────────────────────────
 async function saveFiche(){
   const nom=document.getElementById('nom').value.trim();
-  const region=document.getElementById('region').value;
   const type=document.getElementById('type').value;
-  if(!nom||!region||!type){showToast('Nom, Type et Région obligatoires','error');return;}
+  if(!nom||!type){showToast('Nom et Type obligatoires','error');return;}
   // Sujet (05/07, décision Bruno) : plus jamais de fiche invisible du menu
   // envie — au moins une case cochée, sauf Camping/Halte (déjà couverts par
   // le couchage, champ Type + monde_nuit, pas besoin de doublonner).
@@ -1602,6 +1465,14 @@ async function saveFiche(){
     showToast('Latitude et longitude obligatoires (cœur de la carte et des votes)','error');
     document.getElementById('lat').focus();
     return;
+  }
+  // Sujet (cohérence création/crayon) : plus de dropdown — la région écrite
+  // en base est UNIQUEMENT celle calculée en direct depuis le GPS (même
+  // moteur que carnet.html/horizon.html), jamais un texte choisi à la main.
+  let region='Autre';
+  if(RNR_DECOUPAGE){
+    const zone=RNR_DECOUPAGE.zoneDe(latVal,lngVal);
+    if(zone) region=zone.nom;
   }
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='⏳ Enregistrement...';
@@ -1623,7 +1494,6 @@ async function saveFiche(){
       description:document.getElementById('description').value||null,
       commentaire:document.getElementById('commentaire').value||null,
       conseil:document.getElementById('conseil').value||null,
-      badge_text:document.getElementById('badge').value||null,
       dog_etat:dv,
       dog_source:dogSource,
       dog_friendly:dv==='oui'?true:dv==='non'?false:null,
@@ -1659,15 +1529,7 @@ async function saveFiche(){
       contact_proprio:document.getElementById('contactProprio')?.value||null,
     });
     if(error)throw error;
-    // Sujet (05/07) : la popup doit pointer vers la région RÉELLE (GPS),
-    // pas celle du menu déroulant — sinon "vas voir en Bourgogne" alors que
-    // la fiche est réellement classée en Franche-Comté.
-    let regionPourConfirmation=region;
-    if(RNR_DECOUPAGE){
-      const zoneReelle=RNR_DECOUPAGE.zoneDe(latVal, lngVal);
-      if(zoneReelle) regionPourConfirmation=zoneReelle.nom;
-    }
-    showConfirmation(nom, regionPourConfirmation, type);
+    showConfirmation(nom, region, type);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
     // Incrémenter le compteur local

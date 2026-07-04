@@ -174,6 +174,10 @@
 .em-dog-btn.active-conditions{background:var(--st-warn-bg);border-color:var(--st-warn-line);color:var(--st-warn-ink);}
 .em-dog-btn.active-non{background:var(--st-bad-bg);border-color:var(--st-bad-ink);color:var(--st-bad-ink);}
 .em-dog-btn.active-inconnu{background:var(--st-na-bg);border-color:var(--gold);color:var(--st-na-ink);}
+.em-envie-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.em-envie-chip{padding:6px 12px;border-radius:20px;border:1.5px solid var(--surface-line);background:var(--paper);font-size:11.5px;cursor:pointer;transition:all .15s;color:var(--ink-dim);}
+.em-envie-chip.on{background:var(--gold-a20);border-color:var(--gold);color:var(--ink);font-weight:700;}
+#em-mini-map{height:150px;border-radius:8px;overflow:hidden;margin-bottom:6px;border:1.5px solid var(--surface-line);}
 .em-dog-check{background:var(--st-na-bg);border:1px solid var(--gold-a35);color:var(--st-na-ink);font-size:9.5px;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
 .em-dog-check:hover{background:var(--gold-a20);}
 .em-footer{padding:16px 24px;border-top:1px solid var(--surface-line);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--paper);}
@@ -373,6 +377,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
+<script src="themes-horizon.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script></head>
 <body>
@@ -432,6 +437,26 @@
         <div class="em-fg">
           <label class="em-label">Sous-région</label>
           <input class="em-input" id="em-sous-region" type="text" placeholder="ex: Haut-Rhin">
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Position GPS · glisser le repère pour corriger</label>
+          <div id="em-mini-map"></div>
+          <div style="display:flex;gap:8px;">
+            <input class="em-input" id="em-lat" type="number" step="0.000001" placeholder="Latitude" oninput="emSyncMarkerDepuisChamps()">
+            <input class="em-input" id="em-lng" type="number" step="0.000001" placeholder="Longitude" oninput="emSyncMarkerDepuisChamps()">
+          </div>
+        </div>
+        <div class="em-fg full">
+          <label class="em-label">Envie <button type="button" class="em-dog-check" onclick="emSuggereEnvies()">🔮 Suggérer</button></label>
+          <div class="em-envie-grid" id="em-envies-grid">
+            <span class="em-envie-chip" data-envie="culture" onclick="emToggleEnvie(this)">🏛️ Culture</span>
+            <span class="em-envie-chip" data-envie="nature" onclick="emToggleEnvie(this)">🌿 Nature</span>
+            <span class="em-envie-chip" data-envie="mer" onclick="emToggleEnvie(this)">🌊 Mer</span>
+            <span class="em-envie-chip" data-envie="montagne" onclick="emToggleEnvie(this)">⛰️ Montagne</span>
+            <span class="em-envie-chip" data-envie="sport" onclick="emToggleEnvie(this)">🥾 Sport</span>
+            <span class="em-envie-chip" data-envie="loisirs" onclick="emToggleEnvie(this)">🎡 Loisirs</span>
+            <span class="em-envie-chip" data-envie="terroir" onclick="emToggleEnvie(this)">🧺 Terroir</span>
+          </div>
         </div>
         <div class="em-fg full">
           <label class="em-label">Description</label>
@@ -1285,7 +1310,7 @@ function updateCarteInfoPanel(l){
     <div style="flex:1;display:flex;flex-direction:column;">
       <div class="cip-main" style="flex:1;">
         <div class="cip-name">${l.nom||'—'}</div>
-        <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||''} · ${l.region||''}</div>
+        <div class="cip-meta">${l.type||'Lieu'} · ${l.sous_region||''} · ${nomRegion22(l._regionSvg||regionSlugDe(l))}</div>
         <div class="cip-row">${noteG}${noteF}${distHtml}</div>
         ${l.dog_info?`<div style="font-size:10px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-top:8px;font-style:italic;">${l.dog_info.slice(0,100)}</div>`:''}
         ${tags?`<div class="cip-tags">${tags}</div>`:''}
@@ -1314,7 +1339,7 @@ function initCarteGlobal(){
     const noteF=l.note_famille?'★'.repeat(l.note_famille)+' ':'' ;
     const popup=`<div style="font-family:Inter,sans-serif;min-width:160px;">
       <strong style="font-size:13px;">${l.nom||'—'}</strong><br>
-      <span style="font-size:10px;color:var(--ink-dim);">${l.type||'Lieu'} · ${l.region||''}</span><br>
+      <span style="font-size:10px;color:var(--ink-dim);">${l.type||'Lieu'} · ${nomRegion22(rk)}</span><br>
       ${l.note?`<span style="font-size:10px;color:var(--green);font-weight:700;">★ ${l.note}</span> `:''}
       ${noteF?`<span style="font-size:10px;color:var(--gold-deep);font-weight:700;">${noteF}🐾</span>`:''}
       <br><span style="font-size:10px;background:var(--bg);color:var(--ink-dim);padding:1px 6px;border-radius:8px;font-weight:700;">${DOG_LABELS[dogEtatDe(l)]}</span>
@@ -1770,6 +1795,66 @@ let editingLieuId = null;
 let emDogVal = 'inconnu';
 let emDogSource = 'google';
 let emStarVal = 0;
+let emEnviesVal = [];
+let emMiniMap = null, emMiniMarker = null;
+
+// ── ENVIE (cohérence avec admin.html — même grille, même moteur) ────────────
+function emToggleEnvie(el){
+  const envie = el.dataset.envie;
+  el.classList.toggle('on');
+  if(emEnviesVal.includes(envie)) emEnviesVal = emEnviesVal.filter(t=>t!==envie);
+  else emEnviesVal.push(envie);
+}
+// Réemploie EXACTEMENT themesDeFiche (comme admin.html) — un seul moteur de
+// classement, jamais une copie. N'ajoute que les suggestions, ne décoche rien.
+function emSuggereEnvies(){
+  if(!window.RNR_THEMES){ showToast('themes-horizon.js absent','error'); return; }
+  const l = allLieux.find(x => x.id === editingLieuId || x.id === String(editingLieuId));
+  const ficheProvisoire = {
+    nom: document.getElementById('em-nom').value,
+    lat: parseFloat(document.getElementById('em-lat').value)||null,
+    lng: parseFloat(document.getElementById('em-lng').value)||null,
+    tags: (l && l.tags) || [],
+    type: document.getElementById('em-type').value,
+    monde_nuit: (l && l.monde_nuit) || false
+  };
+  let suggestions=[];
+  try{ suggestions = RNR_THEMES.themesDeFiche(ficheProvisoire)||[]; }catch(e){ suggestions=[]; }
+  suggestions.forEach(envie=>{
+    if(envie==='nuit') return;
+    const el=document.querySelector('#em-envies-grid [data-envie="'+envie+'"]');
+    if(el && !el.classList.contains('on')){ el.classList.add('on'); if(!emEnviesVal.includes(envie)) emEnviesVal.push(envie); }
+  });
+  showToast(suggestions.length ? 'Suggestions ajoutées' : 'Rien trouvé automatiquement', suggestions.length?'success':'error');
+}
+// Mini-carte GPS du crayon : un repère qu'on glisse pour corriger visuellement
+// lat/lng, plutôt que deux nombres qu'on tape à l'aveugle.
+function emInitMiniMap(lat, lng){
+  const pos = [lat||46.6, lng||2.4];
+  if(!emMiniMap){
+    emMiniMap = L.map('em-mini-map', {zoomControl:false}).setView(pos, lat&&lng?12:5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(emMiniMap);
+    emMiniMarker = L.marker(pos, {draggable:true}).addTo(emMiniMap);
+    emMiniMarker.on('dragend', ()=>{
+      const ll = emMiniMarker.getLatLng();
+      document.getElementById('em-lat').value = ll.lat.toFixed(6);
+      document.getElementById('em-lng').value = ll.lng.toFixed(6);
+    });
+  } else {
+    emMiniMap.setView(pos, lat&&lng?12:5);
+    emMiniMarker.setLatLng(pos);
+    setTimeout(()=>emMiniMap.invalidateSize(), 50);
+  }
+}
+// Saisie manuelle des champs → replace le repère (double sens carte ↔ nombres)
+function emSyncMarkerDepuisChamps(){
+  const lat=parseFloat(document.getElementById('em-lat').value);
+  const lng=parseFloat(document.getElementById('em-lng').value);
+  if(emMiniMarker && !isNaN(lat) && !isNaN(lng)){
+    emMiniMarker.setLatLng([lat,lng]);
+    emMiniMap.setView([lat,lng], Math.max(emMiniMap.getZoom(),10));
+  }
+}
 
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
 let lbPhotos=[], lbIdx=0;
@@ -1901,6 +1986,14 @@ function openEditModal(id){
   document.getElementById('em-conseil').value = l.conseil || '';
   document.getElementById('em-tel').value = l.tel || '';
   document.getElementById('em-dog-info').value = l.dog_info || '';
+  document.getElementById('em-lat').value = l.lat != null ? l.lat : '';
+  document.getElementById('em-lng').value = l.lng != null ? l.lng : '';
+  // Envie : coche ce qui est déjà en base (l.envies), ne suggère rien tout seul
+  emEnviesVal = Array.isArray(l.envies) ? l.envies.slice() : [];
+  document.querySelectorAll('#em-envies-grid .em-envie-chip').forEach(chip=>{
+    chip.classList.toggle('on', emEnviesVal.includes(chip.dataset.envie));
+  });
+  setTimeout(()=>emInitMiniMap(l.lat!=null?+l.lat:null, l.lng!=null?+l.lng:null), 30);
   // Photos
   const allPhotos = [l.photo_url,...(l.photos_urls||[])].filter(Boolean);
   const uniquePhotos = [...new Set(allPhotos)].slice(0,5);
@@ -2012,6 +2105,9 @@ async function saveFromModal(){
       conseil: document.getElementById('em-conseil').value || null,
       tel: document.getElementById('em-tel').value || null,
       dog_info: document.getElementById('em-dog-info').value || null,
+      lat: parseFloat(document.getElementById('em-lat').value) || null,
+      lng: parseFloat(document.getElementById('em-lng').value) || null,
+      envies: emEnviesVal.length ? emEnviesVal : null,
       note_famille: emStarVal || null,
       dog_etat: emDogVal,
       dog_source: emDogSource,
