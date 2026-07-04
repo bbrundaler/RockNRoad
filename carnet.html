@@ -378,6 +378,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
 <script src="themes-horizon.js"></script>
+<script src="fiche-complete.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script></head>
 <body>
@@ -1912,53 +1913,18 @@ function openGrandeFiche(id){
 
   const dogStatus = dogEtatDe(l);
   const dogLabel  = DOG_LABELS[dogStatus];
-  const photos    = [...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];
-  const cover     = photos[0] ? `url('${photos[0]}')` : 'linear-gradient(135deg,#3a2f1a,#1a1510)';
-  const mapsUrl   = l.nom ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.nom + (l.sous_region||l.region ? ', '+(l.sous_region||l.region) : ''))}` : (l.lat&&l.lng ? `https://www.google.com/maps?q=${l.lat},${l.lng}` : 'https://maps.google.com/');
-  const esc = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   const noteG = l.note ? `<span style="background:rgba(44,80,22,.4);color:var(--st-ok-vif);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">★ ${l.note} Google${l.user_ratings_total?` (${l.user_ratings_total} avis)`:''}</span>` : '';
   const noteF = l.note_famille ? `<span style="background:var(--gold-a20);color:var(--gold-light);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille ${coeursFamille(l.note_famille)}</span>` : '';
   const dogBadge = dogLabel ? `<span class="dog-photo-badge ${dogStatus}" style="position:static;font-size:11px;">${dogLabel}</span>` : '';
 
-  // Galerie (vignettes sous la photo de couverture)
-  const galerie = photos.length>1 ? `<div style="display:flex;gap:6px;padding:10px 22px 0;flex-wrap:wrap;">${photos.slice(1,5).map((u,i)=>`<div style="width:54px;height:40px;background-image:url('${u}');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;" onclick="openGfLightbox('${l.id}',${i+1})"></div>`).join('')}</div>` : '';
-
-  // Champs pratiques
-  let pratique = '';
-  if(l.horaires_text){
-    const statut = l.ouvert_maintenant===true?'<span style="color:var(--st-ok-vif);">● Ouvert</span>':l.ouvert_maintenant===false?'<span style="color:var(--st-bad-vif);">● Fermé</span>':'';
-    pratique += `<div class="gf-cell"><div class="gf-cell-t">🕒 HORAIRES</div><div class="gf-cell-v">${esc(l.horaires_text).split('|').join('<br>')}${statut?'<br>'+statut:''}</div></div>`;
-  }
-  if(l.accessibilite || l.wheelchair) pratique += `<div class="gf-cell"><div class="gf-cell-t">♿ ACCESSIBILITÉ</div><div class="gf-cell-v">${esc(l.accessibilite||'Accès PMR')}<br><span style="opacity:.4;font-size:10px;">(à confirmer sur place)</span></div></div>`;
-  if(l.tel) pratique += `<div class="gf-cell"><div class="gf-cell-t">📞 CONTACT</div><div class="gf-cell-v"><a href="tel:${esc(l.tel)}" style="color:var(--ink);">${esc(l.tel)}</a></div></div>`;
-  if(l.adresse||l.sous_region) pratique += `<div class="gf-cell"><div class="gf-cell-t">📍 ADRESSE</div><div class="gf-cell-v">${esc(l.adresse||l.sous_region)}</div></div>`;
-
-  const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
-
-  document.getElementById('gf-body').innerHTML = `
-    <div class="gf-cover" style="background-image:${cover};">
-      <button class="gf-close" onclick="closeGrandeFiche()">✕</button>
-      ${photos.length>1?`<div class="gf-photo-count">📷 ${photos.length} photos</div>`:''}
-      <div class="gf-cover-overlay"><span class="gf-type-badge">${esc(l.type||'Lieu')}${l.sous_region||l.region?' · '+esc(l.sous_region||l.region):''}</span></div>
-    </div>
-    ${galerie}
-    <div class="gf-content">
-      <div class="gf-badges">${noteG}${noteF}${dogBadge}</div>
-      <h2 class="gf-title">${esc(l.nom||'—')}</h2>
-      ${l.adresse||l.sous_region?`<p class="gf-sub">${esc(l.adresse||l.sous_region)}</p>`:''}
-      ${l.description?`<p class="gf-desc">${esc(l.description)}</p>`:''}
-      ${l.commentaire?`<div class="gf-quote"><div class="gf-quote-t">💬 LE MOT DE LA FAMILLE</div><p>${esc(l.commentaire)}</p></div>`:''}
-      ${l.dog_info?`<div class="dog-info-box ${dogStatus}" style="margin-bottom:14px;">🐾 ${esc(l.dog_info)}</div>`:''}
-      ${l.conseil?`<div class="gf-conseil"><div class="gf-conseil-t">💡 Conseil</div><p>${esc(l.conseil)}</p></div>`:''}
-      ${pratique?`<div class="gf-grid">${pratique}</div>`:''}
-      ${tags?`<div class="gf-tags">${tags}</div>`:''}
-      <div class="gf-votebar">${makeVoteBar(l)}</div>
-      <div class="gf-actions">
-        <a href="${mapsUrl}" target="_blank" class="gf-btn-gold">📍 Voir sur Maps</a>
-        <button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️</button>
-      </div>
-    </div>`;
+  document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
+    noteG, noteF, dogBadge,
+    voteBarHtml: makeVoteBar(l),
+    closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
+    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️</button>`,
+    onPhotoClick: `(function(i){openGfLightbox('${l.id}',i)})`
+  });
   document.getElementById('gf-overlay').style.display = 'flex';
 }
 function closeGrandeFiche(){
@@ -2191,31 +2157,6 @@ function showToast(msg){
 #gf-modal{ /* GRANDE FICHE : suit les rôles (papier en clair, sombre en sombre) — décision Bruno 12/06 */
   background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;}
 #gf-body{border-radius:16px;overflow:hidden;}
-.gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:16px 16px 0 0;}
-.gf-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
-.gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
-.gf-cover-overlay{padding:14px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.7));}
-.gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
-.gf-content{padding:16px 22px 22px;}
-.gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:var(--ink)!important;}
-.gf-sub{font-size:12px;color:var(--gold-text);margin:0 0 16px;}
-.gf-desc{font-size:14px;line-height:1.6;color:var(--ink-dim);margin:0 0 14px;}
-.gf-quote{background:var(--surface);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
-.gf-quote-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
-.gf-quote p{font-size:13px;line-height:1.6;color:var(--ink-dim);margin:0;font-style:italic;}
-.gf-conseil{background:var(--gold-a10);border:1px solid var(--gold-a20);padding:11px 14px;border-radius:8px;margin-bottom:16px;}
-.gf-conseil-t{font-size:11px;color:var(--gold-text);font-weight:700;}
-.gf-conseil p{font-size:13px;color:var(--ink-dim);margin:4px 0 0;line-height:1.5;}
-.gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.gf-cell{background:var(--surface);padding:10px 12px;border-radius:8px;}
-.gf-cell-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
-.gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
-.gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
-.gf-votebar{border-top:1px solid var(--gold-a20);padding-top:8px;margin-bottom:12px;}
-.gf-actions{display:flex;gap:8px;}
-.gf-btn-gold{flex:1;background:var(--gold);color:#0f0d09;font-weight:700;font-size:13px;padding:10px;border:none;border-radius:8px;cursor:pointer;text-align:center;text-decoration:none;}
-.gf-btn-dark{background:var(--chrome-bg);border:1px solid var(--gold-a35);color:var(--gold-light);font-size:13px;padding:10px 14px;border-radius:8px;cursor:pointer;}
 </style>
 
 <script src="boussole.js" defer></script>

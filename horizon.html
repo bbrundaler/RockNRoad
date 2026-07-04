@@ -16,6 +16,7 @@
 <script src="tags.js"></script>
 <script src="carto-marqueurs.js"></script>
 <script src="themes-horizon.js"></script>
+<script src="fiche-complete.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
@@ -1051,6 +1052,17 @@ body.hz-explo-on #hz-rail{display:none;}
   </div>
 </div>
 
+<!-- GRANDE FICHE (05/07, retour Bruno) : même fiche riche que le Carnet
+     (RNR_FICHE_COMPLETE, un seul rendu), ouverte SUR la carte — jamais de
+     sortie de page. La carte reste visible, assombrie, en fond : on est
+     toujours "sur Horizon". Effet d'ouverture : la fiche grossit depuis le
+     point cliqué (voir hzOuvreGrandeFiche). -->
+<div id="hz-gf-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,0);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;transition:background .35s ease;" onclick="if(event.target===this)hzFermeGrandeFiche()">
+  <div id="hz-gf-modal" style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
+    <div id="hz-gf-body"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const {createClient}=supabase;
@@ -1421,12 +1433,21 @@ function hzPopupFicheHtml(f){
   const photo=f.photo_url
     ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
     : '';
+  // Sujet (05/07, retour Bruno) : se balader sur la carte pour s'inspirer
+  // donnait MOINS d'info qu'un swipe — à l'inverse du but. Le survol reste
+  // léger (texte tronqué), mais un chemin existe désormais vers la fiche
+  // complète (RNR_FICHE_COMPLETE, la même que le Carnet) sans quitter la carte.
+  const texteApercu=(f.commentaire||f.description||'').trim();
+  const apercu=texteApercu?'<div style="font-size:11px;color:var(--ink-dim,#aaa);padding:0 2px 6px;line-height:1.4;">'+escapeHtmlHz(texteApercu.length>110?texteApercu.slice(0,110)+'…':texteApercu)+'</div>':'';
+  const regionLabel=(typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||'');
   return '<div class="hz-pop" style="font-family:Inter,sans-serif;min-width:200px;max-width:250px;">'+
     photo+
     (badge?'<div style="padding:0 2px 4px;">'+badge+'</div>':'')+
     '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-    '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+    '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(regionLabel)+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+    apercu+
     (actions?'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 2px 2px;">'+actions+'</div>':'')+
+    '<div style="padding:4px 2px 2px;"><button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();hzOuvreGrandeFiche(\''+f.id+'\',event)" style="width:100%;">📖 Lire la fiche complète</button></div>'+
   '</div>';
 }
 // ❤️ cliqué DEPUIS la fiche riche : agit (hzToggleVote porte déjà tout, 02/07),
@@ -1444,10 +1465,93 @@ function hzTooltipFicheHtml(f){
   return '<div style="font-family:Inter,sans-serif;white-space:normal;">'+photo+
     '<div style="padding:8px 10px 9px;">'+
       '<div style="font-weight:700;font-size:12.5px;line-height:1.3;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-      '<div style="font-size:10.5px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz(f.region||'')+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+      '<div style="font-size:10.5px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz((typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||''))+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
     '</div>'+
   '</div>';
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// GRANDE FICHE SUR HORIZON (05/07, retour Bruno) — même fiche riche que le
+// Carnet (RNR_FICHE_COMPLETE, fiche-complete.js), jamais reconstruite à
+// côté. S'ouvre SUR la carte (jamais de sortie de page) : la carte reste
+// visible et assombrie derrière. Effet d'ouverture : la fiche grossit
+// depuis le point cliqué (transform-origin animé), pas un plein écran.
+let HZ_GF_FICHE_ID=null;
+function hzGfVoteBarHtml(f){
+  // Même moteur de vote que le popup léger (hzPopupToggleLove/lancerVoteSurFiche/
+  // epinglerDirectementHzId) — jamais un second chemin de vote (B20).
+  const retenu=HZ_RETENUS.has(f.id);
+  const ecartee=HZ_ECARTEES.has(f.id);
+  const enVote=!!HZ_VOTE_DE_FICHE[f.id];
+  const propId=HZ_VOTE_DE_FICHE[f.id];
+  const c=hzCoeursDe(f.id).love;
+  const estLeader=(typeof jeSuisLeaderHz==='function') && jeSuisLeaderHz();
+  if(retenu) return '<span class="hz-pop-badge" style="background:var(--mk-epingle)">📌 Retenue pour ce voyage</span>';
+  if(ecartee) return '<span class="hz-pop-badge" style="background:var(--ink-dim)">🚫 Écartée par le groupe</span>';
+  let actions='';
+  if(enVote) actions+='<button class="hz-aimee-tag-vote" type="button" onclick="ouvrirCarteVote(\''+propId+'\')">🗳️ Voir et voter</button>';
+  actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="hzPopupToggleLove(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
+  if(!enVote && c.count>0) actions+='<button class="hz-aimee-vote" type="button" onclick="lancerVoteSurFiche(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
+  if(estLeader) actions+='<button class="hz-aimee-epingle" type="button" onclick="epinglerDirectementHzId(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+actions+'</div>';
+}
+// Vignette cliquée dans la galerie : devient la photo de couverture (pas de
+// lightbox séparée — plus simple, suffit à "voir les 5 photos").
+function hzGfSwapPhoto(idx){
+  if(!HZ_GF_FICHE_ID) return;
+  const f=(HZ_FICHES||[]).find(x=>x.id===HZ_GF_FICHE_ID);
+  if(!f) return;
+  const photos=RNR_FICHE_COMPLETE.photosDe(f);
+  const cover=document.querySelector('#hz-gf-body .gf-cover');
+  if(cover && photos[idx]) cover.style.backgroundImage="url('"+photos[idx]+"')";
+}
+function hzOuvreGrandeFiche(ficheId, evt){
+  const f=(HZ_FICHES||[]).find(x=>x.id===ficheId);
+  if(!f) return;
+  HZ_GF_FICHE_ID=ficheId;
+  const noteG=f.note?'<span style="background:rgba(44,80,22,.4);color:#8fce6b;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">★ '+f.note+' Google</span>':'';
+  const noteF=f.note_famille?'<span style="background:var(--gold-a20);color:var(--gold-light);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille '+'★'.repeat(Number(f.note_famille)||0)+'</span>':'';
+  document.getElementById('hz-gf-body').innerHTML = RNR_FICHE_COMPLETE.html(f, {
+    noteG, noteF,
+    voteBarHtml: hzGfVoteBarHtml(f),
+    closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>',
+    onPhotoClick: 'hzGfSwapPhoto'
+  });
+  const overlay=document.getElementById('hz-gf-overlay');
+  const modal=document.getElementById('hz-gf-modal');
+  if(!overlay||!modal) return;
+  // Point d'origine de l'effet : le popup/bouton cliqué, sinon le centre.
+  let originX=window.innerWidth/2, originY=window.innerHeight/2;
+  if(evt && evt.currentTarget && evt.currentTarget.getBoundingClientRect){
+    const r=evt.currentTarget.getBoundingClientRect();
+    originX=r.left+r.width/2; originY=r.top+r.height/2;
+  }
+  const dx=originX-window.innerWidth/2, dy=originY-window.innerHeight/2;
+  overlay.style.display='flex';
+  modal.style.transition='none';
+  modal.style.transform='translate('+dx+'px,'+dy+'px) scale(.05)';
+  modal.style.opacity='0';
+  // reflow puis transition — l'effet "wahoo" (grossit depuis le point cliqué)
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      overlay.style.background='rgba(15,13,9,.55)';
+      modal.style.transition='transform .45s cubic-bezier(.34,1.56,.64,1), opacity .3s ease';
+      modal.style.transform='translate(0,0) scale(1)';
+      modal.style.opacity='1';
+    });
+  });
+}
+function hzFermeGrandeFiche(){
+  const overlay=document.getElementById('hz-gf-overlay');
+  const modal=document.getElementById('hz-gf-modal');
+  if(!overlay||!modal) return;
+  overlay.style.background='rgba(15,13,9,0)';
+  modal.style.transition='transform .3s ease, opacity .25s ease';
+  modal.style.transform='translate(0,0) scale(.92)';
+  modal.style.opacity='0';
+  setTimeout(()=>{ overlay.style.display='none'; HZ_GF_FICHE_ID=null; }, 260);
+}
+
 async function hzPopupToggleLove(lieuId){
   await hzToggleVote(lieuId,'love');
   // Manquait (02/07) : la popup se redessinait, mais pas la PASTILLE elle-même
