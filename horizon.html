@@ -263,6 +263,7 @@ body.hz-coin-carte .hz-ov-rond{display:flex;}
   pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
 #hz-btn-revue:hover{background:var(--gold-a10);}
 body.hz-explo-on #hz-btn-revue{display:none;}
+body.hz-explo-on #hz-btn-vue-pleine{display:none;}
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
@@ -829,6 +830,8 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-db-cell"><b id="hz-db-etapes">0</b><i>étapes</i></span>
         </div>
         <span class="hz-ov-pill hz-ov-titre"><span class="hz-ov-ic">🗺️</span> Clique une région</span>
+        <button class="hz-porte-btn" id="hz-btn-vue-pleine" type="button" onclick="hzRecentrerVuePleine()"
+          title="Revenir à la vue complète de la France, sans rien effacer">↺ Vue complète</button>
       </div>
       <div class="hz-ov hz-ov-tr">
         <div class="hz-ov-pill hz-ov-stats">
@@ -1507,8 +1510,14 @@ function hzInitCarteRepos(){
   // cartes fluides (Google Maps...) zooment en fractions : zoomSnap 0.25 garde
   // les tuiles nettes tout en lissant molette ET pincement. bounceAtZoomLimits
   // coupe le rebond élastique aux extrêmes.
+  // Pincement trackpad PC (05/07, retour Bruno — mobile déjà fluide, PC saccadé
+  // au pincement 2 doigts sur pavé tactile) : un trackpad envoie une rafale de
+  // très petits deltas de molette au lieu des crans francs d'un mulot ; le
+  // regroupement par défaut (40ms) les traite un peu trop par à-coups. Délai
+  // raccourci pour suivre la rafale de plus près, sans casser le lissage déjà
+  // acquis sur mulot/pincement mobile.
   HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false,
-    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:120, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
+    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:120, wheelDebounceTime:15, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
   // Garde anti-glisser (A1) : on mémorise le point d'appui ; le clic région (plus
   // bas) ignorera tout « clic » dont le relâchement est loin de l'appui (= un
   // glisser, pas un clic). Complète l'horodatage dragend, qui seul ne suffisait pas.
@@ -1644,6 +1653,20 @@ function remonteCarteFrance(){
   if(HZ_CARTE_REPOS){
     HZ_CARTE_REPOS.flyTo([46.6,2.4], 6, {duration:0.7});
   }
+}
+
+// Sujet (05/07, retour Bruno) : en pure exploration zoomée (aucune envie ni
+// région choisie), le bouton ↺ Recommencer reste caché (majRecommencer ne
+// l'affiche que si HZ_THEME/HZ_LIEUX) — donc AUCUN moyen de revenir à la vue
+// complète sans tout effacer. Ce bouton fait UNIQUEMENT le geste caméra
+// (réemploie remonteCarteFrance, déjà le bon mouvement), sort du coin si on y
+// était, mais NE TOUCHE PAS aux envies/panier/session — contrairement à
+// recommenceGeste(). Toujours visible (sauf swipe ouvert, CSS).
+function hzRecentrerVuePleine(){
+  if(document.body.classList.contains('hz-coin-carte') && typeof masqueCarteCoin==='function'){
+    masqueCarteCoin();
+  }
+  remonteCarteFrance();
 }
 
 // ── CARTE DU COIN (B18 · 2b-1, fusionnée en une seule caméra — Temps 2a·étape3) ──
@@ -1784,7 +1807,7 @@ function hzRondMajAffichage(centre){
   const txtR=document.getElementById('hz-rond-rayon-txt');
   const txtN=document.getElementById('hz-rond-compte-txt');
   if(txtR) txtR.textContent=hzRondFormatRayon(HZ_ROND_RAYON_M);
-  if(txtN) txtN.textContent=n+' fiche'+(n>1?'s':'')+' dans le rond';
+  if(txtN) txtN.textContent=n+' fiche'+(n>1?'s':'')+' dans la zone';
 }
 // Dessine (ou redessine) le cercle + sa pastille de centre — un seul endroit
 // pour ça, réemployé par le geste ET par « élargir le cercle ».
@@ -3890,21 +3913,28 @@ function ouvreExplo(){
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
-  // C5 de la Charte (03/07, rapport tests) : le panneau du swipe (440px, à
-  // droite) peut recouvrir la zone du rond si celui-ci a été dessiné à droite
-  // de l'écran. On regarde où tombe le centre du rond et, s'il finit sous le
-  // panneau, on glisse la carte juste ce qu'il faut pour le ramener au milieu
-  // de la partie restée visible. Un pan doux, pas un zoom — loi L1 respectée
-  // (recadrage de visibilité, comme l'autoPan d'une popup).
+  // C5 de la Charte (03/07) → généralisé (05/07, retour Bruno) : avant, le pan
+  // ne se déclenchait que si le CENTRE du rond frôlait le bord du panneau —
+  // un cercle large pouvait donc rester recouvert (son centre est loin du
+  // bord, mais son pourtour est dessous). Désormais on recentre SYSTÉMATIQUE-
+  // MENT sur tout le cercle (ses bords, pas son seul centre) à chaque rond,
+  // avec un mouvement plus ample (durée + décélération douce). Un pan, jamais
+  // un zoom — loi L1 respectée (recadrage de visibilité, comme l'autoPan
+  // d'une popup).
   if(HZ_ROND_COIN && HZ_CARTE_COIN){
     try{
-      const centre=HZ_ROND_COIN.getLatLng();
-      const pt=HZ_CARTE_COIN.latLngToContainerPoint(centre);
+      const bounds=HZ_ROND_COIN.getBounds();
+      const no=HZ_CARTE_COIN.latLngToContainerPoint(bounds.getNorthWest());
+      const se=HZ_CARTE_COIN.latLngToContainerPoint(bounds.getSouthEast());
+      const centreRondX=(no.x+se.x)/2;
       const largeur=HZ_CARTE_COIN.getSize().x;
       const largPanneau=Math.min(440, window.innerWidth*0.94);
       const visible=largeur-largPanneau;
-      if(visible>120 && pt.x>visible-40){
-        HZ_CARTE_COIN.panBy([pt.x-Math.round(visible/2), 0], {animate:true, duration:0.5});
+      if(visible>120){
+        const decalage=centreRondX-Math.round(visible/2);
+        if(Math.abs(decalage)>4){
+          HZ_CARTE_COIN.panBy([decalage, 0], {animate:true, duration:0.65, easeLinearity:0.15});
+        }
       }
     }catch(e){ /* jamais bloquant : au pire le pan n'a pas lieu */ }
   }
