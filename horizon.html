@@ -283,7 +283,7 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
    centrée sur le bord droit (évite la collision signalée par Bruno). Marques
    fixes 25/50/75 à gauche, valeur en direct à droite — jamais tronquée
    (colonnes dédiées avec marge, la valeur ne sort jamais de son propre bloc). */
-.hz-rond-marqueur{display:none;position:absolute;top:96px;right:12px;
+.hz-rond-marqueur{display:none;position:absolute;top:96px;right:125px;
   flex-direction:column;align-items:center;z-index:6;}
 body.hz-coin-carte .hz-rond-marqueur{display:flex;}
 body.hz-explo-on .hz-rond-marqueur{display:none;}
@@ -294,11 +294,11 @@ body.hz-explo-on .hz-rond-marqueur{display:none;}
 .hz-rond-marqueur-ticks{position:relative;width:16px;height:100px;}
 .hz-rond-marqueur-ticks span{position:absolute;left:0;font-size:9.5px;font-weight:500;
   color:var(--ink);transform:translateY(50%);white-space:nowrap;}
-.hz-ov-barre-rond{position:relative;width:22px;height:100px;border-radius:0;
+.hz-ov-barre-rond{position:relative;width:18px;height:100px;border-radius:0;
   border:1px solid var(--terracotta-deep);
   background:linear-gradient(to top, var(--terracotta-deep), var(--terracotta-light));
   touch-action:none;cursor:pointer;}
-.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-4px;right:-4px;height:12px;
+.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-3px;right:-3px;height:11px;
   border-radius:0;background:linear-gradient(to bottom, var(--terracotta-light), var(--terracotta-deep));
   border:1px solid var(--terracotta-deep);box-shadow:0 2px 4px rgba(0,0,0,.3),
   inset 0 1px 1px rgba(255,255,255,.5);box-sizing:border-box;}
@@ -1810,7 +1810,21 @@ function hzRondFigerEtLancer(){
   const brutes=hzRondFichesDedans(centre, HZ_ROND_RAYON_M);
   const fiches=brutes.filter(f=>!HZ_ROND_VUES.has(f.id));
   hzRondMajAffichage(centre);
-  if(!fiches.length) return;   // rien de neuf à montrer : on laisse le swipe tel quel
+  const swipeDejaOuvert=document.body.classList.contains('hz-explo-on');
+  if(!fiches.length){
+    // « rien de neuf » ne doit sauter que si un swipe est DÉJÀ ouvert (évite
+    // de le vider pour rien sur un micro-mouvement) — sinon (premier lancer,
+    // ex. depuis la barre) on ouvre quand même, sinon rien ne se passe.
+    if(swipeDejaOuvert) return;
+    HZ_ROND_MODE=true;
+    HZ_ROND_DERNIER_CENTRE=centre;
+    const paquetVide={coeur:brutes, limitrophes:[], toutes:brutes, regionsCible:[], regionsLimitrophes:[]};
+    HZ_COIN_PAQUET=paquetVide;
+    if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquetVide);
+    if(typeof majEnAvant==='function') majEnAvant(paquetVide);
+    ouvreExplo();
+    return;
+  }
   HZ_ROND_MODE=true;
   HZ_ROND_DERNIER_CENTRE=centre;
   fiches.forEach(f=>HZ_ROND_VUES.add(f.id));
