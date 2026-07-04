@@ -264,7 +264,9 @@ body.hz-coin-carte .hz-ov-rond{display:flex;}
   pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
 #hz-btn-revue:hover{background:var(--gold-a10);}
 body.hz-explo-on #hz-btn-revue{display:none;}
-body.hz-explo-on #hz-btn-vue-pleine{display:none;}
+/* Sujet (05/07, retour Bruno) : ce bouton doit rester une échappatoire
+   disponible MÊME pendant le swipe — un rond raté doit pouvoir se relancer
+   sans devoir d'abord fermer le panneau. Ne plus le masquer sur hz-explo-on. */
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
@@ -1667,8 +1669,12 @@ function remonteCarteFrance(){
 // complète sans tout effacer. Ce bouton fait UNIQUEMENT le geste caméra
 // (réemploie remonteCarteFrance, déjà le bon mouvement), sort du coin si on y
 // était, mais NE TOUCHE PAS aux envies/panier/session — contrairement à
-// recommenceGeste(). Toujours visible (sauf swipe ouvert, CSS).
+// recommenceGeste(). Toujours visible, y compris pendant le swipe (05/07 v2) :
+// un rond raté doit pouvoir tout relancer sans devoir d'abord fermer le panneau.
 function hzRecentrerVuePleine(){
+  if(document.body.classList.contains('hz-explo-on') && typeof fermeExplo==='function'){
+    fermeExplo();
+  }
   if(document.body.classList.contains('hz-coin-carte') && typeof masqueCarteCoin==='function'){
     masqueCarteCoin();
   }
@@ -4177,7 +4183,12 @@ function initSwipe(paquet){
     if(!fichesReg.length) return;   // région vidée (toutes retenues) → pas de transition orpheline
     const label=labelRegionSvg(slug);
     // transition « Cap sur <région> » avant chaque région SAUF la 1re présentée
-    if(HZ_SWIPE_SEQ.length){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
+    // — ET seulement hors mode rond (05/07, retour Bruno) : le rond ignore
+    // délibérément les frontières régionales (« peu importe la région pour
+    // moi »), annoncer un changement de région casse la fluidité qu'il est
+    // censé apporter. Ces transitions restent utiles pour le clic-région
+    // classique, où la région choisie ET ses limitrophes sont un vrai repère.
+    if(HZ_SWIPE_SEQ.length && !HZ_ROND_MODE){ HZ_SWIPE_SEQ.push({kind:'transition',ton:'region',titre:'Cap sur '+label,sous:label,slug:slug}); }
     fichesReg.forEach(f=>HZ_SWIPE_SEQ.push({kind:'fiche',fiche:f,region:label,slug:slug}));
   });
   // 3) limitrophes (toutes régions voisines) à la fin, annoncés « Juste à côté »
