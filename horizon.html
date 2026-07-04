@@ -1709,6 +1709,25 @@ function hzRecentrerVuePleine(){
     const info=document.getElementById('hz-geste-info');
     if(info) info.textContent='';
   }
+  // Sujet (05/07 v4, retour Bruno) : le nettoyage ci-dessus ne fermait pas les
+  // PORTES (Envie/Dormir) elles-mêmes — un panneau resté déplié donnait
+  // l'impression que rien n'avait été effacé. On les referme explicitement,
+  // et on oublie la région-mémoire (HZ_LIEUX), vestige de l'ancien geste.
+  HZ_LIEUX=[];
+  const panEnvie=document.getElementById('hz-panneau-envie');
+  const panDormir=document.getElementById('hz-panneau-dormir');
+  const btnEnvie=document.getElementById('hz-porte-envie');
+  const btnDormir=document.getElementById('hz-porte-dormir');
+  if(panEnvie) panEnvie.style.display='none';
+  if(panDormir) panDormir.style.display='none';
+  if(btnEnvie) btnEnvie.classList.remove('ouvert');
+  if(btnDormir) btnDormir.classList.remove('ouvert');
+  // Efface aussi la mémoire du GESTE en sessionStorage (quelle envie était
+  // choisie) — sans ça, fermer l'onglet et revenir sur la page ressuscitait
+  // l'ancienne envie via restaureGeste(). Ne touche PAS au panier ni aux
+  // cœurs/candidats déjà en base (HZ_PANIER, HZ_AIMEES_SESSION) : ceux-là
+  // restent, comme prévu depuis le 05/07 (Vue complète ≠ Recommencer).
+  if(typeof oublieGeste==='function') oublieGeste();
   if(document.body.classList.contains('hz-coin-carte') && typeof masqueCarteCoin==='function'){
     masqueCarteCoin();
   }
