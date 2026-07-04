@@ -1526,16 +1526,17 @@ function hzInitCarteRepos(){
   // cartes fluides (Google Maps...) zooment en fractions : zoomSnap 0.25 garde
   // les tuiles nettes tout en lissant molette ET pincement. bounceAtZoomLimits
   // coupe le rebond élastique aux extrêmes.
-  // Pincement trackpad PC (05/07 → 05/07 v2, retour Bruno) : premier diagnostic
-  // (jerky) corrigé côté regroupement (wheelDebounceTime), mais le vrai souci
-  // était ailleurs — « zoom lent et court, faut répéter plusieurs fois ». Un
-  // trackpad envoie une rafale de TOUT PETITS deltas répartis sur tout le
-  // geste (contrairement à un mulot qui envoie un gros paquet par cran) ; le
-  // total d'un écartement de doigts n'atteignait souvent pas les 120 unités
-  // requises par cran (wheelPxPerZoomLevel) — le geste avançait donc de
-  // presque rien. Abaissé pour qu'un geste fasse vraiment avancer le zoom.
+  // Pincement trackpad PC (05/07 → v2 → v3, retour Bruno) : 40 restait
+  // encore bien trop lent (« 10 gestes pour zoomer sur la Bretagne ») —
+  // abaissé beaucoup plus franchement. Contrepartie assumée : un mulot classique
+  // ira aussi plus vite par cran, mais rien ne dit que c'était un problème —
+  // seul le trackpad avait été signalé lent.
+  // zoomDelta (05/07 v3) : 0.5 ne bougeait quasi rien par double-clic/pincement
+  // — « il faut 10 double-clics pour un vrai zoom ». zoomSnap reste à 0.25
+  // (fluidité pendant le geste), mais chaque ACTION de zoom (double-clic,
+  // boutons +/-) avance maintenant d'un vrai cran plein.
   HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false,
-    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:40, wheelDebounceTime:15, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
+    zoomSnap:0.25, zoomDelta:1, wheelPxPerZoomLevel:12, wheelDebounceTime:15, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
   // Sujet (05/07, retour Bruno) : HZ_CARTE_COIN était aliassé seulement en
   // entrant en coin (afficheCarteCoin) — donc rien n'était branché pour le
   // rond tant qu'on n'avait jamais double-cliqué une région. Alias posé ICI,
@@ -1836,12 +1837,13 @@ function hzFichesDansViewport(){
   });
 }
 function hzRevueZoneVisible(){
-  // Même filet que le rond (05/07 v2, retour Bruno) : ce bouton vit hors de
-  // .hz-rond-marqueur, donc le clic natif qui suit son activation n'était pas
-  // couvert par le filet anti-fermeture posé pour la barre — le swipe
-  // s'ouvrait puis se refermait aussitôt (le fameux "flash").
   hzRondSignalerFin();
   const fiches=hzFichesDansViewport();
+  const b=(HZ_CARTE_COIN && HZ_CARTE_COIN.getBounds) ? HZ_CARTE_COIN.getBounds() : null;
+  console.log('[DEBUG revue] fiches trouvées =', fiches.length,
+    ' HZ_FICHES total =', (HZ_FICHES||[]).length,
+    ' hz-coin-carte =', document.body.classList.contains('hz-coin-carte'),
+    ' bounds =', b ? (b.getSouthWest().lat.toFixed(2)+','+b.getSouthWest().lng.toFixed(2)+' → '+b.getNorthEast().lat.toFixed(2)+','+b.getNorthEast().lng.toFixed(2)) : 'aucune');
   if(!fiches.length) return;   // rien de visible à l'écran pour l'instant : rien à ouvrir
   HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
   const regions=[...new Set(fiches.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
