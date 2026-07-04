@@ -147,10 +147,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* Séparateur « — ou — » entre les deux portes (activités / couchage). Marque le
    choix de départ égal, sans hiérarchie. */
 .hz-geste-ou{font-size:11px;color:var(--ink-dim);text-align:center;margin:10px 0 8px;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
-.hz-lieu-pick{display:flex;flex-wrap:wrap;gap:6px;min-height:20px;}
-.hz-lieu-tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:var(--r-sm);
+.hz-lieu-pick{display:flex;flex-wrap:wrap;gap:8px;min-height:24px;}
+.hz-lieu-tag{display:inline-flex;align-items:center;gap:7px;font-size:14.5px;padding:8px 14px;border-radius:var(--r-sm);
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
-.hz-lieu-tag .x{cursor:pointer;opacity:.8;font-weight:700;}
+.hz-lieu-tag .x{cursor:pointer;opacity:.8;font-weight:700;font-size:15px;}
 .hz-geste-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
 .hz-en-avant{display:none!important;}
 .hz-en-avant-DEAD{width:100%;margin-top:12px;padding:11px;border:none;border-radius:var(--r);
@@ -254,8 +254,8 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 /* ── Rond de précision (2b-2/2b-3) : geste clic-glisser-relâcher directement
    sur la carte du coin — pas de curseur séparé à aller chercher. Pastille
    flottante haut-centre, visible seulement carte du coin ouverte. ── */
-.hz-ov-rond{display:none;top:12px;left:50%;transform:translateX(-50%);gap:8px;align-items:center;}
-body.hz-coin-carte .hz-ov-rond{display:flex;}
+.hz-ov-rond{display:flex;top:12px;left:50%;transform:translateX(-50%);gap:8px;align-items:center;}
+body.hz-explo-on .hz-ov-rond{display:none;}
 /* Q2 (03/07) : le swipe ne s'ouvre plus au clic région — ce bouton est sa 2ᵉ
    porte (avec le rond). Même matière que les pastilles portes ; disparaît
    quand le swipe a déjà la main. */
@@ -291,9 +291,8 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
    centrée sur le bord droit (évite la collision signalée par Bruno). Marques
    fixes 25/50/75 à gauche, valeur en direct à droite — jamais tronquée
    (colonnes dédiées avec marge, la valeur ne sort jamais de son propre bloc). */
-.hz-rond-marqueur{display:none;position:absolute;top:96px;right:125px;
+.hz-rond-marqueur{display:flex;position:absolute;top:96px;right:125px;
   flex-direction:column;align-items:center;z-index:6;}
-body.hz-coin-carte .hz-rond-marqueur{display:flex;}
 body.hz-explo-on .hz-rond-marqueur{display:none;}
 .hz-rond-marqueur-ic{width:22px;height:22px;border-radius:50%;background:var(--terracotta-light);
   border:1px solid var(--terracotta-deep);display:flex;align-items:center;justify-content:center;
@@ -669,9 +668,9 @@ body.hz-explo-on #hz-rail{display:none;}
   display:inline-flex;align-items:center;gap:5px;margin-left:auto;}
 .hz-coin-revoir:hover{background:var(--gold-a10);}
 /* bouton Recommencer (reset du geste) dans l'en-tête du bloc envie */
-.hz-recommencer{margin-left:auto;font-family:var(--font-body);font-size:11.5px;cursor:pointer;
-  background:var(--surface);border:1px solid var(--gold-a35);color:var(--ink);padding:4px 10px;
-  border-radius:var(--r-sm);display:inline-flex;align-items:center;gap:4px;transition:.15s;
+.hz-recommencer{margin-left:auto;font-family:var(--font-body);font-size:13.5px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--gold-a35);color:var(--ink);padding:7px 14px;
+  border-radius:var(--r-sm);display:inline-flex;align-items:center;gap:6px;transition:.15s;
   box-shadow:0 2px 10px rgba(0,0,0,.14);}
 .hz-recommencer:hover{border-color:var(--gold);color:var(--gold-text);}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
@@ -1522,14 +1521,21 @@ function hzInitCarteRepos(){
   // cartes fluides (Google Maps...) zooment en fractions : zoomSnap 0.25 garde
   // les tuiles nettes tout en lissant molette ET pincement. bounceAtZoomLimits
   // coupe le rebond élastique aux extrêmes.
-  // Pincement trackpad PC (05/07, retour Bruno — mobile déjà fluide, PC saccadé
-  // au pincement 2 doigts sur pavé tactile) : un trackpad envoie une rafale de
-  // très petits deltas de molette au lieu des crans francs d'un mulot ; le
-  // regroupement par défaut (40ms) les traite un peu trop par à-coups. Délai
-  // raccourci pour suivre la rafale de plus près, sans casser le lissage déjà
-  // acquis sur mulot/pincement mobile.
+  // Pincement trackpad PC (05/07 → 05/07 v2, retour Bruno) : premier diagnostic
+  // (jerky) corrigé côté regroupement (wheelDebounceTime), mais le vrai souci
+  // était ailleurs — « zoom lent et court, faut répéter plusieurs fois ». Un
+  // trackpad envoie une rafale de TOUT PETITS deltas répartis sur tout le
+  // geste (contrairement à un mulot qui envoie un gros paquet par cran) ; le
+  // total d'un écartement de doigts n'atteignait souvent pas les 120 unités
+  // requises par cran (wheelPxPerZoomLevel) — le geste avançait donc de
+  // presque rien. Abaissé pour qu'un geste fasse vraiment avancer le zoom.
   HZ_CARTE_REPOS=L.map(el,{zoomControl:true, attributionControl:false, scrollWheelZoom:true, closePopupOnClick:false,
-    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:120, wheelDebounceTime:15, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
+    zoomSnap:0.25, zoomDelta:0.5, wheelPxPerZoomLevel:40, wheelDebounceTime:15, bounceAtZoomLimits:false}).setView([46.6,2.4],6);
+  // Sujet (05/07, retour Bruno) : HZ_CARTE_COIN était aliassé seulement en
+  // entrant en coin (afficheCarteCoin) — donc rien n'était branché pour le
+  // rond tant qu'on n'avait jamais double-cliqué une région. Alias posé ICI,
+  // dès la création, pour que le rond soit utilisable dès le repos.
+  HZ_CARTE_COIN=HZ_CARTE_REPOS;
   // Garde anti-glisser (A1) : on mémorise le point d'appui ; le clic région (plus
   // bas) ignorera tout « clic » dont le relâchement est loin de l'appui (= un
   // glisser, pas un clic). Complète l'horodatage dragend, qui seul ne suffisait pas.
@@ -2000,6 +2006,12 @@ function hzInitBarreRond(){
   barre.addEventListener('pointercancel', relacher);
   document.addEventListener('pointerup', relacher);
 }
+// Sujet (05/07, retour Bruno) : hzInitRondCoin() ne se déclenchait qu'à la
+// première entrée en coin (afficheCarteCoin) — donc jamais si on n'y passe
+// pas. Branché ici, au même endroit sûr (après tous les HZ_ROND_* déclarés,
+// donc aucun risque d'accéder à une const avant son initialisation).
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitRondCoin);
+else hzInitRondCoin();
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitBarreRond);
 else hzInitBarreRond();
 // Armement du rond (02/07, retour Bruno) : avant, tout mousedown en mode coin
@@ -2063,12 +2075,19 @@ function hzRondAnnulePending(){
 function hzInitRondCoin(){
   if(HZ_ROND_INIT || !HZ_CARTE_COIN) return;
   HZ_ROND_INIT=true;
-  // Temps 2a·étape3 : une seule carte pour la vue régionale ET le coin — le
-  // geste du rond ne doit exister qu'EN mode coin (body.hz-coin-carte), sinon
-  // un simple clic-glisser en vue régionale ferait naître un rond par erreur.
-  const enModeCoin=()=>document.body.classList.contains('hz-coin-carte');
+  // Sujet (05/07, retour Bruno, décision explicite) : le rond marche
+  // maintenant PARTOUT — repos ET coin, n'importe quel zoom, carte complète
+  // comprise — pas seulement après un double-clic région. Le rond a toujours
+  // été pensé indifférent aux régions ; l'obliger à « entrer en coin » d'abord
+  // était une porte artificielle, pas une nécessité technique (même instance
+  // Leaflet, mêmes fiches GPS partout). Seul vrai garde-fou : ne pas armer le
+  // rond si autre chose a déjà la main (fiche ouverte ou swipe) — réemploie
+  // hzCarteInerte(), déjà la référence pour cet état ailleurs sur la carte.
+  // Amende la Charte : R0 gagne la transition « appui maintenu → D », qui
+  // n'appartenait qu'à C0 jusqu'ici — à consigner dans CARTE.md une fois testé.
+  const hzRondActivable=()=>!hzCarteInerte();
   HZ_CARTE_COIN.on('mousedown', e=>{
-    if(!enModeCoin() || HZ_ROND_EN_COURS) return;
+    if(!hzRondActivable() || HZ_ROND_EN_COURS) return;
     HZ_ROND_DOWN_PT=e.containerPoint; HZ_ROND_DOWN_LATLNG=e.latlng;
     hzRondArmementDebut(e.containerPoint);
     HZ_ROND_TIMER=setTimeout(()=>{
@@ -2078,7 +2097,7 @@ function hzInitRondCoin(){
     }, HZ_ROND_DELAI_MS);
   });
   HZ_CARTE_COIN.on('mousemove', e=>{
-    if(!enModeCoin()) return;
+    if(!hzRondActivable()) return;
     if(HZ_ROND_EN_COURS){ hzRondEtire(e.latlng); return; }
     if(HZ_ROND_TIMER && HZ_ROND_DOWN_PT){
       const dx=e.containerPoint.x-HZ_ROND_DOWN_PT.x, dy=e.containerPoint.y-HZ_ROND_DOWN_PT.y;
@@ -2086,7 +2105,7 @@ function hzInitRondCoin(){
     }
   });
   HZ_CARTE_COIN.on('mouseup', ()=>{
-    if(!enModeCoin()) return;
+    if(!hzRondActivable()) return;
     hzRondAnnulePending();   // simple clic (jamais armé) : rien à figer, le natif a déjà agi
     if(HZ_ROND_EN_COURS) hzRondFigerEtLancer();
   });
