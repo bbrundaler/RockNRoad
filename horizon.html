@@ -1816,7 +1816,6 @@ function hzRondEtire(point){
   hzRondMajAffichage(centre);
 }
 function hzRondFigerEtLancer(){
-  console.log('[DEBUG rond] hzRondFigerEtLancer() appelé, HZ_ROND_COIN=', !!HZ_ROND_COIN);
   hzRondSignalerFin();
   HZ_ROND_EN_COURS=false;
   if(HZ_CARTE_COIN) HZ_CARTE_COIN.dragging.enable();
@@ -1828,7 +1827,6 @@ function hzRondFigerEtLancer(){
   const fiches=brutes.filter(f=>!HZ_ROND_VUES.has(f.id));
   hzRondMajAffichage(centre);
   const swipeDejaOuvert=document.body.classList.contains('hz-explo-on');
-  console.log('[DEBUG rond] fiches neuves=', fiches.length, ' brutes=', brutes.length, ' swipeDejaOuvert=', swipeDejaOuvert, ' HZ_COIN_PAQUET avant=', !!HZ_COIN_PAQUET);
   if(!fiches.length){
     // « rien de neuf » ne doit sauter que si un swipe est DÉJÀ ouvert (évite
     // de le vider pour rien sur un micro-mouvement) — sinon (premier lancer,
@@ -1899,6 +1897,13 @@ function hzRondReset(){
   HZ_ROND_VUES=new Set();
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
+  // La barre de rayon est une AUTRE porte vers ce même geste (04/07) — sa
+  // remise à zéro vit ICI, au seul endroit qui défait déjà tout le reste,
+  // plutôt que dupliquée à chaque appelant de hzRondReset().
+  const bThumb=document.getElementById('hz-barre-thumb');
+  const bTxt=document.getElementById('hz-barre-txt');
+  if(bThumb){ bThumb.style.top='100%'; bThumb.style.marginTop='-6px'; }
+  if(bTxt){ bTxt.style.top='100%'; bTxt.style.marginTop='-7px'; bTxt.textContent=hzRondFormatRayon(0); }
 }
 // Sujet 1 (04/07) : barre de rayon — appât de découvrabilité, visible
 // seulement en mode coin (CSS). RÉEMPLOIE le pipeline du geste direct
@@ -1936,7 +1941,6 @@ function hzInitBarreRond(){
     majThumb(HZ_ROND_RAYON_M/1000);
   }
   barre.addEventListener('pointerdown', e=>{
-    console.log('[DEBUG rond] pointerdown sur la barre, HZ_CARTE_COIN=', !!HZ_CARTE_COIN);
     if(!HZ_CARTE_COIN) return;
     actif=true;
     try{ barre.setPointerCapture(e.pointerId); }catch(err){}
@@ -1948,7 +1952,6 @@ function hzInitBarreRond(){
     appliqueKm(depuisY(e.clientY));
   });
   function relacher(e){
-    console.log('[DEBUG rond] relacher() appelé sur la barre, actif=', actif, ' HZ_ROND_EN_COURS=', HZ_ROND_EN_COURS, ' type événement=', e&&e.type);
     if(!actif) return;
     actif=false;
     if(e && e.pointerId!=null){ try{ barre.releasePointerCapture(e.pointerId); }catch(err){} }
@@ -3876,10 +3879,9 @@ let HZ_EXPLO_MAP=null;
 let HZ_EXPLO_MARQUEURS={};
 
 function ouvreExplo(){
-  console.log('[DEBUG rond] ouvreExplo() appelé, HZ_COIN_PAQUET=', !!HZ_COIN_PAQUET);
-  if(!HZ_COIN_PAQUET){ console.log('[DEBUG rond] ouvreExplo() STOP : HZ_COIN_PAQUET est vide'); return; }
+  if(!HZ_COIN_PAQUET) return;
   const ov=document.getElementById('hz-explo');
-  if(!ov){ console.log('[DEBUG rond] ouvreExplo() STOP : #hz-explo introuvable dans le DOM'); return; }
+  if(!ov) return;
   document.querySelectorAll('.hz-drawer.ouvert').forEach(d=>d.classList.remove('ouvert'));
   document.querySelectorAll('.hz-rail-btn.actif').forEach(b=>b.classList.remove('actif'));
   // La carte devient inerte pendant le swipe (02/07) : si une fiche était déjà
@@ -3932,6 +3934,12 @@ function fermeExplo(){
   // cette fonction sortait aussi du coin et dézoomait sur la France entière
   // (« dézoom surprise »). La sortie complète du coin vit désormais dans
   // recommenceGeste (bouton ↺ Recommencer), le seul geste qui remonte.
+  // Sujet 1 (04/07, retour Bruno) : si ce swipe venait du rond (geste direct
+  // OU barre), le refermer doit AUSSI effacer le cercle et remettre la barre
+  // à zéro — sinon il fallait redescendre le curseur à la main pour pouvoir
+  // recommencer, pas ergonomique. Le clic-région classique (HZ_ROND_MODE
+  // resté false) n'est pas concerné : il n'a jamais dessiné de cercle.
+  if(HZ_ROND_MODE) hzRondReset();
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
   demonteSwipeVersBande();
