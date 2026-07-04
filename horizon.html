@@ -1488,7 +1488,7 @@ function hzAfficheTousLesPoints(){
     // les points restent visibles mais n'ouvrent plus rien (un seul endroit de
     // décision à la fois) — mais passer d'un point à un autre reste possible tant
     // que seul un point (pas le swipe) a la main : Leaflet remplace la popup tout seul.
-    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')) return; m.openPopup(); });
+    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; m.openPopup(); });
     HZ_CARTE_REPOS_MARQ.addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
   });
@@ -1566,24 +1566,28 @@ function hzInitCarteRepos(){
             // qu'à fermer une fiche ouverte (ou qui tombe pendant un swipe) ne
             // doit JAMAIS aussi zoomer/ouvrir la région dessous — un seul geste,
             // un seul effet (03/07, retour Bruno : « clic extérieur ferme la
-            // fiche MAIS zoome aussi »). Ce premier clic se contente de fermer.
+            // fiche MAIS zoome aussi »). Ce clic se contente de fermer.
             if(hzCarteInerte()){ if(HZ_CARTE_REPOS) HZ_CARTE_REPOS.closePopup(); return; }
-            // Simple clic ≠ double-clic (A3, loi L3) : le double-clic appartient
-            // au ZOOM natif. On attend un souffle (270ms) avant de plonger ; si
-            // un second clic arrive entre-temps, la plongée est annulée et le
-            // zoom natif fait son travail.
-            if(window.HZ_REGION_CLICK_TIMER) clearTimeout(window.HZ_REGION_CLICK_TIMER);
-            window.HZ_REGION_CLICK_TIMER=setTimeout(()=>{
-              window.HZ_REGION_CLICK_TIMER=null;
-              const matches=fichesPourRegionCarte(slug);
-              const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-              afficheReve(slug, best);
-              ouvrirFichesRegion(slug);
-            }, 270);
+            // Sujet garde-fou (04/07, retour Bruno) : le simple clic ne PLONGE
+            // plus JAMAIS — le délai de 270ms n'empêchait pas assez de faux
+            // déclenchements (fermer une fiche, se promener sur la carte).
+            // Seul le double-clic plonge désormais. Le simple clic garde un
+            // aperçu léger (utile au tactile, où il n'y a pas de survol réel).
+            const matches=fichesPourRegionCarte(slug);
+            const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+            afficheReve(slug, best);
           });
-          layer.on('dblclick',()=>{
-            if(window.HZ_REGION_CLICK_TIMER){ clearTimeout(window.HZ_REGION_CLICK_TIMER); window.HZ_REGION_CLICK_TIMER=null; }
-            // rien d'autre : l'événement remonte à la carte, le zoom natif s'applique
+          layer.on('dblclick',(e)=>{
+            if(HZ_MODE_TRI) return;
+            // Empêche le zoom natif de Leaflet de se déclencher EN PLUS de la
+            // plongée — un double-clic sur une région ne doit produire qu'UN
+            // effet (loi L1), pas un zoom-avant ET une plongée superposés.
+            L.DomEvent.stop(e);
+            if(hzCarteInerte()){ if(HZ_CARTE_REPOS) HZ_CARTE_REPOS.closePopup(); return; }
+            const matches=fichesPourRegionCarte(slug);
+            const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
+            afficheReve(slug, best);
+            ouvrirFichesRegion(slug);
           });
         }
       }).addTo(HZ_CARTE_REPOS);
@@ -1685,7 +1689,7 @@ function afficheCarteCoin(slug){
     m.on('tooltipopen', ()=>{ if(hzCarteInerte()||HZ_ROND_EN_COURS) m.closeTooltip(); });
     m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; m.closeTooltip(); });
     m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
-    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS) return; m.openPopup(); });
+    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; m.openPopup(); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
@@ -1719,6 +1723,17 @@ let HZ_ROND_COIN=null;        // L.circle affiché pendant/après le geste
 let HZ_ROND_CENTRE_M=null;    // L.marker (pastille) qui matérialise le centre
 let HZ_ROND_RAYON_M=0;        // rayon courant en mètres
 let HZ_ROND_EN_COURS=false;   // un geste clic-glisser est actif
+// Garde anti-course (04/07) : le clic natif du navigateur sur un marqueur se
+// déclenche juste APRÈS notre pointerup/mouseup, à un instant où
+// HZ_ROND_EN_COURS est déjà repassé à false — trop tard pour bloquer
+// l'ouverture d'une fiche sous le point de relâchement. Ce drapeau reste vrai
+// un tick de plus (setTimeout 0 = après le clic de CE geste, avant le
+// prochain), le temps que le clic déjà en vol soit avalé par le garde-fou.
+let HZ_ROND_VIENT_DE_FINIR=false;
+function hzRondSignalerFin(){
+  HZ_ROND_VIENT_DE_FINIR=true;
+  setTimeout(()=>{ HZ_ROND_VIENT_DE_FINIR=false; }, 0);
+}
 let HZ_ROND_INIT=false;       // les listeners ne sont branchés qu'une fois
 const HZ_ROND_RAYON_MIN_M=1500;   // plancher : un simple tap donne un voisinage exploitable
 // Correctif 02/07 : le rond construit un swipe À PART (jour+nuit mélangés, un
@@ -1801,6 +1816,7 @@ function hzRondEtire(point){
   hzRondMajAffichage(centre);
 }
 function hzRondFigerEtLancer(){
+  hzRondSignalerFin();
   HZ_ROND_EN_COURS=false;
   if(HZ_CARTE_COIN) HZ_CARTE_COIN.dragging.enable();
   if(!HZ_ROND_COIN) return;
@@ -2716,20 +2732,14 @@ function brancheSurvolCarte(){
       if(fl) fl.textContent='🏰';
       afficheFicheDansCadre(HZ_FICHE_VEDETTE,null);
     });
-    // clic sur une région → ARBITRAGE selon l'état du geste fondateur :
-    //  • un thème est choisi (on attend un lieu) → on (dé)sélectionne ce lieu
-    //  • sinon → comportement historique : afficher le rêve puis ouvrir les fiches
-    // clic sur une région → LE GESTE FONDATEUR (B18 · Inc. 2a) :
-    // clic région → fiches du coin sur place, TOUJOURS. Une envie active
-    // (HZ_THEME) n'intercepte plus le clic : elle devient un éclairage
-    // (filtre) appliqué dans ouvrirFichesRegion. Fini le détour toggleLieu.
-    reg.addEventListener('click',()=>{
-      if(HZ_MODE_TRI){ basculeRegion(reg); return; }   // (vieux mode tri, neutralisé)
-      const matches=fichesPourRegionCarte(dataR);
-      const best=matches.find(f=>Number(f.note_famille)>0)||matches[0]||null;
-      afficheReve(dataR, best);     // au cas où le survol n'a pas eu lieu (mobile/tactile)
-      ouvrirFichesRegion(dataR);    // la porte, directement — swipe sur place
-    });
+    // Le CLIC est volontairement retiré d'ici (04/07, correctif garde-fou) :
+    // ces mêmes éléments `.region[data-r]` portent AUSSI le layer Leaflet
+    // (`layer.on('click'/'dblclick', …)` plus haut), qui gère déjà le clic
+    // avec toutes les gardes (anti-glisser, fiche ouverte, double-clic).
+    // Un second clic ici, sans garde, plongeait quand même — un seul
+    // endroit doit décider (loi de construction). Le survol reste : il ne
+    // pose pas ce problème et sert de secours si le layer n'est pas encore
+    // prêt.
   });
   brancheModeTri();
 }
