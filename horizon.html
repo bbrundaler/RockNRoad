@@ -269,6 +269,29 @@ body.hz-explo-on #hz-btn-revue{display:none;}
 body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-poignee{width:10px;height:10px;border-radius:50%;background:var(--gold);
   border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);}
+/* Sujet 1 (UX du rond, 04/07) : anneau de chargement pendant l'armement —
+   rend visible l'appui-maintenu AVANT que le rond n'apparaisse. */
+.hz-rond-armement{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;
+  display:none;pointer-events:none;z-index:650;}
+.hz-rond-armement svg{width:100%;height:100%;transform:rotate(-90deg);}
+.hz-rond-armement .fond{fill:none;stroke:rgba(0,0,0,.15);stroke-width:3;}
+.hz-rond-armement .prog{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:100.53;stroke-dashoffset:100.53;}
+/* Barre de rayon (porte simple, appât de découvrabilité) : visible SEULEMENT
+   en mode coin, jamais en repos ni swipe ouvert. Fonctionnelle : tirer dessus
+   dessine et lance le même rond que le geste direct, centré sur la vue. */
+.hz-ov-barre-rond{display:none;top:70px;bottom:70px;right:12px;width:34px;position:absolute;
+  flex-direction:column;align-items:center;border-radius:14px;z-index:6;
+  border:1px solid var(--gold-a35);box-shadow:0 3px 12px rgba(0,0,0,.18);
+  background:linear-gradient(to top, var(--gold-a35), var(--surface));
+  touch-action:none;cursor:pointer;}
+body.hz-coin-carte .hz-ov-barre-rond{display:flex;}
+body.hz-explo-on .hz-ov-barre-rond{display:none;}
+.hz-ov-barre-rond .hz-barre-thumb{position:absolute;left:-4px;right:-4px;height:14px;
+  border-radius:8px;background:var(--surface);border:2px solid var(--gold);box-sizing:border-box;}
+.hz-ov-barre-rond .hz-barre-txt{position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  font-size:11.5px;font-weight:700;color:var(--gold-text);white-space:nowrap;
+  font-family:var(--font-title);}
 /* Illumination du point courant pendant le swipe (correctif 02/07 — reprend
    l'esprit du survol Hub, piloté ici par la progression du swipe). */
 .hz-marqueur-illumine{width:34px;height:34px;border-radius:50%;background:transparent;
@@ -838,6 +861,12 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
           <span class="hz-rond-compte" id="hz-rond-compte-txt">—</span>
         </span>
+      </div>
+      <!-- Sujet 1 (04/07) : barre de rayon, appât de découvrabilité — visible
+           seulement en mode coin, cache dès que le swipe a la main. -->
+      <div class="hz-ov-barre-rond" id="hz-barre-rond">
+        <span class="hz-barre-txt" id="hz-barre-txt">1,5 km</span>
+        <div class="hz-barre-thumb" id="hz-barre-thumb"></div>
       </div>
       <!-- vote de groupe (visage 1) : overlay pleine largeur bas si actif -->
       <div class="hz-ov hz-ov-vote" id="hz-gauche-vote-wrap" style="display:none">
@@ -1801,6 +1830,7 @@ function hzRondElargirJusquauCamping(){
   ouvreExplo();
 }
 function hzRondReset(){
+  hzRondArmementFin();
   if(HZ_CARTE_COIN){
     if(HZ_ROND_COIN) HZ_CARTE_COIN.removeLayer(HZ_ROND_COIN);
     if(HZ_ROND_CENTRE_M) HZ_CARTE_COIN.removeLayer(HZ_ROND_CENTRE_M);
@@ -1812,6 +1842,53 @@ function hzRondReset(){
   const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
 }
+// Sujet 1 (04/07) : barre de rayon — appât de découvrabilité, visible
+// seulement en mode coin (CSS). RÉEMPLOIE le pipeline du geste direct
+// (hzRondDemarre / hzRondFigerEtLancer) : un seul comportement, une porte de
+// plus — jamais une seconde écriture séparée. Centre = centre de la vue
+// actuelle (pas de point de tap, contrairement au geste direct).
+function hzInitBarreRond(){
+  const barre=document.getElementById('hz-barre-rond');
+  const thumb=document.getElementById('hz-barre-thumb');
+  const txt=document.getElementById('hz-barre-txt');
+  if(!barre || !thumb || !txt) return;
+  const KM_MIN=HZ_ROND_RAYON_MIN_M/1000, KM_MAX=30;
+  let actif=false;
+  function majThumb(km){
+    const t=Math.max(0,Math.min(1,(km-KM_MIN)/(KM_MAX-KM_MIN)));
+    thumb.style.top=((1-t)*100)+'%';
+    txt.textContent=hzRondFormatRayon(km*1000);
+  }
+  majThumb(KM_MIN);
+  function depuisY(clientY){
+    const rect=barre.getBoundingClientRect();
+    const t=Math.max(0,Math.min(1, 1-((clientY-rect.top)/rect.height)));
+    return KM_MIN+t*(KM_MAX-KM_MIN);
+  }
+  function appliqueKm(km){
+    HZ_ROND_RAYON_M=Math.max(HZ_ROND_RAYON_MIN_M, km*1000);
+    if(HZ_ROND_COIN) HZ_ROND_COIN.setRadius(HZ_ROND_RAYON_M);
+    hzRondMajAffichage(HZ_ROND_COIN?HZ_ROND_COIN.getLatLng():HZ_CARTE_COIN.getCenter());
+    majThumb(HZ_ROND_RAYON_M/1000);
+  }
+  barre.addEventListener('pointerdown', e=>{
+    if(!HZ_CARTE_COIN) return;
+    actif=true;
+    hzRondDemarre(HZ_CARTE_COIN.getCenter());
+    appliqueKm(depuisY(e.clientY));
+  });
+  document.addEventListener('pointermove', e=>{
+    if(!actif || !HZ_ROND_EN_COURS) return;
+    appliqueKm(depuisY(e.clientY));
+  });
+  document.addEventListener('pointerup', ()=>{
+    if(!actif) return;
+    actif=false;
+    if(HZ_ROND_EN_COURS) hzRondFigerEtLancer();
+  });
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitBarreRond);
+else hzInitBarreRond();
 // Armement du rond (02/07, retour Bruno) : avant, tout mousedown en mode coin
 // coupait IMMÉDIATEMENT le déplacement natif de la carte — plus de double-clic
 // zoom possible, plus de glisser pour se balader une fois zoomé, puisque le
@@ -1823,10 +1900,52 @@ function hzRondReset(){
 // habituel (double-clic, molette, glisser). Le geste du rond lui-même ne
 // change pas : presser, (tenir un instant), glisser, relâcher.
 let HZ_ROND_DOWN_PT=null, HZ_ROND_DOWN_LATLNG=null, HZ_ROND_TIMER=null;
-const HZ_ROND_SEUIL_PX=10, HZ_ROND_DELAI_MS=320;
+// Sujet 1 (UX du rond, session 04/07) : délai raccourci 320→220ms et seuil
+// de tolérance élargi 10→26px — moins de faux échecs sur un tremblement de
+// main pendant l'armement, sans se confondre avec un vrai glisser de carte.
+const HZ_ROND_SEUIL_PX=26, HZ_ROND_DELAI_MS=220;
+let HZ_ROND_ARM_EL=null, HZ_ROND_ARM_RAF=null;
+const HZ_ROND_ARM_CIRC=2*Math.PI*16;
+// Retour visuel PENDANT l'armement (avant, rien n'était visible tant que le
+// délai n'était pas écoulé — le geste semblait ne rien faire). Un petit anneau
+// se remplit au point d'appui ; il disparaît dès que le rond est armé (dessin
+// réel du cercle) ou dès que l'armement est annulé.
+function hzRondArmementUI(){
+  if(HZ_ROND_ARM_EL) return HZ_ROND_ARM_EL;
+  const cont=HZ_CARTE_COIN && HZ_CARTE_COIN.getContainer();
+  if(!cont) return null;
+  const el=document.createElement('div');
+  el.className='hz-rond-armement';
+  el.innerHTML='<svg viewBox="0 0 40 40"><circle class="fond" cx="20" cy="20" r="16"></circle>'
+    +'<circle class="prog" cx="20" cy="20" r="16"></circle></svg>';
+  cont.appendChild(el);
+  HZ_ROND_ARM_EL=el;
+  return el;
+}
+function hzRondArmementDebut(containerPoint){
+  const el=hzRondArmementUI();
+  if(!el || !containerPoint) return;
+  el.style.left=containerPoint.x+'px';
+  el.style.top=containerPoint.y+'px';
+  el.style.display='block';
+  const prog=el.querySelector('.prog');
+  prog.style.strokeDashoffset=HZ_ROND_ARM_CIRC;
+  const t0=performance.now();
+  (function loop(){
+    const t=Math.min(1,(performance.now()-t0)/HZ_ROND_DELAI_MS);
+    prog.style.strokeDashoffset=HZ_ROND_ARM_CIRC*(1-t);
+    if(t<1) HZ_ROND_ARM_RAF=requestAnimationFrame(loop);
+  })();
+}
+function hzRondArmementFin(){
+  if(HZ_ROND_ARM_RAF) cancelAnimationFrame(HZ_ROND_ARM_RAF);
+  HZ_ROND_ARM_RAF=null;
+  if(HZ_ROND_ARM_EL) HZ_ROND_ARM_EL.style.display='none';
+}
 function hzRondAnnulePending(){
   if(HZ_ROND_TIMER){ clearTimeout(HZ_ROND_TIMER); HZ_ROND_TIMER=null; }
   HZ_ROND_DOWN_PT=null; HZ_ROND_DOWN_LATLNG=null;
+  hzRondArmementFin();
 }
 function hzInitRondCoin(){
   if(HZ_ROND_INIT || !HZ_CARTE_COIN) return;
@@ -1838,8 +1957,10 @@ function hzInitRondCoin(){
   HZ_CARTE_COIN.on('mousedown', e=>{
     if(!enModeCoin() || HZ_ROND_EN_COURS) return;
     HZ_ROND_DOWN_PT=e.containerPoint; HZ_ROND_DOWN_LATLNG=e.latlng;
+    hzRondArmementDebut(e.containerPoint);
     HZ_ROND_TIMER=setTimeout(()=>{
       HZ_ROND_TIMER=null;
+      hzRondArmementFin();
       if(HZ_ROND_DOWN_LATLNG) hzRondDemarre(HZ_ROND_DOWN_LATLNG);
     }, HZ_ROND_DELAI_MS);
   });
