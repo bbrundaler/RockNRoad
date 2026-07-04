@@ -1542,6 +1542,14 @@ function hzInitCarteRepos(){
   // rond tant qu'on n'avait jamais double-cliqué une région. Alias posé ICI,
   // dès la création, pour que le rond soit utilisable dès le repos.
   HZ_CARTE_COIN=HZ_CARTE_REPOS;
+  // Sujet (05/07, retour Bruno) : les compteurs de thème (panneau envie)
+  // reflètent la zone visible désormais — il faut donc les rafraîchir quand
+  // on bouge/zoome, sinon ils restent figés sur la zone d'ouverture du
+  // panneau. Ne travaille que si le panneau est réellement ouvert.
+  HZ_CARTE_REPOS.on('moveend zoomend', ()=>{
+    const pan=document.getElementById('hz-panneau-envie');
+    if(pan && pan.style.display!=='none' && typeof rendThemesChips==='function') rendThemesChips();
+  });
   // Garde anti-glisser (A1) : on mémorise le point d'appui ; le clic région (plus
   // bas) ignorera tout « clic » dont le relâchement est loin de l'appui (= un
   // glisser, pas un clic). Complète l'horodatage dragend, qui seul ne suffisait pas.
@@ -1823,22 +1831,24 @@ function hzRondFichesDedans(centre, rayon_m){
 // soit un paquet PÉRIMÉ d'un geste précédent ailleurs sur la carte, jamais
 // marqué nulle part sur l'écran actuel. Périmètre maintenant explicite et
 // SANS AMBIGUÏTÉ : les fiches VISIBLES À L'ÉCRAN à l'instant du clic (viewport
-// réel de la carte), même filtre jour/nuit que le rond (couchage toujours
-// inclus, fiches jour filtrées par l'envie active) — un seul comportement de
-// filtrage, réemployé, pas réinventé.
-function hzFichesDansViewport(){
+// réel de la carte). Paramètre `strict` (05/07 v2) : le mélange jour+nuit du
+// rond est gravé (02/07, hzRondFichesDedans, non touché) mais NE VAUT PAS
+// pour l'envie — choisir « Culture » ne doit jamais faire apparaître des
+// campings. strict=true coupe l'inclusion automatique du couchage ; le
+// bouton "Passer en revue" (sans thème précis à respecter) garde le mélange.
+function hzFichesDansViewport(strict){
   if(!HZ_CARTE_COIN || !window.RNR_CARNET_COIN) return [];
   const bounds=HZ_CARTE_COIN.getBounds();
   return (HZ_FICHES||[]).filter(f=>{
     if(f.lat==null||f.lng==null) return false;
     if(!bounds.contains([+f.lat,+f.lng])) return false;
-    if(window.RNR_TAGS && RNR_TAGS.estCouchage(f)) return true;
+    if(!strict && window.RNR_TAGS && RNR_TAGS.estCouchage(f)) return true;
     return RNR_CARNET_COIN.correspondTheme(f, HZ_THEME||null, HZ_TAGS_THEME);
   });
 }
-function hzRevueZoneVisible(){
+function hzRevueZoneVisible(strict){
   hzRondSignalerFin();
-  const fiches=hzFichesDansViewport();
+  const fiches=hzFichesDansViewport(strict);
   if(!fiches.length) return false;   // rien de visible à l'écran pour l'instant : rien à ouvrir
   HZ_ROND_MODE=true;   // zone-based comme le rond : pas de transitions « Cap sur région »
   const regions=[...new Set(fiches.map(f=>f._regionSvg||f.region||null).filter(Boolean))];
@@ -3141,9 +3151,17 @@ function hzToggleporte(which){
 function rendThemesChips(){
   const box=document.getElementById('hz-themes-chips');
   if(!box || !window.RNR_THEMES) return;
-  // compteur par thème sur les fiches du groupe
+  // Sujet (05/07, retour Bruno) : le compteur affichait le total NATIONAL,
+  // identique en pleine carte de France ou zoomé sur une seule région —
+  // trompeur maintenant que l'envie filtre la ZONE visible, pas le pays
+  // entier. Compte désormais dans le viewport actuel.
+  const enZone=(HZ_CARTE_COIN && HZ_CARTE_COIN.getBounds) ? HZ_CARTE_COIN.getBounds() : null;
   const compte={};
-  HZ_FICHES.forEach(f=>{
+  (HZ_FICHES||[]).forEach(f=>{
+    if(enZone){
+      if(f.lat==null||f.lng==null) return;
+      if(!enZone.contains([+f.lat,+f.lng])) return;
+    }
     let ts=[]; try{ ts=RNR_THEMES.themesDeFiche(f)||[]; }catch(e){}
     ts.forEach(t=>compte[t]=(compte[t]||0)+1);
   });
@@ -3279,7 +3297,7 @@ function choisitTheme(cle){
     // comportement). Message clair si rien dans cette zone plutôt qu'un bouton
     // caché ou un silence — l'utilisateur sait quoi faire (zoomer, se déplacer).
     coloreCartePourTheme(HZ_THEME);   // estompe les régions sans fiche du thème
-    const trouve=hzRevueZoneVisible();
+    const trouve=hzRevueZoneVisible(true);
     if(info) info.textContent = trouve ? '' : 'Aucune fiche « '+themeLibelle(HZ_THEME)+' » visible dans cette zone — zoome arrière ou déplace-toi.';
   }else{
     rallumeToutesRegions();           // plus de thème → carte entièrement vivante
@@ -4040,6 +4058,12 @@ function majTitrePopup(slugActuel){
 }
 function fermeExplo(){
   if(HZ_CARTE_COIN_HALO && HZ_CARTE_COIN){ HZ_CARTE_COIN.removeLayer(HZ_CARTE_COIN_HALO); HZ_CARTE_COIN_HALO=null; }
+  // Sujet (05/07, retour Bruno) : la dernière fiche ouverte (popup) pendant le
+  // swipe restait affichée sur la carte une fois le panneau fermé — perturbant
+  // (« pourquoi cette fiche est encore ouverte »). Fermer le swipe doit aussi
+  // fermer toute fiche encore ouverte. Ne touche PAS au zoom/à la caméra —
+  // Bruno a été explicite là-dessus, seul « Vue complète »/« Recommencer » y touchent.
+  if(HZ_CARTE_COIN && HZ_CARTE_COIN.closePopup) HZ_CARTE_COIN.closePopup();
   const ov=document.getElementById('hz-explo');
   if(ov){ ov.style.display='none'; ov.classList.remove('hz-explo-inline'); }
   document.body.classList.remove('hz-explo-on');
@@ -4053,7 +4077,20 @@ function fermeExplo(){
   // à zéro — sinon il fallait redescendre le curseur à la main pour pouvoir
   // recommencer, pas ergonomique. Le clic-région classique (HZ_ROND_MODE
   // resté false) n'est pas concerné : il n'a jamais dessiné de cercle.
-  if(HZ_ROND_MODE) hzRondReset();
+  if(HZ_ROND_MODE){
+    hzRondReset();
+    // Sujet (05/07, retour Bruno) : le thème choisi via envie/dormir reste
+    // collé après la fermeture — un rond tracé ensuite ailleurs héritait donc
+    // silencieusement du filtre. Le cycle complet (rond OU envie → swipe)
+    // doit repartir de zéro à la fermeture, pas seulement le cercle.
+    if(HZ_THEME){
+      HZ_THEME=null;
+      if(typeof rallumeToutesRegions==='function') rallumeToutesRegions();
+      if(typeof rendThemesChips==='function') rendThemesChips();
+      const info=document.getElementById('hz-geste-info');
+      if(info) info.textContent='';
+    }
+  }
   clearTimeout(HZ_TR_TIMER);
   clearTimeout(HZ_FIN_TIMER);
   demonteSwipeVersBande();
