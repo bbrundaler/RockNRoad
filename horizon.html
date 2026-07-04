@@ -218,6 +218,7 @@ body.hz-coin-carte .hz-ov-tl{display:none;}  /* « Clique une région » parle d
 .hz-ov{position:absolute;z-index:5;pointer-events:none;}            /* zones vides transparentes au clic */
 .hz-ov>*{pointer-events:auto;}                                     /* seuls les contrôles captent */
 .hz-ov-tl{top:12px;left:56px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.hz-ov-vue-pleine{top:54px;left:56px;}
 /* Report Hub → Horizon (02/07) : même tableau de bord km/temps/étapes, même
    grammaire visuelle, juste au-dessus du hint « Clique une région ». Cachée
    tant qu'aucune étape n'est placée dans le trajet (comme sur le Hub). */
@@ -829,7 +830,12 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-db-cell"><b id="hz-db-duree">—</b><i>de route</i></span>
           <span class="hz-db-cell"><b id="hz-db-etapes">0</b><i>étapes</i></span>
         </div>
-        <span class="hz-ov-pill hz-ov-titre"><span class="hz-ov-ic">🗺️</span> Clique une région</span>
+        <span class="hz-ov-pill hz-ov-titre"><span class="hz-ov-ic">🗺️</span> Double-clique une région</span>
+      </div>
+      <!-- Sujet (05/07, retour Bruno) : indépendant de hz-ov-tl (qui se cache
+           en mode coin) — ce bouton doit rester visible dans TOUTES les
+           situations de zoom, repos ET coin, seul le swipe le masque. -->
+      <div class="hz-ov hz-ov-vue-pleine" id="hz-ov-vue-pleine">
         <button class="hz-porte-btn" id="hz-btn-vue-pleine" type="button" onclick="hzRecentrerVuePleine()"
           title="Revenir à la vue complète de la France, sans rien effacer">↺ Vue complète</button>
       </div>
@@ -3920,7 +3926,9 @@ function ouvreExplo(){
   // MENT sur tout le cercle (ses bords, pas son seul centre) à chaque rond,
   // avec un mouvement plus ample (durée + décélération douce). Un pan, jamais
   // un zoom — loi L1 respectée (recadrage de visibilité, comme l'autoPan
-  // d'une popup).
+  // d'une popup). Largeur du panneau MESURÉE réellement (getBoundingClientRect,
+  // après le display:block qui vient de s'appliquer) plutôt qu'estimée — une
+  // estimation fausse de quelques dizaines de px suffisait à rater le centrage.
   if(HZ_ROND_COIN && HZ_CARTE_COIN){
     try{
       const bounds=HZ_ROND_COIN.getBounds();
@@ -3928,7 +3936,8 @@ function ouvreExplo(){
       const se=HZ_CARTE_COIN.latLngToContainerPoint(bounds.getSouthEast());
       const centreRondX=(no.x+se.x)/2;
       const largeur=HZ_CARTE_COIN.getSize().x;
-      const largPanneau=Math.min(440, window.innerWidth*0.94);
+      const largPanneauMesuree=ov.getBoundingClientRect().width;
+      const largPanneau=largPanneauMesuree>40 ? largPanneauMesuree : Math.min(440, window.innerWidth*0.94);
       const visible=largeur-largPanneau;
       if(visible>120){
         const decalage=centreRondX-Math.round(visible/2);
