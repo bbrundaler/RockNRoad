@@ -142,6 +142,14 @@
   function themesDeFiche(fiche, options) {
     options = options || {};
     var trouve = {};
+    /* 0-bis) SOURCE DE VÉRITÉ (05/07, décision Bruno) : la colonne `envies` est
+       la réponse EXPLICITE et définitive — pré-remplie par cette même fonction
+       à la création, mais confirmée ou corrigée par un humain, et obligatoire.
+       Si elle existe, elle fait foi, un point c'est tout ; la devinette
+       ci-dessous ne sert plus que de filet pour une fiche pas encore migrée. */
+    if (fiche && Array.isArray(fiche.envies) && fiche.envies.length) {
+      return fiche.envies.slice();
+    }
     /* 0) COUCHAGE = 8e thème « nuit », et RIEN d'autre (décidé 24/06 avec Bruno :
        un camping n'est pas 'culture'). On réutilise la VÉRITÉ UNIQUE estCouchage
        de tags.js — aucune logique de classification dupliquée ici. Si la fiche est

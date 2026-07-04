@@ -307,6 +307,24 @@ input.auto-filled{background:var(--gold-a10);border-color:rgba(200,168,75,.4);}
     </div>
   </div>
 
+  <!-- ENVIE (05/07, décision Bruno) : la RÉPONSE EXPLICITE et définitive du
+       classement — plus une devinette invisible côté carte. Pré-remplie par
+       notre système, mais corrigeable ; obligatoire (sauf Camping/Halte,
+       déjà couverts par le couchage — champ Type + monde_nuit). -->
+  <div class="form-card">
+    <div class="fc-title">🎯 Envie (obligatoire) <button type="button" onclick="suggereEnvies()" style="font-size:12px;margin-left:8px;cursor:pointer;">🔮 Suggérer depuis nom/tags/GPS</button></div>
+    <div class="tags-grid" id="enviesGrid">
+      <div class="tag-opt" data-envie="culture" onclick="toggleEnvie(this)">🏛️ Culture</div>
+      <div class="tag-opt" data-envie="nature" onclick="toggleEnvie(this)">🌿 Nature</div>
+      <div class="tag-opt" data-envie="mer" onclick="toggleEnvie(this)">🌊 Mer</div>
+      <div class="tag-opt" data-envie="montagne" onclick="toggleEnvie(this)">⛰️ Montagne</div>
+      <div class="tag-opt" data-envie="sport" onclick="toggleEnvie(this)">🥾 Sport</div>
+      <div class="tag-opt" data-envie="loisirs" onclick="toggleEnvie(this)">🎡 Loisirs</div>
+      <div class="tag-opt" data-envie="terroir" onclick="toggleEnvie(this)">🧺 Terroir</div>
+    </div>
+    <div id="enviesInfo" style="font-size:12px;color:#888;margin-top:6px;"></div>
+  </div>
+
   <!-- TAGS -->
   <div class="form-card">
     <div class="fc-title">🏷️ Tags rapides</div>
@@ -327,6 +345,7 @@ input.auto-filled{background:var(--gold-a10);border-color:rgba(200,168,75,.4);}
       <div class="tag-opt" data-tag="electricite" onclick="toggleTag(this)">⚡ Électricité</div>
     </div>
   </div>
+
 
   <!-- MONDE NUIT -->
   <div class="form-card">
@@ -547,7 +566,7 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedEnvies=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
 let mondeNuitVal=false;
 let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
@@ -726,7 +745,9 @@ async function importFromMaps(){
     if(el){el.value='';el.classList.remove('auto-filled');}
   });
   selectedTags=[];
+  selectedEnvies=[];
   document.querySelectorAll('.tag-opt.on').forEach(t=>t.classList.remove('on'));
+  const enviesInfo=document.getElementById('enviesInfo'); if(enviesInfo) enviesInfo.textContent='';
   setDog('inconnu', true);
   familyStarVal=0;
   document.querySelectorAll('.star.on').forEach(s=>s.classList.remove('on'));
@@ -1036,6 +1057,10 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
       const el=document.querySelector(`#tagsGrid [data-tag="${tag}"]`);
       if(el&&!el.classList.contains('on')){el.classList.add('on');if(!selectedTags.includes(tag))selectedTags.push(tag);}
     });
+
+    // ── Auto-envie (05/07) : suggérée tout de suite après l'auto-remplissage,
+    // moins de clics — Bruno n'a plus qu'à corriger si besoin.
+    setTimeout(suggereEnvies, 0);
 
     // ── Sous-région depuis address_components (plus fiable que regex CP) ──────
     if(p.address_components&&!document.getElementById('sousRegion').value){
@@ -1403,6 +1428,40 @@ function toggleTag(el){
   updatePreview();
 }
 
+// ── ENVIE (05/07, décision Bruno) : classement explicite et obligatoire ─────
+function toggleEnvie(el){
+  const envie=el.dataset.envie;
+  el.classList.toggle('on');
+  if(selectedEnvies.includes(envie))selectedEnvies=selectedEnvies.filter(t=>t!==envie);
+  else selectedEnvies.push(envie);
+  const info=document.getElementById('enviesInfo');
+  if(info) info.textContent='';
+}
+// Suggère depuis nom+tags+GPS (réemploie EXACTEMENT themesDeFiche, la même
+// fonction qui sert côté carte — un seul comportement de classement, pas une
+// copie). N'AJOUTE que les puces suggérées, ne décoche jamais ce que
+// l'utilisateur a déjà choisi à la main.
+function suggereEnvies(){
+  if(!window.RNR_THEMES){ showToast('themes-horizon.js absent','error'); return; }
+  const ficheProvisoire={
+    nom: document.getElementById('nom').value,
+    lat: parseFloat(document.getElementById('lat').value)||null,
+    lng: parseFloat(document.getElementById('lng').value)||null,
+    tags: selectedTags,
+    type: document.getElementById('type').value,
+    monde_nuit: mondeNuitVal||false
+  };
+  let suggestions=[];
+  try{ suggestions=RNR_THEMES.themesDeFiche(ficheProvisoire)||[]; }catch(e){ suggestions=[]; }
+  suggestions.forEach(envie=>{
+    if(envie==='nuit') return;   // la case nuit n'est pas dans cette grille (déjà couverte par Type/Couchage)
+    const el=document.querySelector(`#enviesGrid [data-envie="${envie}"]`);
+    if(el && !el.classList.contains('on')){ el.classList.add('on'); if(!selectedEnvies.includes(envie)) selectedEnvies.push(envie); }
+  });
+  const info=document.getElementById('enviesInfo');
+  if(info) info.textContent = suggestions.length ? ('Suggéré : '+suggestions.filter(e=>e!=='nuit').join(', ')||'rien de sûr, à compléter à la main') : 'Rien trouvé automatiquement — choisis à la main.';
+}
+
 // ── NOTES ────────────────────────────────────────────────────────────────────
 function setFamilyStar(v){
   familyStarVal=v;
@@ -1512,6 +1571,15 @@ async function saveFiche(){
   const region=document.getElementById('region').value;
   const type=document.getElementById('type').value;
   if(!nom||!region||!type){showToast('Nom, Type et Région obligatoires','error');return;}
+  // Sujet (05/07, décision Bruno) : plus jamais de fiche invisible du menu
+  // envie — au moins une case cochée, sauf Camping/Halte (déjà couverts par
+  // le couchage, champ Type + monde_nuit, pas besoin de doublonner).
+  const dispenseEnvie = (type==='Camping' || type==='Halte');
+  if(!dispenseEnvie && !selectedEnvies.length){
+    showToast('Au moins une Envie obligatoire (clique 🔮 Suggérer, ou choisis à la main)','error');
+    document.getElementById('enviesGrid').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   // lat/lng = pivot de toute la chaîne (votes, cartes, roadbook) → obligatoires.
   const latVal=parseFloat(document.getElementById('lat').value);
   const lngVal=parseFloat(document.getElementById('lng').value);
@@ -1548,6 +1616,7 @@ async function saveFiche(){
       note:parseFloat(document.getElementById('noteGoogle').value)||null,
       note_famille:familyStarVal||null,
       tags:selectedTags.length?selectedTags:null,
+      envies:dispenseEnvie?['nuit']:(selectedEnvies.length?selectedEnvies:null),
       photo_url,
       photos_urls:googlePhotoRefs.length?googlePhotoRefs.map(r=>googlePhotoUrl(r,null,800)):null,
       lat:latVal,
@@ -1639,6 +1708,7 @@ function showToast(msg,type='success'){
 }
 </script>
 <script src="tags.js"></script>
+<script src="themes-horizon.js"></script>
 <script src="boussole.js" defer></script>
 </body>
 </html>
