@@ -280,24 +280,23 @@
 .camp-intro{background:rgba(44,80,22,.05);border-left:3px solid var(--pyr);border-radius:0 6px 6px 0;padding:9px 13px;font-size:12px;color:var(--green);line-height:1.6;margin-bottom:14px;}
 @media(max-width:900px){.tips-grid{grid-template-columns:1fr!important;}}
 
-/* MENU RÉGIONS UNIQUE (05/07) : mini-carte + recherche, remplace la barre des
+/* MENU RÉGIONS UNIQUE (05/07 v2) : mini-carte + recherche, remplace la barre des
    22 onglets — un seul endroit, sticky, pas une copie par page-région. */
 .rnr-nav-wrap{position:sticky;top:56px;z-index:150;background:rgba(15,13,9,.97);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--gold-a20);box-shadow:0 2px 12px rgba(0,0,0,.4);
-  padding:12px 20px;}
+  padding:14px 20px;}
 .rnr-nav-search input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--surface-line);
   background:var(--paper);color:var(--ink);font-size:13px;margin-bottom:10px;}
-.rnr-nav-body{display:flex;gap:14px;max-height:220px;}
-#rnr-nav-map{width:160px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);}
-#rnr-nav-liste{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
-.rnr-nav-row{display:flex;align-items:center;padding:6px 12px;background:none;
-  border:1.5px solid rgba(255,255,255,.08);border-radius:20px;color:rgba(245,239,224,.65);
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;
-  transition:all .18s;text-align:left;}
-.rnr-nav-row:hover{border-color:var(--gold-a35);color:rgba(245,239,224,.9);}
-.rnr-nav-row.active{border-color:var(--gold);background:var(--gold-a10);color:var(--gold);}
-.rnr-nav-count{font-size:10px;font-weight:700;opacity:.6;margin-left:8px;}
+#rnr-nav-map{width:100%;height:180px;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);margin-bottom:10px;}
+#rnr-nav-liste{display:flex;flex-wrap:wrap;gap:6px;max-height:96px;overflow-y:auto;}
+.rnr-nav-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:none;
+  border:1.5px solid rgba(255,255,255,.1);border-radius:20px;color:rgba(245,239,224,.65);
+  font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;
+  transition:all .18s;}
+.rnr-nav-chip:hover{border-color:var(--gold-a35);color:rgba(245,239,224,.9);}
+.rnr-nav-chip.active{border-color:var(--gold);background:var(--gold-a10);color:var(--gold);}
+.rnr-nav-count{font-size:9.5px;font-weight:700;opacity:.6;}
 
 /* Panneau info dynamique carte */
 #carte-info-panel{background:var(--paper);border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
@@ -323,10 +322,14 @@
 .cip-dist strong{display:block;font-size:16px;font-weight:800;color:var(--ink);}
 
 /* ── RÉGION MAP + RÉCAP VIEW ─────────────────────────────── */
-.region-view-tabs{display:flex;gap:8px;margin:20px 28px 0;position:relative;z-index:5;}
-.rvt-btn{padding:8px 18px;border-radius:20px;border:1.5px solid var(--gold-a20);background:transparent;color:var(--ink-dim);font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;}
-.rvt-btn.active{background:var(--gold-a20);border-color:var(--gold);color:var(--gold);}
-.rvt-add{text-decoration:none;color:var(--chrome-bg);background:var(--gold);border-color:var(--gold);font-weight:800;}
+/* Pastilles dans le bandeau région coloré (05/07 v2, retour Bruno) : Fiches /
+   Carte & Récap / +Fiche / Explorer sur Horizon, regroupées à droite plutôt
+   qu'une rangée de boutons séparée qui prenait de la hauteur pour rien. */
+.sh-pill{padding:6px 12px;border-radius:8px;border:none;background:rgba(0,0,0,.28);
+  color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+  text-decoration:none;white-space:nowrap;transition:all .18s;}
+.sh-pill:hover{background:rgba(0,0,0,.45);}
+.sh-pill.active{background:var(--gold);color:var(--chrome-bg);}
 .region-view{display:none;}
 .region-view.active{display:block;}
 .region-map-container{border-radius:12px;overflow:hidden;border:2px solid var(--gold-a35);margin:16px 28px 0;box-shadow:0 4px 20px rgba(0,0,0,.1);}
@@ -1566,16 +1569,15 @@ function createRegionTab(tabId, rk, regionName, lieux){
   tab.innerHTML=`
     <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px 28px 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
       <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
-      <a href="horizon.html?region=${rk}" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon"
-        style="position:absolute;right:20px;top:20px;font-size:11px;font-weight:700;color:white;background:rgba(0,0,0,.28);padding:6px 12px;border-radius:8px;text-decoration:none;">🧭 Explorer sur Horizon</a>
+      <div style="position:absolute;right:20px;top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:65%;">
+        <button class="sh-pill active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
+        <button class="sh-pill" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">Carte &amp; Récap</button>
+        <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
+        <a class="sh-pill" href="horizon.html?region=${rk}" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon">🧭 Horizon</a>
+      </div>
       <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
       <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:2px;letter-spacing:-.5px;">${regionName}</h2>
       <div style="font-size:12px;color:rgba(255,255,255,.6);">${(lieux&&lieux.length)||0} ${((lieux&&lieux.length)||0)>1?'fiches':'fiche'} dans ce coin</div>
-    </div>
-    <div class="region-view-tabs">
-      <button class="rvt-btn active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
-      <button class="rvt-btn" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">Carte &amp; Récap</button>
-      <a class="rvt-btn rvt-add" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
     </div>
     <div class="region-view active" id="rv-${rk}-fiches">
       <div class="inner" id="${rk}-content">
@@ -1734,72 +1736,85 @@ function makeNuitCard(l){
   </div>`;
 }
 
-// ═══ NOUVEAU MENU RÉGIONS (05/07, retour Bruno) : mini-carte + recherche ═══
+// ═══ NOUVEAU MENU RÉGIONS (05/07, retour Bruno v2) : mini-carte + recherche ═══
 // Remplace la barre des 22 onglets, devenue illisible à mesure que le Carnet
 // se remplit. Construit UNE FOIS (pas une copie par onglet comme l'ancien
 // addDynRegionTopbar) — réutilise le MÊME GeoJSON que le rattachement GPS
 // (window.RNR_GEOJSON_22), pas une 2e donnée à maintenir.
-let RNR_NAV_MAP=null, RNR_NAV_LAYERS={};
+// v2 (retour Bruno sur le premier jet) : la carte multicolore faisait trop —
+// une seule couleur neutre par défaut, la région s'illumine (sa vraie couleur)
+// au survol, et seule la région ACTIVE reste colorée en dehors du survol.
+// Liste passée en pastilles compactes (nom+compteur ensemble), pas des lignes
+// pleine largeur avec le chiffre à l'autre bout de l'écran.
+let RNR_NAV_MAP=null, RNR_NAV_LAYERS={}, RNR_NAV_ACTIVE=null, RNR_NAV_FICHES={};
+const RNR_NAV_NEUTRE='#8a8a8a';
+function rnrNavStyleRegion(rk, survol){
+  const aDesFiches=!!RNR_NAV_FICHES[rk];
+  if(!aDesFiches) return {fillColor:'#8a8a8a', fillOpacity:0.10, color:'#1a1510', weight:1};
+  const estActive=(rk===RNR_NAV_ACTIVE);
+  if(survol || estActive){
+    return {fillColor:couleurRegion22(rk)||'#c8a84b', fillOpacity:0.85, color:'#1a1510', weight:1.5};
+  }
+  return {fillColor:RNR_NAV_NEUTRE, fillOpacity:0.35, color:'#1a1510', weight:1};
+}
 function construitMenuRegionsUnique(byTab){
   const host=document.getElementById('rnr-nav-regions');
   if(!host || host.dataset.built) return;   // une seule fois — les rechargements de fiches ne reconstruisent pas le menu
   host.dataset.built='1';
   const regionsAvecFiches=Object.keys(byTab).filter(rk=>byTab[rk]&&byTab[rk].length);
+  RNR_NAV_FICHES={}; regionsAvecFiches.forEach(rk=>RNR_NAV_FICHES[rk]=byTab[rk].length);
   host.innerHTML=`
     <div class="rnr-nav-wrap">
       <div class="rnr-nav-search">
         <input type="text" id="rnr-nav-search-input" placeholder="🔎 Chercher une région…" oninput="rnrNavFiltre(this.value)">
       </div>
-      <div class="rnr-nav-body">
-        <div id="rnr-nav-map"></div>
-        <div id="rnr-nav-liste"></div>
-      </div>
+      <div id="rnr-nav-map"></div>
+      <div id="rnr-nav-liste"></div>
     </div>`;
   const liste=document.getElementById('rnr-nav-liste');
   regionsAvecFiches
     .sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr'))
     .forEach(rk=>{
-      const col=couleurRegion22(rk)||'var(--gold)';
       const btn=document.createElement('button');
-      btn.className='rnr-nav-row';
+      btn.className='rnr-nav-chip';
       btn.dataset.rname=nomRegion22(rk);
       btn.dataset.rk=rk;
-      btn.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:8px;flex-shrink:0;"></span>`+
-        `<span style="flex:1;text-align:left;">${nomRegion22(rk)}</span>`+
-        `<span class="rnr-nav-count">${byTab[rk].length}</span>`;
-      btn.onclick=()=>{ showTab('dyn-'+rk); rnrNavSurbrille(rk); };
+      btn.innerHTML=`${nomRegion22(rk)}<span class="rnr-nav-count">${byTab[rk].length}</span>`;
+      btn.onclick=()=>{ showTab('dyn-'+rk); };
+      btn.onmouseenter=()=>{ const lyr=RNR_NAV_LAYERS[rk]; if(lyr) lyr.setStyle(rnrNavStyleRegion(rk, true)); };
+      btn.onmouseleave=()=>{ const lyr=RNR_NAV_LAYERS[rk]; if(lyr) lyr.setStyle(rnrNavStyleRegion(rk, false)); };
       liste.appendChild(btn);
     });
   if(window.RNR_GEOJSON_22 && window.L){
     RNR_NAV_MAP=L.map('rnr-nav-map',{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false});
     const layer=L.geoJSON(window.RNR_GEOJSON_22,{
-      style: f=>{
-        const rk=f.properties.slug;
-        const aDesFiches=regionsAvecFiches.includes(rk);
-        return {fillColor: aDesFiches?(couleurRegion22(rk)||'#c8a84b'):'#888888', fillOpacity: aDesFiches?0.55:0.12, color:'#1a1510', weight:1};
-      },
+      style: f=>rnrNavStyleRegion(f.properties.slug, false),
       onEachFeature:(f,lyr)=>{
         const rk=f.properties.slug;
         RNR_NAV_LAYERS[rk]=lyr;
-        if(regionsAvecFiches.includes(rk)){
-          lyr.on('click',()=>{ showTab('dyn-'+rk); rnrNavSurbrille(rk); });
-          lyr.on('mouseover',()=>lyr.setStyle({fillOpacity:0.85}));
-          lyr.on('mouseout',()=>lyr.setStyle({fillOpacity:0.55}));
-          lyr.bindTooltip(nomRegion22(rk)+' · '+byTab[rk].length+' fiche'+(byTab[rk].length>1?'s':''));
+        if(RNR_NAV_FICHES[rk]){
+          lyr.on('click',()=>{ showTab('dyn-'+rk); });
+          lyr.on('mouseover',()=>lyr.setStyle(rnrNavStyleRegion(rk, true)));
+          lyr.on('mouseout',()=>lyr.setStyle(rnrNavStyleRegion(rk, false)));
+          lyr.bindTooltip(nomRegion22(rk)+' · '+RNR_NAV_FICHES[rk]+' fiche'+(RNR_NAV_FICHES[rk]>1?'s':''));
         }
       }
     }).addTo(RNR_NAV_MAP);
-    try{ RNR_NAV_MAP.fitBounds(layer.getBounds(), {padding:[4,4]}); }catch(e){}
+    try{ RNR_NAV_MAP.fitBounds(layer.getBounds(), {padding:[6,6]}); }catch(e){}
   }
 }
+// Marque la région ACTIVE (celle affichée) — seule à rester colorée sur la
+// mini-carte hors survol ; les autres retombent en neutre.
 function rnrNavSurbrille(rk){
-  document.querySelectorAll('.rnr-nav-row').forEach(b=>b.classList.toggle('active', b.dataset.rk===rk));
+  RNR_NAV_ACTIVE=rk;
+  document.querySelectorAll('.rnr-nav-chip').forEach(b=>b.classList.toggle('active', b.dataset.rk===rk));
+  Object.keys(RNR_NAV_LAYERS).forEach(k=>{ RNR_NAV_LAYERS[k].setStyle(rnrNavStyleRegion(k, false)); });
 }
 function rnrNavFiltre(texte){
   const q=(texte||'').toLowerCase().trim();
-  document.querySelectorAll('.rnr-nav-row').forEach(b=>{
+  document.querySelectorAll('.rnr-nav-chip').forEach(b=>{
     const match=!q || (b.dataset.rname||'').toLowerCase().includes(q);
-    b.style.display=match?'flex':'none';
+    b.style.display=match?'inline-flex':'none';
   });
 }
 
