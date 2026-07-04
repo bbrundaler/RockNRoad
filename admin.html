@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="app.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="chrome.js"></script>
+<script src="carto.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;}
@@ -610,6 +611,20 @@ async function checkAuth(){
 }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
 checkAuth();
+// Sujet (05/07, retour Bruno) : la popup de fin de création envoyait vers la
+// mauvaise région (celle du menu déroulant, choisie à la main) — carnet.html
+// classe RÉELLEMENT par GPS (_regionSvg), pas par cette colonne, « ancien
+// découpage, OBSOLÈTE » (carto.js le documentait déjà : « Chalets monts Jura,
+// rangé Franche-Comté en base, tombe réellement en Auvergne-Rhône-Alpes »).
+// Même moteur chargé ici pour que la confirmation pointe vers la VRAIE case.
+let RNR_DECOUPAGE=null;
+(async function chargeDecoupageAdmin(){
+  try{
+    const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
+    const geojson=await rep.json();
+    if(window.RNR_CARTO_MOTEUR) RNR_DECOUPAGE=RNR_CARTO_MOTEUR.creerDecoupage(geojson);
+  }catch(e){ console.warn('Admin: découpage régions non chargé (repli sur le menu déroulant)', e); }
+})();
 
 // ── Chargement profil groupe ──────────────────────────────────────────────
 async function loadGroupeProfil(userId) {
@@ -1644,7 +1659,15 @@ async function saveFiche(){
       contact_proprio:document.getElementById('contactProprio')?.value||null,
     });
     if(error)throw error;
-    showConfirmation(nom, region, type);
+    // Sujet (05/07) : la popup doit pointer vers la région RÉELLE (GPS),
+    // pas celle du menu déroulant — sinon "vas voir en Bourgogne" alors que
+    // la fiche est réellement classée en Franche-Comté.
+    let regionPourConfirmation=region;
+    if(RNR_DECOUPAGE){
+      const zoneReelle=RNR_DECOUPAGE.zoneDe(latVal, lngVal);
+      if(zoneReelle) regionPourConfirmation=zoneReelle.nom;
+    }
+    showConfirmation(nom, regionPourConfirmation, type);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
     // Incrémenter le compteur local
