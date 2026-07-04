@@ -1843,6 +1843,14 @@ function hzRevueZoneVisible(){
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
+  // Déclenchement VOLONTAIRE (bouton cliqué) : force la reconstruction même si
+  // la signature ressemble à celle d'une zone précédente (05/07, retour Bruno
+  // — sur un petit jeu de fiches, deux zones différentes peuvent partager les
+  // mêmes IDs et tromper le garde anti-doublon d'initSwipe, laissant l'ancien
+  // état affiché : le "saut" vers la dernière zone était ce garde-fou qui
+  // protégeait à tort). Le garde reste utile pour les rafraîchissements
+  // automatiques (❤️ realtime) — ici on sait que c'est un geste neuf.
+  HZ_SWIPE_SIG=null;
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();
@@ -1916,6 +1924,7 @@ function hzRondFigerEtLancer(){
     HZ_ROND_DERNIER_CENTRE=centre;
     const paquetVide={coeur:brutes, limitrophes:[], toutes:brutes, regionsCible:[], regionsLimitrophes:[]};
     HZ_COIN_PAQUET=paquetVide;
+    HZ_SWIPE_SIG=null;   // geste volontaire : force la reconstruction (05/07)
     if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquetVide);
     if(typeof majEnAvant==='function') majEnAvant(paquetVide);
     ouvreExplo();
@@ -1932,6 +1941,7 @@ function hzRondFigerEtLancer(){
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fiches, limitrophes:[], toutes:fiches, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
+  HZ_SWIPE_SIG=null;   // geste volontaire : force la reconstruction (05/07)
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);   // rebâtit aussi HZ_SWIPE_SEQ (initSwipe)
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();   // (re)monte/rafraîchit le panneau swipe avec ce nouveau paquet
@@ -1961,6 +1971,7 @@ function hzRondElargirJusquauCamping(){
   if(regions.length) HZ_LIEUX=regions;
   const paquet={coeur:fichesNuit, limitrophes:[], toutes:fichesNuit, regionsCible:regions, regionsLimitrophes:[]};
   HZ_COIN_PAQUET=paquet;
+  HZ_SWIPE_SIG=null;   // geste volontaire : force la reconstruction (05/07)
   if(typeof rendCarnetCoin==='function') rendCarnetCoin(paquet);
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();
@@ -4372,12 +4383,10 @@ function rendFinSwipe(){
     // dit et on propose d'élargir jusqu'au plus proche, plutôt que de boucler.
     const sansNuitRond = HZ_ROND_MODE && HZ_ROND_SANS_NUIT;
     if(nb===0 && !sansNuitRond){
-      // rien aimé → retour AUTOMATIQUE à Horizon (petit message puis fermeture)
-      vide.style.display='flex';
-      vide.innerHTML='<span class="hz-swipe-empty-ic">🧭</span>'+
-        '<div>Rien retenu cette fois — on revient à Horizon…</div>';
-      clearTimeout(HZ_FIN_TIMER);
-      HZ_FIN_TIMER=setTimeout(()=>{ fermeExplo(); }, 1400);
+      // Sujet (05/07, retour Bruno) : le message "rien retenu, on revient..."
+      // n'apportait rien (rien à annoncer) et défilait trop vite pour se lire
+      // de toute façon. On sort directement, sans clignoter un message inutile.
+      fermeExplo();
     }else{
       vide.style.display='flex';
       // ENCHAÎNEMENT AUTO jour→nuit (décision 28/06) : réservé au clic-région
