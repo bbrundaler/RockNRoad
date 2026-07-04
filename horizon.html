@@ -267,10 +267,10 @@ body.hz-explo-on #hz-btn-revue{display:none;}
 /* Sujet (05/07, retour Bruno) : ce bouton doit rester une échappatoire
    disponible MÊME pendant le swipe — un rond raté doit pouvoir se relancer
    sans devoir d'abord fermer le panneau. Ne plus le masquer sur hz-explo-on. */
-#hz-btn-vue-pleine{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
-  box-shadow:0 3px 12px rgba(0,0,0,.18);font-size:12.5px;padding:9px 14px;white-space:nowrap;
+#hz-btn-vue-pleine{background:var(--gold);color:var(--chrome-bg);border:1.5px solid var(--gold-deep);
+  box-shadow:0 3px 14px rgba(0,0,0,.28);font-size:12.5px;font-weight:600;padding:9px 14px;white-space:nowrap;
   pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
-#hz-btn-vue-pleine:hover{background:var(--gold-a10);}
+#hz-btn-vue-pleine:hover{background:var(--gold-light);}
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
@@ -3929,36 +3929,27 @@ function ouvreExplo(){
   ov.classList.add('hz-explo-inline');
   document.body.classList.add('hz-explo-on');
   ov.style.display='block';
-  // C5 de la Charte (03/07) → généralisé (05/07, retour Bruno) : avant, le pan
-  // ne se déclenchait que si le CENTRE du rond frôlait le bord du panneau —
-  // un cercle large pouvait donc rester recouvert (son centre est loin du
-  // bord, mais son pourtour est dessous). Désormais on recentre SYSTÉMATIQUE-
-  // MENT sur tout le cercle (ses bords, pas son seul centre) à chaque rond,
-  // avec un mouvement plus ample (durée + décélération douce). Un pan, jamais
-  // un zoom — loi L1 respectée (recadrage de visibilité, comme l'autoPan
-  // d'une popup). Largeur du panneau MESURÉE réellement (getBoundingClientRect,
-  // après le display:block qui vient de s'appliquer) plutôt qu'estimée — une
-  // estimation fausse de quelques dizaines de px suffisait à rater le centrage.
+  // C5 de la Charte (03/07) → refondu (05/07, retour Bruno) : le panBy pur ne
+  // réglait pas le vrai problème (un rond large restait sous le panneau) et
+  // n'avait pas le « joli virage » du zoom natif de Leaflet. Bruno a repéré
+  // que le double-clic-région utilise déjà ce mouvement (flyTo) — on reprend
+  // EXACTEMENT le même mécanisme (`flyToBounds`) pour le rond : un mini zoom
+  // + recentrage en un seul geste animé, la marge du panneau confiée
+  // directement à Leaflet (paddingBottomRight) plutôt que recalculée à la
+  // main. C'est une exception voulue à L1 (zoom ET pan dans le même geste) —
+  // décision explicite de Bruno, à consigner dans CARTE.md une fois validée.
   if(HZ_ROND_COIN && HZ_CARTE_COIN){
     try{
       const bounds=HZ_ROND_COIN.getBounds();
-      const no=HZ_CARTE_COIN.latLngToContainerPoint(bounds.getNorthWest());
-      const se=HZ_CARTE_COIN.latLngToContainerPoint(bounds.getSouthEast());
-      const centreRondX=(no.x+se.x)/2;
-      const largeur=HZ_CARTE_COIN.getSize().x;
-      const largPanneauMesuree=ov.getBoundingClientRect().width;
-      const largPanneau=largPanneauMesuree>40 ? largPanneauMesuree : Math.min(440, window.innerWidth*0.94);
-      const visible=largeur-largPanneau;
-      const decalage=centreRondX-Math.round(visible/2);
-      console.log('[DEBUG recentrage] centreRondX=',Math.round(centreRondX),' largeurCarte=',largeur,
-        ' largPanneauMesuree=',Math.round(largPanneauMesuree),' visible=',Math.round(visible),
-        ' decalage=',Math.round(decalage));
-      if(visible>120){
-        if(Math.abs(decalage)>4){
-          HZ_CARTE_COIN.panBy([decalage, 0], {animate:true, duration:0.65, easeLinearity:0.15});
-        }
-      }
-    }catch(e){ /* jamais bloquant : au pire le pan n'a pas lieu */ }
+      const largPanneau=(ov.getBoundingClientRect().width)||Math.min(440, window.innerWidth*0.94);
+      const zoomActuel=HZ_CARTE_COIN.getZoom();
+      HZ_CARTE_COIN.flyToBounds(bounds, {
+        paddingTopLeft:[30,30],
+        paddingBottomRight:[largPanneau+30, 30],
+        duration:0.9,
+        maxZoom: Math.min(zoomActuel+2, 15)   // « mini zoom » — jamais un saut brutal
+      });
+    }catch(e){ /* jamais bloquant : au pire ni zoom ni pan n'ont lieu */ }
   }
   setTimeout(()=>{ initExploCarte(); if(typeof monteSwipeDansExplo==='function') monteSwipeDansExplo(); majTitrePopup(HZ_LIEUX[0]); }, 60);
 }
