@@ -590,11 +590,12 @@ checkAuth();
 // découpage, OBSOLÈTE » (carto.js le documentait déjà : « Chalets monts Jura,
 // rangé Franche-Comté en base, tombe réellement en Auvergne-Rhône-Alpes »).
 // Même moteur chargé ici pour que la confirmation pointe vers la VRAIE case.
-let RNR_DECOUPAGE=null;
+let RNR_DECOUPAGE=null, RNR_CODE2SLUG={};
 (async function chargeDecoupageAdmin(){
   try{
     const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
     const geojson=await rep.json();
+    geojson.features.forEach(f=>{ RNR_CODE2SLUG[f.properties.code]=f.properties.slug; });
     if(window.RNR_CARTO_MOTEUR) RNR_DECOUPAGE=RNR_CARTO_MOTEUR.creerDecoupage(geojson);
   }catch(e){ console.warn('Admin: découpage régions non chargé (repli sur le menu déroulant)', e); }
 })();
@@ -1469,10 +1470,10 @@ async function saveFiche(){
   // Sujet (cohérence création/crayon) : plus de dropdown — la région écrite
   // en base est UNIQUEMENT celle calculée en direct depuis le GPS (même
   // moteur que carnet.html/horizon.html), jamais un texte choisi à la main.
-  let region='Autre';
+  let region='Autre', regionSlug=null;
   if(RNR_DECOUPAGE){
     const zone=RNR_DECOUPAGE.zoneDe(latVal,lngVal);
-    if(zone) region=zone.nom;
+    if(zone){ region=zone.nom; regionSlug=RNR_CODE2SLUG[zone.code]||null; }
   }
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='⏳ Enregistrement...';
@@ -1529,7 +1530,7 @@ async function saveFiche(){
       contact_proprio:document.getElementById('contactProprio')?.value||null,
     });
     if(error)throw error;
-    showConfirmation(nom, region, type);
+    showConfirmation(nom, region, type, regionSlug);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
     // Incrémenter le compteur local
@@ -1539,25 +1540,12 @@ async function saveFiche(){
   }
 }
 
-function showConfirmation(nom, region, type){
-  // Calculer l'onglet carnet correspondant à la région
-  // Normalise le nom de région → clé carnet (même algo que normalizeRegionKey dans carnet.js)
-  function normalizeForCarnet(r){
-    return (r||'').toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]/g,'');
-  }
-  // Régions fixes (4 tabs statiques du carnet)
-  const FIXED_TABS = {
-    alsace:1, lorraine:1, champagneardenne:1,
-    pyrenees:1,
-    atlantique:1, aquitaine:1, paysdelaloire:1,
-    bourgogne:1, franchecomte:1,
-  };
-  const rk = normalizeForCarnet(region);
-  const isFixed = FIXED_TABS[rk] || false;
-  // Régions fixes : hash direct ; régions dyn : hash #dyn-xxx
-  const carnetUrl = rk ? (isFixed ? `carnet.html#${rk}` : `carnet.html#dyn-${rk}`) : 'carnet.html';
+function showConfirmation(nom, region, type, regionSlug){
+  // Onglets carnet 100% dynamiques depuis le 12/06 : un slug = un onglet
+  // tab-dyn-<slug>, résolu par carnet.html via le hash direct (#<slug>).
+  // Plus de table FIXED_TABS ni de renormalisation approximative — le slug
+  // vient du MÊME découpage GPS que celui qui range réellement la fiche.
+  const carnetUrl = regionSlug ? `carnet.html#${regionSlug}` : 'carnet.html';
 
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(15,13,9,.88);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);';
