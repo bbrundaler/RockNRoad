@@ -189,33 +189,8 @@
   border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 .em-btn-del:hover{background:rgba(200,50,0,.15);}
 
-/* LIGHTBOX PHOTOS */
-#lightbox{position:fixed;inset:0;background:rgba(15,13,9,.82); /* scrim : invariant */z-index:4000;
-  display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
-#lightbox.open{display:flex;}
-#lightbox-inner{background:#1a1710;border-radius:14px;overflow:hidden;
-  max-width:720px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;}
-#lightbox-main{width:100%;height:420px;background-size:cover!important;background-position:center!important;position:relative;}
-#lightbox-title{position:absolute;bottom:0;left:0;right:0;padding:12px 16px;
-  background:linear-gradient(transparent,rgba(0,0,0,.7));
-  font-family:'Playfair Display',serif;font-size:16px;color:white;font-weight:700;}
-#lightbox-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.5);
-  color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;}
-#lightbox-thumbs{display:flex;gap:6px;padding:10px 12px;overflow-x:auto;background:#141210;scrollbar-width:thin;scrollbar-color:var(--gold-a35) transparent;}
-.lb-thumb{width:72px;height:52px;border-radius:6px;background-size:cover!important;background-position:center!important;
-  cursor:pointer;flex-shrink:0;border:2px solid transparent;transition:all .2s;opacity:.7;}
-.lb-thumb:hover{opacity:1;}
-.lb-thumb.active{border-color:var(--gold);opacity:1;}
-.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);
-  color:white;border:none;width:36px;height:36px;border-radius:50%;font-size:16px;
-  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;}
-.lb-nav:hover{background:rgba(200,168,75,.7);}
-#lb-prev{left:10px;}
-#lb-next{right:10px;}
-#lightbox-close{position:absolute;top:10px;left:12px;background:rgba(0,0,0,.5);color:white;
-  border:none;width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:1;}
-#lightbox-close:hover{background:rgba(200,50,0,.6);}
+/* Le lightbox photo vit désormais dans lightbox.js (partagé avec Horizon) —
+   il construit son propre style au premier usage, plus rien à poser ici. */
 
 /* FILTRES VOTES RAPIDES */
 .vote-filters{display:flex;gap:6px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
@@ -379,6 +354,7 @@
 <script src="tags.js"></script>
 <script src="themes-horizon.js"></script>
 <script src="fiche-complete.js"></script>
+<script src="lightbox.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script></head>
 <body>
@@ -392,19 +368,7 @@
 </div>
 
 <!-- Contenu protégé -->
-<!-- LIGHTBOX PHOTOS -->
-<div id="lightbox" onclick="if(event.target===this)closeLightbox()">
-  <div id="lightbox-inner">
-    <button id="lightbox-close" onclick="closeLightbox()">✕</button>
-    <div id="lightbox-main">
-      <div id="lb-prev" class="lb-nav" onclick="lbNav(-1)">‹</div>
-      <div id="lb-next" class="lb-nav" onclick="lbNav(1)">›</div>
-      <div id="lightbox-title"></div>
-      <div id="lightbox-counter"></div>
-    </div>
-    <div id="lightbox-thumbs"></div>
-  </div>
-</div>
+<!-- Le lightbox photo est injecté par lightbox.js au premier usage -->
 
 <!-- MODALE ÉDITION INLINE -->
 <div id="edit-overlay" onclick="if(event.target===this)closeEditModal()">
@@ -815,19 +779,17 @@ function makeVoteBar(l){
   const estRetenu = retenus.has(l.id);
   const estEcartee = ecartees.has(l.id);
   const loveLbl = c.love.count>0 ? 'J\'adore · '+c.love.count : 'J\'adore';
+  if(estRetenu){
+    return `<div class="vote-bar"><span class="rnr-retenue-banner">📌 Retenue pour ce voyage</span></div>`;
+  }
+  if(estEcartee){
+    return `<div class="vote-bar"><span class="rnr-ecartee-banner">🚫 Écartée par le groupe</span></div>`;
+  }
   return `<div class="vote-bar">
     <button class="vote-btn love ${c.love.mine?'active':''}" id="vote-love-${l.id}"
       onclick="event.stopPropagation();toggleVote('${l.id}','love')" title="J'adore — la proposer au groupe">
       ❤️ <span class="vote-count">${loveLbl}</span>
     </button>
-    <span class="vote-btn save derived ${estRetenu?'active':''}" id="vote-save-${l.id}"
-      title="${estRetenu?'Retenue par un vote du groupe pour ce voyage':'Sera allumé quand un vote la retient'}">
-      📌 <span class="vote-count">Retenu</span>
-    </span>${estEcartee?`
-    <span class="vote-btn ecartee derived active" id="vote-eca-${l.id}"
-      title="Écartée par un vote du groupe pour ce voyage (la fiche reste dans le carnet)">
-      🚫 <span class="vote-count">Écartée</span>
-    </span>`:''}
   </div>`;
 }
 let currentGroupeId = null; // groupe de l'utilisateur connecté
@@ -1858,46 +1820,11 @@ function emSyncMarkerDepuisChamps(){
 }
 
 // ── LIGHTBOX ──────────────────────────────────────────────────────────────────
-let lbPhotos=[], lbIdx=0;
-
-function openLightbox(photos, nom, startIdx=0){
-  if(!photos||!photos.length) return;
-  lbPhotos=photos; lbIdx=startIdx;
-  document.getElementById('lightbox').classList.add('open');
-  document.body.style.overflow='hidden';
-  lbRender();
-}
-function closeLightbox(){
-  document.getElementById('lightbox').classList.remove('open');
-  document.body.style.overflow='';
-}
-function lbNav(dir){
-  lbIdx=(lbIdx+dir+lbPhotos.length)%lbPhotos.length;
-  lbRender();
-}
-function lbRender(){
-  const main=document.getElementById('lightbox-main');
-  main.style.backgroundImage=`url('${lbPhotos[lbIdx]}')`;
-  document.getElementById('lightbox-counter').textContent=`${lbIdx+1} / ${lbPhotos.length}`;
-  // Thumbs
-  const tc=document.getElementById('lightbox-thumbs');
-  tc.innerHTML=lbPhotos.map((u,i)=>`
-    <div class="lb-thumb ${i===lbIdx?'active':''}"
-      style="background-image:url('${u}');"
-      onclick="lbIdx=${i};lbRender()"></div>
-  `).join('');
-  // Cacher nav si 1 seule photo
-  document.getElementById('lb-prev').style.display=lbPhotos.length>1?'flex':'none';
-  document.getElementById('lb-next').style.display=lbPhotos.length>1?'flex':'none';
-  document.getElementById('lightbox-thumbs').style.display=lbPhotos.length>1?'flex':'none';
-}
-// Clavier
-document.addEventListener('keydown', e=>{
-  if(!document.getElementById('lightbox').classList.contains('open')) return;
-  if(e.key==='ArrowLeft') lbNav(-1);
-  else if(e.key==='ArrowRight') lbNav(1);
-  else if(e.key==='Escape') closeLightbox();
-});
+// Délègue vers le module partagé (lightbox.js) — mêmes noms de fonction
+// conservés pour ne rien casser aux dizaines d'appels existants dans ce fichier.
+function openLightbox(photos, nom, startIdx=0){ RNR_LIGHTBOX.open(photos, startIdx); }
+function closeLightbox(){ RNR_LIGHTBOX.close(); }
+function lbNav(dir){ RNR_LIGHTBOX.nav(dir); }
 
 // ── Note famille maison : cœurs dorés (distincte de l'étoile Google) ──
 function coeursFamille(n){
@@ -1914,28 +1841,21 @@ function openGrandeFiche(id){
   const dogStatus = dogEtatDe(l);
   const dogLabel  = DOG_LABELS[dogStatus];
 
-  const noteG = l.note ? `<span style="background:rgba(44,80,22,.4);color:var(--st-ok-vif);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">★ ${l.note} Google${l.user_ratings_total?` (${l.user_ratings_total} avis)`:''}</span>` : '';
-  const noteF = l.note_famille ? `<span style="background:var(--gold-a20);color:var(--gold-light);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille ${coeursFamille(l.note_famille)}</span>` : '';
+  const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(l.note, l.user_ratings_total);
+  const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(l.note_famille);
   const dogBadge = dogLabel ? `<span class="dog-photo-badge ${dogStatus}" style="position:static;font-size:11px;">${dogLabel}</span>` : '';
 
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
     noteG, noteF, dogBadge,
     voteBarHtml: makeVoteBar(l),
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
-    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️</button>`,
-    onPhotoClick: `(function(i){openGfLightbox('${l.id}',i)})`
+    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button>`
   });
   document.getElementById('gf-overlay').style.display = 'flex';
 }
 function closeGrandeFiche(){
   const o = document.getElementById('gf-overlay');
   if(o) o.style.display = 'none';
-}
-function openGfLightbox(id, startIndex){
-  const l = allLieux.find(x => x.id === id || x.id === String(id));
-  if(!l) return;
-  const photos = [...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];
-  if(photos.length>1) openLightbox(photos,'',startIndex||0);
 }
 
 function openEditModal(id){

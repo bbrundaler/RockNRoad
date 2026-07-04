@@ -17,6 +17,7 @@
 <script src="carto-marqueurs.js"></script>
 <script src="themes-horizon.js"></script>
 <script src="fiche-complete.js"></script>
+<script src="lightbox.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
@@ -1486,37 +1487,31 @@ function hzGfVoteBarHtml(f){
   const propId=HZ_VOTE_DE_FICHE[f.id];
   const c=hzCoeursDe(f.id).love;
   const estLeader=(typeof jeSuisLeaderHz==='function') && jeSuisLeaderHz();
-  if(retenu) return '<span class="hz-pop-badge" style="background:var(--mk-epingle)">📌 Retenue pour ce voyage</span>';
-  if(ecartee) return '<span class="hz-pop-badge" style="background:var(--ink-dim)">🚫 Écartée par le groupe</span>';
+  if(retenu) return '<span class="rnr-retenue-banner">📌 Retenue pour ce voyage</span>';
+  if(ecartee) return '<span class="rnr-ecartee-banner">🚫 Écartée par le groupe</span>';
   let actions='';
   if(enVote) actions+='<button class="hz-aimee-tag-vote" type="button" onclick="ouvrirCarteVote(\''+propId+'\')">🗳️ Voir et voter</button>';
-  actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="hzPopupToggleLove(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
-  if(!enVote && c.count>0) actions+='<button class="hz-aimee-vote" type="button" onclick="lancerVoteSurFiche(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
-  if(estLeader) actions+='<button class="hz-aimee-epingle" type="button" onclick="epinglerDirectementHzId(\''+f.id+'\');hzOuvreGrandeFiche(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
+  actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="hzPopupToggleLove(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
+  if(!enVote && c.count>0) actions+='<button class="hz-aimee-vote" type="button" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
+  if(estLeader) actions+='<button class="hz-aimee-epingle" type="button" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
   return '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+actions+'</div>';
 }
-// Vignette cliquée dans la galerie : devient la photo de couverture (pas de
-// lightbox séparée — plus simple, suffit à "voir les 5 photos").
-function hzGfSwapPhoto(idx){
-  if(!HZ_GF_FICHE_ID) return;
-  const f=(HZ_FICHES||[]).find(x=>x.id===HZ_GF_FICHE_ID);
-  if(!f) return;
-  const photos=RNR_FICHE_COMPLETE.photosDe(f);
-  const cover=document.querySelector('#hz-gf-body .gf-cover');
-  if(cover && photos[idx]) cover.style.backgroundImage="url('"+photos[idx]+"')";
+// Construit le HTML de la grande fiche (utilisé à l'ouverture ET au rafraîchissement
+// en place — un seul endroit, jamais deux versions qui divergent).
+function hzGfConstruitHtml(f){
+  const noteG=RNR_FICHE_COMPLETE.badgeNoteGoogle(f.note);
+  const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(f.note_famille);
+  return RNR_FICHE_COMPLETE.html(f, {
+    noteG, noteF,
+    voteBarHtml: hzGfVoteBarHtml(f),
+    closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>'
+  });
 }
 function hzOuvreGrandeFiche(ficheId, evt){
   const f=(HZ_FICHES||[]).find(x=>x.id===ficheId);
   if(!f) return;
   HZ_GF_FICHE_ID=ficheId;
-  const noteG=f.note?'<span style="background:rgba(44,80,22,.4);color:#8fce6b;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">★ '+f.note+' Google</span>':'';
-  const noteF=f.note_famille?'<span style="background:var(--gold-a20);color:var(--gold-light);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille '+'★'.repeat(Number(f.note_famille)||0)+'</span>':'';
-  document.getElementById('hz-gf-body').innerHTML = RNR_FICHE_COMPLETE.html(f, {
-    noteG, noteF,
-    voteBarHtml: hzGfVoteBarHtml(f),
-    closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>',
-    onPhotoClick: 'hzGfSwapPhoto'
-  });
+  document.getElementById('hz-gf-body').innerHTML = hzGfConstruitHtml(f);
   const overlay=document.getElementById('hz-gf-overlay');
   const modal=document.getElementById('hz-gf-modal');
   if(!overlay||!modal) return;
@@ -1541,6 +1536,20 @@ function hzOuvreGrandeFiche(ficheId, evt){
     });
   });
 }
+// Sujet (05/07, retour Bruno) : après ❤️/vote/épingler, la fiche ouverte
+// restait affichée avec l'ANCIEN état (fallait fermer/rouvrir pour voir le
+// changement). Cause racine : les actions sont asynchrones (confirm() +
+// écriture en base) — rafraîchir tout de suite après l'appel, sans attendre
+// la fin, montrait l'état d'AVANT. Chaque action async appelle maintenant
+// hzGfRafraichir APRÈS avoir fini (voir epinglerDirectementHz/hzPopupToggleLove),
+// jamais l'appelant du bouton lui-même.
+function hzGfRafraichir(lieuId){
+  if(HZ_GF_FICHE_ID!==lieuId) return;   // la grande fiche affiche autre chose, ou est fermée
+  const f=(HZ_FICHES||[]).find(x=>x.id===lieuId);
+  if(!f) return;
+  const body=document.getElementById('hz-gf-body');
+  if(body) body.innerHTML = hzGfConstruitHtml(f);
+}
 function hzFermeGrandeFiche(){
   const overlay=document.getElementById('hz-gf-overlay');
   const modal=document.getElementById('hz-gf-modal');
@@ -1560,6 +1569,7 @@ async function hzPopupToggleLove(lieuId){
   const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null;
   if(f && typeof hzMajMarqueur==='function') hzMajMarqueur(lieuId, f.type);
   hzRafraichitPopup(lieuId);
+  if(typeof hzGfRafraichir==='function') hzGfRafraichir(lieuId);
 }
 function hzRafraichitPopup(lieuId){
   const f=(typeof ficheParIdHz==='function')?ficheParIdHz(lieuId):null; if(!f) return;
@@ -1605,7 +1615,10 @@ function hzAfficheTousLesPoints(){
     // les points restent visibles mais n'ouvrent plus rien (un seul endroit de
     // décision à la fois) — mais passer d'un point à un autre reste possible tant
     // que seul un point (pas le swipe) a la main : Leaflet remplace la popup tout seul.
-    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; m.openPopup(); });
+    // Sujet (05/07, retour Bruno) : "trop de clics" — survol = mini fiche (tooltip),
+    // UN clic = directement la grande fiche (RNR_FICHE_COMPLETE). On oublie la
+    // fiche intermédiaire (l'ancien popup Leaflet) dans le geste de clic.
+    m.on('click', (ev)=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; hzOuvreGrandeFiche(f.id, {currentTarget:m.getElement?m.getElement():null}); });
     HZ_CARTE_REPOS_MARQ.addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
   });
@@ -1881,7 +1894,7 @@ function afficheCarteCoin(slug){
     m.on('tooltipopen', ()=>{ if(hzCarteInerte()||HZ_ROND_EN_COURS) m.closeTooltip(); });
     m.on('popupopen', ()=>{ m.setPopupContent(hzPopupFicheHtml(f)); HZ_POPUP_OUVERTE=true; m.closeTooltip(); });
     m.on('popupclose', ()=>{ HZ_POPUP_OUVERTE=false; });
-    m.on('click', ()=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; m.openPopup(); });
+    m.on('click', (ev)=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; hzOuvreGrandeFiche(f.id, {currentTarget:m.getElement?m.getElement():null}); });
     HZ_CARTE_COIN_MARQ.addLayer(m);
     HZ_CARTE_COIN_MARQ_PAR_ID[f.id]={marker:m, latlng:[+f.lat,+f.lng]};
   });
@@ -4722,6 +4735,8 @@ async function epinglerDirectementHz(fiche){
   rendPanier();
   majLigneCockpit();
   marqueRegionsRetenues();
+  if(typeof hzRafraichitPopup==='function') hzRafraichitPopup(fiche.id);
+  if(typeof hzGfRafraichir==='function') hzGfRafraichir(fiche.id);
 }
 
 // Variante par id, pour les gabarits construits en innerHTML (onclick="...")

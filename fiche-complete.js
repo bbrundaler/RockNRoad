@@ -8,28 +8,43 @@
 // (B20 : ❤️→candidate reste dans hzToggleVote/toggleVote, jamais ailleurs).
 //
 // Usage : RNR_FICHE_COMPLETE.html(lieu, {
-//   noteG, noteF, dogBadge,       // badges déjà formatés par l'appelant (HTML)
-//   voteBarHtml,                  // barre de vote/actions de LA page appelante
-//   extraActionsHtml,             // ex: bouton crayon (Carnet uniquement)
-//   closeButtonHtml,              // bouton fermer, propre à chaque page
-//   onPhotoClick(index)           // nom de fonction globale pour la galerie/lightbox
+//   noteG, noteF, dogBadge,     // badges déjà formatés — utiliser badgeNoteGoogle/
+//                               // badgeNoteFamille ci-dessous pour rester lisibles
+//   voteBarHtml,                // barre de vote/actions de LA page appelante
+//   extraActionsHtml,           // ex: bouton crayon (Carnet uniquement)
+//   closeButtonHtml,            // bouton fermer, propre à chaque page
 // })
+// La galerie photo (couverture + vignettes) ouvre TOUJOURS le lightbox partagé
+// (lightbox.js) — plus besoin de le préciser à l'appel.
 (function(){
   function esc(s){ return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function photosDe(l){
     return [...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];
   }
+  // Sujet (05/07, retour Bruno) : texte vert sur fond vert, illisible. Un seul
+  // badge défini ici — le corriger une fois le corrige partout.
+  function badgeNoteGoogle(note, totalAvis){
+    if(!note) return '';
+    return '<span style="background:#1f4d16;color:#eafbe0;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">★ '+note+' Google'+(totalAvis?' ('+totalAvis+' avis)':'')+'</span>';
+  }
+  function badgeNoteFamille(n){
+    const note=Number(n)||0; if(!note) return '';
+    return '<span style="background:var(--gold-a20);color:var(--gold-light,var(--gold-deep));font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille '+'★'.repeat(note)+'</span>';
+  }
+  function ouvrirLightbox(photosJson, idx){
+    if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.open(JSON.parse(photosJson), idx);
+  }
   function html(l, opts){
     opts = opts || {};
     const photos = photosDe(l);
+    const photosAttr = esc(JSON.stringify(photos)).replace(/"/g,'&quot;');
     const cover = photos[0] ? `url('${photos[0]}')` : 'linear-gradient(135deg,#3a2f1a,#1a1510)';
     const mapsUrl = l.nom
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.nom + (l.sous_region||l.region ? ', '+(l.sous_region||l.region) : ''))}`
       : (l.lat&&l.lng ? `https://www.google.com/maps?q=${l.lat},${l.lng}` : 'https://maps.google.com/');
-    const photoFn = opts.onPhotoClick || 'RNR_FICHE_COMPLETE.noop';
 
     const galerie = photos.length>1 ? `<div style="display:flex;gap:6px;padding:10px 22px 0;flex-wrap:wrap;">${
-      photos.slice(1,5).map((u,i)=>`<div style="width:54px;height:40px;background-image:url('${u}');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;" onclick="${photoFn}(${i+1})"></div>`).join('')
+      photos.slice(1,5).map((u,i)=>`<div style="width:54px;height:40px;background-image:url('${u}');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;" onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',${i+1})"></div>`).join('')
     }</div>` : '';
 
     let pratique = '';
@@ -43,8 +58,10 @@
 
     const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
 
+    // Sujet (05/07, retour Bruno) : Maps/Site/crayon groupés à droite (utilitaire),
+    // vote/retenue à gauche (social) — plus la longue barre dorée pleine largeur.
     return `
-      <div class="gf-cover" style="background-image:${cover};">
+      <div class="gf-cover" style="background-image:${cover};${photos.length>1?'cursor:pointer;':''}" ${photos.length>1?`onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',0)"`:''}>
         ${opts.closeButtonHtml||''}
         ${photos.length>1?`<div class="gf-photo-count">📷 ${photos.length} photos</div>`:''}
         <div class="gf-cover-overlay"><span class="gf-type-badge">${esc(l.type||'Lieu')}${l.sous_region||l.region?' · '+esc(l.sous_region||l.region):''}</span></div>
@@ -60,13 +77,16 @@
         ${l.conseil?`<div class="gf-conseil"><div class="gf-conseil-t">💡 Conseil</div><p>${esc(l.conseil)}</p></div>`:''}
         ${pratique?`<div class="gf-grid">${pratique}</div>`:''}
         ${tags?`<div class="gf-tags">${tags}</div>`:''}
-        ${opts.voteBarHtml?`<div class="gf-votebar">${opts.voteBarHtml}</div>`:''}
-        <div class="gf-actions">
-          <a href="${mapsUrl}" target="_blank" class="gf-btn-gold">📍 Voir sur Maps</a>
-          ${opts.extraActionsHtml||''}
+        <div class="gf-bottom-row">
+          <div class="gf-bottom-vote">${opts.voteBarHtml||''}</div>
+          <div class="gf-bottom-actions">
+            <a href="${mapsUrl}" target="_blank" class="gf-btn-dark">📍 Maps</a>
+            ${l.site_web?`<a href="${l.site_web}" target="_blank" class="gf-btn-dark">🌐 Site</a>`:''}
+            ${opts.extraActionsHtml||''}
+          </div>
         </div>
       </div>
     `;
   }
-  window.RNR_FICHE_COMPLETE = { html, photosDe, noop:function(){} };
+  window.RNR_FICHE_COMPLETE = { html, photosDe, badgeNoteGoogle, badgeNoteFamille, _openLb:ouvrirLightbox };
 })();
