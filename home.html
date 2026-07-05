@@ -190,6 +190,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       </div>
     </div>
     <div class="hub-carte-cote">
+      <div class="hub-dashboard" id="hub-tableau">
+        <div class="hdb-cell">
+          <div class="hdb-val" id="htFiches">—</div>
+          <div class="hdb-label" id="htFichesLabel">fiches</div>
+        </div>
+        <div class="hdb-cell">
+          <div class="hdb-val" id="htRetenues">—</div>
+          <div class="hdb-label" id="htRetenuesLabel">retenues</div>
+        </div>
+        <div class="hdb-cell" id="htVotesCell" style="display:none;">
+          <div class="hdb-val" id="htVotes">—</div>
+          <div class="hdb-label" id="htVotesLabel">vote en cours</div>
+        </div>
+      </div>
       <div class="hub-dashboard" id="hub-dashboard" style="display:none;">
         <div class="hdb-cell">
           <div class="hdb-val" id="hubDist">—<span class="u"> km</span></div>
@@ -205,14 +219,25 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
         </div>
       </div>
       <div class="rr-surface">
-        <h3>Comment ça marche</h3>
-        <div class="hub-itin-aide">Survole un point pour le voir. <b>Clique pour le retenir</b> — il rejoint « Retenues pour ce voyage », prêt à être placé dans le trajet.</div>
+        <h3>La carte, en un coup d'œil</h3>
+        <div class="hub-itin-aide">Survole (ou touche) un point pour le voir. Pour le retenir ou en discuter, direction <a href="horizon.html" style="color:var(--gold-text);font-weight:600;">Horizon</a>.</div>
         <div class="hub-itin-aide" style="margin-top:10px;">Les points <b>numérotés</b> sont déjà dans ton trajet. Tu les ordonnes dans <a href="voyage.html" style="color:var(--gold-text);font-weight:600;">Voyage</a>.</div>
       </div>
       <a class="rr-btn rr-btn-primary" href="voyage.html" style="width:100%;margin-top:10px;text-align:center;text-decoration:none;display:block;box-sizing:border-box;">Ouvrir mon voyage →</a>
       <a class="hub-porte2" href="horizon.html">Pas d'idée précise ? <b>Explorer →</b></a>
     </div>
   </div>
+
+  <details class="rr-surface" id="hub-comment" style="margin:14px 0;">
+    <summary style="cursor:pointer;font-weight:700;">Comment fonctionne RockNRoad&nbsp;?</summary>
+    <div style="margin-top:10px;font-size:14px;line-height:1.5;">
+      <b>Imaginer</b> — sur Horizon, on parcourt des lieux et on garde ce qui tente.
+      <b>Décider</b> — le groupe discute et retient ses coups de cœur.
+      <b>Tracer</b> — dans Voyage, on ordonne les étapes retenues en un vrai trajet.
+      <b>Se souvenir</b> — après le voyage, les photos et souvenirs se rangent dans Souvenir.
+      Cette page (l'Accueil) résume où en est votre groupe et vous envoie au bon endroit pour agir.
+    </div>
+  </details>
 
   <div class="rr-section">Le groupe</div>
 
@@ -371,7 +396,12 @@ async function loadHubData(userId){
 
     const regions=new Set(fiches.map(f=>normalizeRegionKey(f.region)));
 
-    /* ── CARTE DE CONSTRUCTION (B16.1) : porte « je sais où je vais » ── */
+    // Introduction dépliée par défaut seulement pour un groupe tout neuf (0 fiche) —
+    // repliée ensuite pour ne pas gêner les habitués (05/07 soir).
+    const comment=document.getElementById('hub-comment');
+    if(comment && fiches.length===0) comment.open=true;
+
+    /* ── CARTE DE L'ACCUEIL : aperçu du voyage en cours (mode info) ── */
     await initHubCarte(fiches, groupeId, userId);
 
     /* ── FIL DU VOYAGE VIVANT : étape/texte calculés depuis l'état réel du voyage
@@ -384,14 +414,15 @@ async function loadHubData(userId){
 }
 
 /* ════════════════════════════════════════════════════════════════════════
-   CARTE DE CONSTRUCTION DU HUB (B16.1) — porte « je sais où je vais ».
-   Toutes les fiches en marqueurs (moteur unique carto-marqueurs.js). On clique
-   les points DANS L'ORDRE → ils s'ajoutent à « Mon itinéraire ». « Valider »
-   écrit des RETENUES (origine 'hub') + l'ordre dans voyage_itineraire, puis
-   ouvre Voyage. Un seul mode. Distance = visuelle (zoom), pas de calcul GPS.
+   CARTE DE L'ACCUEIL — aperçu du voyage en cours, PAS un outil de construction
+   (bascule du 05/07 soir : l'Accueil devient tableau de bord, retenir une fiche
+   est un comportement qui ne vit plus qu'sur Horizon). Toutes les fiches en
+   marqueurs (moteur unique carto-marqueurs.js) ; survol/tap montre la fiche,
+   pour agir on renvoie vers Horizon. Le tracé (fiches déjà PLACÉES dans
+   voyage_itineraire) reste affiché — lecture seule, reflet de Voyage.
    ════════════════════════════════════════════════════════════════════════ */
 let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null, HUB_DOMICILE=null, HUB_MAISON_MK=null;
-// Tactile : sur mobile le survol n'existe pas → on n'ouvre pas la fiche au survol (le tap ajoute direct).
+// Tactile : sur mobile le survol n'existe pas → bindPopup gère déjà l'ouverture au tap.
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
 async function initHubCarte(fiches, groupeId, userId){
@@ -426,6 +457,9 @@ async function initHubCarte(fiches, groupeId, userId){
       // L'itinéraire ordonné du voyage : ces fiches sont PLACÉES (numéro + tracé).
       const {data:ri}=await sb.from('voyage_itineraire').select('lieu_id,ordre').eq('voyage_id',voyageId).order('ordre',{ascending:true});
       let n=0; (ri||[]).forEach(r=>{ if(HUB_PLACEES[r.lieu_id]==null){ HUB_PLACEES[r.lieu_id]=(++n); } });
+      // Tableau de bord : signal « votes en cours » — la NOTIFICATION vit ici, VOTER reste
+      // exclusivement sur Horizon (aucune action de vote ajoutée sur ce tableau).
+      hubMajVotesEnCours(voyageId);
     }
     const {data:rx}=await sb.from('reactions').select('cible_id')
       .eq('cible_type','lieu').eq('membre_id',userId).eq('emoji','❤️');
@@ -455,12 +489,15 @@ async function initHubCarte(fiches, groupeId, userId){
       photo+
       '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
       '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '<a href="horizon.html?region='+encodeURIComponent(f.region||'')+'" style="display:block;font-size:12px;font-weight:600;color:var(--gold-text);padding:2px 2px 0;">Voir sur Horizon →</a>'+
       '</div>', {maxWidth:240, autoPan:false, closeButton:false});
-    // SURVOL (desktop) : la fiche apparaît / disparaît. Pas de menu, pas de clic pour voir.
+    // SURVOL (desktop) / TAP (tactile, via bindPopup) : la fiche s'affiche en INFO seule —
+    // plus de clic-retenue direct depuis le Hub (retiré, Sujet Accueil du 05/07 soir) :
+    // retenir une fiche est un comportement qui vit UNIQUEMENT sur Horizon (hzToggleVote /
+    // epinglerDirectementHzId), jamais un 2ᵉ chemin d'écriture. La carte du Hub redevient
+    // un aperçu, pas un outil de construction.
     mk.on('mouseover', ()=>{ if(!HUB_TACTILE) mk.openPopup(); });
     mk.on('mouseout',  ()=>{ if(!HUB_TACTILE) mk.closePopup(); });
-    // CLIC / TAP : ajoute ou retire DIRECT de l'itinéraire (1 geste, point allumé en teal).
-    mk.on('click', ()=>{ hubTogglePoint(f.id); });
     HUB_MARKERS[f.id]=mk;
     bounds.push([f.lat,f.lng]);
   });
@@ -492,6 +529,24 @@ async function initHubCarte(fiches, groupeId, userId){
 //    Décider → Tracer (Partir/Se souvenir restent neutres, pas de signal fiable
 //    encore disponible pour les détecter). Appelée après initHubCarte, une fois
 //    HUB_ETATS/HUB_PLACEES connus.
+// Signal « votes en cours » du tableau de bord — lecture seule (propositions.statut='ouvert').
+// Cliquer envoie sur Horizon pour trancher : voter reste UN SEUL comportement, jamais ici.
+async function hubMajVotesEnCours(voyageId){
+  try{
+    const {count}=await sb.from('propositions').select('*',{count:'exact',head:true})
+      .eq('voyage_id',voyageId).eq('statut','ouvert');
+    const cell=document.getElementById('htVotesCell');
+    if(!cell) return;
+    if(count>0){
+      document.getElementById('htVotes').textContent=count;
+      document.getElementById('htVotesLabel').textContent='vote'+(count>1?'s':'')+' en cours';
+      cell.style.display='';
+    } else {
+      cell.style.display='none';
+    }
+  }catch(e){ console.warn('Hub: votes en cours',e); }
+}
+
 function hubMajFilVoyage(nbFiches, nbRegions){
   const nbRetenues=Object.values(HUB_ETATS).filter(e=>e&&e.epingle).length;
   const nbPlacees=Object.keys(HUB_PLACEES).length;
@@ -527,46 +582,13 @@ function hubMajFilVoyage(nbFiches, nbRegions){
   const resume=document.getElementById('fil-resume'); if(resume) resume.textContent=TEXTES[etape];
   const cta=document.getElementById('fil-cta');
   if(cta){ cta.textContent=CTA[etape].label; cta.setAttribute('href', CTA[etape].href); }
-}
 
-// CLIC sur un point du Hub = on RETIENT la fiche pour le voyage (statut 'retenue',
-// origine 'hub'). Elle apparaît dans « Retenues pour ce voyage » (bas de Voyage),
-// en attente d'être montée dans le trajet. Le Hub N'ÉCRIT JAMAIS l'itinéraire (D-MK).
-// Re-cliquer une fiche retenue (mais pas encore placée) la retire.
-async function hubTogglePoint(id){
-  const f=HUB_FICHES[id]; if(!f) return;
-  if(HUB_PLACEES[id]!=null){          // déjà placée dans le trajet → on ne touche pas depuis le Hub
-    if(HUB_MAP) HUB_MAP.closePopup();
-    return;
-  }
-  try{
-    const {data:{session}}=await sb.auth.getSession();
-    if(!session){ window.location.href='index.html'; return; }
-    const voyageId=await hubResoutVoyage(session.user.id);
-    if(!voyageId){ alert('Crée d\'abord un voyage.'); return; }
-    const dejaRetenue = HUB_ETATS[id] && HUB_ETATS[id].epingle;
-    if(dejaRetenue){
-      await sb.from('voyage_fiches').delete().eq('voyage_id',voyageId).eq('lieu_id',id).eq('statut','retenue');
-      delete HUB_ETATS[id];
-    }else{
-      await sb.from('voyage_fiches').upsert(
-        [{voyage_id:voyageId, lieu_id:id, statut:'retenue', origine:'hub'}],
-        {onConflict:'voyage_id,lieu_id'});
-      HUB_ETATS[id]={epingle:true};
-    }
-    hubRafraichitMarqueur(id);
-  }catch(err){ console.warn('Hub toggle retenue',err); }
-  if(HUB_MAP) HUB_MAP.closePopup();
-}
-
-// Redessine UN marqueur selon son état courant (épingle si retenue, etc.).
-function hubRafraichitMarqueur(id){
-  const mk=HUB_MARKERS[id]; const f=HUB_FICHES[id];
-  if(!mk||!f||!window.RNR_MARQUEURS) return;
-  const num=HUB_PLACEES[id];
-  const opts=(num!=null)?{numero:num,taille:30}:{taille:20};
-  const ic=RNR_MARQUEURS.icone(f, HUB_ETATS[id]||{}, opts);
-  if(ic) mk.setIcon(ic);
+  // Tableau de bord (Accueil, 05/07 soir) : mêmes compteurs que ci-dessus, une seule
+  // maison — pas de 2ᵉ calcul ailleurs pour les mêmes chiffres.
+  const htF=document.getElementById('htFiches'); if(htF) htF.textContent=nbFiches;
+  const htFL=document.getElementById('htFichesLabel'); if(htFL) htFL.textContent='fiche'+s(nbFiches);
+  const htR=document.getElementById('htRetenues'); if(htR) htR.textContent=nbRetenues;
+  const htRL=document.getElementById('htRetenuesLabel'); if(htRL) htRL.textContent='retenue'+s(nbRetenues);
 }
 
 // Tracé PERMANENT des fiches déjà placées dans le trajet (reflet de Voyage).
