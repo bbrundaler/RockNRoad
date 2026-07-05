@@ -149,21 +149,41 @@
     return estCotierApprox(lat, lng);
   }
 
-  function estMontagne(lat, lng) {
-    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
-    /* Cœurs de massifs resserrés (on vise la VRAIE montagne, pas le piémont,
-       qui ferait apparaître des campings de plaine en "Montagne"). Calé sur
-       les coordonnées réelles des fiches.
-       EN ATTENTE (05/07) : remplacement par les polygones officiels des 6
-       massifs (loi montagne 1985, data.gouv.fr) — Bruno doit récupérer le
-       fichier, non accessible depuis l'environnement de code. Rectangle
-       conservé tel quel jusque-là. */
-    var pyrenees     = lat < 43.05 && lng >= -0.90 && lng <= 2.1;   /* haute chaîne */
-    var alpes        = lat >= 44.0 && lat <= 46.3 && lng > 6.0;     /* Alpes franches */
+  /* Massifs officiels (05/07) : décret du 16 janvier 2004 (loi montagne),
+     communes → massif fournies par Bruno (data.gouv.fr), jointes aux contours
+     communaux réels (miroir GitHub gregoiredavid/france-geojson) et fusionnées
+     en un seul contour par massif. Même moteur que les régions (`carto.js`,
+     point-dans-polygone) — un seul endroit pour "être dans un polygone".
+     Chargé une fois au démarrage ; tant que ce n'est pas prêt, repli sur
+     l'ancien rectangle (jamais pire qu'avant, juste moins précis le temps du
+     chargement). filet:false volontairement : être à côté d'un massif ne
+     veut pas dire qu'on y est (contrairement aux régions, toujours pourvues). */
+  var MASSIFS_DECOUPAGE = null;
+  var MASSIFS_CHARGEMENT = (function(){
+    if (typeof fetch !== 'function') return null;
+    return fetch('massifs-france.geojson', {cache:'no-cache'})
+      .then(function(r){ return r.json(); })
+      .then(function(geo){
+        if (window.RNR_CARTO_MOTEUR) {
+          MASSIFS_DECOUPAGE = window.RNR_CARTO_MOTEUR.creerDecoupage(geo, {filet:false});
+        }
+      })
+      .catch(function(e){ console.warn('themes-horizon: massifs réels non chargés, repli sur rectangle', e); });
+  })();
+  function estMontagneApprox(lat, lng) {
+    /* Ancien filet par rectangles — conservé UNIQUEMENT comme repli le temps
+       du chargement des vrais massifs. Ne plus enrichir. */
+    var pyrenees     = lat < 43.05 && lng >= -0.90 && lng <= 2.1;
+    var alpes        = lat >= 44.0 && lat <= 46.3 && lng > 6.0;
     var jura         = lat >= 46.1 && lat <= 47.2 && lng >= 5.7 && lng <= 6.9;
-    var vosges       = lat >= 47.85 && lat <= 48.45 && lng >= 6.85 && lng <= 7.10; /* crêtes, exclut piémont alsacien */
+    var vosges       = lat >= 47.85 && lat <= 48.45 && lng >= 6.85 && lng <= 7.10;
     var massifCentral= lat >= 44.6 && lat <= 45.6 && lng >= 2.4 && lng <= 4.0;
     return pyrenees || alpes || jura || vosges || massifCentral;
+  }
+  function estMontagne(lat, lng) {
+    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+    if (MASSIFS_DECOUPAGE) return !!MASSIFS_DECOUPAGE.zoneDe(lat, lng);
+    return estMontagneApprox(lat, lng);
   }
 
   /* Cherche un mot-clé d'un thème dans le nom. Le mot-clé doit commencer un

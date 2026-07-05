@@ -85,7 +85,8 @@
      UN DÉCOUPAGE chargé = { code, nom, geom } par zone, indexé.
      `charger(geojson)` accepte un FeatureCollection (properties.code/nom).
      --------------------------------------------------------------------- */
-  function creerDecoupage(geojson) {
+  function creerDecoupage(geojson, opts) {
+    const filet = !opts || opts.filet !== false;   // par défaut : comportement inchangé (régions)
     const zones = geojson.features.map(f => ({
       code: f.properties.code,
       nom: f.properties.nom,
@@ -95,8 +96,12 @@
     }));
 
     // rattache une position à une zone : polygone d'abord, filet proximité ensuite
+    // (filet:false → test STRICT, pour un découpage où "hors zone" est une
+    // réponse légitime, ex. massifs : être à 5km d'un massif ne veut pas dire
+    // qu'on y est, contrairement aux régions qui doivent toujours en avoir une)
     function zoneDe(lat, lng) {
       for (const z of zones) if (pointDansGeom(lng, lat, z.geom)) return z;
+      if (!filet) return null;
       // filet : aucune zone ne contient le point → la plus proche sous le seuil
       let best = null, bestD = Infinity;
       for (const z of zones) {
