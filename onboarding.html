@@ -699,8 +699,9 @@ async function saveProfil(){
     if(ie)throw ie;
 
     showToast('✅ Enregistré !');
-    // On SORT de la page : retour au carnet (le bug « l'écran reste » est corrigé ici).
-    setTimeout(()=>{ window.location.href='carnet.html'; }, 900);
+    // On SORT de la page : retour au Hub (toute entrée dans le site passe par le
+    // Hub, 05/07 soir — auparavant carnet.html, contournait la porte d'entrée).
+    setTimeout(()=>{ window.location.href='home.html'; }, 900);
   }catch(e){
     showError('Erreur : '+(e.message||e));
     btn.disabled=false; btn.textContent=oldLabel;

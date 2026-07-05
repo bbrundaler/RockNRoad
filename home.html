@@ -497,6 +497,18 @@ let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={
 // Tactile : sur mobile le survol n'existe pas → bindPopup gère déjà l'ouverture au tap.
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
+// Ouverture de "Comment fonctionne RockNRoad" → on fait défiler pour révéler les
+// vignettes vidéo (05/07 soir, demande Bruno) : sans ça, déplier ne suffit pas
+// toujours à les rendre visibles selon la hauteur d'écran. `toggle` ne fire
+// qu'à l'ouverture/fermeture réelle, jamais au chargement de la page.
+(function(){
+  const det=document.getElementById('hub-comment');
+  if(!det) return;
+  det.addEventListener('toggle', ()=>{
+    if(det.open) setTimeout(()=>{ det.scrollIntoView({behavior:'smooth', block:'end'}); }, 60);
+  });
+})();
+
 async function initHubCarte(fiches, groupeId, userId){
   HUB_GROUPE_ID=groupeId;
   // Domicile du groupe (point de départ/retour) — pour la boucle, comme dans Voyage.
