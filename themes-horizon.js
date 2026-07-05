@@ -79,26 +79,85 @@
     /* camping / hotel / table / cafebar / bienetre = LOGISTIQUE → aucun thème */
   };
 
-  /* ── GÉOGRAPHIE (GPS) : filets façades maritimes + massifs ─────────────────
-     Reprend et COMPLÈTE carto-lentilles (qui ne voyait que l'Atlantique ouest
-     et ratait le Massif central). Approximation honnête de pré-tri ; une vraie
-     élévation viendra plus tard (chantier dédié). */
-  function estCotier(lat, lng) {
-    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
-    /* Atlantique / Manche : façade ouest. */
+  /* ── GÉOGRAPHIE (GPS) : littoral réel + filet montagne ──────────────────────
+     Sujet (05/07, retour Bruno) : « pour un FAIT géographique, la précision
+     doit venir de la source, pas d'une case à cocher ». Le littoral vient
+     maintenant de Natural Earth (domaine public, mondial — via le miroir npm
+     world-atlas, découpé sur l'Europe + Atlantique proche), chargé une fois au
+     démarrage. Tant que ce n'est pas chargé (bref instant), on retombe sur
+     l'ancien rectangle — jamais pire qu'avant, juste moins précis le temps du
+     chargement. La montagne reste au rectangle en attendant les polygones
+     officiels des massifs (chantier posé, données à récupérer par Bruno sur
+     data.gouv.fr — non accessible depuis l'environnement de code). */
+  var LITTORAL_SEUIL_KM = 15;
+  var LITTORAL_ANNEAUX = null;   // rempli par le chargement ci-dessous : [[ [lng,lat], ... ], ...]
+  var LITTORAL_CHARGEMENT = (function(){
+    if (typeof fetch !== 'function') return null;
+    return fetch('littoral-europe.geojson', {cache:'force-cache'})
+      .then(function(r){ return r.json(); })
+      .then(function(geo){
+        var anneaux = [];
+        (geo.features||[]).forEach(function(f){
+          var coords = f.geometry && f.geometry.coordinates;
+          if (!coords) return;
+          coords.forEach(function(poly){
+            poly.forEach(function(ring){ if (ring && ring.length>1) anneaux.push(ring); });
+          });
+        });
+        LITTORAL_ANNEAUX = anneaux;
+      })
+      .catch(function(e){ console.warn('themes-horizon: littoral réel non chargé, repli sur rectangle', e); });
+  })();
+  // Distance point→segment en projection locale (suffisante pour un seuil de
+  // quelques km — pas besoin d'une géodésie exacte pour ce test de pré-tri).
+  function distancePointSegmentKm(lat, lng, lng1, lat1, lng2, lat2) {
+    var R = 6371, cosLat = Math.cos(lat * Math.PI/180);
+    function mx(lo){ return lo * Math.PI/180 * cosLat * R; }
+    function my(la){ return la * Math.PI/180 * R; }
+    var px = mx(lng), py = my(lat), x1 = mx(lng1), y1 = my(lat1), x2 = mx(lng2), y2 = my(lat2);
+    var dx = x2-x1, dy = y2-y1, lenSq = dx*dx+dy*dy;
+    var t = lenSq ? ((px-x1)*dx + (py-y1)*dy) / lenSq : 0;
+    if (t<0) t=0; if (t>1) t=1;
+    var cx = x1+t*dx, cy = y1+t*dy, ddx = px-cx, ddy = py-cy;
+    return Math.sqrt(ddx*ddx + ddy*ddy);
+  }
+  function distanceLittoralKm(lat, lng) {
+    if (!LITTORAL_ANNEAUX) return null;
+    var min = Infinity;
+    for (var i=0; i<LITTORAL_ANNEAUX.length; i++) {
+      var ring = LITTORAL_ANNEAUX[i];
+      for (var j=0; j<ring.length-1; j++) {
+        var d = distancePointSegmentKm(lat, lng, ring[j][0], ring[j][1], ring[j+1][0], ring[j+1][1]);
+        if (d<min) min=d;
+      }
+    }
+    return min;
+  }
+  function estCotierApprox(lat, lng) {
+    /* Ancien filet par rectangles — conservé UNIQUEMENT comme repli le temps
+       du chargement du vrai littoral. Ne plus enrichir : à retirer une fois
+       qu'on est sûr que le chargement réseau est toujours fiable en prod. */
     if (lng < -1.05) return true;
-    /* Méditerranée : sud-est sous ~43.6° et est de ~3°. */
     if (lat < 43.6 && lng > 3.0) return true;
-    /* Manche / Mer du Nord : nord au-dessus de ~49.3°, ouest de ~2.6°. */
     if (lat > 49.3 && lng < 2.6) return true;
     return false;
+  }
+  function estCotier(lat, lng) {
+    if (typeof lat !== 'number' || typeof lng !== 'number') return false;
+    var d = distanceLittoralKm(lat, lng);
+    if (d !== null) return d <= LITTORAL_SEUIL_KM;
+    return estCotierApprox(lat, lng);
   }
 
   function estMontagne(lat, lng) {
     if (typeof lat !== 'number' || typeof lng !== 'number') return false;
     /* Cœurs de massifs resserrés (on vise la VRAIE montagne, pas le piémont,
        qui ferait apparaître des campings de plaine en "Montagne"). Calé sur
-       les coordonnées réelles des fiches. */
+       les coordonnées réelles des fiches.
+       EN ATTENTE (05/07) : remplacement par les polygones officiels des 6
+       massifs (loi montagne 1985, data.gouv.fr) — Bruno doit récupérer le
+       fichier, non accessible depuis l'environnement de code. Rectangle
+       conservé tel quel jusque-là. */
     var pyrenees     = lat < 43.05 && lng >= -0.90 && lng <= 2.1;   /* haute chaîne */
     var alpes        = lat >= 44.0 && lat <= 46.3 && lng > 6.0;     /* Alpes franches */
     var jura         = lat >= 46.1 && lat <= 47.2 && lng >= 5.7 && lng <= 6.9;
