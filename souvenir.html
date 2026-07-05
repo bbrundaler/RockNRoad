@@ -178,6 +178,5 @@ async function logout(){await sb.auth.signOut();window.location.href="index.html
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
 /* le bouton Quitter du chrome (chrome.js) appelle window.logout() ci-dessus */
 </script>
-<script src="boussole.js" defer></script>
 </body>
 </html>

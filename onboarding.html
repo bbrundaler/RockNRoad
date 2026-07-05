@@ -712,6 +712,5 @@ function hideError(){document.getElementById('error-msg').classList.remove('show
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 </script>
-<script src="boussole.js" defer></script>
 </body>
 </html>

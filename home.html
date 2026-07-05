@@ -119,10 +119,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hub-carte-vide a{color:var(--gold-text);font-weight:600;}
 .hub-carte-cote{display:flex;flex-direction:column;}
 /* TABLEAU DE BORD du Hub — même grammaire que celui de Voyage (km / temps / étapes). */
-.hub-dashboard{display:flex;align-items:stretch;background:var(--gold-a10,rgba(200,168,75,.10));
-  border:1px solid var(--gold-a30,rgba(200,168,75,.35));border-radius:var(--r);margin-bottom:10px;overflow:hidden;}
+.hub-dashboard{display:flex;align-items:stretch;background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:var(--r);margin-bottom:10px;overflow:hidden;}
 .hdb-cell{flex:1;text-align:center;padding:9px 4px;}
-.hdb-cell + .hdb-cell{border-left:1px solid var(--gold-a30,rgba(200,168,75,.30));}
+.hdb-cell + .hdb-cell{border-left:1px solid var(--gold-a20);}
 .hdb-val{font-family:var(--font-title);font-size:21px;font-weight:800;color:var(--gold-text);line-height:1;}
 .hdb-val .u{font-size:11px;font-weight:700;}
 .hdb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
@@ -131,7 +131,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hub-itin-liste li{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);
   border:1px solid var(--surface-line);border-radius:var(--r-sm);font-size:13px;}
 .hub-itin-liste li .hi-n{width:22px;height:22px;flex-shrink:0;border-radius:50%;background:var(--gold);
-  color:#1a1208;font-weight:700;font-size:12px;display:grid;place-items:center;}
+  color:var(--mk-jour-ink);font-weight:700;font-size:12px;display:grid;place-items:center;}
 .hub-itin-liste li .hi-nom{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
 .hub-itin-liste li .hi-x{border:none;background:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:2px 4px;border-radius:4px;}
 .hub-itin-liste li .hi-x:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
@@ -448,7 +448,7 @@ async function initHubCarte(fiches, groupeId, userId){
     mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
       photo+
       '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
-      '<div style="font-size:11px;color:#888;padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
       '</div>', {maxWidth:240, autoPan:false, closeButton:false});
     // SURVOL (desktop) : la fiche apparaît / disparaît. Pas de menu, pas de clic pour voir.
     mk.on('mouseover', ()=>{ if(!HUB_TACTILE) mk.openPopup(); });
@@ -466,7 +466,7 @@ async function initHubCarte(fiches, groupeId, userId){
     if(HUB_MAISON_MK){ HUB_MAP.removeLayer(HUB_MAISON_MK); HUB_MAISON_MK=null; }
     HUB_MAISON_MK=L.marker([HUB_DOMICILE.lat,HUB_DOMICILE.lng],
       {icon:RNR_MARQUEURS.iconeMaison({taille:32}), zIndexOffset:1000}).addTo(HUB_MAP)
-      .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHubHtml(HUB_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div></div>',
+      .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHubHtml(HUB_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div></div>',
       {maxWidth:220, autoPan:false, closeButton:false});
     if(!HUB_TACTILE){
       HUB_MAISON_MK.on('mouseover', ()=>HUB_MAISON_MK.openPopup());
@@ -549,7 +549,7 @@ function hubTraceVoyage(){
         .then(r=>{ if(r && r.ok) hubMajDashboard(r); })
         .catch(()=>{});
     } else {
-      const col='#C8A84B';
+      const col=(getComputedStyle(document.documentElement).getPropertyValue('--mk-trace')||'').trim()||'#2159A8';
       L.polyline(pts,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
     }
   }
@@ -590,7 +590,6 @@ async function hubResoutVoyage(userId){
 
 function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 </script>
-<script src="boussole.js" defer></script>
 
 <!-- ════ MODAL : créer le premier voyage (1ère connexion, aucun voyage) ════ -->
 <div id="vy-modal" class="vy-overlay" style="display:none">
