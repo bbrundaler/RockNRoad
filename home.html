@@ -339,6 +339,11 @@ async function loadHubData(userId){
     if(window.rnrChrome){ rnrChrome.setGroupe(nomGroupe); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
     document.getElementById('gr-lien').textContent=nomGroupe+' ⚙️';
 
+    /* ── Voyage actif dans le chrome (titre + sélecteur) — même moteur qu'Horizon/Carnet
+       (chargeVoyageActif/CR_chargeVoyageActif) : sans ça, le Hub n'affichait jamais le nom
+       du voyage ni le sélecteur multi-voyages, contrairement aux autres pages. ── */
+    await hubChargeVoyageActif(groupeId);
+
     /* ── Fil « Partager au groupe » : MÊME composant unifié que Cockpit/Horizon (Master 4.18).
        Identité via la règle canonique rnrNomMembre (chrome.js) → nom cohérent partout. ── */
     if(window.RNRDiscussion){
@@ -630,6 +635,33 @@ async function hubResoutVoyage(userId){
     .eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
   const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
   return actif?actif.id:null;
+}
+
+// Voyage actif dans le chrome (titre + sélecteur multi-voyages) — MÊME fonction que
+// chargeVoyageActif (horizon.html) / CR_chargeVoyageActif (carnet.html), copiée ici à
+// l'identique (un comportement = un seul endroit, trois maisons car trois pages, jamais
+// de logique divergente). Appelée AVANT initHubCarte pour que rnr_voyage_id soit déjà en
+// sessionStorage quand hubResoutVoyage() le lit (court-circuit existant, inchangé).
+async function hubChargeVoyageActif(groupeId){
+  if(!groupeId) return;
+  try{
+    const {data:vs}=await sb.from('voyages')
+      .select('id,nom,est_principal,created_at').eq('groupe_id',groupeId)
+      .order('created_at',{ascending:true});
+    const liste=vs||[];
+    if(!liste.length) return;   // aucun voyage : verifierPremierVoyage() ouvrira la modale juste après
+    let actifId=null;
+    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    const actif=liste.find(v=>v.id===actifId)||liste.find(v=>v.est_principal)||liste[0];
+    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    if(window.rnrChrome && rnrChrome.setVoyage){
+      rnrChrome.setVoyage(actif.nom, liste, function(id){
+        if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        window.location.reload();
+      });
+    }
+  }catch(e){ console.warn('Hub: voyage actif',e); }
 }
 
 function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
