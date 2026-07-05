@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RockNRoad · Mon Voyage</title>
+<title>RockNRoad · Roadbook</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
@@ -28,7 +28,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .tb-btn{padding:6px 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;border:1px solid transparent;}
 .tb-btn-clear{background:transparent;color:var(--st-bad-ink);border-color:rgba(200,50,0,.3);}
 .tb-btn-clear:hover{background:var(--st-bad-bg);}
-.tb-btn-add{background:var(--gold);color:#1a1208;}
+.tb-btn-add{background:var(--gold);color:var(--ink);}
 .tb-btn-add:hover{background:var(--gold-light);}
 .tb-btn-print{background:transparent;color:var(--ink);border-color:var(--gold-a35);}
 .tb-btn-print:hover{background:var(--gold-a10);}
@@ -64,14 +64,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
    nouvelle place au lieu de sauter. Classe posée le temps du drag uniquement. */
 .stop-item.vy-sliding{transition:box-shadow .15s, transform .18s ease;}
 .stop-item.vy-grabbed{opacity:.4;transition:none;}  /* l'étape tenue ne s'auto-anime pas */
-.drag-handle{color:#c4b89e;font-size:16px;cursor:grab;flex-shrink:0;user-select:none;touch-action:none;padding:4px 6px;margin:-4px -2px;} /* touch-action:none = la poignée capte le geste au lieu du scroll */
-.stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:#1a1208;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
+.drag-handle{color:var(--ink-dim);font-size:16px;cursor:grab;flex-shrink:0;user-select:none;touch-action:none;padding:4px 6px;margin:-4px -2px;} /* touch-action:none = la poignée capte le geste au lieu du scroll */
+.stop-num{width:22px;height:22px;border-radius:50%;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10px;flex-shrink:0;}
 .stop-info{flex:1;min-width:0;}
-.stop-name{font-size:13px;font-weight:600;color:#1a1208;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stop-meta{font-size:11px;color:#6B5F4A;margin-top:1px;}
+.stop-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stop-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
 .stop-dist{font-size:10px;color:var(--gold-deep);margin-top:2px;}
 .stop-dist-home{font-weight:700;color:var(--gold-text);}
-.stop-remove{background:none;border:none;color:#b3a88e;font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
+.stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
 .stop-remove:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
 
 /* VIDE */
@@ -154,7 +154,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
   <div id="voyage-content">
     <div id="voyage-panel">
       <div id="panel-header">
-        <h2>Itinéraire</h2>
+        <h2>Roadbook</h2>
         <p>Glissez une retenue ici · réordonnez · × pour retirer</p>
         <div class="dashboard">
           <div class="db-cell">
@@ -179,7 +179,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div id="stops-list">
         <div class="empty-voyage" id="emptyVoyage" style="display:flex;">
           <div class="icon">🗺️</div>
-          <h3>Itinéraire vide</h3>
+          <h3>Roadbook vide</h3>
           <p>Glissez une fiche depuis « Retenues pour ce voyage » (sous la carte) pour la poser sur la carte et tracer votre route.</p>
         </div>
       </div>
@@ -682,15 +682,15 @@ function renderMap(){
     // Pastille numérotée VIA LE MOTEUR (rond numéroté, couleur = jour/nuit). D-MK.
     const icon = (window.RNR_MARQUEURS)
       ? RNR_MARQUEURS.icone(v, {epingle:true}, {numero:i+1, taille:32})
-      : L.divIcon({html:`<div style="background:#1A1208;color:#C8A84B;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid #C8A84B;">${i+1}</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
+      : L.divIcon({html:`<div style="background:var(--ink);color:var(--gold);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid var(--gold);">${i+1}</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
     const photoNum = v.photo_url
-      ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escVr(v.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+      ? '<div style="height:110px;background:var(--gold-a20) center/cover no-repeat url(\''+escVr(v.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
       : '';
     const mkNum = L.marker([v.lat,v.lng],{icon}).addTo(routeLayer).bindPopup(`
       <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
         ${photoNum}
         <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">${i+1}. ${escVr(v.nom||'—')}</div>
-        <div style="font-size:11px;color:#888;padding:0 2px;">${escVr(v.region||'')} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
+        <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(v.region||'')} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
     `, {maxWidth:240, autoPan:false, closeButton:false});
     // SURVOL (desktop) : la fiche s'ouvre pour savoir QUEL lieu est ce numéro. Tactile → au tap.
@@ -709,7 +709,7 @@ function renderMap(){
     const mkMaison=L.marker([DOMICILE.lat,DOMICILE.lng],{icon:iconMaison,zIndexOffset:1000}).addTo(routeLayer).bindPopup(`
       <div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;">
         <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">🏠 ${escVr(DOMICILE.nom||'La maison')}</div>
-        <div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div>
+        <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div>
       </div>
     `, {maxWidth:220, autoPan:false, closeButton:false});
     if(!VY_TACTILE){
@@ -740,7 +740,7 @@ function renderMap(){
           .then(r=>{ if(r && r.ok) majTotauxRoute(r); })
           .catch(()=>{});
       } else {
-        const colTrace = '#C8A84B';
+        const colTrace = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#C8A84B';
         L.polyline(latlngs,{color:colTrace,opacity:.2,weight:10}).addTo(routeLayer);
         L.polyline(latlngs,{color:colTrace,weight:3,dashArray:'10,6'}).addTo(routeLayer);
       }
@@ -758,13 +758,13 @@ function renderMap(){
       if(placed.has(f.id)) return;   // déjà dans le trajet → c'est une pastille numérotée
       const icon=RNR_MARQUEURS.icone(f,{epingle:true},{taille:22});
       const phEp = f.photo_url
-        ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escVr(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+        ? '<div style="height:110px;background:var(--gold-a20) center/cover no-repeat url(\''+escVr(f.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
         : '';
       const mkEp = L.marker([f.lat,f.lng], icon?{icon:icon}:{}).addTo(routeLayer).bindPopup(`
         <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
           ${phEp}
           <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">📌 ${escVr(f.nom||'—')}</div>
-          <div style="font-size:11px;color:#888;padding:0 2px;">${escVr(f.region||'')} ${f.type?'· '+escVr(f.type):''}</div>
+          <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(f.region||'')} ${f.type?'· '+escVr(f.type):''}</div>
           <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
       `, {maxWidth:240, autoPan:false, closeButton:false});

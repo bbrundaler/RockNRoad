@@ -38,7 +38,7 @@
     {id:'carnet',   label:'Carnet',   href:'carnet.html'},
     /* Cockpit retiré (02/07, B18-Inc.D) : fusionné dans Horizon — le débat,
        le vote et la main du leader vivent désormais sur la carte d'Horizon. */
-    {id:'voyage',   label:'Voyage',   href:'voyage.html'},
+    {id:'voyage',   label:'Roadbook', href:'voyage.html'},
     {id:'souvenir', label:'Souvenir', href:'souvenir.html'}
   ];
   var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', souvenir:'📸'};
