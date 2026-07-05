@@ -21,12 +21,17 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh;}
 
-/* ── LE FIL DU VOYAGE — la signature ergonomique ── */.fil{
+/* ── LE FIL DU VOYAGE — la signature ergonomique, fusionnée avec l'ancien header
+   (05/07 soir : gagner de la hauteur pour révéler "Comment fonctionne RockNRoad"
+   sans scroll) ── */.fil{
   background:var(--surface);border:1px solid var(--surface-line);
-  border-radius:var(--r-lg);padding:24px 26px 18px;margin-top:18px;
+  border-radius:var(--r-lg);padding:20px 26px 18px;margin-top:18px;
   box-shadow:var(--shadow);
 }
-.fil-steps{display:flex;align-items:flex-start;}
+.fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--surface-line);}
+.fil-top-right{display:flex;align-items:center;gap:10px;}
+.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:0 auto;}
 .fil-step{flex:1;text-align:center;position:relative;cursor:pointer;text-decoration:none;display:block;}
 .fil-step .dot{
   width:14px;height:14px;border-radius:50%;margin:0 auto 8px;
@@ -101,13 +106,17 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   display:flex;align-items:center;justify-content:center;font-size:13px;}
 .hub-demo-lbl{font-size:12px;font-weight:600;color:var(--ink-dim);text-align:center;}
 
-/* ── Rangée d'avatars du groupe (header) — présence discrète (05/07 soir) ── */
-.hub-avatars{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
-.hub-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:600;color:#fff;position:relative;box-shadow:0 0 0 2px var(--bg);}
-.hub-av .pt{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
-  background:var(--gold);box-shadow:0 0 0 2px var(--bg);}
-@media(max-width:700px){.hub-avatars{order:3;width:100%;}}
+/* ── Avatars du groupe (header) — pile chevauchante façon "collaborateurs",
+   présence discrète (05/07 soir) ── */
+.hub-avatars{display:flex;align-items:center;flex-wrap:wrap;}
+.hub-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12.5px;font-weight:600;color:#fff;position:relative;box-shadow:0 0 0 2px var(--surface);
+  margin-left:-8px;}
+.hub-av:first-child{margin-left:0;}
+.hub-av .pt{position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 0 2px var(--surface);}
+.hub-av-plus{background:var(--ink-dim);color:var(--surface);font-size:11.5px;}
+@media(max-width:700px){.hub-avatars{order:3;}}
 
 /* ── Le Hub respire en grand : pleine largeur, comme Horizon/Carnet/Voyage
    (05/07 soir : rr-wrap est la seule page du site à plafonner sa largeur — corrigé). ── */
@@ -158,20 +167,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 
 <main class="rr-wrap">
 
-  <header class="rr-header">
-    <div>
-      <h1 id="hub-salut">Bonjour</h1>
-      <div class="rr-sub">Prêt pour votre prochaine étape ?</div>
-    </div>
-    <div class="hub-avatars" id="hub-avatars"></div>
-    <div>
-      <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
-      <a class="rr-btn rr-btn-ghost" href="admin.html">＋ Nouvelle fiche</a>
-    </div>
-  </header>
-
-  <!-- ═══ LE FIL DU VOYAGE — étape "now"/"done" et texte calculés par hubMajFilVoyage() ═══ -->
+  <!-- ═══ BANNIÈRE : salutation + groupe + fil du voyage, un seul bloc compact
+       (05/07 soir : fusion header+fil pour gagner de la hauteur — le bloc "Comment
+       fonctionne RockNRoad" doit rester visible sans scroll). ═══ -->
   <div class="fil">
+    <div class="fil-top">
+      <div>
+        <h1 id="hub-salut">Bonjour</h1>
+        <div class="rr-sub">Prêt pour votre prochaine étape ?</div>
+      </div>
+      <div class="fil-top-right">
+        <div class="hub-avatars" id="hub-avatars"></div>
+        <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
+        <a class="rr-btn rr-btn-ghost rr-btn-sm" href="admin.html">＋ Nouvelle fiche</a>
+      </div>
+    </div>
     <div class="fil-steps">
       <a class="fil-step now" id="fil-s0" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
       <a class="fil-step" id="fil-s1" href="horizon.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Horizon</span></a>
@@ -367,7 +377,10 @@ function hubRenderAvatars(membres, monUserId, referenceISO){
   if(!box) return;
   if(!membres.length){ box.innerHTML=''; return; }
   const refTime = referenceISO ? new Date(referenceISO).getTime() : 0;
-  box.innerHTML = membres.map(m=>{
+  const MAX=5;
+  const visibles=membres.slice(0,MAX);
+  const surplus=membres.length-visibles.length;
+  box.innerHTML = visibles.map(m=>{
     const nom = m.prenom || m.pseudo || 'Voyageur';
     const av = (window.RNRDiscussion && RNRDiscussion.memberAvatar)
       ? RNRDiscussion.memberAvatar({membres:membres}, m.user_id, nom)
@@ -377,7 +390,7 @@ function hubRenderAvatars(membres, monUserId, referenceISO){
     const contenu = av.emoji ? av.emoji : (av.initiale||'?');
     const titre = nom+(actif?' — actif·ve depuis votre dernière visite':'');
     return '<div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div>';
-  }).join('');
+  }).join('') + (surplus>0 ? '<div class="hub-av hub-av-plus" title="'+surplus+' autre'+(surplus>1?'s':'')+'">+'+surplus+'</div>' : '');
 }
 
 async function loadHubData(userId, email){
