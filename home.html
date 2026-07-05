@@ -124,8 +124,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
    (05/07 soir : rr-wrap est la seule page du site à plafonner sa largeur — corrigé). ── */
 .rr-wrap{max-width:none;}
 /* ── CARTE DE CONSTRUCTION (B16.1) — héros en haut ── */
-.hub-carte-zone{display:grid;grid-template-columns:2.5fr 1fr;gap:16px;margin:6px 0 26px;}
+.hub-carte-zone{display:grid;grid-template-columns:2.5fr 1fr;gap:16px;margin:6px 0 26px;align-items:start;}
 @media(max-width:860px){.hub-carte-zone{grid-template-columns:1fr;}}
+.hub-carte-gauche{min-width:0;}
 .hub-carte-wrap{position:relative;border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;
   height:540px;background:var(--surface);}
 @media(max-width:860px){.hub-carte-wrap{height:360px;}}
@@ -198,13 +199,46 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 
   <!-- ═══ CARTE DE CONSTRUCTION (B16.1) — porte « je sais où je vais » ═══ -->
   <div class="hub-carte-zone">
-    <div class="hub-carte-wrap">
-      <div id="hub-map"></div>
-      <div class="hub-carte-vide" id="hub-carte-vide" style="display:none;">
-        <div class="hcv-ic">🗺️</div>
-        <div class="hcv-t">La carte est vide</div>
-        <div class="hcv-s">Le site a besoin de fiches pour fonctionner.<br>Commence par nourrir le <a href="carnet.html">Carnet</a>.</div>
+    <div class="hub-carte-gauche">
+      <div class="hub-carte-wrap">
+        <div id="hub-map"></div>
+        <div class="hub-carte-vide" id="hub-carte-vide" style="display:none;">
+          <div class="hcv-ic">🗺️</div>
+          <div class="hcv-t">La carte est vide</div>
+          <div class="hcv-s">Le site a besoin de fiches pour fonctionner.<br>Commence par nourrir le <a href="carnet.html">Carnet</a>.</div>
+        </div>
       </div>
+
+      <!-- ── "Comment fonctionne" reste sous la carte, même colonne (05/07 soir,
+           3e passe) : ne déborde plus en pleine largeur jusque sous la discussion. ── -->
+      <details class="rr-surface" id="hub-comment" style="margin-top:10px;">
+        <summary style="cursor:pointer;font-weight:700;">Comment fonctionne RockNRoad&nbsp;?</summary>
+        <div style="margin-top:10px;font-size:14px;line-height:1.5;">
+          <b>Collecter</b> — au Carnet, on rassemble les lieux qui tentent.
+          <b>Tracer</b> — sur Horizon, le groupe discute, vote et retient ses coups de cœur.
+          <b>Partir</b> — dans le Roadbook, on ordonne les étapes retenues en un vrai trajet.
+          <b>Souvenir</b> — après le voyage, les photos et souvenirs s'y rangent.
+          Cette page (l'Accueil) résume où en est votre groupe et vous envoie au bon endroit pour agir.
+        </div>
+        <div class="hub-demos">
+          <a class="hub-demo" href="carnet.html">
+            <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+            <span class="hub-demo-lbl">Collecter</span>
+          </a>
+          <a class="hub-demo" href="horizon.html">
+            <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+            <span class="hub-demo-lbl">Tracer</span>
+          </a>
+          <a class="hub-demo" href="voyage.html">
+            <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+            <span class="hub-demo-lbl">Partir</span>
+          </a>
+          <a class="hub-demo" href="souvenir.html">
+            <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+            <span class="hub-demo-lbl">Souvenir</span>
+          </a>
+        </div>
+      </details>
     </div>
     <div class="hub-carte-cote">
       <div class="hub-dashboard" id="hub-tableau">
@@ -250,35 +284,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       </div>
     </div>
   </div>
-
-  <details class="rr-surface" id="hub-comment" style="margin:14px 0;">
-    <summary style="cursor:pointer;font-weight:700;">Comment fonctionne RockNRoad&nbsp;?</summary>
-    <div style="margin-top:10px;font-size:14px;line-height:1.5;">
-      <b>Collecter</b> — au Carnet, on rassemble les lieux qui tentent.
-      <b>Tracer</b> — sur Horizon, le groupe discute, vote et retient ses coups de cœur.
-      <b>Partir</b> — dans le Roadbook, on ordonne les étapes retenues en un vrai trajet.
-      <b>Souvenir</b> — après le voyage, les photos et souvenirs s'y rangent.
-      Cette page (l'Accueil) résume où en est votre groupe et vous envoie au bon endroit pour agir.
-    </div>
-    <div class="hub-demos">
-      <a class="hub-demo" href="carnet.html">
-        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
-        <span class="hub-demo-lbl">Collecter</span>
-      </a>
-      <a class="hub-demo" href="horizon.html">
-        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
-        <span class="hub-demo-lbl">Tracer</span>
-      </a>
-      <a class="hub-demo" href="voyage.html">
-        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
-        <span class="hub-demo-lbl">Partir</span>
-      </a>
-      <a class="hub-demo" href="souvenir.html">
-        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
-        <span class="hub-demo-lbl">Souvenir</span>
-      </a>
-    </div>
-  </details>
 
 </main>
 
