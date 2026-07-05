@@ -23,15 +23,17 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 
 /* ── LE FIL DU VOYAGE — la signature ergonomique, fusionnée avec l'ancien header
    (05/07 soir : gagner de la hauteur pour révéler "Comment fonctionne RockNRoad"
-   sans scroll) ── */.fil{
+   sans scroll — sous-titre et ligne de phase retirés, redondants avec le tableau
+   de bord ; colonne d'avatars pleine hauteur à droite). ── */.fil{
   background:var(--surface);border:1px solid var(--surface-line);
-  border-radius:var(--r-lg);padding:20px 26px 18px;margin-top:18px;
-  box-shadow:var(--shadow);
+  border-radius:var(--r-lg);padding:16px 26px;margin-top:18px;
+  box-shadow:var(--shadow);display:flex;gap:20px;align-items:stretch;
 }
-.fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;
-  flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--surface-line);}
+.fil-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+.fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.fil-top h1{margin:0;}
 .fil-top-right{display:flex;align-items:center;gap:10px;}
-.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:0 auto;}
+.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:14px auto 0;width:100%;}
 .fil-step{flex:1;text-align:center;position:relative;cursor:pointer;text-decoration:none;display:block;}
 .fil-step .dot{
   width:14px;height:14px;border-radius:50%;margin:0 auto 8px;
@@ -53,12 +55,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .fil-step.now .lbl{color:var(--gold-text);}
 .fil-step .sub{font-size:11px;color:var(--ink-dim);opacity:.7;}
 .fil-step:hover .lbl{color:var(--ink);}
-.fil-now-line{
-  margin-top:16px;padding-top:13px;border-top:1px solid var(--surface-line);
-  font-size:14.5px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  color:var(--ink);
-}
-.fil-now-line b{font-family:var(--font-title);font-size:17px;}
+.fil-cta-row{display:flex;justify-content:flex-end;margin-top:10px;}
 
 /* ── Modal création du premier voyage ── */
 .vy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
@@ -106,17 +103,22 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   display:flex;align-items:center;justify-content:center;font-size:13px;}
 .hub-demo-lbl{font-size:12px;font-weight:600;color:var(--ink-dim);text-align:center;}
 
-/* ── Avatars du groupe (header) — pile chevauchante façon "collaborateurs",
-   présence discrète (05/07 soir) ── */
-.hub-avatars{display:flex;align-items:center;flex-wrap:wrap;}
-.hub-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:12.5px;font-weight:600;color:#fff;position:relative;box-shadow:0 0 0 2px var(--surface);
-  margin-left:-8px;}
-.hub-av:first-child{margin-left:0;}
-.hub-av .pt{position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;
+/* ── Avatars du groupe — colonne pleine hauteur à l'extrême droite du bandeau,
+   avec surnom, présence discrète (05/07 soir, 2e passe) ── */
+.hub-avatars{display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;
+  padding-left:20px;border-left:1px solid var(--surface-line);flex-shrink:0;}
+.hub-av-row{display:flex;align-items:center;gap:9px;}
+.hub-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:600;color:#fff;position:relative;flex-shrink:0;}
+.hub-av .pt{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
   background:var(--gold);box-shadow:0 0 0 2px var(--surface);}
-.hub-av-plus{background:var(--ink-dim);color:var(--surface);font-size:11.5px;}
-@media(max-width:700px){.hub-avatars{order:3;}}
+.hub-av-nom{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;}
+.hub-av-plus{background:var(--ink-dim);color:var(--surface);font-size:14px;}
+@media(max-width:700px){
+  .fil{flex-direction:column;}
+  .hub-avatars{flex-direction:row;flex-wrap:wrap;border-left:none;border-top:1px solid var(--surface-line);
+    padding-left:0;padding-top:12px;justify-content:flex-start;}
+}
 
 /* ── Le Hub respire en grand : pleine largeur, comme Horizon/Carnet/Voyage
    (05/07 soir : rr-wrap est la seule page du site à plafonner sa largeur — corrigé). ── */
@@ -171,27 +173,25 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
        (05/07 soir : fusion header+fil pour gagner de la hauteur — le bloc "Comment
        fonctionne RockNRoad" doit rester visible sans scroll). ═══ -->
   <div class="fil">
-    <div class="fil-top">
-      <div>
+    <div class="fil-body">
+      <div class="fil-top">
         <h1 id="hub-salut">Bonjour</h1>
-        <div class="rr-sub">Prêt pour votre prochaine étape ?</div>
+        <div class="fil-top-right">
+          <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
+          <a class="rr-btn rr-btn-ghost rr-btn-sm" href="admin.html">＋ Nouvelle fiche</a>
+        </div>
       </div>
-      <div class="fil-top-right">
-        <div class="hub-avatars" id="hub-avatars"></div>
-        <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
-        <a class="rr-btn rr-btn-ghost rr-btn-sm" href="admin.html">＋ Nouvelle fiche</a>
+      <div class="fil-steps">
+        <a class="fil-step now" id="fil-s0" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
+        <a class="fil-step" id="fil-s1" href="horizon.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Horizon</span></a>
+        <a class="fil-step" id="fil-s2" href="voyage.html"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
+        <a class="fil-step" id="fil-s3" href="souvenir.html"><span class="dot"></span><span class="lbl">Souvenir</span><br><span class="sub">Souvenir</span></a>
+      </div>
+      <div class="fil-cta-row">
+        <a class="rr-btn rr-btn-primary rr-btn-sm" id="fil-cta" href="carnet.html">Continuer à collecter →</a>
       </div>
     </div>
-    <div class="fil-steps">
-      <a class="fil-step now" id="fil-s0" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
-      <a class="fil-step" id="fil-s1" href="horizon.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Horizon</span></a>
-      <a class="fil-step" id="fil-s2" href="voyage.html"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
-      <a class="fil-step" id="fil-s3" href="souvenir.html"><span class="dot"></span><span class="lbl">Souvenir</span><br><span class="sub">Souvenir</span></a>
-    </div>
-    <div class="fil-now-line">
-      <span>Vous êtes en phase <b id="fil-phase-nom">Collecter</b> — <span id="fil-resume">alors, on part où ?</span></span>
-      <a class="rr-btn rr-btn-ghost rr-btn-sm" id="fil-cta" href="carnet.html">Continuer à collecter →</a>
-    </div>
+    <div class="hub-avatars" id="hub-avatars"></div>
   </div>
 
   <div class="rr-section">Construire mon voyage</div>
@@ -388,9 +388,9 @@ function hubRenderAvatars(membres, monUserId, referenceISO){
     const actif = m.user_id!==monUserId && !!m.derniere_activite && new Date(m.derniere_activite).getTime()>refTime;
     const styleBg = av.emoji ? '' : ('background:'+(av.bg||'#888')+';');
     const contenu = av.emoji ? av.emoji : (av.initiale||'?');
-    const titre = nom+(actif?' — actif·ve depuis votre dernière visite':'');
-    return '<div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div>';
-  }).join('') + (surplus>0 ? '<div class="hub-av hub-av-plus" title="'+surplus+' autre'+(surplus>1?'s':'')+'">+'+surplus+'</div>' : '');
+    const titre = actif ? nom+' — actif·ve depuis votre dernière visite' : nom;
+    return '<div class="hub-av-row"><div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div><span class="hub-av-nom">'+nom.replace(/</g,'')+'</span></div>';
+  }).join('') + (surplus>0 ? '<div class="hub-av-row"><div class="hub-av hub-av-plus">+'+surplus+'</div><span class="hub-av-nom">'+surplus+' autre'+(surplus>1?'s':'')+'</span></div>' : '');
 }
 
 async function loadHubData(userId, email){
@@ -624,15 +624,7 @@ function hubMajFilVoyage(nbFiches, nbRegions){
   if(nbPlacees>0) etape=2;
   else if(nbRetenues>0) etape=1;
 
-  const NOMS=['Collecter','Tracer','Partir'];
   const s=(n)=>n>1?'s':'';
-  const TEXTES=[
-    nbFiches>0
-      ? nbFiches+' fiche'+s(nbFiches)+' au Carnet — direction Horizon pour commencer à tracer votre voyage.'
-      : 'Le Carnet est vide — direction Carnet pour le nourrir de vos envies.',
-    nbRetenues+' fiche'+s(nbRetenues)+' retenue'+s(nbRetenues)+' pour ce voyage — direction Horizon pour poursuivre.',
-    nbPlacees+' étape'+s(nbPlacees)+' déjà dans le trajet — direction Voyage pour les ordonner.'
-  ];
   const CTA=[
     nbFiches>0
       ? {label:'Tracer sur Horizon →', href:'horizon.html'}
@@ -648,8 +640,6 @@ function hubMajFilVoyage(nbFiches, nbRegions){
     if(i<etape) el.classList.add('done');
     else if(i===etape) el.classList.add('now');
   }
-  const nom=document.getElementById('fil-phase-nom'); if(nom) nom.textContent=NOMS[etape];
-  const resume=document.getElementById('fil-resume'); if(resume) resume.textContent=TEXTES[etape];
   const cta=document.getElementById('fil-cta');
   if(cta){ cta.textContent=CTA[etape].label; cta.setAttribute('href', CTA[etape].href); }
 
