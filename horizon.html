@@ -1391,8 +1391,12 @@ function hzCarteInerte(){
   // pouvait se désynchroniser (marqueurs reconstruits sous une popup ouverte →
   // pas d'événement de fermeture → drapeau fantôme). Leaflet sait toujours si
   // une popup est réellement ouverte : on lui demande, à lui.
+  // Sujet (05/07 v2) : le clic ouvre maintenant directement la grande fiche
+  // (plus un popup Leaflet) — ce garde-fou doit aussi la reconnaître, sinon
+  // le rond s'arme alors qu'une fiche est ouverte à l'écran.
   const p=(HZ_CARTE_REPOS && HZ_CARTE_REPOS._popup);
-  return !!(p && p.isOpen && p.isOpen()) || document.body.classList.contains('hz-explo-on');
+  const gfOuverte=!!HZ_GF_FICHE_ID;
+  return !!(p && p.isOpen && p.isOpen()) || gfOuverte || document.body.classList.contains('hz-explo-on');
 }
 // ════════════════════════════════════════════════════════════════
 //  FICHE RICHE AU CLIC SUR LA CARTE (02/07) — remplace l'ancien clic direct
@@ -2212,12 +2216,10 @@ function hzInitBarreRond(){
   barre.addEventListener('pointercancel', relacher);
   document.addEventListener('pointerup', relacher);
 }
-// Sujet (05/07, retour Bruno) : hzInitRondCoin() ne se déclenchait qu'à la
-// première entrée en coin (afficheCarteCoin) — donc jamais si on n'y passe
-// pas. Branché ici, au même endroit sûr (après tous les HZ_ROND_* déclarés,
-// donc aucun risque d'accéder à une const avant son initialisation).
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitRondCoin);
-else hzInitRondCoin();
+// Sujet (05/07 v2, retour Bruno) : ce branchement à DOMContentLoaded courait
+// contre la création asynchrone de la vraie carte et perdait la course plus
+// souvent qu'il ne fallait — hzInitRondCoin() est maintenant appelé de façon
+// fiable juste après hzInitCarteRepos() (voir plus haut dans initGesteFondateur).
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', hzInitBarreRond);
 else hzInitBarreRond();
 // Armement du rond (02/07, retour Bruno) : avant, tout mousedown en mode coin
@@ -5367,6 +5369,14 @@ async function loadHorizonData(userId){
     // reçoit _regionSvg = slug de sa région réelle sur la carte 13 régions.
     await chargeDecoupageEtRattache(fiches);
     hzInitCarteRepos();   // Temps 2a·étape1 : la vraie carte Leaflet + régions D-22 prend le relais visuel
+    // Sujet (05/07 v2, retour Bruno) : le branchement à DOMContentLoaded courait
+    // contre la création RÉELLE de la carte (asynchrone, plus loin dans cette
+    // séquence) — s'il gagnait la course, hzInitRondCoin() trouvait HZ_CARTE_COIN
+    // encore nul et abandonnait pour de bon (son propre garde-fou), sans jamais
+    // réessayer. Le rond ne remarchait alors qu'après un double-clic région
+    // (afficheCarteCoin le rappelle). Branché ICI, juste après que la carte
+    // existe pour de vrai — plus de dépendance au timing de la page.
+    hzInitRondCoin();
     await hzChargeDomicileEtPlacees();   // report Hub→Horizon : domicile + itinéraire déjà placé
     hzAfficheMaison();
     hzTraceVoyage();
