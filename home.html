@@ -86,26 +86,34 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .vy-anim:hover{border-color:var(--gold-a35);}
 .vy-anim input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
 
-/* ── Ligne du bas : Le groupe | Partager au groupe ── */
-.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding-bottom:90px;margin-top:6px;}
-@media(max-width:860px){.hub-grid{grid-template-columns:1fr;}}
-
-/* groupe */
-.gr-nom{font-size:14.5px;color:var(--ink);margin-bottom:10px;}
-.gr-nom a{color:var(--gold-text);text-decoration:none;font-weight:600;}
-.gr-nom a:hover{text-decoration:underline;}
-.gr-compte{font-size:13px;color:var(--ink-dim);line-height:1.6;}
-
 @media(max-width:700px){
   .fil{padding:18px 12px 14px;}
   .fil-step .sub{display:none;}
   .fil-step .lbl{font-size:11px;}
-  .hub-grid{padding-bottom:130px;}
 }
-/* ── Le Hub respire en grand : la carte est le héros de la page ── */
-.rr-wrap{max-width:1480px;}
+/* ── Vignettes de démo (Comment ça marche) — emplacements en attente des vraies
+   petites vidéos ; poser le format et le rendre pour validation (05/07 soir). ── */
+.hub-demos{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.hub-demo{flex:1;min-width:110px;text-decoration:none;display:flex;flex-direction:column;gap:6px;}
+.hub-demo-poster{aspect-ratio:9/12;border-radius:var(--r);background:var(--surface-line);
+  display:flex;align-items:center;justify-content:center;}
+.hub-demo-play{width:34px;height:34px;border-radius:50%;background:var(--gold-a10);color:var(--gold-text);
+  display:flex;align-items:center;justify-content:center;font-size:13px;}
+.hub-demo-lbl{font-size:12px;font-weight:600;color:var(--ink-dim);text-align:center;}
+
+/* ── Rangée d'avatars du groupe (header) — présence discrète (05/07 soir) ── */
+.hub-avatars{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.hub-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:#fff;position:relative;box-shadow:0 0 0 2px var(--bg);}
+.hub-av .pt{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 0 2px var(--bg);}
+@media(max-width:700px){.hub-avatars{order:3;width:100%;}}
+
+/* ── Le Hub respire en grand : pleine largeur, comme Horizon/Carnet/Voyage
+   (05/07 soir : rr-wrap est la seule page du site à plafonner sa largeur — corrigé). ── */
+.rr-wrap{max-width:none;}
 /* ── CARTE DE CONSTRUCTION (B16.1) — héros en haut ── */
-.hub-carte-zone{display:grid;grid-template-columns:3fr 1fr;gap:16px;margin:6px 0 26px;}
+.hub-carte-zone{display:grid;grid-template-columns:2.5fr 1fr;gap:16px;margin:6px 0 26px;}
 @media(max-width:860px){.hub-carte-zone{grid-template-columns:1fr;}}
 .hub-carte-wrap{position:relative;border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;
   height:540px;background:var(--surface);}
@@ -155,7 +163,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       <h1 id="hub-salut">Bonjour</h1>
       <div class="rr-sub">Prêt pour votre prochaine étape ?</div>
     </div>
+    <div class="hub-avatars" id="hub-avatars"></div>
     <div>
+      <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
       <a class="rr-btn rr-btn-ghost" href="admin.html">＋ Nouvelle fiche</a>
     </div>
   </header>
@@ -217,11 +227,17 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       </div>
       <div class="rr-surface">
         <h3>La carte, en un coup d'œil</h3>
-        <div class="hub-itin-aide">Survole (ou touche) un point pour le voir. Pour le retenir ou en discuter, ouvre sa fiche.</div>
-        <div class="hub-itin-aide" style="margin-top:10px;">Les points <b>numérotés</b> sont déjà dans ton trajet. Tu les ordonnes dans <a href="voyage.html" style="color:var(--gold-text);font-weight:600;">Voyage</a>.</div>
+        <div class="hub-itin-aide">Survole (ou touche) un point pour le voir ; les <b>numérotés</b> sont déjà dans ton trajet (<a href="voyage.html" style="color:var(--gold-text);font-weight:600;">Voyage</a>).</div>
       </div>
       <a class="rr-btn rr-btn-primary" href="voyage.html" style="width:100%;margin-top:10px;text-align:center;text-decoration:none;display:block;box-sizing:border-box;">Ouvrir mon voyage →</a>
       <a class="hub-porte2" href="horizon.html">Pas d'idée précise ? <b>Explorer →</b></a>
+
+      <!-- ── Partager au groupe (remonté ici le 05/07 soir : visible sans scroll dès
+           l'arrivée sur l'Accueil, à côté de la carte plutôt qu'en bas de page). ── -->
+      <div class="rr-surface" style="margin-top:10px;">
+        <h3>Partager au groupe</h3>
+        <div id="hub-discussion"></div>
+      </div>
     </div>
   </div>
 
@@ -234,27 +250,25 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       <b>Souvenir</b> — après le voyage, les photos et souvenirs s'y rangent.
       Cette page (l'Accueil) résume où en est votre groupe et vous envoie au bon endroit pour agir.
     </div>
+    <div class="hub-demos">
+      <a class="hub-demo" href="carnet.html">
+        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+        <span class="hub-demo-lbl">Collecter</span>
+      </a>
+      <a class="hub-demo" href="horizon.html">
+        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+        <span class="hub-demo-lbl">Tracer</span>
+      </a>
+      <a class="hub-demo" href="voyage.html">
+        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+        <span class="hub-demo-lbl">Partir</span>
+      </a>
+      <a class="hub-demo" href="souvenir.html">
+        <span class="hub-demo-poster"><span class="hub-demo-play">▶</span></span>
+        <span class="hub-demo-lbl">Souvenir</span>
+      </a>
+    </div>
   </details>
-
-  <div class="rr-section">Le groupe</div>
-
-  <div class="hub-grid">
-
-    <!-- ── Le groupe ── -->
-    <div class="rr-surface">
-      <h3>Le groupe</h3>
-      <div class="gr-nom">🧑‍🤝‍🧑 <a href="onboarding.html" id="gr-lien" title="Régler mon groupe (nom, départ, membres)">Mon groupe ⚙️</a></div>
-      <div class="gr-compte" id="gr-compte">Chargement…</div>
-    </div>
-
-    <!-- ── Partager au groupe (fil unifié, discussion.js — invariant, Master 4.18) ── -->
-    <div class="rr-surface">
-      <h3>Partager au groupe</h3>
-      <div id="hub-discussion"></div>
-      <div class="gr-compte" style="margin-top:8px;">Informel · commun à tous les voyages · ne crée pas de fiche</div>
-    </div>
-
-  </div>
 
 </main>
 
@@ -265,7 +279,6 @@ const SURL="https://cazqllstxhuecoqpktwm.supabase.co";
 const SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
 const sb=createClient(SURL,SKEY);
 
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function normalizeRegionKey(region){
   return (region||'autre').toLowerCase()
     .replace(/é/g,'e').replace(/è/g,'e').replace(/ê/g,'e')
@@ -278,13 +291,14 @@ function normalizeRegionKey(region){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href="index.html";return;}
 
-  /* Salutation selon l'heure + prénom (depuis l'email, comme ailleurs) */
+  /* Salutation selon l'heure seule ; le prénom réel est posé dans loadHubData (règle
+     canonique rnrNomMembre), une fois le membre résolu — jamais un calcul maison sur
+     l'email ailleurs (05/07 soir : "Bruno.brundaler" venait de là). */
   const h=new Date().getHours();
   const salut=(h>=18||h<5)?"Bonsoir":"Bonjour";
-  const prenom=cap((session.user.email||'').split('@')[0]);
-  document.getElementById('hub-salut').textContent=salut+(prenom?(', '+prenom):'')+' 👋';
+  document.getElementById('hub-salut').textContent=salut+' 👋';
 
-  loadHubData(session.user.id);
+  loadHubData(session.user.id, session.user.email);
 })();
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
 sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_OUT")window.location.href="index.html";});
@@ -345,7 +359,28 @@ async function creerPremierVoyage(){
   }
 }
 
-async function loadHubData(userId){
+// Rangée d'avatars du groupe (header) — présence : un point s'allume sur les membres
+// actifs depuis TA dernière visite (referenceISO), jamais sur toi-même. Couleur/initiale
+// via RNRDiscussion.memberAvatar (même moteur que la discussion, un seul endroit).
+function hubRenderAvatars(membres, monUserId, referenceISO){
+  const box=document.getElementById('hub-avatars');
+  if(!box) return;
+  if(!membres.length){ box.innerHTML=''; return; }
+  const refTime = referenceISO ? new Date(referenceISO).getTime() : 0;
+  box.innerHTML = membres.map(m=>{
+    const nom = m.prenom || m.pseudo || 'Voyageur';
+    const av = (window.RNRDiscussion && RNRDiscussion.memberAvatar)
+      ? RNRDiscussion.memberAvatar({membres:membres}, m.user_id, nom)
+      : {initiale:(nom.charAt(0)||'?').toUpperCase(), bg:'#888'};
+    const actif = m.user_id!==monUserId && !!m.derniere_activite && new Date(m.derniere_activite).getTime()>refTime;
+    const styleBg = av.emoji ? '' : ('background:'+(av.bg||'#888')+';');
+    const contenu = av.emoji ? av.emoji : (av.initiale||'?');
+    const titre = nom+(actif?' — actif·ve depuis votre dernière visite':'');
+    return '<div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div>';
+  }).join('');
+}
+
+async function loadHubData(userId, email){
   try{
     /* Groupe de l'utilisateur (même requête éprouvée qu'Horizon) */
     const {data:mem,error:eMem}=await sb.from('membres')
@@ -353,37 +388,59 @@ async function loadHubData(userId){
     if(eMem||!mem){ console.warn('Hub: pas de groupe',eMem); return; }
     const groupeId=mem.groupe_id;
     const nomGroupe=(mem.groupes&&mem.groupes.nom)?mem.groupes.nom:'Mon groupe';
+
+    /* Prénom réel de la salutation — règle canonique rnrNomMembre (chrome.js), la MÊME
+       que pour la discussion plus bas : jamais un 2e calcul pour le même nom. */
+    const userNom=(window.rnrNomMembre ? window.rnrNomMembre(mem, email) : (mem.pseudo||mem.prenom||'Voyageur'));
+    const salutEl=document.getElementById('hub-salut');
+    if(salutEl) salutEl.textContent=salutEl.textContent.replace(' 👋','')+', '+userNom+' 👋';
+
     /* Stocker dans sessionStorage pour que chrome.js et les autres pages lisent le cache */
     try {
       var gCache = Object.assign({}, mem.groupes||{}, {is_superadmin: mem.is_superadmin===true});
       sessionStorage.setItem('rnr_groupe', JSON.stringify(gCache));
     } catch(e){}
     if(window.rnrChrome){ rnrChrome.setGroupe(nomGroupe); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
-    document.getElementById('gr-lien').textContent=nomGroupe+' ⚙️';
+    const grLien=document.getElementById('gr-lien'); if(grLien) grLien.title='Réglages de '+nomGroupe;
 
     /* ── Voyage actif dans le chrome (titre + sélecteur) — même moteur qu'Horizon/Carnet
        (chargeVoyageActif/CR_chargeVoyageActif) : sans ça, le Hub n'affichait jamais le nom
        du voyage ni le sélecteur multi-voyages, contrairement aux autres pages. ── */
     await hubChargeVoyageActif(groupeId);
 
+    /* ── Membres du groupe : UNE seule requête (avatars du header + discussion +
+       compte), là où deux requêtes quasi identiques existaient avant (05/07 soir). ── */
+    let membres=[];
+    try{
+      const r=await sb.from('membres')
+        .select('id,user_id,pseudo,prenom,avatar,derniere_activite').eq('groupe_id',groupeId).limit(40);
+      membres=r.data||[];
+    }catch(e){ console.warn('Hub: membres',e); }
+
+    /* ── Présence : qui a été actif depuis TA dernière visite (05/07 soir).
+       Référence = ta propre derniere_activite AVANT qu'on l'écrase ci-dessous,
+       gardée en sessionStorage pour rester stable tout le long de la session. */
+    let reference=null;
+    try{
+      reference=sessionStorage.getItem('rnr_dernier_vu_reference');
+      if(reference==null){
+        const moi=membres.find(m=>m.user_id===userId);
+        reference=(moi&&moi.derniere_activite)||'';
+        sessionStorage.setItem('rnr_dernier_vu_reference', reference);
+      }
+    }catch(e){}
+    sb.from('membres').update({derniere_activite:new Date().toISOString()}).eq('user_id',userId).eq('groupe_id',groupeId).then(()=>{},()=>{});
+
+    hubRenderAvatars(membres, userId, reference);
+
     /* ── Fil « Partager au groupe » : MÊME composant unifié que Cockpit/Horizon (Master 4.18).
-       Identité via la règle canonique rnrNomMembre (chrome.js) → nom cohérent partout. ── */
+       Identité via la règle canonique rnrNomMembre (chrome.js) → nom cohérent partout,
+       userNom et membres déjà calculés ci-dessus, pas de requête en double. ── */
     if(window.RNRDiscussion){
-      const session2 = (await sb.auth.getSession()).data.session;
-      const email = session2 ? session2.user.email : '';
-      const userNom = (window.rnrNomMembre ? window.rnrNomMembre(mem, email) : (mem.pseudo||mem.prenom||'Voyageur'));
-      let membres=[];
-      try{ const r=await sb.from('membres').select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(40); membres=r.data||[]; }catch(e){}
       RNRDiscussion.monter('hub-discussion', {
-        sb, groupeId, userId, userNom, membres, hauteur:'100%'
+        sb, groupeId, userId, userNom, membres, hauteur:'240px'
       });
     }
-
-    /* Nombre de membres */
-    const {count:nbMembres}=await sb.from('membres')
-      .select('*',{count:'exact',head:true}).eq('groupe_id',groupeId);
-    document.getElementById('gr-compte').textContent=
-      (nbMembres||1)+' voyageur'+((nbMembres||1)>1?'s':'')+' à bord. Les réglages du groupe (nom, membres) se font via le lien ci-dessus.';
 
     /* Fiches du groupe */
     const {data:lieux,error:eLieux}=await sb.from('lieux')
@@ -469,7 +526,6 @@ async function initHubCarte(fiches, groupeId, userId){
       attribution:'© OpenStreetMap', maxZoom:18
     }).addTo(HUB_MAP);
   }
-  const bounds=[];
   geo.forEach(f=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
     const etat=HUB_ETATS[f.id]||{};
@@ -496,9 +552,11 @@ async function initHubCarte(fiches, groupeId, userId){
     mk.on('mouseover', ()=>{ if(!HUB_TACTILE) mk.openPopup(); });
     mk.on('mouseout',  ()=>{ if(!HUB_TACTILE) mk.closePopup(); });
     HUB_MARKERS[f.id]=mk;
-    bounds.push([f.lat,f.lng]);
   });
-  if(bounds.length) HUB_MAP.fitBounds(bounds,{padding:[40,40]});
+  // Vue par défaut = France (posée à la création, setView([46.5,2.5],6)) : pas de
+  // fitBounds sur tous les points, qui zoomait jusqu'à montrer toute l'Europe dès
+  // qu'un point sortait de France (05/07 soir, demande Bruno — voir les points
+  // clairement plutôt que tout cadrer).
   setTimeout(()=>HUB_MAP.invalidateSize(),200); // la carte était peut-être cachée au montage
 
   // ── LA MAISON : point de départ/retour du groupe (comme dans Voyage).

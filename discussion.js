@@ -292,5 +292,5 @@
     var h=document.getElementById(idConteneur); if(h) h.innerHTML='';
   }
 
-  window.RNRDiscussion = { monter: monter, recharger: recharger, demonter: demonter };
+  window.RNRDiscussion = { monter: monter, recharger: recharger, demonter: demonter, memberAvatar: memberAvatar };
 })();
