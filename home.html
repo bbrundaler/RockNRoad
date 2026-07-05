@@ -161,19 +161,19 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     </div>
   </header>
 
-  <!-- ═══ LE FIL DU VOYAGE ═══ -->
+  <!-- ═══ LE FIL DU VOYAGE — étape "now"/"done" et texte calculés par hubMajFilVoyage() ═══ -->
   <div class="fil">
     <div class="fil-steps">
-      <a class="fil-step now" href="horizon.html"><span class="dot"></span><span class="lbl">Rêver</span><br><span class="sub">Horizon</span></a>
-      <a class="fil-step" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
-      <a class="fil-step" href="horizon.html"><span class="dot"></span><span class="lbl">Décider</span><br><span class="sub">Horizon</span></a>
-      <a class="fil-step" href="voyage.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Voyage</span></a>
+      <a class="fil-step now" id="fil-s0" href="horizon.html"><span class="dot"></span><span class="lbl">Imaginer</span><br><span class="sub">Horizon</span></a>
+      <a class="fil-step" id="fil-s1" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
+      <a class="fil-step" id="fil-s2" href="horizon.html"><span class="dot"></span><span class="lbl">Décider</span><br><span class="sub">Horizon</span></a>
+      <a class="fil-step" id="fil-s3" href="voyage.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Voyage</span></a>
       <a class="fil-step"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
       <a class="fil-step" href="souvenir.html"><span class="dot"></span><span class="lbl">Se souvenir</span><br><span class="sub">Souvenir</span></a>
     </div>
     <div class="fil-now-line">
-      <span>Vous êtes en phase <b>Rêver</b> — <span id="fil-resume">alors, on part où ?</span></span>
-      <a class="rr-btn rr-btn-ghost rr-btn-sm" href="carnet.html">Continuer à collecter →</a>
+      <span>Vous êtes en phase <b id="fil-phase-nom">Imaginer</b> — <span id="fil-resume">alors, on part où ?</span></span>
+      <a class="rr-btn rr-btn-ghost rr-btn-sm" id="fil-cta" href="carnet.html">Continuer à collecter →</a>
     </div>
   </div>
 
@@ -366,11 +366,12 @@ async function loadHubData(userId){
 
     const regions=new Set(fiches.map(f=>normalizeRegionKey(f.region)));
 
-    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-    set('fil-resume',fiches.length+' fiche'+(fiches.length>1?'s':'')+' rêvée'+(fiches.length>1?'s':'')+' dans '+regions.size+' région'+(regions.size>1?'s':'')+'.');
-
     /* ── CARTE DE CONSTRUCTION (B16.1) : porte « je sais où je vais » ── */
-    initHubCarte(fiches, groupeId, userId);
+    await initHubCarte(fiches, groupeId, userId);
+
+    /* ── FIL DU VOYAGE VIVANT : étape/texte calculés depuis l'état réel du voyage
+       (fiches, retenues, placées) — jamais figé sur « Imaginer » (F3). ── */
+    hubMajFilVoyage(fiches.length, regions.size);
 
     /* ── Premier voyage ? Si le groupe n'en a aucun, on ouvre la scène de création ── */
     await verifierPremierVoyage(groupeId, userId);
@@ -478,6 +479,49 @@ async function initHubCarte(fiches, groupeId, userId){
   //    l'ordre. C'est le reflet permanent de la carte Voyage sur le Hub (D-MK).
   //    Distinct du trait de CONSTRUCTION (HUB_TRAIT) qu'on dessine en cliquant.
   hubTraceVoyage();
+}
+
+// ── FIL DU VOYAGE VIVANT (F3) — l'étape "en cours" et le texte s'appuient sur le
+//    vrai état du voyage actif (fiches du Carnet, retenues, fiches placées dans le
+//    trajet), jamais figés en dur. Ordre de progression : Imaginer → Collecter →
+//    Décider → Tracer (Partir/Se souvenir restent neutres, pas de signal fiable
+//    encore disponible pour les détecter). Appelée après initHubCarte, une fois
+//    HUB_ETATS/HUB_PLACEES connus.
+function hubMajFilVoyage(nbFiches, nbRegions){
+  const nbRetenues=Object.values(HUB_ETATS).filter(e=>e&&e.epingle).length;
+  const nbPlacees=Object.keys(HUB_PLACEES).length;
+
+  let etape=0; // 0=Imaginer 1=Collecter 2=Décider 3=Tracer
+  if(nbPlacees>0) etape=3;
+  else if(nbRetenues>0) etape=2;
+  else if(nbFiches>0) etape=1;
+
+  const NOMS=['Imaginer','Collecter','Décider','Tracer'];
+  const s=(n)=>n>1?'s':'';
+  const TEXTES=[
+    nbFiches+' fiche'+s(nbFiches)+' dans '+nbRegions+' région'+s(nbRegions)+' — alors, on part où\u00a0?',
+    nbFiches+' fiche'+s(nbFiches)+' au Carnet — direction Horizon pour en faire des envies de voyage.',
+    nbRetenues+' fiche'+s(nbRetenues)+' retenue'+s(nbRetenues)+' pour ce voyage — direction Horizon pour trancher.',
+    nbPlacees+' étape'+s(nbPlacees)+' déjà dans le trajet — direction Voyage pour les ordonner.'
+  ];
+  const CTA=[
+    {label:'Explorer sur Horizon →', href:'horizon.html'},
+    {label:'Continuer à collecter →', href:'carnet.html'},
+    {label:'Trancher sur Horizon →', href:'horizon.html'},
+    {label:'Ouvrir mon Voyage →', href:'voyage.html'}
+  ];
+
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('fil-s'+i);
+    if(!el) continue;
+    el.classList.remove('now','done');
+    if(i<etape) el.classList.add('done');
+    else if(i===etape) el.classList.add('now');
+  }
+  const nom=document.getElementById('fil-phase-nom'); if(nom) nom.textContent=NOMS[etape];
+  const resume=document.getElementById('fil-resume'); if(resume) resume.textContent=TEXTES[etape];
+  const cta=document.getElementById('fil-cta');
+  if(cta){ cta.textContent=CTA[etape].label; cta.setAttribute('href', CTA[etape].href); }
 }
 
 // CLIC sur un point du Hub = on RETIENT la fiche pour le voyage (statut 'retenue',
@@ -596,7 +640,7 @@ function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=
   <div class="vy-modal">
     <div class="vy-emoji">🧭</div>
     <h2 class="vy-titre">Votre premier voyage</h2>
-    <p class="vy-sous">Avant de rêver, donnez vie à votre aventure. C'est le point de départ de tout&nbsp;: un nom, une saison, et l'envie de partir ensemble.</p>
+    <p class="vy-sous">Avant d'imaginer, donnez vie à votre aventure. C'est le point de départ de tout&nbsp;: un nom, une saison, et l'envie de partir ensemble.</p>
     <label class="vy-lbl">Le nom de ce voyage</label>
     <input id="vy-nom" class="vy-input" type="text" placeholder="Été 2026, Notre Bretagne, La grande boucle…" maxlength="60">
     <div class="vy-row">
