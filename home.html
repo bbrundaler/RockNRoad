@@ -164,15 +164,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   <!-- ═══ LE FIL DU VOYAGE — étape "now"/"done" et texte calculés par hubMajFilVoyage() ═══ -->
   <div class="fil">
     <div class="fil-steps">
-      <a class="fil-step now" id="fil-s0" href="horizon.html"><span class="dot"></span><span class="lbl">Imaginer</span><br><span class="sub">Horizon</span></a>
-      <a class="fil-step" id="fil-s1" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
-      <a class="fil-step" id="fil-s2" href="horizon.html"><span class="dot"></span><span class="lbl">Décider</span><br><span class="sub">Horizon</span></a>
-      <a class="fil-step" id="fil-s3" href="voyage.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Voyage</span></a>
-      <a class="fil-step"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
-      <a class="fil-step" href="souvenir.html"><span class="dot"></span><span class="lbl">Se souvenir</span><br><span class="sub">Souvenir</span></a>
+      <a class="fil-step now" id="fil-s0" href="carnet.html"><span class="dot"></span><span class="lbl">Collecter</span><br><span class="sub">Carnet</span></a>
+      <a class="fil-step" id="fil-s1" href="horizon.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Horizon</span></a>
+      <a class="fil-step" id="fil-s2" href="voyage.html"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
+      <a class="fil-step" id="fil-s3" href="souvenir.html"><span class="dot"></span><span class="lbl">Souvenir</span><br><span class="sub">Souvenir</span></a>
     </div>
     <div class="fil-now-line">
-      <span>Vous êtes en phase <b id="fil-phase-nom">Imaginer</b> — <span id="fil-resume">alors, on part où ?</span></span>
+      <span>Vous êtes en phase <b id="fil-phase-nom">Collecter</b> — <span id="fil-resume">alors, on part où ?</span></span>
       <a class="rr-btn rr-btn-ghost rr-btn-sm" id="fil-cta" href="carnet.html">Continuer à collecter →</a>
     </div>
   </div>
@@ -231,10 +229,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   <details class="rr-surface" id="hub-comment" style="margin:14px 0;">
     <summary style="cursor:pointer;font-weight:700;">Comment fonctionne RockNRoad&nbsp;?</summary>
     <div style="margin-top:10px;font-size:14px;line-height:1.5;">
-      <b>Imaginer</b> — sur Horizon, on parcourt des lieux et on garde ce qui tente.
-      <b>Décider</b> — le groupe discute et retient ses coups de cœur.
-      <b>Tracer</b> — dans Voyage, on ordonne les étapes retenues en un vrai trajet.
-      <b>Se souvenir</b> — après le voyage, les photos et souvenirs se rangent dans Souvenir.
+      <b>Collecter</b> — au Carnet, on rassemble les lieux qui tentent.
+      <b>Tracer</b> — sur Horizon, le groupe discute, vote et retient ses coups de cœur.
+      <b>Partir</b> — dans le Roadbook, on ordonne les étapes retenues en un vrai trajet.
+      <b>Souvenir</b> — après le voyage, les photos et souvenirs s'y rangent.
       Cette page (l'Accueil) résume où en est votre groupe et vous envoie au bon endroit pour agir.
     </div>
   </details>
@@ -405,7 +403,7 @@ async function loadHubData(userId){
     await initHubCarte(fiches, groupeId, userId);
 
     /* ── FIL DU VOYAGE VIVANT : étape/texte calculés depuis l'état réel du voyage
-       (fiches, retenues, placées) — jamais figé sur « Imaginer » (F3). ── */
+       (fiches, retenues, placées) — jamais figé sur « Collecter » (F3). ── */
     hubMajFilVoyage(fiches.length, regions.size);
 
     /* ── Premier voyage ? Si le groupe n'en a aucun, on ouvre la scène de création ── */
@@ -525,9 +523,10 @@ async function initHubCarte(fiches, groupeId, userId){
 
 // ── FIL DU VOYAGE VIVANT (F3) — l'étape "en cours" et le texte s'appuient sur le
 //    vrai état du voyage actif (fiches du Carnet, retenues, fiches placées dans le
-//    trajet), jamais figés en dur. Ordre de progression : Imaginer → Collecter →
-//    Décider → Tracer (Partir/Se souvenir restent neutres, pas de signal fiable
-//    encore disponible pour les détecter). Appelée après initHubCarte, une fois
+//    trajet), jamais figés en dur. 4 phases, une par page (05/07 soir, simplifié à
+//    la demande de Bruno) : Collecter (Carnet) → Tracer (Horizon) → Partir
+//    (Voyage/Roadbook). Souvenir reste neutre, pas de signal fiable encore
+//    disponible pour le détecter. Appelée après initHubCarte, une fois
 //    HUB_ETATS/HUB_PLACEES connus.
 // Signal « votes en cours » du tableau de bord — lecture seule (propositions.statut='ouvert').
 // Cliquer envoie sur Horizon pour trancher : voter reste UN SEUL comportement, jamais ici.
@@ -551,23 +550,24 @@ function hubMajFilVoyage(nbFiches, nbRegions){
   const nbRetenues=Object.values(HUB_ETATS).filter(e=>e&&e.epingle).length;
   const nbPlacees=Object.keys(HUB_PLACEES).length;
 
-  let etape=0; // 0=Imaginer 1=Collecter 2=Décider 3=Tracer
-  if(nbPlacees>0) etape=3;
-  else if(nbRetenues>0) etape=2;
-  else if(nbFiches>0) etape=1;
+  let etape=0; // 0=Collecter 1=Tracer 2=Partir (3=Souvenir jamais déduit, pas de signal fiable)
+  if(nbPlacees>0) etape=2;
+  else if(nbRetenues>0) etape=1;
 
-  const NOMS=['Imaginer','Collecter','Décider','Tracer'];
+  const NOMS=['Collecter','Tracer','Partir'];
   const s=(n)=>n>1?'s':'';
   const TEXTES=[
-    nbFiches+' fiche'+s(nbFiches)+' dans '+nbRegions+' région'+s(nbRegions)+' — alors, on part où\u00a0?',
-    nbFiches+' fiche'+s(nbFiches)+' au Carnet — direction Horizon pour en faire des envies de voyage.',
-    nbRetenues+' fiche'+s(nbRetenues)+' retenue'+s(nbRetenues)+' pour ce voyage — direction Horizon pour trancher.',
+    nbFiches>0
+      ? nbFiches+' fiche'+s(nbFiches)+' au Carnet — direction Horizon pour commencer à tracer votre voyage.'
+      : 'Le Carnet est vide — direction Carnet pour le nourrir de vos envies.',
+    nbRetenues+' fiche'+s(nbRetenues)+' retenue'+s(nbRetenues)+' pour ce voyage — direction Horizon pour poursuivre.',
     nbPlacees+' étape'+s(nbPlacees)+' déjà dans le trajet — direction Voyage pour les ordonner.'
   ];
   const CTA=[
-    {label:'Explorer sur Horizon →', href:'horizon.html'},
-    {label:'Continuer à collecter →', href:'carnet.html'},
-    {label:'Trancher sur Horizon →', href:'horizon.html'},
+    nbFiches>0
+      ? {label:'Tracer sur Horizon →', href:'horizon.html'}
+      : {label:'Nourrir le Carnet →', href:'carnet.html'},
+    {label:'Continuer sur Horizon →', href:'horizon.html'},
     {label:'Ouvrir mon Voyage →', href:'voyage.html'}
   ];
 
