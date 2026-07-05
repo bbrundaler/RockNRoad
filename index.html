@@ -269,8 +269,11 @@ async function resetMotDePasse() {
 
   btn.disabled = true;
 
+  // Portabilité hébergeur (05/07, retour Bruno) : plus jamais une URL figée sur
+  // github.io — calculée depuis la page courante, fonctionne pareil sur
+  // GitHub Pages, un domaine perso, ou un autre hébergeur demain.
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://bbrundaler.github.io/RockNRoad/nouveau-mot-de-passe.html'
+    redirectTo: new URL('nouveau-mot-de-passe.html', window.location.href).href
   });
 
   btn.disabled = false;
