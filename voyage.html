@@ -246,7 +246,7 @@ const sb=supabase.createClient(SURL,SKEY);
 let map, routeLayer;
 // Tactile : pas de survol au doigt → la fiche s'ouvre au tap, pas en passant dessus.
 const VY_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
-// Source unique de vérité — tableau d'objets {uid, nom, lat, lng, region, type}
+// Source unique de vérité — tableau d'objets {uid, nom, lat, lng, type} (la région se calcule du GPS, B23)
 // uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
 let voyage = [];
 let VOYAGE_ID = null;   // voyage actif (résolu une fois, partagé load/save/retenues)
@@ -296,7 +296,7 @@ async function resoutVoyageId(userId){
    Chaque vignette est SAISISSABLE : on l'attrape (doigt/souris) et on la dépose
    dans l'itinéraire (cf. initRetenueDrag). Décision Bruno 25/06 : l'itinéraire
    est à part, on y fait entrer une retenue d'un geste. ── */
-let RETENUES_INFO={};   // id -> {id,nom,lat,lng,region,type,photo_url} (source du drag)
+let RETENUES_INFO={};   // id -> {id,nom,lat,lng,type,photo_url} (source du drag)
 async function chargerRetenuesVoyage(userId){
   const box=document.getElementById('vr-list');
   const badge=document.getElementById('vr-badge');
@@ -311,10 +311,10 @@ async function chargerRetenuesVoyage(userId){
     const ids=(vf||[]).map(r=>r.lieu_id);
     if(badge) badge.textContent=ids.length;
     if(!ids.length){
-      box.innerHTML='<div class="vr-empty">Aucune fiche retenue. Les fiches gardées au Cockpit arrivent ici.</div>';
+      box.innerHTML='<div class="vr-empty">Aucune fiche retenue. Les fiches retenues sur Horizon arrivent ici.</div>';
       return;
     }
-    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url,lat,lng,region,type').in('id',ids);
+    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url,lat,lng,type').in('id',ids);
     RETENUES_INFO={}; (fs||[]).forEach(f=>{ RETENUES_INFO[f.id]=f; });
     const placed=new Set(voyage.map(v=>v.id));   // déjà sur l'itinéraire
     box.innerHTML = ids.map(id=>{
@@ -483,7 +483,7 @@ function ajouteRetenueAItineraire(id, insertAt){
   if(!f || f.lat==null || f.lng==null) return;
   if(voyage.some(v=>v.id===id)) return;   // anti-doublon
   const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||''};
+  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||''};
   const pos=(typeof insertAt==='number' && insertAt>=0 && insertAt<=voyage.length)?insertAt:voyage.length;
   voyage.splice(pos,0,item);
   saveVoyage();
@@ -528,12 +528,12 @@ async function loadVoyage(){
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
-      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,region,type,photo_url').in('id',ids);
+      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,type,photo_url').in('id',ids);
       (fs||[]).forEach(f=>{ infos[f.id]=f; });
     }
     voyage=(rows||[])
       .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), region:f.region||'', type:f.type||'', photo_url:f.photo_url||''}; })
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||''}; })
       .filter(Boolean);
   }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
@@ -566,8 +566,14 @@ let RB_DECOUPAGE = null;
     const geo = await rep.json();
     if(window.RNR_CARTO_MOTEUR) RB_DECOUPAGE = RNR_CARTO_MOTEUR.creerDecoupage(geo);
   }catch(e){ console.warn('Roadbook: découpage régions indisponible pour la destination auto', e); }
-  rbInfosRender();  // si le découpage arrive après le premier rendu, on rafraîchit
+  render();  // si le découpage arrive après le premier rendu, tout se recalcule (régions des étapes comprises)
 })();
+
+function rbRegionDe(lat,lng){
+  if(!RB_DECOUPAGE || lat==null || lng==null) return '';
+  const z = RB_DECOUPAGE.zoneDe(+lat,+lng);
+  return z ? z.nom : '';
+}
 
 function rbRegionAuto(){
   if(!RB_DECOUPAGE) return '';
@@ -772,7 +778,7 @@ function renderList(){
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
         <div class="stop-name">${item.nom||'—'}</div>
-        <div class="stop-meta">${item.region||''} ${item.type?'· '+item.type:''}</div>
+        <div class="stop-meta">${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
         ${distHtml}
       </div>
       <button class="stop-remove" title="Retirer">✕</button>
@@ -840,7 +846,7 @@ function renderMap(){
       <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
         ${photoNum}
         <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">${i+1}. ${escVr(v.nom||'—')}</div>
-        <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(v.region||'')} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
+        <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(v.lat,v.lng))} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
     `, {maxWidth:240, autoPan:false, closeButton:false});
     // SURVOL (desktop) : la fiche s'ouvre pour savoir QUEL lieu est ce numéro. Tactile → au tap.
@@ -914,7 +920,7 @@ function renderMap(){
         <div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">
           ${phEp}
           <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">📌 ${escVr(f.nom||'—')}</div>
-          <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(f.region||'')} ${f.type?'· '+escVr(f.type):''}</div>
+          <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(f.lat,f.lng))} ${f.type?'· '+escVr(f.type):''}</div>
           <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
       `, {maxWidth:240, autoPan:false, closeButton:false});

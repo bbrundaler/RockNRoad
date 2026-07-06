@@ -33,7 +33,7 @@
   /* ── Réglages ── */
   var PHASE = 'carnet';                   /* univers de la phase EN COURS (→ config_plateforme plus tard) */
   var LINKS = [
-    {id:'hub',      label:'Hub',      href:'home.html'},
+    {id:'hub',      label:'Accueil',  href:'home.html'},
     {id:'horizon',  label:'Horizon',  href:'horizon.html'},
     {id:'carnet',   label:'Carnet',   href:'carnet.html'},
     /* Cockpit retiré (02/07, B18-Inc.D) : fusionné dans Horizon — le débat,
