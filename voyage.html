@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
+<script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -20,6 +21,27 @@
 body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
 /* (270 lignes de CSS mort du prototype héros/markers/itin supprimées — prouvé zéro usage, 11/06) */
+
+/* ── BLOC « INFOS DU VOYAGE » : la couverture du Roadbook. Bande pliée par
+   défaut (résumé en un coup d'œil) ; un clic déplie le formulaire complet.
+   Ces champs sont aussi ceux qui nourriront la version imprimée plus tard. ── */
+#rb-infos{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--surface-line);}
+.rb-infos-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;cursor:pointer;}
+.rb-infos-resume{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rb-infos-resume b{font-family:var(--font-title);font-weight:700;}
+.rb-infos-resume .dim{color:var(--ink-dim);margin:0 2px;}
+.rb-infos-edit{background:none;border:none;color:var(--gold-text);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+.rb-infos-form{padding:4px 16px 14px;border-top:1px solid var(--surface-line);}
+.rb-infos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;}
+.rb-infos-grid label,.rb-infos-but{display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.4px;color:var(--ink-dim);text-transform:uppercase;}
+.rb-infos-grid input,.rb-infos-but textarea{font-family:var(--font-body);font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--paper);border:1px solid var(--paper-line);border-radius:var(--r);padding:7px 9px;}
+.rb-infos-check{flex-direction:row!important;align-items:center;gap:7px!important;justify-content:flex-start;}
+.rb-infos-check input{width:16px;height:16px;flex-shrink:0;}
+.rb-infos-but{margin-bottom:10px;}
+.rb-infos-but textarea{resize:vertical;font-family:var(--font-body);}
+.rb-infos-actions{display:flex;gap:8px;align-items:center;}
+.rb-infos-err{font-size:12px;color:var(--st-bad-ink);margin-top:6px;}
+@media(max-width:700px){.rb-infos-grid{grid-template-columns:1fr 1fr;}}
 
 /* MAIN */
 #app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}  /* enveloppe locale du voyage (Template A retiré d'app.css le 13/06) */
@@ -151,6 +173,27 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 </div>
 
 <div id="app-main">
+  <div id="rb-infos">
+    <div class="rb-infos-bar" onclick="rbInfosToggle()">
+      <span class="rb-infos-resume" id="rb-infos-resume">Chargement du voyage…</span>
+      <button class="rb-infos-edit" type="button">Modifier ›</button>
+    </div>
+    <div class="rb-infos-form" id="rb-infos-form" style="display:none">
+      <div class="rb-infos-grid">
+        <label>Nom du voyage<input id="rb-nom" type="text" placeholder="Vacances été 2026"></label>
+        <label>Destination<input id="rb-dest" type="text" placeholder="calculée depuis vos étapes"></label>
+        <label>Dates<input id="rb-dates" type="text" placeholder="ex. 12 → 26 août 2026"></label>
+        <label>Participants<input id="rb-nb" type="number" min="1" placeholder="Nombre de personnes"></label>
+        <label class="rb-infos-check"><input id="rb-chien" type="checkbox"> 🐾 Avec chien</label>
+      </div>
+      <label class="rb-infos-but">But du voyage<textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
+      <div class="rb-infos-actions">
+        <button class="tb-btn tb-btn-add" type="button" onclick="rbInfosSave()">Enregistrer</button>
+        <button class="tb-btn tb-btn-print" type="button" onclick="rbInfosToggle()">Annuler</button>
+      </div>
+      <div class="rb-infos-err" id="rb-infos-err"></div>
+    </div>
+  </div>
   <div id="voyage-content">
     <div id="voyage-panel">
       <div id="panel-header">
@@ -171,7 +214,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
           </div>
         </div>
         <div class="panel-actions">
-          <button class="tb-btn tb-btn-add" onclick="window.location.href='carnet.html'">+ Ajouter des lieux</button>
+          <button class="tb-btn tb-btn-add" onclick="window.location.href='horizon.html'">+ Ajouter des lieux</button>
           <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
           <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
         </div>
@@ -245,6 +288,7 @@ async function resoutVoyageId(userId){
   await resoutVoyageId(session.user.id);   // VOYAGE_ID résolu une fois
   await loadVoyage();                       // itinéraire depuis la base (partagé)
   chargerRetenuesVoyage(session.user.id);   // bande retenues (calcule « déjà placé » après load)
+  chargerInfosVoyage();                     // bloc « Infos du voyage » (couverture du Roadbook)
 })();
 
 /* ── Bande « Retenues pour ce voyage » : même invariant que le Cockpit (Master 4.18).
@@ -503,6 +547,112 @@ function render(){
   // Redessiner si itinéraire OU épingles non placées (3c : la carte montre les deux)
   const aDesEpingles = (typeof RETENUES_INFO==='object') && Object.keys(RETENUES_INFO).length>0;
   if(voyage.length || aDesEpingles) renderMap();
+  rbInfosRender();  // la destination auto-calculée suit les étapes tant qu'elle n'est pas fixée à la main
+}
+
+/* ── BLOC « INFOS DU VOYAGE » : couverture du Roadbook ────────────────────────
+   Champs déjà en base (créés à l'origine dans la modale « premier voyage » de
+   l'Accueil, jamais réaffichés depuis) + 2 nouveaux (destination_libre,
+   but_voyage). Un seul point d'écriture : ce bloc, sur la table voyages,
+   comportement décrit dans Master 4.2x. La destination se pré-remplit avec la
+   région dominante des étapes (moteur RNR_CARTO_MOTEUR, même découpage que
+   Carnet/Horizon) tant que Bruno n'a rien saisi à la main — dès qu'un texte
+   est enregistré dans destination_libre, il prime et l'auto-calcul s'efface. */
+let RB_INFO = {nom:'',date_envisagee:'',nb_participants:null,animaux_a_bord:false,destination_libre:'',but_voyage:''};
+let RB_DECOUPAGE = null;
+(async()=>{
+  try{
+    const rep = await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
+    const geo = await rep.json();
+    if(window.RNR_CARTO_MOTEUR) RB_DECOUPAGE = RNR_CARTO_MOTEUR.creerDecoupage(geo);
+  }catch(e){ console.warn('Roadbook: découpage régions indisponible pour la destination auto', e); }
+  rbInfosRender();  // si le découpage arrive après le premier rendu, on rafraîchit
+})();
+
+function rbRegionAuto(){
+  if(!RB_DECOUPAGE) return '';
+  const pts = (voyage && voyage.length) ? voyage : Object.values(RETENUES_INFO||{});
+  if(!pts || !pts.length) return '';
+  const compte = {};
+  pts.forEach(p=>{
+    if(p.lat==null || p.lng==null) return;
+    const z = RB_DECOUPAGE.zoneDe(+p.lat,+p.lng);
+    if(!z) return;
+    if(!compte[z.code]) compte[z.code] = {n:0, nom:z.nom};
+    compte[z.code].n++;
+  });
+  let meilleur = null;
+  Object.values(compte).forEach(c=>{ if(!meilleur || c.n>meilleur.n) meilleur=c; });
+  return meilleur ? meilleur.nom : '';
+}
+
+async function chargerInfosVoyage(){
+  if(!VOYAGE_ID) return;
+  try{
+    const {data,error} = await sb.from('voyages')
+      .select('nom,date_envisagee,nb_participants,animaux_a_bord,destination_libre,but_voyage')
+      .eq('id',VOYAGE_ID).single();
+    if(error || !data) throw (error||new Error('voyage introuvable'));
+    RB_INFO = data;
+  }catch(e){ console.warn('Roadbook: chargement infos voyage', e); }
+  rbInfosRender();
+}
+
+function rbInfosRender(){
+  const el = document.getElementById('rb-infos-resume');
+  if(!el) return;
+  const dest = RB_INFO.destination_libre || rbRegionAuto() || 'destination à définir';
+  const morceaux = [
+    '<b>' + (RB_INFO.nom || 'Roadbook') + '</b>',
+    dest,
+    RB_INFO.date_envisagee || null,
+    RB_INFO.nb_participants ? RB_INFO.nb_participants + ' pers.' : null,
+    RB_INFO.animaux_a_bord ? '🐾 avec chien' : null
+  ].filter(Boolean);
+  el.innerHTML = morceaux.join(' <span class="dim">·</span> ');
+}
+
+function rbInfosRemplirForm(){
+  document.getElementById('rb-nom').value = RB_INFO.nom || '';
+  document.getElementById('rb-dest').value = RB_INFO.destination_libre || rbRegionAuto() || '';
+  document.getElementById('rb-dates').value = RB_INFO.date_envisagee || '';
+  document.getElementById('rb-nb').value = RB_INFO.nb_participants || '';
+  document.getElementById('rb-chien').checked = !!RB_INFO.animaux_a_bord;
+  document.getElementById('rb-but').value = RB_INFO.but_voyage || '';
+  const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
+}
+
+function rbInfosToggle(){
+  const form = document.getElementById('rb-infos-form');
+  const ouvre = form.style.display === 'none';
+  if(ouvre) rbInfosRemplirForm();
+  form.style.display = ouvre ? 'block' : 'none';
+}
+
+async function rbInfosSave(){
+  const nom = (document.getElementById('rb-nom').value||'').trim();
+  const err = document.getElementById('rb-infos-err');
+  if(!nom){ if(err) err.textContent='Le voyage a besoin d\'un nom.'; return; }
+  const nbRaw = (document.getElementById('rb-nb').value||'').trim();
+  const row = {
+    nom,
+    destination_libre: (document.getElementById('rb-dest').value||'').trim() || null,
+    date_envisagee:    (document.getElementById('rb-dates').value||'').trim() || null,
+    nb_participants:   nbRaw ? parseInt(nbRaw,10) : null,
+    animaux_a_bord:    !!document.getElementById('rb-chien').checked,
+    but_voyage:        (document.getElementById('rb-but').value||'').trim() || null
+  };
+  try{
+    const {error} = await sb.from('voyages').update(row).eq('id',VOYAGE_ID);
+    if(error) throw error;
+    RB_INFO = Object.assign({}, RB_INFO, row);
+    try{ sessionStorage.setItem('rnr_voyage_nom', nom); }catch(e){}  // le sélecteur du chrome lit ce cache (même moteur qu'Horizon/Carnet)
+    rbInfosRender();
+    rbInfosToggle();
+  }catch(e){
+    console.warn('Roadbook: sauvegarde infos voyage', e);
+    if(err) err.textContent='Enregistrement impossible, réessayez.';
+  }
 }
 
 // ── Délégation d'événements — UN seul listener permanent sur le container ─────
