@@ -18,6 +18,7 @@
 <script src="themes-horizon.js"></script>
 <script src="fiche-complete.js"></script>
 <script src="lightbox.js"></script>
+<script src="fiche-edit.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
@@ -1514,7 +1515,26 @@ function hzGfConstruitHtml(f){
   return RNR_FICHE_COMPLETE.html(f, {
     noteG, noteF,
     voteBarHtml: hzGfVoteBarHtml(f),
-    closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>'
+    closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>',
+    extraActionsHtml: '<button class="gf-btn-dark" data-lid="'+f.id+'" onclick="hzFermeGrandeFiche();hzOuvreEditModal(this.dataset.lid)">✏️ Modifier</button>'
+  });
+}
+// Retour Bruno (07/07) : le stylo d'édition manquait sur Horizon. Délègue au
+// module partagé fiche-edit.js (même modale que le Carnet, un seul endroit) —
+// jamais un second module d'édition construit à côté.
+function hzOuvreEditModal(id){
+  const f=(HZ_FICHES||[]).find(x=>x.id===id||x.id===String(id));
+  if(!f) return;
+  RNR_FICHE_EDIT.open(f, {
+    onSaved: (updated)=>{
+      const idx=HZ_FICHES.findIndex(x=>x.id===updated.id||x.id===String(updated.id));
+      if(idx>=0) HZ_FICHES[idx]={...HZ_FICHES[idx], ...updated};
+      if(typeof hzAfficheTousLesPoints==='function') hzAfficheTousLesPoints();
+    },
+    onDeleted: (deletedId)=>{
+      HZ_FICHES=(HZ_FICHES||[]).filter(x=>x.id!==deletedId&&x.id!==String(deletedId));
+      if(typeof hzAfficheTousLesPoints==='function') hzAfficheTousLesPoints();
+    }
   });
 }
 function hzOuvreGrandeFiche(ficheId, evt){
@@ -1561,6 +1581,11 @@ function hzGfRafraichir(lieuId){
   if(body) body.innerHTML = hzGfConstruitHtml(f);
 }
 function hzFermeGrandeFiche(){
+  // Retour Bruno (07/07) : le carrousel photo (lightbox.js) s'ouvre PAR-DESSUS la
+  // grande fiche (z-index plus haut) et vit dans son propre DOM, indépendant —
+  // fermer la grande fiche ne le fermait pas, d'où "il faut fermer 2 fois". Un
+  // seul geste (la croix) doit tout refermer d'un coup.
+  if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.close();
   const overlay=document.getElementById('hz-gf-overlay');
   const modal=document.getElementById('hz-gf-modal');
   if(!overlay||!modal) return;
@@ -5476,6 +5501,25 @@ async function loadHorizonData(userId){
         setTimeout(()=>ouvrirFichesRegion(regionParam), 300);
       }
     }catch(e){ console.warn('Horizon: lien région depuis Carnet', e); }
+
+    // 8bis) Bouton « 🧭 Horizon » d'une fiche (07/07, retour Bruno) : ?fiche=<id>
+    // centre la carte de repos exactement sur cette fiche, pour la repérer au
+    // milieu des autres — on ne replonge PAS dans la grande fiche (on vient de
+    // la voir en détail dans le Carnet), juste un centrage + sa popup pour
+    // confirmer laquelle c'est visuellement.
+    try{
+      const ficheParam=new URLSearchParams(window.location.search).get('fiche');
+      if(ficheParam){
+        const f=(HZ_FICHES||[]).find(x=>String(x.id)===String(ficheParam));
+        if(f && f.lat!=null && f.lng!=null && HZ_CARTE_REPOS){
+          setTimeout(()=>{
+            HZ_CARTE_REPOS.setView([+f.lat,+f.lng], 11);
+            const entry=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[f.id];
+            if(entry && entry.marker && entry.marker.openPopup) entry.marker.openPopup();
+          }, 350);
+        }
+      }
+    }catch(e){ console.warn('Horizon: lien fiche depuis Carnet', e); }
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
