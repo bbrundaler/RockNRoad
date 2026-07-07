@@ -87,6 +87,20 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   border-radius:var(--r);padding:11px 13px;margin-bottom:14px;}
 .vy-anim:hover{border-color:var(--gold-a35);}
 .vy-anim input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
+.vy-optionnel{text-transform:none;font-weight:400;letter-spacing:0;color:var(--ink-dim);opacity:.75;}
+.vy-textarea{width:100%;font-family:var(--font-body);font-size:13.5px;padding:10px 12px;
+  border:1.5px solid var(--surface-line);border-radius:var(--r);background:var(--bg);color:var(--ink);
+  margin-bottom:14px;box-sizing:border-box;resize:vertical;}
+.vy-textarea:focus{outline:none;border-color:var(--gold);}
+.vy-plus{cursor:pointer;font-size:12.5px;color:var(--gold-text);text-align:left;margin:-6px 0 14px;
+  display:inline-block;}
+.vy-plus:hover{text-decoration:underline;}
+.vy-depart-bloc{display:none;text-align:left;margin-bottom:6px;}
+.vy-depart-bloc.ouvert{display:block;}
+.vy-geo-status{display:block;font-size:10.5px;margin:-9px 0 12px;min-height:13px;}
+.vy-geo-status.loading{color:var(--ink-dim);}
+.vy-geo-status.ok{color:#7fae7f;}
+.vy-geo-status.err{color:#d98;}
 
 @media(max-width:700px){
   .fil{padding:18px 12px 14px;}
@@ -340,24 +354,81 @@ async function verifierPremierVoyage(groupeId, userId){
   }catch(e){ console.warn('Hub: vérif voyage',e); }
 }
 
+// Géocodage départ/retour — même service que le Roadbook (Nominatim/OpenStreetMap, gratuit,
+// sans clé) : un seul comportement de géocodage, copié à l'identique (une maison par page,
+// motif déjà établi pour chargeVoyageActif/hubChargeVoyageActif).
+let VY_GEO = {depart:{lat:null,lng:null,nom:null}, retour:{lat:null,lng:null,nom:null}};
+let VY_GEO_TIMERS = {};
+function vyToggleOptions(){
+  const box = document.getElementById('vy-options');
+  const ouvre = box.style.display === 'none';
+  box.style.display = ouvre ? 'block' : 'none';
+  document.getElementById('vy-plus-toggle').style.display = ouvre ? 'none' : 'inline-block';
+}
+function vyScheduleGeocode(which){
+  clearTimeout(VY_GEO_TIMERS[which]);
+  VY_GEO[which]={lat:null,lng:null,nom:null};
+  const status=document.getElementById('vy-'+which+'-status');
+  const val=(document.getElementById('vy-'+which).value||'').trim();
+  if(val.length<4){ status.textContent=''; status.className='vy-geo-status'; return; }
+  status.className='vy-geo-status loading';
+  status.textContent='📍 Recherche…';
+  VY_GEO_TIMERS[which]=setTimeout(()=>vyGeocodeAddress(which,val), 700);
+}
+function vyVilleCourte(res){
+  const a = res.address || {};
+  return a.city || a.town || a.village || a.municipality || a.county || (res.display_name||'').split(',')[0];
+}
+async function vyGeocodeAddress(which, addr){
+  const status=document.getElementById('vy-'+which+'-status');
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(addr)+'&format=json&limit=1&addressdetails=1', {headers:{'Accept-Language':'fr'}});
+    const d=await r.json();
+    if(d && d.length>0){
+      VY_GEO[which]={lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon), nom:vyVilleCourte(d[0])};
+      status.className='vy-geo-status ok';
+      status.textContent='✅ '+d[0].display_name.split(',').slice(0,3).join(', ');
+    }else{
+      VY_GEO[which]={lat:null,lng:null,nom:null};
+      status.className='vy-geo-status err';
+      status.textContent='⚠️ Adresse introuvable — essayez une ville proche';
+    }
+  }catch(e){
+    VY_GEO[which]={lat:null,lng:null,nom:null};
+    status.className='vy-geo-status err';
+    status.textContent='⚠️ Erreur réseau';
+  }
+}
+
 async function creerPremierVoyage(){
   const nom=(document.getElementById('vy-nom').value||'').trim();
-  const date=(document.getElementById('vy-date').value||'').trim();
-  const nbRaw=(document.getElementById('vy-nb').value||'').trim();
   const err=document.getElementById('vy-err');
   const btn=document.getElementById('vy-creer');
   if(!nom){ if(err) err.textContent='Donnez au moins un nom à votre voyage 🙂'; return; }
-  const nb = nbRaw ? parseInt(nbRaw,10) : null;
+  const nbRaw=(document.getElementById('vy-nb').value||'').trim();
+  const animauxRaw=(document.getElementById('vy-animaux').value||'').trim();
+  const budgetRaw=(document.getElementById('vy-budget').value||'').trim();
   if(btn){ btn.disabled=true; btn.textContent='Création…'; }
   try{
     // est_principal seulement si c'est le tout premier voyage du groupe
     const {count}=await sb.from('voyages').select('*',{count:'exact',head:true}).eq('groupe_id',VY_GROUPE_ID);
     const premier = (!count || count===0);
-    const row={ groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:premier };
-    if(date) row.date_envisagee=date;
-    if(nb && !isNaN(nb)) row.nb_participants=nb;
-    const anim=document.getElementById('vy-anim');
-    row.animaux_a_bord = !!(anim && anim.checked);
+    const row={
+      groupe_id:VY_GROUPE_ID, nom:nom, statut:'actif', est_principal:premier,
+      but_voyage:        (document.getElementById('vy-desc').value||'').trim() || null,
+      destination_libre: (document.getElementById('vy-dest').value||'').trim() || null,
+      nb_participants:   nbRaw ? parseInt(nbRaw,10) : null,
+      nb_animaux:        animauxRaw ? parseInt(animauxRaw,10) : null,
+      date_debut:        (document.getElementById('vy-date-debut').value||'').trim() || null,
+      date_fin_envisagee:(document.getElementById('vy-date-fin').value||'').trim() || null,
+      budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null,
+      depart_nom: VY_GEO.depart.lat!=null ? VY_GEO.depart.nom : null,
+      depart_lat: VY_GEO.depart.lat || null,
+      depart_lng: VY_GEO.depart.lng || null,
+      retour_nom: VY_GEO.retour.lat!=null ? VY_GEO.retour.nom : null,
+      retour_lat: VY_GEO.retour.lat || null,
+      retour_lng: VY_GEO.retour.lng || null
+    };
     if(VY_MEMBRE_ID) row.cree_par=VY_MEMBRE_ID;
     const {data:cree,error}=await sb.from('voyages').insert(row).select('id,nom').single();
     if(error){ console.warn('Hub: création voyage',error); if(err) err.textContent='Création impossible, réessayez.'; if(btn){btn.disabled=false;btn.textContent='Créer ce voyage →';} return; }
@@ -774,20 +845,50 @@ function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=
     <p class="vy-sous">Avant d'imaginer, donnez vie à votre aventure. C'est le point de départ de tout&nbsp;: un nom, une saison, et l'envie de partir ensemble.</p>
     <label class="vy-lbl">Le nom de ce voyage</label>
     <input id="vy-nom" class="vy-input" type="text" placeholder="Été 2026, Notre Bretagne, La grande boucle…" maxlength="60">
+    <label class="vy-lbl">Description <span class="vy-optionnel">(optionnel)</span></label>
+    <textarea id="vy-desc" class="vy-textarea" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea>
     <div class="vy-row">
       <div class="vy-col">
-        <label class="vy-lbl">Une idée de quand&nbsp;?</label>
-        <input id="vy-date" class="vy-input" type="text" placeholder="Juillet 2026, la Toussaint…" maxlength="40">
+        <label class="vy-lbl">Destination <span class="vy-optionnel">(optionnel)</span></label>
+        <input id="vy-dest" class="vy-input" type="text" placeholder="Bretagne, Alpes…" maxlength="60">
       </div>
       <div class="vy-col vy-col-petit">
         <label class="vy-lbl">Combien à bord&nbsp;?</label>
         <input id="vy-nb" class="vy-input" type="number" min="1" max="50" placeholder="6">
       </div>
     </div>
-    <label class="vy-anim">
-      <input id="vy-anim" type="checkbox">
-      <span>🐾 On emmène un animal de compagnie</span>
-    </label>
+    <div class="vy-row">
+      <div class="vy-col">
+        <label class="vy-lbl">Date de départ <span class="vy-optionnel">(optionnel)</span></label>
+        <input id="vy-date-debut" class="vy-input" type="date">
+      </div>
+      <div class="vy-col">
+        <label class="vy-lbl">Retour envisagé <span class="vy-optionnel">(optionnel)</span></label>
+        <input id="vy-date-fin" class="vy-input" type="date">
+      </div>
+    </div>
+
+    <span class="vy-plus" id="vy-plus-toggle" onclick="vyToggleOptions()">+ Animaux, budget, point de départ/retour…</span>
+
+    <div id="vy-options" style="display:none">
+      <div class="vy-row">
+        <div class="vy-col vy-col-petit">
+          <label class="vy-lbl">Animaux <span class="vy-optionnel">(optionnel)</span></label>
+          <input id="vy-animaux" class="vy-input" type="number" min="0" placeholder="0">
+        </div>
+        <div class="vy-col">
+          <label class="vy-lbl">Budget estimé <span class="vy-optionnel">(optionnel)</span></label>
+          <input id="vy-budget" class="vy-input" type="number" min="0" step="1" placeholder="ex. 800 €">
+        </div>
+      </div>
+      <label class="vy-lbl">Point de départ <span class="vy-optionnel">(vide = la maison du groupe)</span></label>
+      <input id="vy-depart" class="vy-input" type="text" placeholder="ex. Gare de Strasbourg" oninput="vyScheduleGeocode('depart')">
+      <span class="vy-geo-status" id="vy-depart-status"></span>
+      <label class="vy-lbl">Point de retour <span class="vy-optionnel">(vide = la maison du groupe)</span></label>
+      <input id="vy-retour" class="vy-input" type="text" placeholder="ex. Gare de Strasbourg" oninput="vyScheduleGeocode('retour')">
+      <span class="vy-geo-status" id="vy-retour-status"></span>
+    </div>
+
     <button id="vy-creer" class="vy-btn" type="button">Créer ce voyage →</button>
     <div id="vy-err" class="vy-err"></div>
   </div>
