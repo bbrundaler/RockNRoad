@@ -25,7 +25,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 /* ── BLOC « INFOS DU VOYAGE » : la couverture du Roadbook. Bande pliée par
    défaut (résumé en un coup d'œil) ; un clic déplie le formulaire complet.
    Ces champs sont aussi ceux qui nourriront la version imprimée plus tard. ── */
-#rb-infos{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--surface-line);}
+#rb-infos{flex-shrink:0;background:var(--surface);border:1px solid var(--gold-a35,rgba(200,168,75,.35));
+  border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.14);margin:10px 14px 8px;}
 .rb-infos-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;cursor:pointer;}
 .rb-infos-resume{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rb-infos-resume b{font-family:var(--font-title);font-weight:700;}
@@ -53,6 +54,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 #app-main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}  /* enveloppe locale du voyage (Template A retiré d'app.css le 13/06) */
 /* Actions du voyage, logées dans l'en-tête du panneau Itinéraire */
 .panel-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.panel-actions-top{margin:12px 14px 0;}
 .tb-btn{padding:6px 13px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;border:1px solid transparent;}
 .tb-btn-clear{background:transparent;color:var(--st-bad-ink);border-color:rgba(200,50,0,.3);}
 .tb-btn-clear:hover{background:var(--st-bad-bg);}
@@ -63,14 +65,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 
 /* CONTENU */
 #voyage-content{display:flex;flex:1;overflow:hidden;}
-#voyage-panel{width:320px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--surface-line);display:flex;flex-direction:column;overflow:hidden;}
+#voyage-panel{width:400px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--surface-line);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--gold-a35) transparent;}
 /* Colonne DROITE : carte (prend l'espace) + retenues (sous la carte). Permet à la
    colonne itinéraire de gauche de descendre jusqu'en bas de page (≥8 fiches). */
 #voyage-right{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
 #panel-header{padding:16px 16px 12px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 #panel-header h2{font-family:var(--font-title);font-size:19px;color:var(--ink);margin-bottom:2px;}
 #panel-header p{font-size:12px;color:var(--ink-dim);}
-#stops-list{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;scrollbar-color:var(--gold-a35) transparent;}
+#stops-list{padding:8px 14px;}
 /* ── TABLEAU DE BORD : 3 stats horizontales en haut du panneau (km / temps / étapes).
    Partagé visuellement avec le Hub (même grammaire). Remplace l'ancien footer. ── */
 .dashboard{display:flex;align-items:stretch;gap:0;background:var(--gold-a10,rgba(200,168,75,.10));
@@ -81,8 +83,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .db-val .u{font-size:11px;font-weight:700;}
 .db-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
 
-/* L'itinéraire prend toute la hauteur restante et scrolle DANS son bloc (plus la page). */
-#stops-list{flex:1;min-height:0;overflow-y:auto;padding:10px 14px;}
+/* La liste ne défile plus DANS son propre cadre — c'est tout le panneau de gauche
+   (#voyage-panel) qui défile comme une seule bande, du titre jusqu'à la fiche Retour. */
 
 /* STOP ITEMS */
 /* étapes = mini-cartes PAPIER (encres fixes sur papier) — COMPACTES (8-10 visibles) */
@@ -109,8 +111,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-nuits:focus{outline:none;border-color:var(--gold);}
 .stop-meteo{font-size:11px;color:var(--ink-dim);margin-left:6px;}
 .stop-meteo:empty{margin-left:0;}
-.stop-bookend{background:var(--gold-a10);border-style:dashed;}
-.stop-bookend .stop-num{font-size:16px;background:transparent;}
+.stop-bookend{margin:0 14px 8px;cursor:default;}
+.stop-bookend:hover{box-shadow:var(--shadow);}
 .bookend-estime{font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-dim);margin-left:6px;}
 .bookend-date,.bookend-adresse{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--paper);
   border:1px solid var(--paper-line);border-radius:var(--r);padding:5px 8px;margin-top:4px;margin-right:6px;}
@@ -238,6 +240,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
   </div>
   <div id="voyage-content">
     <div id="voyage-panel">
+      <div class="panel-actions panel-actions-top">
+        <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
+      </div>
       <div id="panel-header">
         <h2>Roadbook</h2>
         <p>Glissez une retenue ici · réordonnez · × pour retirer</p>
@@ -254,11 +260,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
             <div class="db-val" id="totalStops">0</div>
             <div class="db-label">étapes</div>
           </div>
-        </div>
-        <div class="panel-actions">
-          <button class="tb-btn tb-btn-add" onclick="window.location.href='horizon.html'">+ Ajouter des lieux</button>
-          <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
-          <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
         </div>
       </div>
       <div class="stop-item stop-bookend" id="bookend-depart">
