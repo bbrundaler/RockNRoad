@@ -96,6 +96,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
 .stop-remove:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
 
+/* ── NOTE PAR ÉTAPE : un seul champ libre, sert de commentaire (jour) ou
+   d'hébergement (nuit) — jamais deux systèmes. Repliée par défaut (elle ne doit
+   pas alourdir la lecture de l'itinéraire), un clic sur le petit picto l'ouvre. ── */
+.stop-item{flex-wrap:wrap;}
+.stop-note-toggle{background:none;border:none;color:var(--ink-dim);font-size:13px;cursor:pointer;flex-shrink:0;padding:2px 5px;border-radius:4px;transition:all .15s;}
+.stop-note-toggle:hover{background:var(--gold-a10);color:var(--gold-text);}
+.stop-note-toggle.actif{color:var(--gold-text);}
+.stop-note-wrap{display:none;flex-basis:100%;margin-top:6px;}
+.stop-note-wrap.ouvert{display:block;}
+.stop-note{width:100%;font-family:var(--font-body);font-size:12px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--paper-line);border-radius:var(--r);padding:6px 8px;resize:vertical;min-height:40px;line-height:1.4;}
+.stop-note:focus{outline:none;border-color:var(--gold);}
+.stop-note-saved{font-size:10px;color:var(--ink-dim);margin-top:2px;visibility:hidden;}
+.stop-note-saved.show{visibility:visible;}
+
 /* VIDE */
 .empty-voyage{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;height:100%;}
 .empty-voyage .icon{font-size:44px;margin-bottom:12px;opacity:.4;}
@@ -483,7 +498,7 @@ function ajouteRetenueAItineraire(id, insertAt){
   if(!f || f.lat==null || f.lng==null) return;
   if(voyage.some(v=>v.id===id)) return;   // anti-doublon
   const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||''};
+  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:''};
   const pos=(typeof insertAt==='number' && insertAt>=0 && insertAt<=voyage.length)?insertAt:voyage.length;
   voyage.splice(pos,0,item);
   saveVoyage();
@@ -512,7 +527,7 @@ async function saveVoyage(){
   if(_saveEnCours){ _saveRedemande=true; return; }  // sérialise les écritures rapprochées
   _saveEnCours=true;
   try{
-    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i}));
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null)}));
     await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
     if(snapshot.length){ await sb.from('voyage_itineraire').insert(snapshot); }
   }catch(e){ console.warn('saveVoyage',e); }
@@ -524,7 +539,7 @@ async function loadVoyage(){
   if(!VOYAGE_ID){ voyage=[]; render(); return; }
   try{
     const {data:rows}=await sb.from('voyage_itineraire')
-      .select('uid,lieu_id,ordre').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+      .select('uid,lieu_id,ordre,note').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
@@ -533,7 +548,7 @@ async function loadVoyage(){
     }
     voyage=(rows||[])
       .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||''}; })
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||'', note:r.note||''}; })
       .filter(Boolean);
   }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
@@ -675,6 +690,42 @@ function initListEvents(){
     if(uid) removeByUid(uid);
   });
 
+  // Picto note (💬/🌙) — ouvre/ferme le champ, sans toucher au reste de l'étape
+  list.addEventListener('click', function(e){
+    const btn = e.target.closest('.stop-note-toggle');
+    if(!btn) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const wrap = btn.closest('.stop-item')?.querySelector('.stop-note-wrap');
+    if(!wrap) return;
+    const ouvre = !wrap.classList.contains('ouvert');
+    wrap.classList.toggle('ouvert', ouvre);
+    if(ouvre) wrap.querySelector('.stop-note')?.focus();
+  });
+
+  // Saisie de la note : on écrit dans voyage[] SANS re-render (perdrait le focus),
+  // et on sauvegarde en base après une courte pause de frappe (debounce). Un seul
+  // champ, jour ou nuit — la sauvegarde ne dépend pas du sens qu'on lui donne.
+  let _noteSaveTimers={};
+  list.addEventListener('input', function(e){
+    const ta = e.target.closest('.stop-note');
+    if(!ta) return;
+    const item = ta.closest('.stop-item');
+    const uid = item?.dataset.uid;
+    if(!uid) return;
+    const v = voyage.find(x=>x.uid===uid);
+    if(v) v.note = ta.value;
+    const toggle = item.querySelector('.stop-note-toggle');
+    if(toggle) toggle.classList.toggle('actif', !!ta.value.trim());
+    const savedTag = item.querySelector('.stop-note-saved');
+    if(savedTag) savedTag.classList.remove('show');
+    if(_noteSaveTimers[uid]) clearTimeout(_noteSaveTimers[uid]);
+    _noteSaveTimers[uid] = setTimeout(async ()=>{
+      await saveVoyage();
+      if(savedTag){ savedTag.classList.add('show'); setTimeout(()=>savedTag.classList.remove('show'), 1800); }
+    }, 700);
+  });
+
   // (Le drag natif HTML5 a été RETIRÉ : il entrait en conflit avec le pointer-drag
   //  ci-dessous — sur PC, attraper une fiche au corps déclenchait le natif, sans
   //  écartement et sans réordon réel. Tout passe désormais par les pointer events.)
@@ -773,6 +824,16 @@ function renderList(){
     row.className='stop-item';
     row.dataset.uid = item.uid; // ← uid dans le DOM, pas dans un listener
 
+    // La nuit change le sens de la note (hébergement) sans changer le champ lui-même —
+    // un seul champ libre, jamais deux systèmes (« une info = une maison »).
+    const nuit = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.estNuit(item) : false;
+    const notePicto = nuit ? '🌙' : '💬';
+    const noteTitre = nuit ? 'Hébergement' : 'Note du groupe';
+    const notePlaceholder = nuit
+      ? 'Où on dort, numéro de résa, heure d\'arrivée…'
+      : 'Ce qu\'on en pense, ce qu\'on veut y faire…';
+    const aUneNote = !!(item.note && item.note.trim());
+
     row.innerHTML=`
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
@@ -781,7 +842,12 @@ function renderList(){
         <div class="stop-meta">${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
         ${distHtml}
       </div>
+      <button class="stop-note-toggle${aUneNote?' actif':''}" type="button" title="${noteTitre}">${notePicto}</button>
       <button class="stop-remove" title="Retirer">✕</button>
+      <div class="stop-note-wrap${aUneNote?' ouvert':''}">
+        <textarea class="stop-note" placeholder="${notePlaceholder}" rows="2">${item.note?escVr(item.note):''}</textarea>
+        <div class="stop-note-saved">Enregistré ✓</div>
+      </div>
     `;
     list.appendChild(row);
   });
