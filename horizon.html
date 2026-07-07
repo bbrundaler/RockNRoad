@@ -1581,11 +1581,6 @@ function hzGfRafraichir(lieuId){
   if(body) body.innerHTML = hzGfConstruitHtml(f);
 }
 function hzFermeGrandeFiche(){
-  // Retour Bruno (07/07) : le carrousel photo (lightbox.js) s'ouvre PAR-DESSUS la
-  // grande fiche (z-index plus haut) et vit dans son propre DOM, indépendant —
-  // fermer la grande fiche ne le fermait pas, d'où "il faut fermer 2 fois". Un
-  // seul geste (la croix) doit tout refermer d'un coup.
-  if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.close();
   const overlay=document.getElementById('hz-gf-overlay');
   const modal=document.getElementById('hz-gf-modal');
   if(!overlay||!modal) return;

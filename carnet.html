@@ -1500,6 +1500,7 @@ function makeDynCard(l, cardType){
       ${makeVoteBar(l)}
       <div class="site-actions" onclick="event.stopPropagation()">
         <a href="${mapsUrl}" target="_blank" class="maps-btn">📍 Voir sur Maps</a>
+        <a href="horizon.html?fiche=${l.id}" class="maps-btn">🧭 Horizon</a>
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="google-btn">🌐 Site</a>`:`<a href="https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}" target="_blank" class="google-btn">🔍 Google</a>`}
         <button data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)" style="background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">✏️</button>
       </div>
@@ -1576,6 +1577,7 @@ function makeNuitCard(l){
       ${makeVoteBar(l)}
       <div class="nuit-actions" onclick="event.stopPropagation()">
         <a href="${mapsUrl}" target="_blank" class="nuit-maps-btn">📍 Maps</a>
+        <a href="horizon.html?fiche=${l.id}" class="nuit-maps-btn">🧭 Horizon</a>
         ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="nuit-maps-btn">🌐 Site</a>`:''}
         <button class="nuit-edit-btn" data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)">✏️</button>
@@ -1722,9 +1724,6 @@ function openGrandeFiche(id){
   document.getElementById('gf-overlay').style.display = 'flex';
 }
 function closeGrandeFiche(){
-  // Même correctif qu'Horizon (07/07) : le lightbox est un DOM séparé, plus
-  // haut en z-index — fermer la grande fiche doit aussi le fermer d'un coup.
-  if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.close();
   const o = document.getElementById('gf-overlay');
   if(o) o.style.display = 'none';
 }

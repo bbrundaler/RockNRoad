@@ -78,6 +78,18 @@
     const el=document.getElementById('rnr-lb'); if(!el) return;
     el.classList.remove('open');
     document.body.style.overflow='';
+    // Retour Bruno (07/07) : quand le carrousel s'ouvre PAR-DESSUS une grande
+    // fiche encore affichée, son propre calque (z-index plus haut) cache le
+    // bouton ✕ de la fiche — le seul ✕ cliquable est celui du carrousel. Un
+    // seul clic doit donc tout refermer d'un coup. Détection générique (pas
+    // de dépendance à Horizon ou au Carnet en particulier) : on ne referme la
+    // fiche que si elle existe sur cette page ET qu'elle est réellement
+    // ouverte — jamais l'inverse (le carrousel s'ouvre aussi seul, depuis les
+    // vignettes des listes, sans fiche à refermer derrière).
+    const hzOv=document.getElementById('hz-gf-overlay');
+    if(hzOv && hzOv.style.display==='flex' && typeof window.hzFermeGrandeFiche==='function') window.hzFermeGrandeFiche();
+    const cnOv=document.getElementById('gf-overlay');
+    if(cnOv && cnOv.style.display==='flex' && typeof window.closeGrandeFiche==='function') window.closeGrandeFiche();
   }
   function nav(dir){ idx=(idx+dir+photos.length)%photos.length; render(); }
   function goTo(i){ idx=i; render(); }
