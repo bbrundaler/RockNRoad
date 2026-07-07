@@ -114,12 +114,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
    nom/la région — ne rajoute plus de hauteur, jour et nuit font désormais la même taille.
    Le 🌙 vit UNIQUEMENT à gauche (au-dessus des 6 points/numéro) — pas de doublon ici (corrigé
    07/07, signalé par Bruno). Largeur plafonnée pour ne plus couper le titre de la fiche. */
-.stop-nuits-col{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;width:38px;}
+.stop-nuits-col{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;width:52px;}
 .stop-nuits-lbl2{font-size:8.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.3px;line-height:1.1;text-align:center;}
-.stop-nuits{width:26px;font-family:var(--font-body);font-size:11px;color:var(--ink);background:var(--bg);
-  border:1px solid var(--paper-line);border-radius:5px;padding:1px 2px;text-align:center;}
+.stop-nuits{width:46px;font-family:var(--font-body);font-size:11px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--paper-line);border-radius:5px;padding:0 2px;height:18px;text-align:left;box-sizing:border-box;}
 .stop-nuits:focus{outline:none;border-color:var(--gold);}
-.stop-meteo{font-size:9px;color:var(--ink-dim);line-height:1.15;text-align:center;max-width:38px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.stop-meteo{font-size:9px;color:var(--ink-dim);line-height:1.15;text-align:center;max-width:50px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .stop-bookend{margin:0 14px 8px;cursor:default;position:relative;}
 .stop-bookend:hover{box-shadow:var(--shadow);}
 .stop-bookend .stop-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -248,10 +248,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <label>Destination<input id="rb-dest" type="text" placeholder="calculée depuis vos étapes"></label>
         <label>Participants<input id="rb-nb" type="number" min="1" placeholder="Nombre de personnes"></label>
         <label>Animaux <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-animaux" type="number" min="0" placeholder="0"></label>
+        <label>Date de départ <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-infos-date-debut" type="date"></label>
+        <label>Retour envisagé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-infos-date-fin" type="date"></label>
         <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
       </div>
       <label class="rb-infos-but">Description <span class="rb-infos-optionnel">(optionnel)</span><textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
-      <p class="rb-infos-note">📍 La date, le point de départ et le point de retour se règlent directement dans la liste des étapes ci-dessous (première et dernière fiche).</p>
+      <p class="rb-infos-note">📍 Départ : <span id="rb-infos-resume-depart">la maison du groupe</span> · Retour : <span id="rb-infos-resume-retour">la maison du groupe</span> — modifiables dans la liste des étapes ci-dessous (première et dernière fiche).</p>
       <div class="rb-infos-actions">
         <button class="tb-btn tb-btn-add" type="button" onclick="rbInfosSave()">Enregistrer</button>
         <button class="tb-btn tb-btn-print" type="button" onclick="rbInfosToggle()">Annuler</button>
@@ -701,7 +703,7 @@ function rbMajBookendRetourEstime(){
    région dominante des étapes (moteur RNR_CARTO_MOTEUR, même découpage que
    Carnet/Horizon) tant que Bruno n'a rien saisi à la main — dès qu'un texte
    est enregistré dans destination_libre, il prime et l'auto-calcul s'efface. */
-let RB_INFO = {nom:'',date_debut:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',budget_estime:null,
+let RB_INFO = {nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',budget_estime:null,
   depart_lat:null,depart_lng:null,depart_nom:'',retour_lat:null,retour_lng:null,retour_nom:''};
 // Géocodage des points de départ/retour personnalisés — même service que l'onboarding
 // (Nominatim/OpenStreetMap, gratuit, sans clé) : un seul comportement de géocodage, un seul endroit.
@@ -828,7 +830,7 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data,error} = await sb.from('voyages')
-      .select('nom,date_debut,nb_participants,nb_animaux,destination_libre,but_voyage,budget_estime,depart_lat,depart_lng,depart_nom,retour_lat,retour_lng,retour_nom')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,budget_estime,depart_lat,depart_lng,depart_nom,retour_lat,retour_lng,retour_nom')
       .eq('id',VOYAGE_ID).single();
     if(error || !data) throw (error||new Error('voyage introuvable'));
     RB_INFO = data;
@@ -907,6 +909,8 @@ async function rbSauverDepartRetourDate(){
       if(RB_INFO[which+'_lat']!=null){ const pop=document.getElementById('rb-'+which+'-pop'); if(pop) pop.style.display='none'; }
     });
     render(); // les dates de toutes les étapes + le résumé + la carte en dépendent
+    const form=document.getElementById('rb-infos-form');
+    if(form && form.style.display!=='none') rbInfosRemplirForm(); // le formulaire Infos, s'il est ouvert, suit la même valeur
   }catch(e){
     console.warn('Roadbook: sauvegarde départ/retour/date', e);
   }
@@ -968,8 +972,12 @@ function rbInfosRemplirForm(){
   document.getElementById('rb-dest').value = RB_INFO.destination_libre || rbRegionAuto() || '';
   document.getElementById('rb-nb').value = RB_INFO.nb_participants || '';
   document.getElementById('rb-animaux').value = (RB_INFO.nb_animaux!=null) ? RB_INFO.nb_animaux : '';
+  document.getElementById('rb-infos-date-debut').value = RB_INFO.date_debut || '';
+  document.getElementById('rb-infos-date-fin').value = RB_INFO.date_fin_envisagee || '';
   document.getElementById('rb-budget').value = (RB_INFO.budget_estime!=null) ? RB_INFO.budget_estime : '';
   document.getElementById('rb-but').value = RB_INFO.but_voyage || '';
+  const rd=document.getElementById('rb-infos-resume-depart'); if(rd) rd.textContent = (RB_INFO.depart_lat!=null) ? (RB_INFO.depart_nom||'lieu personnalisé') : 'la maison du groupe';
+  const rr=document.getElementById('rb-infos-resume-retour'); if(rr) rr.textContent = (RB_INFO.retour_lat!=null) ? (RB_INFO.retour_nom||'lieu personnalisé') : 'la maison du groupe';
   const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
 }
 
@@ -992,6 +1000,8 @@ async function rbInfosSave(){
     destination_libre: (document.getElementById('rb-dest').value||'').trim() || null,
     nb_participants:   nbRaw ? parseInt(nbRaw,10) : null,
     nb_animaux:        animauxRaw ? parseInt(animauxRaw,10) : null,
+    date_debut:        (document.getElementById('rb-infos-date-debut').value||'').trim() || null,
+    date_fin_envisagee:(document.getElementById('rb-infos-date-fin').value||'').trim() || null,
     but_voyage:        (document.getElementById('rb-but').value||'').trim() || null,
     budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null
   };
@@ -1001,6 +1011,8 @@ async function rbInfosSave(){
     RB_INFO = Object.assign({}, RB_INFO, row);
     try{ sessionStorage.setItem('rnr_voyage_nom', nom); }catch(e){}  // le sélecteur du chrome lit ce cache (même moteur qu'Horizon/Carnet)
     rbInfosRender();
+    rbRemplirBookends();   // la date de départ vit aussi sur la fiche Départ — les deux se suivent
+    render();              // les dates de chaque étape dépendent de RB_INFO.date_debut
     rbInfosToggle();
   }catch(e){
     console.warn('Roadbook: sauvegarde infos voyage', e);
