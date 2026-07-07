@@ -266,12 +266,9 @@ const sb=supabase.createClient(SURL,SKEY);
 
 let map, routeLayer;
 // Tactile : pas de survol au doigt → la fiche s'ouvre au tap, pas en passant dessus.
-// Détection tactile FIABLE : pas une capacité figée au chargement (navigator.maxTouchPoints
-// reste souvent >0 sur les portables à écran tactile même utilisés à la souris — c'était le
-// bug : le curseur devenait une main, mais la bulle ne s'ouvrait jamais au survol). On suit à
-// la place le DERNIER type de pointeur réellement observé, mis à jour en continu.
-let DERNIER_POINTEUR_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0); // repli initial, corrigé dès le premier geste
-document.addEventListener('pointerdown', e=>{ DERNIER_POINTEUR_TACTILE = (e.pointerType==='touch'); }, {capture:true});
+// (Détection tactile retirée le 07/07 : la carte gère désormais l'ouverture des bulles par
+// simple clic natif — souris ET tactile — plus fiable que notre survol maison, qui entrait
+// en conflit avec le clic. Une chose en moins à faire soi-même quand la carte le fait déjà bien.)
 // Source unique de vérité — tableau d'objets {uid, nom, lat, lng, type} (la région se calcule du GPS, B23)
 // uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
 let voyage = [];
@@ -925,11 +922,7 @@ function renderMap(){
         <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">${i+1}. ${escVr(v.nom||'—')}</div>
         <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(v.lat,v.lng))} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
-    `, {maxWidth:240, autoPan:false, closeButton:false});
-    // SURVOL (souris réelle, détectée en direct) : la fiche s'ouvre pour savoir QUEL lieu est
-    // ce numéro. Tactile → au tap (comportement par défaut de bindPopup, déjà garanti).
-    mkNum.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkNum.openPopup(); });
-    mkNum.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkNum.closePopup(); });
+    `, {maxWidth:240, autoPan:true, closeButton:true});
     bounds.push([v.lat,v.lng]);
   });
 
@@ -943,9 +936,7 @@ function renderMap(){
         <div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">🏠 ${escVr(DOMICILE.nom||'La maison')}</div>
         <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div>
       </div>
-    `, {maxWidth:220, autoPan:false, closeButton:false});
-    mkMaison.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkMaison.openPopup(); });
-    mkMaison.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkMaison.closePopup(); });
+    `, {maxWidth:220, autoPan:true, closeButton:true});
     bounds.push([DOMICILE.lat,DOMICILE.lng]);
   }
 
@@ -997,9 +988,7 @@ function renderMap(){
           <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(f.lat,f.lng))} ${f.type?'· '+escVr(f.type):''}</div>
           <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
-      `, {maxWidth:240, autoPan:false, closeButton:false});
-      mkEp.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkEp.openPopup(); });
-      mkEp.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkEp.closePopup(); });
+      `, {maxWidth:240, autoPan:true, closeButton:true});
       bounds.push([f.lat,f.lng]);
     });
   }
