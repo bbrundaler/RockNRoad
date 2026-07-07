@@ -575,6 +575,8 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee .nm .st{font-size:12px;font-weight:400;color:var(--ink-dim);margin-top:2px;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-non-leader{font-family:var(--font-body);font-size:10px;cursor:pointer;background:none;border:1px dashed var(--ink-dim);color:var(--ink-dim);padding:3px 8px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-non-leader:hover{border-color:var(--gold-a35);color:var(--gold-text);}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
 .hz-aimee-vote{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
@@ -1433,6 +1435,8 @@ function hzPopupFicheHtml(f){
     actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="event.stopPropagation();hzPopupToggleLove(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
     if(estLeader){
       actions+='<button class="hz-aimee-epingle" type="button" onclick="event.stopPropagation();epinglerDirectementHzId(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
+    } else {
+      actions+=chipNonLeaderHz();
     }
   }
 
@@ -1499,6 +1503,7 @@ function hzGfVoteBarHtml(f){
   actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="hzPopupToggleLove(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
   if(!enVote && c.count>0) actions+='<button class="hz-aimee-vote" type="button" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
   if(estLeader) actions+='<button class="hz-aimee-epingle" type="button" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
+  else actions+=chipNonLeaderHz();
   return '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+actions+'</div>';
 }
 // Construit le HTML de la grande fiche (utilisé à l'ouverture ET au rafraîchissement
@@ -3594,7 +3599,7 @@ function carteFicheDrawer(f){
   const enVote=!!HZ_VOTE_DE_FICHE[f.id];
   const btnLeader=jeSuisLeaderHz()
     ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
-    : '';
+    : chipNonLeaderHz();
   const btnVote=enVote
     ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
     : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
@@ -4068,7 +4073,7 @@ function rendPanier(){
         const enVote = !!HZ_VOTE_DE_FICHE[f.id];
         const btnLeader = jeSuisLeaderHz()
           ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
-          : '';
+          : chipNonLeaderHzCompacte();
         const btnVote = enVote
           ? '<button class="hz-pr-tag-vote" type="button" title="Voir et voter" onclick="ouvrirCarteVote(\''+HZ_VOTE_DE_FICHE[f.id]+'\')">🗳️</button>'
           : '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
@@ -4718,6 +4723,24 @@ function jeSuisLeaderHz(){
   const moi = (typeof monMembreIdReel==='function') ? monMembreIdReel() : null;
   return !!(moi && HZ_LEADERS_ELUS && HZ_LEADERS_ELUS.length && HZ_LEADERS_ELUS.includes(moi));
 }
+// Le silence total quand on n'est pas leader se lit comme « ça marche pas » pour qui n'a pas
+// conçu le système (signalé par Bruno, 07/07 — le vrai bug n'était pas technique, ergonomique).
+// On explique toujours QUI peut épingler, et on ouvre le tiroir groupe pour agir (lancer/rejoindre
+// le vote des leaders) au lieu de laisser un vide silencieux à la place du bouton.
+function chipNonLeaderHz(){
+  if(!HZ_LEADERS_ELUS || !HZ_LEADERS_ELUS.length){
+    return '<span class="hz-non-leader" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');" title="Personne n\'anime encore ce voyage — cliquez pour lancer le vote">👑 Leader à désigner</span>';
+  }
+  const noms = HZ_LEADERS_ELUS.map(id=>(typeof nomMembre==='function')?nomMembre(id):'').filter(Boolean).join(', ');
+  return '<span class="hz-non-leader" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');" title="Seul(e) '+escapeHtmlHz(noms)+' peut épingler pour ce voyage — cliquez pour voir">👑 '+escapeHtmlHz(noms)+' anime</span>';
+}
+// Variante compacte (icône seule) pour les listes serrées où le texte ne tient pas.
+function chipNonLeaderHzCompacte(){
+  const titre = (!HZ_LEADERS_ELUS || !HZ_LEADERS_ELUS.length)
+    ? 'Personne n\'anime encore ce voyage — cliquez pour lancer le vote'
+    : 'Seul le leader peut épingler — cliquez pour voir qui';
+  return '<button class="hz-pr-epingle hz-pr-epingle-verrou" type="button" title="'+titre+'" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');">👑</button>';
+}
 async function epinglerDirectementHz(fiche){
   if(!jeSuisLeaderHz()) return;   // garde de sûreté (le bouton ne s'affiche déjà qu'au leader)
   if(!HZ_VOYAGE_ID || !fiche || !fiche.id) return;
@@ -5086,7 +5109,7 @@ function rendAimees(){
     const enVote = !!HZ_VOTE_DE_FICHE[f.id];
     const btnLeader = jeSuisLeaderHz()
       ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
-      : '';
+      : chipNonLeaderHz();
     const btnVote = enVote
       ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
       : '<button class="hz-aimee-vote" type="button" title="Lancer un vote du groupe sur cette fiche">🗳️ Vote</button>';
