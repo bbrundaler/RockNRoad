@@ -412,6 +412,11 @@ async function voyageChargeSelecteurChrome(){
   await loadVoyage();                       // itinéraire depuis la base (partagé)
   chargerRetenuesVoyage(session.user.id);   // bande retenues (calcule « déjà placé » après load)
   await chargerInfosVoyage();                // bloc « Infos du voyage » (couverture du Roadbook)
+  // loadVoyage() a déjà dessiné la liste plus haut, mais RB_INFO.date_debut n'était pas encore
+  // chargé à ce moment-là (chargerInfosVoyage tourne après) — donc les dates de chaque étape (et
+  // la météo qui en dépend) restaient absentes tant qu'un clic ne redessinait pas la liste. On
+  // redessine ici, une fois RB_INFO au complet, pour que tout soit juste dès l'arrivée sur la page.
+  render();
   // Arrivée depuis « ✏️ Modifier ce voyage » (menu du sélecteur, chrome.js) : on ouvre
   // directement le formulaire, sans que la personne ait à deviner où cliquer.
   try{
@@ -781,12 +786,13 @@ async function rbFetchMeteo(lat, lng, dateISO){
   if(RB_METEO_CACHE[cle]!==undefined) return RB_METEO_CACHE[cle];
   try{
     const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lng
-      +'&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto'
+      +'&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto'
       +'&start_date='+dateISO+'&end_date='+dateISO;
     const r = await fetch(url);
     const d = await r.json();
+    if(d && d.error){ console.warn('Roadbook: météo — API a répondu une erreur :', d.reason||d); RB_METEO_CACHE[cle]=null; return null; }
     if(d && d.daily && d.daily.time && d.daily.time.length){
-      const res = {icone:rbMeteoIcone(d.daily.weathercode[0]), tmax:Math.round(d.daily.temperature_2m_max[0]), tmin:Math.round(d.daily.temperature_2m_min[0])};
+      const res = {icone:rbMeteoIcone(d.daily.weather_code[0]), tmax:Math.round(d.daily.temperature_2m_max[0]), tmin:Math.round(d.daily.temperature_2m_min[0])};
       RB_METEO_CACHE[cle]=res; return res;
     }
   }catch(e){ console.warn('Roadbook: météo indisponible', e); }
