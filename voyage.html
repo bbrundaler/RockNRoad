@@ -138,6 +138,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .bookend-adresse:focus{outline:none;border-color:var(--gold);}
 .bookend-estime{font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-dim);margin-left:6px;}
 .stop-dist{font-size:10px;color:var(--gold-deep);margin-top:2px;}
+.stop-duree{color:var(--ink-dim);}
 .stop-dist-home{font-weight:700;color:var(--gold-text);}
 .stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
 .stop-remove:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
@@ -406,7 +407,14 @@ async function voyageChargeSelecteurChrome(){
   voyageChargeSelecteurChrome();            // nom du voyage + liste visible partout (chrome.js)
   await loadVoyage();                       // itinéraire depuis la base (partagé)
   chargerRetenuesVoyage(session.user.id);   // bande retenues (calcule « déjà placé » après load)
-  chargerInfosVoyage();                     // bloc « Infos du voyage » (couverture du Roadbook)
+  await chargerInfosVoyage();                // bloc « Infos du voyage » (couverture du Roadbook)
+  // Arrivée depuis « ✏️ Modifier ce voyage » (menu du sélecteur, chrome.js) : on ouvre
+  // directement le formulaire, sans que la personne ait à deviner où cliquer.
+  try{
+    if(new URLSearchParams(window.location.search).get('modifier')==='1'){
+      if(document.getElementById('rb-infos-form').style.display==='none') rbInfosToggle();
+    }
+  }catch(e){}
 })();
 
 /* ── Bande « Retenues pour ce voyage » : même invariant que le Cockpit (Master 4.18).
@@ -1159,11 +1167,11 @@ function renderList(){
       if(dep && item.lat){
         const d=calcDist(dep.lat, dep.lng, item.lat, item.lng);
         const estMaison = (dep===DOMICILE);
-        distHtml=`<div class="stop-dist stop-dist-home">${estMaison?'🏠':'🚏'} ${d} km depuis ${estMaison?'la maison':escVr(dep.nom||'le départ')}</div>`;
+        distHtml=`<div class="stop-dist stop-dist-home">${estMaison?'🏠':'🚏'} ${d} km depuis ${estMaison?'la maison':escVr(dep.nom||'le départ')} <span class="stop-duree">· ~${_fmtDuree(rbDureeEstimee(d))}</span></div>`;
       }
     } else if(voyage[i-1].lat && item.lat){
       const d=calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng);
-      distHtml=`<div class="stop-dist">↑ ${d} km</div>`;
+      distHtml=`<div class="stop-dist">↑ ${d} km <span class="stop-duree">· ~${_fmtDuree(rbDureeEstimee(d))}</span></div>`;
     }
 
     const row = document.createElement('div');
@@ -1243,6 +1251,12 @@ function renderList(){
 }
 
 // Petit format de distance/durée pour le tableau de bord.
+// Durée estimée d'une étape : à défaut du tracé réel (ORS, calculé pour tout le voyage
+// seulement, pas étape par étape), une vitesse moyenne route raisonnable pour un van/fourgon.
+// Volontairement approximative (le « ~ » l'indique) — comme l'estimation provisoire du total
+// avant que le tracé réel ne réponde.
+const RB_VITESSE_MOY_KMH = 65;
+function rbDureeEstimee(km){ return km / RB_VITESSE_MOY_KMH; }
 function _fmtDuree(h){
   const H=Math.floor(h), M=Math.round((h-H)*60);
   return H>0 ? (H+'<span class="u">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span class="u"> min</span>');

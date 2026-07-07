@@ -125,6 +125,14 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   border:1px solid var(--surface-line);background:var(--surface);color:var(--ink-dim);white-space:nowrap;}
 .mbr-lead-btn:hover{border-color:var(--gold);color:var(--gold-text);}
 .mail-barre{margin-top:12px;}
+.voyages-liste{display:flex;flex-direction:column;gap:8px;}
+.vg-row{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid var(--surface-line);
+  border-radius:var(--r);background:var(--surface);}
+.vg-nom{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vg-principal{font-size:11px;}
+.vg-modifier{font-size:11px;padding:4px 9px;border-radius:999px;cursor:pointer;flex-shrink:0;
+  border:1px solid var(--surface-line);background:var(--surface);color:var(--ink-dim);white-space:nowrap;}
+.vg-modifier:hover{border-color:var(--gold);color:var(--gold-text);}
 .mail-btn{width:100%;padding:9px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:600;
   border:1.5px solid var(--gold);background:var(--gold-a20);color:var(--gold-text);}
 .mail-btn:hover{background:var(--gold);color:#1a1208;}
@@ -293,6 +301,10 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
       <!-- ── COLONNE 3 : LES GENS (membres, leader 1-clic, mail) — visible pour tous ── -->
       <div class="onb-col">
         <div class="cfg-card">
+          <div class="cfg-card-title"><span>🧭</span> Vos voyages</div>
+          <div id="voyages-liste" class="voyages-liste">Chargement…</div>
+        </div>
+        <div class="cfg-card">
           <div class="cfg-card-title"><span>👥</span> Les membres du groupe</div>
           <div id="membres-liste" class="membres-liste">Chargement…</div>
           <div id="mail-barre" class="mail-barre" style="display:none;">
@@ -456,7 +468,30 @@ async function chargerMembres(){
     GM_peutNommer = (myRole==='admin') || suisLeaderQuelquePart;
 
     rendreMembres();
+    rendreVoyagesGroupe();
   }catch(e){ console.warn('chargerMembres',e); box.textContent='Liste indisponible.'; }
+}
+
+// « Vos voyages » — un lien direct vers chaque projet du groupe (Bruno, 07/07 : « il ne faut plus
+// que la fiche d'un voyage soit un jeu de piste »). Réutilise GM_voyages, déjà chargé ci-dessus —
+// une seule requête, pas une de plus.
+function rendreVoyagesGroupe(){
+  const box=document.getElementById('voyages-liste');
+  if(!box) return;
+  if(!GM_voyages.length){ box.textContent='Aucun voyage créé pour l\'instant.'; return; }
+  box.innerHTML = GM_voyages.map(v=>{
+    return '<div class="vg-row">'
+      + '<div class="vg-nom">'+escMbr(v.nom||'Voyage')+(v.est_principal?' <span class="vg-principal">⭐</span>':'')+'</div>'
+      + '<button type="button" class="vg-modifier" onclick="ouvrirVoyagePourModif(\''+v.id+'\')">✏️ Modifier</button>'
+      + '</div>';
+  }).join('');
+}
+// Bascule ce voyage en actif (même sessionStorage que chrome.js/Horizon/Roadbook), PUIS ouvre
+// le Roadbook avec son formulaire déjà déplié — un seul geste, pas de jeu de piste.
+function ouvrirVoyagePourModif(voyageId){
+  const v = GM_voyages.find(x=>x.id===voyageId);
+  try{ sessionStorage.setItem('rnr_voyage_id', voyageId); if(v) sessionStorage.setItem('rnr_voyage_nom', v.nom||''); }catch(e){}
+  window.location.href = 'voyage.html?modifier=1';
 }
 
 function leaderDeQuoi(membreId){

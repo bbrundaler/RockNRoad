@@ -88,6 +88,7 @@
   +'.rnrc-vy-item.actif{color:var(--gold-light);font-weight:600;}'
   +'.rnrc-vy-sep{height:1px;background:var(--gold-a20);margin:5px 0;}'
   +'.rnrc-vy-new{color:var(--gold-light);font-weight:600;}'
+  +'.rnrc-vy-modifier{text-decoration:none;}'
   +'@media(max-width:700px){.rnrc-voyage{font-size:14px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}'
   +'.rnrc-groupe{font-size:13.5px;color:var(--chrome-ink-dim);text-decoration:none;'
   +'white-space:nowrap;font-family:var(--font-body);}'
@@ -281,6 +282,12 @@
           vyMenu.appendChild(it);
         });
         var sep = document.createElement('div'); sep.className='rnrc-vy-sep'; vyMenu.appendChild(sep);
+        var mod = document.createElement('a');
+        mod.className = 'rnrc-vy-item rnrc-vy-modifier';
+        mod.href = 'voyage.html?modifier=1';
+        mod.textContent = '✏️ Modifier ce voyage';
+        vyMenu.appendChild(mod);
+        var sep2 = document.createElement('div'); sep2.className='rnrc-vy-sep'; vyMenu.appendChild(sep2);
         var nw = document.createElement('button');
         nw.className = 'rnrc-vy-item rnrc-vy-new';
         nw.textContent = '+ Nouveau voyage';
