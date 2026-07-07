@@ -37,6 +37,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .rb-infos-grid input,.rb-infos-but textarea{font-family:var(--font-body);font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--paper);border:1px solid var(--paper-line);border-radius:var(--r);padding:7px 9px;}
 .rb-infos-check{flex-direction:row!important;align-items:center;gap:7px!important;justify-content:flex-start;}
 .rb-infos-check input{width:16px;height:16px;flex-shrink:0;}
+.rb-infos-optionnel{text-transform:none;font-weight:400;letter-spacing:0;color:var(--ink-dim);opacity:.75;}
 .rb-infos-but{margin-bottom:10px;}
 .rb-infos-but textarea{resize:vertical;font-family:var(--font-body);}
 .rb-infos-actions{display:flex;gap:8px;align-items:center;}
@@ -97,6 +98,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-info{flex:1;min-width:0;}
 .stop-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
+.stop-nuits-lbl{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-dim);margin-top:2px;}
+.stop-nuits{width:34px;font-family:var(--font-body);font-size:11px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--paper-line);border-radius:5px;padding:1px 3px;text-align:center;}
+.stop-nuits:focus{outline:none;border-color:var(--gold);}
 .stop-dist{font-size:10px;color:var(--gold-deep);margin-top:2px;}
 .stop-dist-home{font-weight:700;color:var(--gold-text);}
 .stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
@@ -203,8 +208,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div class="rb-infos-grid">
         <label>Nom du voyage<input id="rb-nom" type="text" placeholder="Vacances été 2026"></label>
         <label>Destination<input id="rb-dest" type="text" placeholder="calculée depuis vos étapes"></label>
-        <label>Dates<input id="rb-dates" type="text" placeholder="ex. 12 → 26 août 2026"></label>
+        <label>Date de départ<input id="rb-dates" type="date"></label>
         <label>Participants<input id="rb-nb" type="number" min="1" placeholder="Nombre de personnes"></label>
+        <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
         <label class="rb-infos-check"><input id="rb-chien" type="checkbox"> 🐾 Avec chien</label>
       </div>
       <label class="rb-infos-but">But du voyage<textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
@@ -506,7 +512,7 @@ function ajouteRetenueAItineraire(id, insertAt){
   if(!f || f.lat==null || f.lng==null) return;
   if(voyage.some(v=>v.id===id)) return;   // anti-doublon
   const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:''};
+  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:'', nb_nuits:null};
   const pos=(typeof insertAt==='number' && insertAt>=0 && insertAt<=voyage.length)?insertAt:voyage.length;
   voyage.splice(pos,0,item);
   saveVoyage();
@@ -535,7 +541,7 @@ async function saveVoyage(){
   if(_saveEnCours){ _saveRedemande=true; return; }  // sérialise les écritures rapprochées
   _saveEnCours=true;
   try{
-    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null)}));
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null)}));
     await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
     if(snapshot.length){ await sb.from('voyage_itineraire').insert(snapshot); }
   }catch(e){ console.warn('saveVoyage',e); }
@@ -547,7 +553,7 @@ async function loadVoyage(){
   if(!VOYAGE_ID){ voyage=[]; render(); return; }
   try{
     const {data:rows}=await sb.from('voyage_itineraire')
-      .select('uid,lieu_id,ordre,note').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+      .select('uid,lieu_id,ordre,note,nb_nuits').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
@@ -556,7 +562,7 @@ async function loadVoyage(){
     }
     voyage=(rows||[])
       .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||'', note:r.note||''}; })
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||'', note:r.note||'', nb_nuits:r.nb_nuits||null}; })
       .filter(Boolean);
   }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
@@ -581,7 +587,7 @@ function render(){
    région dominante des étapes (moteur RNR_CARTO_MOTEUR, même découpage que
    Carnet/Horizon) tant que Bruno n'a rien saisi à la main — dès qu'un texte
    est enregistré dans destination_libre, il prime et l'auto-calcul s'efface. */
-let RB_INFO = {nom:'',date_envisagee:'',nb_participants:null,animaux_a_bord:false,destination_libre:'',but_voyage:''};
+let RB_INFO = {nom:'',date_debut:null,nb_participants:null,animaux_a_bord:false,destination_libre:'',but_voyage:'',budget_estime:null};
 let RB_DECOUPAGE = null;
 (async()=>{
   try{
@@ -619,7 +625,7 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data,error} = await sb.from('voyages')
-      .select('nom,date_envisagee,nb_participants,animaux_a_bord,destination_libre,but_voyage')
+      .select('nom,date_debut,nb_participants,animaux_a_bord,destination_libre,but_voyage,budget_estime')
       .eq('id',VOYAGE_ID).single();
     if(error || !data) throw (error||new Error('voyage introuvable'));
     RB_INFO = data;
@@ -627,16 +633,53 @@ async function chargerInfosVoyage(){
   rbInfosRender();
 }
 
+function rbFormatDateCourt(d){
+  try{ return new Intl.DateTimeFormat('fr-FR',{weekday:'short',day:'numeric',month:'long'}).format(d); }
+  catch(e){ return ''; }
+}
+// Le calendrier du voyage se construit sur les NUITS, pas sur le nombre d'étapes : les visites
+// d'une journée se regroupent presque toujours autour d'une même halte de nuit (rayon court), donc
+// daté une visite au jour près n'aurait rien apporté. Chaque étape porte la date du jour où on y
+// est ; en passant une halte de nuit, on avance le calendrier de son nombre de nuits (1 par défaut).
+function rbDatesCumulees(){
+  if(!RB_INFO.date_debut) return voyage.map(()=>null);
+  const debut = new Date(RB_INFO.date_debut+'T00:00:00');
+  if(isNaN(debut)) return voyage.map(()=>null);
+  let cumul=0;
+  return voyage.map(item=>{
+    const d=new Date(debut); d.setDate(d.getDate()+cumul);
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    if(nuit) cumul += (item.nb_nuits && item.nb_nuits>0) ? item.nb_nuits : 1;
+    return d;
+  });
+}
+function rbNuitsTotal(){
+  return voyage.reduce((s,item)=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    return s + (nuit ? ((item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1) : 0);
+  },0);
+}
+
 function rbInfosRender(){
   const el = document.getElementById('rb-infos-resume');
   if(!el) return;
   const dest = RB_INFO.destination_libre || rbRegionAuto() || 'destination à définir';
+  let datesTxt = null;
+  if(RB_INFO.date_debut){
+    const debut = new Date(RB_INFO.date_debut+'T00:00:00');
+    const nuits = rbNuitsTotal();
+    if(!isNaN(debut)){
+      const fin = new Date(debut); fin.setDate(fin.getDate()+nuits);
+      datesTxt = nuits>0 ? rbFormatDateCourt(debut)+' → '+rbFormatDateCourt(fin) : rbFormatDateCourt(debut);
+    }
+  }
   const morceaux = [
     '<b>' + (RB_INFO.nom || 'Roadbook') + '</b>',
     dest,
-    RB_INFO.date_envisagee || null,
+    datesTxt,
     RB_INFO.nb_participants ? RB_INFO.nb_participants + ' pers.' : null,
-    RB_INFO.animaux_a_bord ? '🐾 avec chien' : null
+    RB_INFO.animaux_a_bord ? '🐾 avec chien' : null,
+    (RB_INFO.budget_estime!=null && RB_INFO.budget_estime!=='') ? '≈ ' + Math.round(RB_INFO.budget_estime) + ' €' : null
   ].filter(Boolean);
   el.innerHTML = morceaux.join(' <span class="dim">·</span> ');
 }
@@ -644,8 +687,9 @@ function rbInfosRender(){
 function rbInfosRemplirForm(){
   document.getElementById('rb-nom').value = RB_INFO.nom || '';
   document.getElementById('rb-dest').value = RB_INFO.destination_libre || rbRegionAuto() || '';
-  document.getElementById('rb-dates').value = RB_INFO.date_envisagee || '';
+  document.getElementById('rb-dates').value = RB_INFO.date_debut || '';
   document.getElementById('rb-nb').value = RB_INFO.nb_participants || '';
+  document.getElementById('rb-budget').value = (RB_INFO.budget_estime!=null) ? RB_INFO.budget_estime : '';
   document.getElementById('rb-chien').checked = !!RB_INFO.animaux_a_bord;
   document.getElementById('rb-but').value = RB_INFO.but_voyage || '';
   const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
@@ -663,13 +707,15 @@ async function rbInfosSave(){
   const err = document.getElementById('rb-infos-err');
   if(!nom){ if(err) err.textContent='Le voyage a besoin d\'un nom.'; return; }
   const nbRaw = (document.getElementById('rb-nb').value||'').trim();
+  const budgetRaw = (document.getElementById('rb-budget').value||'').trim();
   const row = {
     nom,
     destination_libre: (document.getElementById('rb-dest').value||'').trim() || null,
-    date_envisagee:    (document.getElementById('rb-dates').value||'').trim() || null,
+    date_debut:        (document.getElementById('rb-dates').value||'').trim() || null,
     nb_participants:   nbRaw ? parseInt(nbRaw,10) : null,
     animaux_a_bord:    !!document.getElementById('rb-chien').checked,
-    but_voyage:        (document.getElementById('rb-but').value||'').trim() || null
+    but_voyage:        (document.getElementById('rb-but').value||'').trim() || null,
+    budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null
   };
   try{
     const {error} = await sb.from('voyages').update(row).eq('id',VOYAGE_ID);
@@ -734,6 +780,23 @@ function initListEvents(){
     }, 700);
   });
 
+  // Nombre de nuits d'une halte : change tout le calendrier en aval, donc on redessine
+  // (contrairement à la note, ce champ ne se tape pas en continu — un 'change', pas un 'input').
+  list.addEventListener('change', function(e){
+    const inp = e.target.closest('.stop-nuits');
+    if(!inp) return;
+    const item = inp.closest('.stop-item');
+    const uid = item?.dataset.uid;
+    if(!uid) return;
+    const v = voyage.find(x=>x.uid===uid);
+    if(!v) return;
+    let n = parseInt(inp.value,10);
+    if(!n || n<1) n=1;
+    v.nb_nuits = n;
+    saveVoyage();
+    render(); // les dates de toutes les étapes suivantes dépendent de ce nombre de nuits
+  });
+
   // (Le drag natif HTML5 a été RETIRÉ : il entrait en conflit avec le pointer-drag
   //  ci-dessous — sur PC, attraper une fiche au corps déclenchait le natif, sans
   //  écartement et sans réordon réel. Tout passe désormais par les pointer events.)
@@ -744,6 +807,7 @@ function initListEvents(){
     if(e.target.closest('.stop-remove')) return;   // la croix reste cliquable, pas un drag
     if(e.target.closest('.stop-note-toggle')) return;  // le picto note aussi — même bug que la croix, oublié à sa création (07/07)
     if(e.target.closest('.stop-note')) return;  // la note elle-même (édition, sélection de texte) ne doit jamais déclencher un glisser
+    if(e.target.closest('.stop-nuits')) return;  // le nombre de nuits non plus
     const item=e.target.closest('.stop-item');
     if(!item||!item.dataset.uid) return;
     pDragEl=item; pStarted=false; pSx=e.clientX; pSy=e.clientY;
@@ -817,6 +881,8 @@ function renderList(){
   list.querySelectorAll('.stop-item').forEach(el=>el.remove());
   empty.style.display='none';
 
+  const datesCumulees = rbDatesCumulees(); // une seule passe, pas recalculée à chaque étape
+
   voyage.forEach((item, i)=>{
     let distHtml='';
     if(i===0){
@@ -843,13 +909,19 @@ function renderList(){
       ? 'Où on dort, numéro de résa, heure d\'arrivée…'
       : 'Ce qu\'on en pense, ce qu\'on veut y faire…';
     const aUneNote = !!(item.note && item.note.trim());
+    const dEtape = datesCumulees[i];
+    const nbNuits = (item.nb_nuits && item.nb_nuits>0) ? item.nb_nuits : 1;
+    const champNuits = nuit
+      ? `<label class="stop-nuits-lbl">🌙 <input type="number" class="stop-nuits" min="1" max="30" value="${nbNuits}"> nuit${nbNuits>1?'s':''}</label>`
+      : '';
 
     row.innerHTML=`
       <span class="drag-handle">⠿</span>
       <div class="stop-num">${i+1}</div>
       <div class="stop-info">
         <div class="stop-name">${item.nom||'—'}</div>
-        <div class="stop-meta">${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
+        <div class="stop-meta">${dEtape?rbFormatDateCourt(dEtape)+' · ':''}${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
+        ${champNuits}
         ${distHtml}
       </div>
       <button class="stop-note-toggle${aUneNote?' actif':''}" type="button" title="${noteTitre}">${notePicto}</button>
