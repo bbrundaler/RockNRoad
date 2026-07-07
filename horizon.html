@@ -5508,7 +5508,7 @@ async function loadHorizonData(userId){
         const f=(HZ_FICHES||[]).find(x=>String(x.id)===String(ficheParam));
         if(f && f.lat!=null && f.lng!=null && HZ_CARTE_REPOS){
           setTimeout(()=>{
-            HZ_CARTE_REPOS.setView([+f.lat,+f.lng], 11);
+            HZ_CARTE_REPOS.setView([+f.lat,+f.lng], 9);
             const entry=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[f.id];
             if(entry && entry.marker && entry.marker.openPopup) entry.marker.openPopup();
           }, 350);

@@ -58,10 +58,17 @@
 
     const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
 
+    // Retour Bruno (07/07) : depuis le Carnet, repérer où se trouve une fiche sur
+    // la carte Horizon (au milieu des autres) — un seul bouton, ici, partagé par
+    // tous les appelants (jamais dupliqué page par page). Inutile sur Horizon
+    // lui-même (on y est déjà) — masqué sur cette seule page via le chemin d'URL.
+    const surHorizon = /horizon\.html/i.test(window.location.pathname);
+    const horizonUrl = (!surHorizon && l.id) ? `horizon.html?fiche=${encodeURIComponent(l.id)}` : null;
+
     // Sujet (05/07, retour Bruno) : Maps/Site/crayon groupés à droite (utilitaire),
     // vote/retenue à gauche (social) — plus la longue barre dorée pleine largeur.
     return `
-      <div class="gf-cover" style="background-image:${cover};${photos.length>1?'cursor:pointer;':''}" ${photos.length>1?`onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',0)"`:''}>
+      <div class="gf-cover" style="background-image:${cover};${photos.length>1?'cursor:pointer;':''}" ${photos.length>1?`onclick="if(!event.target.closest('.gf-close'))RNR_FICHE_COMPLETE._openLb('${photosAttr}',0)"`:''}>
         ${opts.closeButtonHtml||''}
         ${photos.length>1?`<div class="gf-photo-count">📷 ${photos.length} photos</div>`:''}
         <div class="gf-cover-overlay"><span class="gf-type-badge">${esc(l.type||'Lieu')}${l.sous_region||l.region?' · '+esc(l.sous_region||l.region):''}</span></div>
@@ -81,6 +88,7 @@
           <div class="gf-bottom-vote">${opts.voteBarHtml||''}</div>
           <div class="gf-bottom-actions">
             <a href="${mapsUrl}" target="_blank" class="gf-btn-dark">📍 Maps</a>
+            ${horizonUrl?`<a href="${horizonUrl}" class="gf-btn-dark">🧭 Horizon</a>`:''}
             ${l.site_web?`<a href="${l.site_web}" target="_blank" class="gf-btn-dark">🌐 Site</a>`:''}
             ${opts.extraActionsHtml||''}
           </div>
