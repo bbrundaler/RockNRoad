@@ -80,7 +80,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 
 /* STOP ITEMS */
 /* étapes = mini-cartes PAPIER (encres fixes sur papier) — COMPACTES (8-10 visibles) */
-.stop-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:5px;cursor:grab;transition:box-shadow .15s;}
+.stop-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r);background:var(--paper);border:1px solid var(--paper-line);box-shadow:var(--shadow);margin-bottom:5px;cursor:grab;transition:box-shadow .15s;
+  user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;}
+/* Sans ça, saisir une étape par son corps (pas seulement la poignée ⠿) sélectionnait le texte
+   des étapes survolées pendant le glisser (surlignage bleu disgracieux, signalé par Bruno 07/07) —
+   le réordon fonctionnait, mais l'œil ne suivait que le texte qui se surlignait, pas la fiche. */
+.stop-item *{user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;}
+.stop-item textarea, .stop-item textarea *{user-select:text;-webkit-user-select:text;-moz-user-select:text;-ms-user-select:text;}
 .stop-item:hover{box-shadow:var(--shadow-hover);}
 /* Écartement fluide pendant le réordon (FLIP) : les voisines GLISSENT vers leur
    nouvelle place au lieu de sauter. Classe posée le temps du drag uniquement. */
@@ -260,7 +266,12 @@ const sb=supabase.createClient(SURL,SKEY);
 
 let map, routeLayer;
 // Tactile : pas de survol au doigt → la fiche s'ouvre au tap, pas en passant dessus.
-const VY_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
+// Détection tactile FIABLE : pas une capacité figée au chargement (navigator.maxTouchPoints
+// reste souvent >0 sur les portables à écran tactile même utilisés à la souris — c'était le
+// bug : le curseur devenait une main, mais la bulle ne s'ouvrait jamais au survol). On suit à
+// la place le DERNIER type de pointeur réellement observé, mis à jour en continu.
+let DERNIER_POINTEUR_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0); // repli initial, corrigé dès le premier geste
+document.addEventListener('pointerdown', e=>{ DERNIER_POINTEUR_TACTILE = (e.pointerType==='touch'); }, {capture:true});
 // Source unique de vérité — tableau d'objets {uid, nom, lat, lng, type} (la région se calcule du GPS, B23)
 // uid = identifiant UNIQUE généré à l'ajout (pas l'id Supabase, pas l'index)
 let voyage = [];
@@ -915,11 +926,10 @@ function renderMap(){
         <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(v.lat,v.lng))} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
     `, {maxWidth:240, autoPan:false, closeButton:false});
-    // SURVOL (desktop) : la fiche s'ouvre pour savoir QUEL lieu est ce numéro. Tactile → au tap.
-    if(!VY_TACTILE){
-      mkNum.on('mouseover', ()=>mkNum.openPopup());
-      mkNum.on('mouseout',  ()=>mkNum.closePopup());
-    }
+    // SURVOL (souris réelle, détectée en direct) : la fiche s'ouvre pour savoir QUEL lieu est
+    // ce numéro. Tactile → au tap (comportement par défaut de bindPopup, déjà garanti).
+    mkNum.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkNum.openPopup(); });
+    mkNum.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkNum.closePopup(); });
     bounds.push([v.lat,v.lng]);
   });
 
@@ -934,10 +944,8 @@ function renderMap(){
         <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div>
       </div>
     `, {maxWidth:220, autoPan:false, closeButton:false});
-    if(!VY_TACTILE){
-      mkMaison.on('mouseover', ()=>mkMaison.openPopup());
-      mkMaison.on('mouseout',  ()=>mkMaison.closePopup());
-    }
+    mkMaison.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkMaison.openPopup(); });
+    mkMaison.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkMaison.closePopup(); });
     bounds.push([DOMICILE.lat,DOMICILE.lng]);
   }
 
@@ -990,10 +998,8 @@ function renderMap(){
           <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
       `, {maxWidth:240, autoPan:false, closeButton:false});
-      if(!VY_TACTILE){
-        mkEp.on('mouseover', ()=>mkEp.openPopup());
-        mkEp.on('mouseout',  ()=>mkEp.closePopup());
-      }
+      mkEp.on('mouseover', ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkEp.openPopup(); });
+      mkEp.on('mouseout',  ()=>{ if(!DERNIER_POINTEUR_TACTILE) mkEp.closePopup(); });
       bounds.push([f.lat,f.lng]);
     });
   }
