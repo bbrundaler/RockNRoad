@@ -111,13 +111,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
 /* Colonne « nombre de nuits » : à droite, verticalement centrée sur la même ligne que le
-   nom/la région — ne rajoute plus de hauteur, jour et nuit font désormais la même taille. */
-.stop-nuits-col{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;}
-.stop-nuits-ic{font-size:11px;line-height:1;}
-.stop-nuits{width:30px;font-family:var(--font-body);font-size:11px;color:var(--ink);background:var(--bg);
-  border:1px solid var(--paper-line);border-radius:5px;padding:1px 3px;text-align:center;}
+   nom/la région — ne rajoute plus de hauteur, jour et nuit font désormais la même taille.
+   Le 🌙 vit UNIQUEMENT à gauche (au-dessus des 6 points/numéro) — pas de doublon ici (corrigé
+   07/07, signalé par Bruno). Largeur plafonnée pour ne plus couper le titre de la fiche. */
+.stop-nuits-col{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;width:38px;}
+.stop-nuits-lbl2{font-size:8.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.3px;line-height:1.1;text-align:center;}
+.stop-nuits{width:26px;font-family:var(--font-body);font-size:11px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--paper-line);border-radius:5px;padding:1px 2px;text-align:center;}
 .stop-nuits:focus{outline:none;border-color:var(--gold);}
-.stop-meteo{font-size:9.5px;color:var(--ink-dim);line-height:1.2;text-align:center;}
+.stop-meteo{font-size:9px;color:var(--ink-dim);line-height:1.15;text-align:center;max-width:38px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .stop-bookend{margin:0 14px 8px;cursor:default;position:relative;}
 .stop-bookend:hover{box-shadow:var(--shadow);}
 .stop-bookend .stop-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
@@ -1214,8 +1216,8 @@ function renderList(){
         ${distHtml}
       </div>
       ${nuit ? `<div class="stop-nuits-col">
-        <span class="stop-nuits-ic">🌙</span>
-        <input type="number" class="stop-nuits" min="1" max="30" value="${nbNuits}" title="Nombre de nuits">
+        <span class="stop-nuits-lbl2">Nb nuits</span>
+        <input type="number" class="stop-nuits" min="1" max="99" maxlength="2" value="${nbNuits}" title="Nombre de nuits">
         <span class="stop-meteo" id="meteo-${item.uid}"></span>
       </div>` : ''}
       <button class="stop-remove" title="Retirer">✕</button>
