@@ -38,6 +38,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .rb-infos-check{flex-direction:row!important;align-items:center;gap:7px!important;justify-content:flex-start;}
 .rb-infos-check input{width:16px;height:16px;flex-shrink:0;}
 .rb-infos-optionnel{text-transform:none;font-weight:400;letter-spacing:0;color:var(--ink-dim);opacity:.75;}
+.rb-infos-note{font-size:11.5px;color:var(--ink-dim);margin-top:2px;font-style:italic;}
 .rb-geo-status{display:block;font-size:10.5px;text-transform:none;font-weight:400;letter-spacing:0;margin-top:3px;min-height:13px;}
 .rb-geo-status.loading{color:var(--ink-dim);}
 .rb-geo-status.ok{color:var(--ok, #7fae7f);}
@@ -108,6 +109,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-nuits:focus{outline:none;border-color:var(--gold);}
 .stop-meteo{font-size:11px;color:var(--ink-dim);margin-left:6px;}
 .stop-meteo:empty{margin-left:0;}
+.stop-bookend{background:var(--gold-a10);border-style:dashed;}
+.stop-bookend .stop-num{font-size:16px;background:transparent;}
+.bookend-estime{font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-dim);margin-left:6px;}
+.bookend-date,.bookend-adresse{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--paper-line);border-radius:var(--r);padding:5px 8px;margin-top:4px;margin-right:6px;}
+.bookend-date{width:150px;}
+.bookend-adresse{width:min(320px,60%);}
+.bookend-date:focus,.bookend-adresse:focus{outline:none;border-color:var(--gold);}
 .stop-dist{font-size:10px;color:var(--gold-deep);margin-top:2px;}
 .stop-dist-home{font-weight:700;color:var(--gold-text);}
 .stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
@@ -214,22 +223,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div class="rb-infos-grid">
         <label>Nom du voyage<input id="rb-nom" type="text" placeholder="Vacances été 2026"></label>
         <label>Destination<input id="rb-dest" type="text" placeholder="calculée depuis vos étapes"></label>
-        <label>Date de départ<input id="rb-dates" type="date"></label>
         <label>Participants<input id="rb-nb" type="number" min="1" placeholder="Nombre de personnes"></label>
         <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
         <label class="rb-infos-check"><input id="rb-chien" type="checkbox"> 🐾 Avec chien</label>
       </div>
       <label class="rb-infos-but">But du voyage<textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
-      <div class="rb-infos-grid">
-        <label>Point de départ <span class="rb-infos-optionnel">(vide = la maison du groupe)</span>
-          <input id="rb-depart" type="text" placeholder="ex. Gare de Strasbourg" oninput="rbScheduleGeocode('depart')">
-          <span class="rb-geo-status" id="rb-depart-status"></span>
-        </label>
-        <label>Point de retour <span class="rb-infos-optionnel">(vide = la maison du groupe)</span>
-          <input id="rb-retour" type="text" placeholder="ex. Gare de Strasbourg" oninput="rbScheduleGeocode('retour')">
-          <span class="rb-geo-status" id="rb-retour-status"></span>
-        </label>
-      </div>
+      <p class="rb-infos-note">📍 La date, le point de départ et le point de retour se règlent directement dans la liste des étapes ci-dessous (première et dernière fiche).</p>
       <div class="rb-infos-actions">
         <button class="tb-btn tb-btn-add" type="button" onclick="rbInfosSave()">Enregistrer</button>
         <button class="tb-btn tb-btn-print" type="button" onclick="rbInfosToggle()">Annuler</button>
@@ -262,11 +261,32 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
           <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
         </div>
       </div>
+      <div class="stop-item stop-bookend" id="bookend-depart">
+        <div class="stop-num">🏠</div>
+        <div class="stop-info">
+          <div class="stop-name">Départ</div>
+          <div class="stop-meta">
+            <input id="rb-dates" type="date" class="bookend-date" onchange="rbSauverDepartRetourDate()">
+            <input id="rb-depart" type="text" class="bookend-adresse" placeholder="Adresse de départ (vide = la maison du groupe)" oninput="rbScheduleGeocode('depart')">
+          </div>
+          <span class="rb-geo-status" id="rb-depart-status"></span>
+        </div>
+      </div>
       <div id="stops-list">
         <div class="empty-voyage" id="emptyVoyage" style="display:flex;">
           <div class="icon">🗺️</div>
           <h3>Roadbook vide</h3>
           <p>Glissez une fiche depuis « Retenues pour ce voyage » (sous la carte) pour la poser sur la carte et tracer votre route.</p>
+        </div>
+      </div>
+      <div class="stop-item stop-bookend" id="bookend-retour">
+        <div class="stop-num">🏁</div>
+        <div class="stop-info">
+          <div class="stop-name">Retour <span class="bookend-estime" id="bookend-date-retour"></span></div>
+          <div class="stop-meta">
+            <input id="rb-retour" type="text" class="bookend-adresse" placeholder="Adresse de retour (vide = la maison du groupe)" oninput="rbScheduleGeocode('retour')">
+          </div>
+          <span class="rb-geo-status" id="rb-retour-status"></span>
         </div>
       </div>
     </div>
@@ -593,6 +613,21 @@ function render(){
   const aDesEpingles = (typeof RETENUES_INFO==='object') && Object.keys(RETENUES_INFO).length>0;
   if(voyage.length || aDesEpingles) renderMap();
   rbInfosRender();  // la destination auto-calculée suit les étapes tant qu'elle n'est pas fixée à la main
+  rbMajBookendRetourEstime(); // texte seul, jamais les champs : ne perturbe jamais la frappe
+}
+
+// La date de retour n'est jamais un champ à part : elle se déduit du départ + des nuits (même
+// logique que chaque étape). Affichée en lecture seule sur la fiche Retour, pour que Bruno voie
+// « une date de départ ET une date d'arrivée » sans dupliquer la source de vérité (les nuits).
+function rbMajBookendRetourEstime(){
+  const el = document.getElementById('bookend-date-retour');
+  if(!el) return;
+  if(!RB_INFO.date_debut){ el.textContent=''; return; }
+  const debut = new Date(RB_INFO.date_debut+'T00:00:00');
+  if(isNaN(debut)){ el.textContent=''; return; }
+  const nuits = rbNuitsTotal();
+  const fin = new Date(debut); fin.setDate(fin.getDate()+nuits);
+  el.textContent = '— estimé ' + rbFormatDateCourt(fin);
 }
 
 /* ── BLOC « INFOS DU VOYAGE » : couverture du Roadbook ────────────────────────
@@ -639,6 +674,7 @@ async function rbGeocodeAddress(which, addr){
     status.className='rb-geo-status err';
     status.textContent='⚠️ Erreur réseau';
   }
+  rbSauverDepartRetourDate(); // auto-sauvegarde, comme la note et le nombre de nuits
 }
 // Point effectif de départ/retour : l'adresse personnalisée si elle a été géocodée avec succès,
 // sinon la maison du groupe (DOMICILE) — jamais les deux mélangés, jamais de valeur inventée.
@@ -725,6 +761,52 @@ async function chargerInfosVoyage(){
     RB_INFO = data;
   }catch(e){ console.warn('Roadbook: chargement infos voyage', e); }
   rbInfosRender();
+  rbRemplirBookends();
+  rbMajBookendRetourEstime();
+}
+
+// Remplit les DEUX fiches fixes (départ/retour) — appelée au chargement ET après chaque
+// sauvegarde, jamais depuis le formulaire Infos (ces champs n'y vivent plus, une seule maison).
+function rbRemplirBookends(){
+  const dateEl = document.getElementById('rb-dates');
+  if(dateEl) dateEl.value = RB_INFO.date_debut || '';
+  ['depart','retour'].forEach(which=>{
+    const champ = document.getElementById('rb-'+which);
+    const status = document.getElementById('rb-'+which+'-status');
+    if(!champ||!status) return;
+    champ.value = RB_INFO[which+'_nom'] || '';
+    if(RB_INFO[which+'_lat']!=null){
+      RB_GEO[which] = {lat:RB_INFO[which+'_lat'], lng:RB_INFO[which+'_lng']};
+      status.className='rb-geo-status ok'; status.textContent='✅ '+(RB_INFO[which+'_nom']||'');
+    }else{
+      RB_GEO[which] = {lat:null,lng:null};
+      status.className='rb-geo-status'; status.textContent='';
+    }
+  });
+}
+
+// Sauvegarde immédiate des 2 fiches fixes — pas de bouton « Enregistrer » séparé, cohérent
+// avec le reste de la liste (note, nombre de nuits) qui s'auto-sauvent déjà.
+async function rbSauverDepartRetourDate(){
+  if(!VOYAGE_ID) return;
+  const dateEl = document.getElementById('rb-dates');
+  const row = {
+    date_debut: dateEl ? ((dateEl.value||'').trim() || null) : RB_INFO.date_debut,
+    depart_nom: (document.getElementById('rb-depart').value||'').trim() || null,
+    depart_lat: RB_GEO.depart.lat || null,
+    depart_lng: RB_GEO.depart.lng || null,
+    retour_nom: (document.getElementById('rb-retour').value||'').trim() || null,
+    retour_lat: RB_GEO.retour.lat || null,
+    retour_lng: RB_GEO.retour.lng || null
+  };
+  try{
+    const {error} = await sb.from('voyages').update(row).eq('id',VOYAGE_ID);
+    if(error) throw error;
+    RB_INFO = Object.assign({}, RB_INFO, row);
+    render(); // les dates de toutes les étapes + le résumé + la carte en dépendent
+  }catch(e){
+    console.warn('Roadbook: sauvegarde départ/retour/date', e);
+  }
 }
 
 function rbFormatDateCourt(d){
@@ -781,20 +863,8 @@ function rbInfosRender(){
 function rbInfosRemplirForm(){
   document.getElementById('rb-nom').value = RB_INFO.nom || '';
   document.getElementById('rb-dest').value = RB_INFO.destination_libre || rbRegionAuto() || '';
-  document.getElementById('rb-dates').value = RB_INFO.date_debut || '';
   document.getElementById('rb-nb').value = RB_INFO.nb_participants || '';
   document.getElementById('rb-budget').value = (RB_INFO.budget_estime!=null) ? RB_INFO.budget_estime : '';
-  ['depart','retour'].forEach(which=>{
-    document.getElementById('rb-'+which).value = RB_INFO[which+'_nom'] || '';
-    const status = document.getElementById('rb-'+which+'-status');
-    if(RB_INFO[which+'_lat']!=null){
-      RB_GEO[which] = {lat:RB_INFO[which+'_lat'], lng:RB_INFO[which+'_lng']};
-      status.className='rb-geo-status ok'; status.textContent='✅ '+(RB_INFO[which+'_nom']||'');
-    }else{
-      RB_GEO[which] = {lat:null,lng:null};
-      status.className='rb-geo-status'; status.textContent='';
-    }
-  });
   document.getElementById('rb-chien').checked = !!RB_INFO.animaux_a_bord;
   document.getElementById('rb-but').value = RB_INFO.but_voyage || '';
   const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
@@ -816,17 +886,10 @@ async function rbInfosSave(){
   const row = {
     nom,
     destination_libre: (document.getElementById('rb-dest').value||'').trim() || null,
-    date_debut:        (document.getElementById('rb-dates').value||'').trim() || null,
     nb_participants:   nbRaw ? parseInt(nbRaw,10) : null,
     animaux_a_bord:    !!document.getElementById('rb-chien').checked,
     but_voyage:        (document.getElementById('rb-but').value||'').trim() || null,
-    budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null,
-    depart_nom: (document.getElementById('rb-depart').value||'').trim() || null,
-    depart_lat: RB_GEO.depart.lat || null,
-    depart_lng: RB_GEO.depart.lng || null,
-    retour_nom: (document.getElementById('rb-retour').value||'').trim() || null,
-    retour_lat: RB_GEO.retour.lat || null,
-    retour_lng: RB_GEO.retour.lng || null
+    budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null
   };
   try{
     const {error} = await sb.from('voyages').update(row).eq('id',VOYAGE_ID);
