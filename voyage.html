@@ -14,6 +14,7 @@
 <script src="tags.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script>
+<script src="rail-groupe.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -411,6 +412,15 @@ async function voyageChargeSelecteurChrome(){
   initListEvents();
   await resoutVoyageId(session.user.id);   // VOYAGE_ID résolu une fois
   voyageChargeSelecteurChrome();            // nom du voyage + liste visible partout (chrome.js)
+
+  // Notes du groupe + Mémo de voyage (08/07) — module partagé, mode autonome.
+  if(window.RNR_RAIL_GROUPE && GROUPE_ID && VOYAGE_ID){
+    (async()=>{
+      const {data:moi}=await sb.from('membres').select('id').eq('user_id',MEMBRE_USER_ID).eq('groupe_id',GROUPE_ID).limit(1).single();
+      RNR_RAIL_GROUPE.init({ sb, voyageId:VOYAGE_ID, groupeId:GROUPE_ID, userId:MEMBRE_USER_ID, membreId:moi?moi.id:null, membres:[] });
+    })();
+  }
+
   await loadVoyage();                       // itinéraire depuis la base (partagé)
   chargerRetenuesVoyage(session.user.id);   // bande retenues (calcule « déjà placé » après load)
   await chargerInfosVoyage();                // bloc « Infos du voyage » (couverture du Roadbook)

@@ -19,6 +19,7 @@
 <script src="fiche-complete.js"></script>
 <script src="lightbox.js"></script>
 <script src="fiche-edit.js"></script>
+<script src="rail-groupe.js"></script>
 <script src="carnet-coin.js"></script>
 <style>
 /* HORIZON converti grammaire v2 (page pilote, Charte Design v1)
@@ -5471,6 +5472,17 @@ async function loadHorizonData(userId){
 
     // 6) Bloc « Le groupe » : vrais membres + derniers messages du cockpit
     await chargerBlocGroupe(groupeId);
+
+    // 6bis-A) Notes du groupe + Mémo de voyage (08/07) — module partagé,
+    // intercalé dans le rail existant : groupe, NOTES, cœurs, MÉMO.
+    if(window.RNR_RAIL_GROUPE && HZ_VOYAGE_ID){
+      RNR_RAIL_GROUPE.init({
+        sb, voyageId:HZ_VOYAGE_ID, groupeId, userId:HZ_USER_ID,
+        membreId:(typeof monMembreIdReel==='function')?monMembreIdReel():null,
+        membres:HZ_MEMBRES||[],
+        railHote:document.getElementById('hz-rail')
+      });
+    }
 
     // 6bis) GESTE FONDATEUR thème→lieu (neuf) — APRÈS le bloc groupe car les
     // cœurs ❤️ ont besoin de HZ_MEMBRES (monMembreIdReel) pour marquer « mine ».

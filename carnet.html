@@ -321,6 +321,7 @@
 <script src="fiche-complete.js"></script>
 <script src="lightbox.js"></script>
 <script src="fiche-edit.js"></script>
+<script src="rail-groupe.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script></head>
 <body>
@@ -421,6 +422,18 @@ function requestIdleCallbackSafe(cb){
   await loadGroupeProfil(session.user.id);
   RNR_PERF.end('2 groupe');
   RNR_userId = session.user.id;
+
+  // Notes du groupe + Mémo de voyage (08/07) — module partagé, mode autonome
+  // (le Carnet n'a pas de rail existant, contrairement à Horizon).
+  if(window.RNR_RAIL_GROUPE && currentGroupeId){
+    (async()=>{
+      let voyageId=null; try{ voyageId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+      if(!voyageId) return;
+      const {data:moi}=await sb.from('membres').select('id').eq('user_id',RNR_userId).eq('groupe_id',currentGroupeId).limit(1).single();
+      RNR_RAIL_GROUPE.init({ sb, voyageId, groupeId:currentGroupeId, userId:RNR_userId, membreId:moi?moi.id:null, membres:[] });
+    })();
+  }
+
   await chargerCoeurs();   // premier choix collectif (❤️/✨) + 📌 dérivé des votes
   // Load dynamic fiches from Supabase
   RNR_PERF.start('3 fiches');
