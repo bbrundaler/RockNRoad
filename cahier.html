@@ -110,16 +110,30 @@ setTimeout(function(){
 
 <div id="pages"><div class="empty-state">Chargement du Roadbook…</div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="
-  document.getElementById('auth-check').style.display='none';
-  document.getElementById('pages').innerHTML='<div class=\'empty-state\'>⚠️ La bibliothèque nécessaire au Cahier n\'a pas pu se charger (problème réseau).<br><br>Vérifie ta connexion et recharge la page (Ctrl+Maj+R).</div>';
-"></script>
 <script>
-if(typeof createClient==='undefined'){
+// Chargement résilient de Supabase (07/07, retour Bruno) : le CDN jsdelivr a
+// échoué deux fois de suite chez lui, même après rechargement forcé — plutôt
+// que de dépendre d'une seule source, on tente une seconde adresse (unpkg)
+// avant d'afficher un vrai message d'échec. Déclenché en JS pur (jamais via
+// des attributs onload/onerror en HTML) pour garantir que demarrerCahier()
+// existe déjà quand on l'appelle.
+function rnrChargerScript(src, onOk, onKo){
+  const s=document.createElement('script');
+  s.src=src; s.onload=onOk; s.onerror=onKo;
+  document.head.appendChild(s);
+}
+function rnrEchecFinalSupabase(){
   document.getElementById('auth-check').style.display='none';
-  document.getElementById('pages').innerHTML='<div class="empty-state">⚠️ La bibliothèque nécessaire au Cahier n\'a pas pu se charger (problème réseau).<br><br>Vérifie ta connexion et recharge la page (Ctrl+Maj+R).</div>';
-} else {
-const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+  document.getElementById('pages').innerHTML='<div class="empty-state">⚠️ Impossible de charger la bibliothèque nécessaire au Cahier, même en essayant deux sources différentes.<br><br>Ça pointe vers un blocage réseau chez toi (bloqueur de pub/traqueurs, VPN, ou pare-feu) plutôt qu\'un souci du site — les autres pages utilisent la même bibliothèque avec succès. Essaie de désactiver un éventuel bloqueur pour ce site, ou un autre réseau.</div>';
+}
+function rnrChargerSupabaseSecours(){
+  rnrChargerScript('https://unpkg.com/@supabase/supabase-js@2', demarrerCahier, rnrEchecFinalSupabase);
+}
+
+let sb=null;
+function demarrerCahier(){
+if(typeof createClient==='undefined'){ rnrEchecFinalSupabase(); return; }
+sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
 let voyage=[];
@@ -375,6 +389,7 @@ function render(){
   }
 })();
 }
+rnrChargerScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', demarrerCahier, rnrChargerSupabaseSecours);
 </script>
 </body>
 </html>
