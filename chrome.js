@@ -384,6 +384,9 @@
     {v:'3_10_ans', label:'3 à 10 ans'},
     {v:'veteran', label:'Vétéran(ne)'}
   ];
+  // Seule source de ces libellés (08/07) — toute page qui affiche un profil
+  // (Le Cahier, plus tard une page équipe dédiée) les lit ici, jamais une copie.
+  window.RNR_PROFIL_CHOIX = { passions: PASSIONS_CHOIX, voyageurDepuis: VOYAGEUR_DEPUIS_CHOIX };
   var _sbChrome=null, _monUserId=null, _monGroupeId=null, _monMembre=null, _tousMembres=[];
 
   function coord(nom){
