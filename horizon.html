@@ -305,7 +305,10 @@ body.hz-explo-on .hz-rond-marqueur{display:none;}
   font-size:11px;color:var(--terracotta-deep);margin-bottom:6px;}
 .hz-rond-marqueur-corps{display:flex;align-items:flex-start;gap:6px;padding:7px 0;}
 .hz-rond-marqueur-ticks{position:relative;width:16px;height:100px;}
-.hz-rond-marqueur-ticks span{position:absolute;left:0;font-size:9.5px;font-weight:500;
+/* --pos (posé en HTML) porte la graduation en % — bottom sur desktop (barre
+   verticale), réinterprété en left sur mobile (barre horizontale, cf. media
+   query plus bas). Un seul endroit pour la valeur, deux lectures CSS. */
+.hz-rond-marqueur-ticks span{position:absolute;left:0;bottom:var(--pos);font-size:9.5px;font-weight:500;
   color:var(--ink);transform:translateY(50%);white-space:nowrap;}
 .hz-ov-barre-rond{position:relative;width:18px;height:100px;border-radius:0;
   border:1px solid var(--terracotta-deep);
@@ -328,6 +331,32 @@ body.hz-explo-on .hz-rond-marqueur{display:none;}
   .hz-ov-stats{gap:9px;padding:6px 9px;}
   .hz-ov-stats .hz-stat-note{display:none;}
   .hz-ov-titre{display:none;}
+}
+/* Sujet (08/07, retour Bruno — capture iPhone) : la jauge terracotta était en
+   position absolue fixe (top:96px;right:125px), jamais retouchée pour mobile —
+   elle flottait au milieu de la carte, décrochée de tout repère. Redessinée en
+   barre HORIZONTALE ancrée en bas (même ancrage que #hz-rail:bottom 90px)
+   plutôt que reflowée telle quelle en vertical. Le JS (hzInitBarreRond) détecte
+   l'orientation réelle du rendu (largeur>hauteur) au lieu de dupliquer la
+   logique par breakpoint — un seul comportement, piloté par le CSS. */
+@media(max-width:680px){
+  .hz-rond-marqueur{position:fixed;top:auto;left:14px;right:14px;bottom:90px;
+    flex-direction:row;align-items:center;gap:10px;background:var(--surface);
+    border:1px solid var(--terracotta-deep);border-radius:var(--r);
+    padding:8px 12px;box-shadow:var(--shadow);z-index:6200;}
+  /* ticks/barre/livewrap sont 3 FRÈRES en HTML (pas parent/enfant) — on les
+     empile en colonne et on les étire (align-items:stretch) pour qu'ils
+     partagent naturellement la même largeur, sans overlay absolu fragile. */
+  .hz-rond-marqueur-corps{flex-direction:column;align-items:stretch;gap:5px;
+    flex:1;min-width:0;padding:0;}
+  .hz-rond-marqueur-ticks{position:relative;width:auto;height:12px;}
+  .hz-rond-marqueur-ticks span{bottom:auto;top:0;left:var(--pos);transform:translateX(-50%);}
+  .hz-ov-barre-rond{width:auto;height:14px;
+    background:linear-gradient(to right, var(--terracotta-deep), var(--terracotta-light));}
+  .hz-ov-barre-rond .hz-barre-thumb{left:auto;right:auto;top:-3px;bottom:-3px;
+    width:11px;height:auto;background:linear-gradient(to right, var(--terracotta-light), var(--terracotta-deep));}
+  .hz-rond-marqueur-livewrap{width:auto;height:auto;text-align:right;}
+  .hz-barre-txt{position:static;margin:0;}
 }
 
 /* ── GRAND POPUP D'EXPLORATION (3d) ── */
@@ -901,9 +930,9 @@ body.hz-explo-on #hz-rail{display:none;}
         <div class="hz-rond-marqueur-ic" aria-hidden="true">◎</div>
         <div class="hz-rond-marqueur-corps">
           <div class="hz-rond-marqueur-ticks">
-            <span style="bottom:75%">75</span>
-            <span style="bottom:50%">50</span>
-            <span style="bottom:25%">25</span>
+            <span style="--pos:75%">75</span>
+            <span style="--pos:50%">50</span>
+            <span style="--pos:25%">25</span>
           </div>
           <div class="hz-ov-barre-rond" id="hz-barre-rond">
             <div class="hz-barre-thumb" id="hz-barre-thumb"></div>
@@ -2181,16 +2210,24 @@ function hzRondReset(){
   // La barre de rayon est une AUTRE porte vers ce même geste (04/07) — sa
   // remise à zéro vit ICI, au seul endroit qui défait déjà tout le reste,
   // plutôt que dupliquée à chaque appelant de hzRondReset().
-  const bThumb=document.getElementById('hz-barre-thumb');
-  const bTxt=document.getElementById('hz-barre-txt');
-  if(bThumb){ bThumb.style.top='100%'; bThumb.style.marginTop='-6px'; }
-  if(bTxt){ bTxt.style.top='100%'; bTxt.style.marginTop='-7px'; bTxt.textContent=hzRondFormatRayon(0); }
+  if(typeof HZ_MAJ_THUMB_ROND==='function'){
+    HZ_MAJ_THUMB_ROND(0);
+  } else {
+    // repli si hzInitBarreRond n'a pas encore tourné (ne devrait pas arriver)
+    const bThumb=document.getElementById('hz-barre-thumb');
+    const bTxt=document.getElementById('hz-barre-txt');
+    if(bThumb){ bThumb.style.top='100%'; bThumb.style.marginTop='-6px'; }
+    if(bTxt){ bTxt.style.top='100%'; bTxt.style.marginTop='-7px'; bTxt.textContent=hzRondFormatRayon(0); }
+  }
 }
 // Sujet 1 (04/07) : barre de rayon — appât de découvrabilité, visible
 // seulement en mode coin (CSS). RÉEMPLOIE le pipeline du geste direct
 // (hzRondDemarre / hzRondFigerEtLancer) : un seul comportement, une porte de
 // plus — jamais une seconde écriture séparée. Centre = centre de la vue
 // actuelle (pas de point de tap, contrairement au geste direct).
+let HZ_MAJ_THUMB_ROND=null;  // exposé pour hzRondReset (04/07→08/07) : un seul
+                              // endroit qui sait poser le curseur à 0, quelle
+                              // que soit l'orientation réelle de la barre.
 function hzInitBarreRond(){
   const barre=document.getElementById('hz-barre-rond');
   const thumb=document.getElementById('hz-barre-thumb');
@@ -2198,21 +2235,34 @@ function hzInitBarreRond(){
   if(!barre || !thumb || !txt) return;
   const KM_MIN=0, KM_MAX=100;
   let actif=false;
+  // Sujet (08/07, retour Bruno) : verticale sur desktop, horizontale sur
+  // mobile (CSS, @media 680px) — la FORME RÉELLE du rendu (largeur>hauteur)
+  // décide, jamais une 2ᵉ détection de largeur d'écran dupliquée ici.
+  function estHorizontal(){ return barre.clientWidth > barre.clientHeight; }
   function majThumb(km){
     const t=Math.max(0,Math.min(1,(km-KM_MIN)/(KM_MAX-KM_MIN)));
-    const hauteur=barre.clientHeight||100;
-    const yPx=(1-t)*hauteur;
-    thumb.style.top=yPx+'px';
-    thumb.style.marginTop='-6px';
-    const yTxt=Math.max(6, Math.min(hauteur-6, yPx));
-    txt.style.top=yTxt+'px';
-    txt.style.marginTop='-7px';
+    if(estHorizontal()){
+      const largeur=barre.clientWidth||100;
+      thumb.style.left=(t*largeur)+'px'; thumb.style.marginLeft='-6px';
+      thumb.style.top=''; thumb.style.marginTop='';
+      txt.style.top=''; txt.style.marginTop='';
+    } else {
+      const hauteur=barre.clientHeight||100;
+      const yPx=(1-t)*hauteur;
+      thumb.style.top=yPx+'px'; thumb.style.marginTop='-6px';
+      thumb.style.left=''; thumb.style.marginLeft='';
+      const yTxt=Math.max(6, Math.min(hauteur-6, yPx));
+      txt.style.top=yTxt+'px'; txt.style.marginTop='-7px';
+    }
     txt.textContent=hzRondFormatRayon(km*1000);
   }
+  HZ_MAJ_THUMB_ROND=majThumb;
   majThumb(KM_MIN);
-  function depuisY(clientY){
+  function depuisPoint(clientX, clientY){
     const rect=barre.getBoundingClientRect();
-    const t=Math.max(0,Math.min(1, 1-((clientY-rect.top)/rect.height)));
+    const t=estHorizontal()
+      ? Math.max(0,Math.min(1, (clientX-rect.left)/rect.width))
+      : Math.max(0,Math.min(1, 1-((clientY-rect.top)/rect.height)));
     return KM_MIN+t*(KM_MAX-KM_MIN);
   }
   function appliqueKm(km){
@@ -2226,11 +2276,11 @@ function hzInitBarreRond(){
     actif=true;
     try{ barre.setPointerCapture(e.pointerId); }catch(err){}
     hzRondDemarre(HZ_CARTE_COIN.getCenter());
-    appliqueKm(depuisY(e.clientY));
+    appliqueKm(depuisPoint(e.clientX, e.clientY));
   });
   document.addEventListener('pointermove', e=>{
     if(!actif || !HZ_ROND_EN_COURS) return;
-    appliqueKm(depuisY(e.clientY));
+    appliqueKm(depuisPoint(e.clientX, e.clientY));
   });
   function relacher(e){
     if(!actif) return;
