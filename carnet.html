@@ -41,6 +41,15 @@
 /* SECTION HEADER COMPACT */
 .sh-compact{border-radius:10px;padding:16px 22px;color:white;margin:20px 28px 0;position:relative;overflow:hidden;}
 .sh-compact::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);background-size:22px 22px;}
+/* Sujet (08/07, retour Bruno) : ces boutons étaient en position:absolute pur
+   inline (right/top fixes, max-width:65%) — sur un écran étroit, le bloc
+   retombait en plusieurs lignes et se posait PAR-DESSUS le titre de région,
+   qui ne réservait aucune place pour lui (hors du flux). Classe dédiée pour
+   que le mobile puisse le repasser en flux normal, au-dessus du titre. */
+.rg-actions{position:absolute;right:20px;top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:65%;}
+@media(max-width:700px){
+  .rg-actions{position:static;max-width:none;justify-content:flex-start;margin-bottom:12px;}
+}
 .sh-pyr{background:linear-gradient(135deg,#0a1a0c,#2C5016);}
 .sh-atl{background:linear-gradient(135deg,#041420,#1a5a7a);}
 .sh-bou{background:linear-gradient(135deg,#160820,#6B3288);}
@@ -1429,9 +1438,9 @@ function createRegionTab(tabId, rk, regionName, lieux){
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
-    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px calc(28px + 2cm) 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
+    <div class="sh-compact" style="background:${grad};padding:22px 28px;border:1px solid var(--gold-a20);">
       <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
-      <div style="position:absolute;right:20px;top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:65%;">
+      <div class="rg-actions">
         <button class="sh-pill active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
         <button class="sh-pill" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">Carte &amp; Récap</button>
         <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>

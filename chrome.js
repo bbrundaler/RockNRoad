@@ -111,7 +111,7 @@
   +'.rnrc-tabbar{display:none;}'
   +'.rnrc-footer{text-align:center;padding:8px 16px calc(8px + env(safe-area-inset-bottom));'
   +'border-top:1px solid var(--gold-a20);margin-top:10px;}'
-  +'.rnrc-footer a{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
+  +'.rnrc-footer a{font-size:12px;color:var(--ink-dim);text-decoration:none;'
   +'font-family:var(--font-body);}'
   +'.rnrc-footer a:hover{color:var(--gold-light);text-decoration:underline;}'
   +'@media(max-width:700px){.rnrc-footer{margin-bottom:70px;}}'  /* au-dessus de la tabbar */

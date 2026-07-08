@@ -279,6 +279,7 @@ body.hz-explo-on #hz-btn-revue{display:none;}
   pointer-events:auto;position:relative;z-index:6;cursor:pointer;}
 #hz-btn-vue-pleine:hover{background:var(--gold-light);}
 .hz-rond-ctrl{gap:9px;}
+.hz-rond-hint-off{display:none;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
 body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
@@ -292,13 +293,12 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-armement .fond{fill:none;stroke:rgba(0,0,0,.15);stroke-width:3;}
 .hz-rond-armement .prog{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;
   stroke-dasharray:100.53;stroke-dashoffset:100.53;}
-/* Jauge de rayon (08/07 v5 — piste B validée par Bruno) : UNE SEULE forme,
-   desktop et mobile, rattachée au cluster hz-ov-rond (avec le hint et le
-   bouton « Passer les fiches en revue ») plutôt que flottant seule près des
-   stats. Corrige à la fois l'alignement (plus besoin de se centrer sur
-   elle-même hors de tout repère) et le rendu terracotta qui ne plaisait
-   pas — remplissage plat + petit galet, fini le dégradé brut. */
-.hz-rond-jauge{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+/* Jauge de rayon (08/07 v6, retour Bruno) : desktop — juste sous le cluster
+   hz-ov-rond, toujours groupée visuellement avec lui. Mobile — redescend en
+   bas de l'écran (voir media query plus bas), ancrage bottom:90px comme
+   #hz-rail, jamais empilée avec le hint/bouton sur un petit écran. */
+.hz-rond-jauge{top:58px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;}
 body.hz-explo-on .hz-rond-jauge{display:none;}
 .hz-rond-jauge-ic{width:18px;height:18px;border-radius:50%;background:var(--terracotta);
   display:flex;align-items:center;justify-content:center;font-size:10px;
@@ -328,9 +328,15 @@ body.hz-explo-on .hz-rond-jauge{display:none;}
 }
 @media(max-width:680px){
   /* Sujet (08/07, retour Bruno) : redondant maintenant que la jauge est
-     visible en permanence dans le cluster — elle se suffit à elle-même, ce
-     pavé ne fait plus que prendre de la place utile à l'écran. */
+     visible en permanence — elle se suffit à elle-même, ce pavé ne fait
+     plus que prendre de la place utile à l'écran. */
   #hz-rond-hint{display:none;}
+  /* La jauge redescend en bas (retour Bruno 08/07 v6) : hz-ov-rond a un
+     transform, un position:fixed posé DANS lui se serait ancré au parent
+     transformé plutôt qu'au viewport — d'où la sortie en sibling ci-dessus.
+     Ici position:fixed marche vraiment, la jauge est bien un enfant direct
+     de la carte (aucun ancêtre transformé entre elle et le viewport). */
+  .hz-rond-jauge{position:fixed;top:auto;left:50%;bottom:90px;transform:translateX(-50%);}
 }
 
 /* ── GRAND POPUP D'EXPLORATION (3d) ── */
@@ -899,20 +905,23 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
           <span class="hz-rond-compte" id="hz-rond-compte-txt">—</span>
         </span>
-        <!-- Jauge de rayon (08/07 v5 — piste B) : rattachée ici plutôt que
-             flottant seule près des stats — même cluster que le hint et le
-             bouton, une seule forme desktop+mobile. -->
-        <div class="hz-ov-pill hz-rond-jauge" id="hz-rond-jauge">
-          <span class="hz-rond-jauge-ic" aria-hidden="true">◎</span>
-          <div class="hz-rond-jauge-piste" id="hz-barre-rond">
-            <span class="hz-rond-jauge-tick" style="--pos:25%"></span>
-            <span class="hz-rond-jauge-tick" style="--pos:50%"></span>
-            <span class="hz-rond-jauge-tick" style="--pos:75%"></span>
-            <div class="hz-rond-jauge-remplissage" id="hz-jauge-remplissage"></div>
-            <div class="hz-barre-thumb" id="hz-barre-thumb"></div>
-          </div>
-          <span class="hz-barre-txt" id="hz-barre-txt">0 km</span>
+      </div>
+      <!-- Jauge de rayon (08/07 v6, retour Bruno) : ressortie de hz-ov-rond —
+           celui-ci a un transform (centrage), qui aurait piégé un position:fixed
+           posé sur un enfant (le fixed se serait ancré au parent transformé,
+           pas au viewport). En sibling direct, elle reste groupée visuellement
+           SOUS le cluster sur desktop (top fixe), et peut vraiment redescendre
+           en bas de l'écran sur mobile (position:fixed, media query). -->
+      <div class="hz-ov hz-ov-pill hz-rond-jauge" id="hz-rond-jauge">
+        <span class="hz-rond-jauge-ic" aria-hidden="true">◎</span>
+        <div class="hz-rond-jauge-piste" id="hz-barre-rond">
+          <span class="hz-rond-jauge-tick" style="--pos:25%"></span>
+          <span class="hz-rond-jauge-tick" style="--pos:50%"></span>
+          <span class="hz-rond-jauge-tick" style="--pos:75%"></span>
+          <div class="hz-rond-jauge-remplissage" id="hz-jauge-remplissage"></div>
+          <div class="hz-barre-thumb" id="hz-barre-thumb"></div>
         </div>
+        <span class="hz-barre-txt" id="hz-barre-txt">0 km</span>
       </div>
       <!-- vote de groupe (visage 1) : overlay pleine largeur bas si actif -->
       <div class="hz-ov hz-ov-vote" id="hz-gauche-vote-wrap" style="display:none">
@@ -2082,7 +2091,7 @@ function hzRondDemarre(centre){
   HZ_CARTE_COIN.dragging.disable();   // le geste dessine le rond, ne balade plus la carte
   HZ_ROND_RAYON_M=HZ_ROND_RAYON_MIN_M;
   hzRondDessine(centre, HZ_ROND_RAYON_M);
-  const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='none';
+  const hint=document.getElementById('hz-rond-hint'); if(hint) hint.classList.add('hz-rond-hint-off');
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='inline-flex';
   hzRondMajAffichage(centre);
 }
@@ -2177,7 +2186,7 @@ function hzRondReset(){
   HZ_ROND_COIN=null; HZ_ROND_CENTRE_M=null; HZ_ROND_EN_COURS=false;
   HZ_ROND_MODE=false; HZ_ROND_DERNIER_CENTRE=null; HZ_ROND_SANS_NUIT=false; HZ_ROND_NUIT_DIST_KM=null;
   HZ_ROND_VUES=new Set();
-  const hint=document.getElementById('hz-rond-hint'); if(hint) hint.style.display='inline-flex';
+  const hint=document.getElementById('hz-rond-hint'); if(hint) hint.classList.remove('hz-rond-hint-off');
   const ctrl=document.getElementById('hz-rond-ctrl'); if(ctrl) ctrl.style.display='none';
   // La barre de rayon est une AUTRE porte vers ce même geste (04/07) — sa
   // remise à zéro vit ICI, au seul endroit qui défait déjà tout le reste,
@@ -3977,12 +3986,13 @@ function brancheClicExterieur(){
     const explo=document.getElementById('hz-explo');
     // Sujet 1 (04/07) : la barre de rayon vient d'ouvrir le swipe — le clic qui
     // suit son relâchement (natif du navigateur, juste après notre pointerup)
-    // ne doit pas le refermer aussitôt. La jauge vit maintenant DANS
-    // hz-ov-rond (08/07) : un seul filet suffit. Le drapeau temporisé
-    // HZ_ROND_VIENT_DE_FINIR couvre toute zone future ajoutée près de la carte.
+    // ne doit pas le refermer aussitôt. La jauge est ressortie de hz-ov-rond
+    // (08/07 v6, retour Bruno : elle redescend en bas sur mobile, un transform
+    // sur hz-ov-rond aurait piégé son position:fixed) — deux filets à nouveau.
+    // Le drapeau temporisé HZ_ROND_VIENT_DE_FINIR couvre toute zone future.
     if(explo && explo.style.display==='block' && !e.target.closest('#hz-explo')
        && !e.target.closest('.francemap') && !e.target.closest('#hz-carte-repos')
-       && !e.target.closest('.hz-ov-rond') && !HZ_ROND_VIENT_DE_FINIR){
+       && !e.target.closest('.hz-ov-rond') && !e.target.closest('.hz-rond-jauge') && !HZ_ROND_VIENT_DE_FINIR){
       fermeExplo();
     }
   });
