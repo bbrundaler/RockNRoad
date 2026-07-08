@@ -34,10 +34,12 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid #8a8272;background:transparent;box-shadow:inset 0 0 0 3px #FDF9EF;}
 
 .cover{display:flex;flex-direction:column;color:#F5EFE0;}
-.cover-photo{position:absolute;inset:0;background:linear-gradient(180deg, rgba(15,13,9,.1) 0%, rgba(15,13,9,.4) 55%, rgba(15,13,9,.95) 100%), linear-gradient(135deg,#2C5016 0%, #1a5a7a 55%, #6B3288 100%);background-size:cover;background-position:center;}
-.cover-top{position:relative;padding:50px 50px 0;}
-.cover-eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-light);font-weight:600;margin:0 0 10px;}
-.cover-title{font-family:var(--font-title);font-size:44px;line-height:1.08;margin:0;font-weight:700;}
+.cover-illu{position:absolute;inset:0;background:linear-gradient(180deg,#F5E6C8 0%,#EAD4A0 45%,#C9A65E 100%);}
+.cover-illu svg{position:absolute;bottom:0;left:0;width:100%;height:62%;}
+.cover-scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(15,13,9,0) 40%, rgba(15,13,9,.55) 75%, rgba(15,13,9,.95) 100%);}
+.cover-top{position:relative;padding:60px 50px 0;color:var(--ink);}
+.cover-eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-deep);font-weight:700;margin:0 0 10px;}
+.cover-title{font-family:var(--font-title);font-size:44px;line-height:1.08;margin:0;font-weight:700;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.3);}
 .cover-bottom{position:relative;margin-top:auto;padding:0 50px 40px;}
 .cover-line{width:60px;height:2px;background:var(--gold);margin:20px 0;}
 .cover-stats{display:flex;background:rgba(15,13,9,.55);border:1px solid rgba(245,239,224,.15);border-radius:12px;overflow:hidden;margin-top:18px;}
@@ -288,11 +290,28 @@ function render(){
   if(DOMICILE&&voyage[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,voyage[0].lat,voyage[0].lng);
   for(let i=1;i<voyage.length;i++) totalKm+=calcDist(voyage[i-1].lat,voyage[i-1].lng,voyage[i].lat,voyage[i].lng);
 
-  const premierePhoto=(voyage.find(v=>v.photo_url)||{}).photo_url;
-
-  let html='';
-  html+='<div class="page cover">'
-    +'<div class="cover-photo" style="'+(premierePhoto?("background-image:url('"+premierePhoto+"');background-size:cover;background-position:center;"):'')+'"></div>'
+  const html0=''
+    +'<div class="page cover">'
+    +'<div class="cover-illu">'
+      +'<svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">'
+        +'<path d="M0,260 Q80,200 160,230 T320,210 Q400,190 480,225 T600,200 L600,400 L0,400 Z" fill="#8b7a4f" opacity=".55"/>'
+        +'<path d="M0,300 Q100,250 220,280 T450,260 Q520,250 600,275 L600,400 L0,400 Z" fill="#6b5a38" opacity=".7"/>'
+        +'<path d="M0,340 Q150,310 300,335 T600,320 L600,400 L0,400 Z" fill="#3d3320"/>'
+        +'<circle cx="480" cy="80" r="34" fill="#F9E9BE" opacity=".9"/>'
+        +'<path d="M40,352 Q160,300 300,340 T560,330" fill="none" stroke="#F5EFE0" stroke-width="3" stroke-dasharray="1 10" stroke-linecap="round" opacity=".8"/>'
+        +'<g transform="translate(255,318)">'
+          +'<rect x="0" y="0" width="46" height="26" rx="4" fill="#C8A84B"/>'
+          +'<rect x="0" y="-14" width="26" height="16" rx="3" fill="#C8A84B"/>'
+          +'<rect x="2" y="-11" width="14" height="9" rx="1" fill="#3d3320"/>'
+          +'<circle cx="12" cy="27" r="6" fill="#211a10"/><circle cx="36" cy="27" r="6" fill="#211a10"/>'
+        +'</g>'
+        +'<g fill="#3d3320" opacity=".85">'
+          +'<path d="M70,345 L82,315 L94,345 Z"/><path d="M84,345 L94,320 L104,345 Z"/>'
+          +'<path d="M480,335 L492,308 L504,335 Z"/><path d="M494,335 L504,313 L514,335 Z"/>'
+        +'</g>'
+      +'</svg>'
+    +'</div>'
+    +'<div class="cover-scrim"></div>'
     +'<div class="cover-top"><p class="cover-eyebrow">Carnet de voyage</p><h1 class="cover-title">'+esc(dest)+'</h1></div>'
     +'<div class="cover-bottom"><div class="cover-line"></div><div class="cover-stats">'
     +'<div class="cover-stat"><b>'+(totalKm>0?('≈'+totalKm):'—')+' km</b><span>Total</span></div>'
@@ -300,6 +319,7 @@ function render(){
     +'<div class="cover-stat"><b>'+(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
     +'<div class="cover-stat"><b>'+(RB_INFO.nb_animaux?(RB_INFO.nb_animaux+' 🐕'):'—')+'</b><span>Compagnons</span></div>'
     +'</div></div></div>';
+  let html=html0;
 
   voyage.forEach((item,i)=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
