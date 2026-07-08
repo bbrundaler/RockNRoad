@@ -109,10 +109,6 @@
   +'transition:all .15s;}'
   +'.rnrc-quit:hover{color:var(--chrome-ink);border-color:rgba(245,239,224,.35);}'
   +'.rnrc-tabbar{display:none;}'
-  +'.rnrc-cgu-link{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
-  +'white-space:nowrap;font-family:var(--font-body);opacity:.8;}'
-  +'.rnrc-cgu-link:hover{color:var(--gold-light);opacity:1;}'
-  +'@media(max-width:700px){.rnrc-cgu-link{display:none;}}'  /* sur mobile : seulement dans le pied */
   +'.rnrc-footer{text-align:center;padding:8px 16px calc(8px + env(safe-area-inset-bottom));'
   +'border-top:1px solid var(--gold-a20);margin-top:10px;}'
   +'.rnrc-footer a{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
@@ -256,13 +252,10 @@
     add.innerHTML = '+ <span class="rnrc-add-label">Fiche</span>';
     right.appendChild(add);
 
-    var cgu = document.createElement('a');
-    cgu.className = 'rnrc-cgu-link';
-    cgu.href = 'cgu.html';
-    cgu.title = "Conditions d'utilisation";
-    cgu.textContent = 'Conditions';
-    if(pageActive('cgu.html')) cgu.style.color = 'var(--gold-light)';
-    right.appendChild(cgu);
+    // Sujet (08/07, retour Bruno) : le lien Conditions vivait ICI ET dans le
+    // pied de page — doublon inutile qui encombrait une barre déjà chargée.
+    // Retiré d'ici, il ne reste plus qu'à un seul endroit (le pied de page,
+    // plus bas dans ce fichier).
 
     var th = document.createElement('button');
     th.className = 'rnrc-theme';
