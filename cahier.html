@@ -110,8 +110,15 @@ setTimeout(function(){
 
 <div id="pages"><div class="empty-state">Chargement du Roadbook…</div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="
+  document.getElementById('auth-check').style.display='none';
+  document.getElementById('pages').innerHTML='<div class=\'empty-state\'>⚠️ La bibliothèque nécessaire au Cahier n\'a pas pu se charger (problème réseau).<br><br>Vérifie ta connexion et recharge la page (Ctrl+Maj+R).</div>';
+"></script>
 <script>
+if(typeof createClient==='undefined'){
+  document.getElementById('auth-check').style.display='none';
+  document.getElementById('pages').innerHTML='<div class="empty-state">⚠️ La bibliothèque nécessaire au Cahier n\'a pas pu se charger (problème réseau).<br><br>Vérifie ta connexion et recharge la page (Ctrl+Maj+R).</div>';
+} else {
 const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
@@ -367,6 +374,7 @@ function render(){
     document.getElementById('pages').innerHTML='<div class="empty-state">⚠️ Une erreur a empêché le Cahier de se charger.<br><br>Détail technique : '+esc(String(e&&e.message||e))+'</div>';
   }
 })();
+}
 </script>
 </body>
 </html>
