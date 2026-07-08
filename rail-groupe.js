@@ -29,10 +29,10 @@
   background:#d8456e;color:#fff;font-size:11.5px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 5px;}
 .rnrg-rail-badge.on{display:flex;}
 
-#rnrg-drawer-notes,#rnrg-drawer-memo{position:fixed;top:64px;right:0;bottom:0;left:auto;width:min(420px,90vw);
+#rnrg-drawer-groupe,#rnrg-drawer-notes,#rnrg-drawer-coeurs,#rnrg-drawer-memo{position:fixed;top:64px;right:0;bottom:0;left:auto;width:min(420px,90vw);
   background:var(--surface);border-left:1px solid var(--gold-a35);box-shadow:-8px 0 30px rgba(0,0,0,.22);
   z-index:9300;display:none;flex-direction:column;}
-#rnrg-drawer-notes.open,#rnrg-drawer-memo.open{display:flex;}
+#rnrg-drawer-groupe.open,#rnrg-drawer-notes.open,#rnrg-drawer-coeurs.open,#rnrg-drawer-memo.open{display:flex;}
 .rnrg-dr-tete{display:flex;align-items:center;gap:8px;padding:14px 16px;flex-shrink:0;border-bottom:1px solid var(--surface-line);}
 .rnrg-dr-tete h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--ink);margin:0;flex:1;}
 .rnrg-dr-fermer{background:none;border:none;font-size:16px;color:var(--ink-dim);cursor:pointer;padding:4px;}
