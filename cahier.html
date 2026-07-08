@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Le Cahier · Ton Roadbook, prêt à imprimer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<script src="chrome.js"></script>
+<script src="tags.js"></script>
+<script src="carto.js"></script>
+<script src="carto-marqueurs.js"></script>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
+
+#auth-check{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9999;color:var(--ink);}
+.auth-spinner{width:28px;height:28px;border:3px solid var(--gold-a20);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.toolbar{position:sticky;top:56px;z-index:50;background:var(--chrome-bg);color:var(--chrome-ink);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.toolbar h1{font-family:var(--font-title);font-size:16px;margin:0;font-weight:600;}
+.toolbar p{margin:0;font-size:11px;color:var(--chrome-ink-dim);}
+.btn-print{background:var(--gold);color:var(--chrome-bg);border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-body);}
+.btn-print:hover{background:var(--gold-light);}
+
+#pages{padding:20px 0 60px;}
+.page{width:210mm;min-height:297mm;margin:16px auto;background:#FDF9EF;position:relative;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.4);page-break-after:always;
+  background-image:radial-gradient(ellipse at top left, rgba(200,168,75,.05), transparent 60%), repeating-linear-gradient(rgba(26,18,8,.015) 0 1px, transparent 1px 3px);}
+@media print{ #auth-check,.toolbar{display:none !important;} body{background:none;} .page{margin:0;box-shadow:none;} }
+
+.spirale{position:absolute;left:10px;top:30px;bottom:30px;width:14px;display:flex;flex-direction:column;justify-content:space-between;z-index:5;}
+.spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid #8a8272;background:transparent;box-shadow:inset 0 0 0 3px #FDF9EF;}
+
+.cover{display:flex;flex-direction:column;color:#F5EFE0;}
+.cover-photo{position:absolute;inset:0;background:linear-gradient(180deg, rgba(15,13,9,.1) 0%, rgba(15,13,9,.4) 55%, rgba(15,13,9,.95) 100%), linear-gradient(135deg,#2C5016 0%, #1a5a7a 55%, #6B3288 100%);background-size:cover;background-position:center;}
+.cover-top{position:relative;padding:50px 50px 0;}
+.cover-eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-light);font-weight:600;margin:0 0 10px;}
+.cover-title{font-family:var(--font-title);font-size:44px;line-height:1.08;margin:0;font-weight:700;}
+.cover-bottom{position:relative;margin-top:auto;padding:0 50px 40px;}
+.cover-line{width:60px;height:2px;background:var(--gold);margin:20px 0;}
+.cover-stats{display:flex;background:rgba(15,13,9,.55);border:1px solid rgba(245,239,224,.15);border-radius:12px;overflow:hidden;margin-top:18px;}
+.cover-stat{flex:1;padding:14px 10px;text-align:center;border-right:1px solid rgba(245,239,224,.12);}
+.cover-stat:last-child{border-right:none;}
+.cover-stat b{display:block;font-family:var(--font-title);font-size:19px;color:var(--gold-light);}
+.cover-stat span{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(245,239,224,.65);}
+
+.day-page{padding:36px 40px 36px 54px;display:flex;flex-direction:column;}
+.day-head{display:flex;align-items:baseline;gap:14px;margin-bottom:4px;}
+.day-num-label{font-family:'Caveat',cursive;font-size:28px;color:var(--gold-deep);transform:rotate(-3deg);display:inline-block;}
+.day-title{font-family:var(--font-title);font-size:26px;font-weight:700;}
+.day-sub{font-size:11.5px;color:var(--ink-dim);margin:0 0 16px;padding-left:2px;}
+.day-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:24px;flex:1;min-height:0;}
+
+.visuel-block{position:relative;}
+.visuel-frame{border:1.5px solid rgba(26,18,8,.09);border-radius:4px;padding:14px;background:rgba(255,255,255,.4);min-height:200px;display:flex;align-items:center;justify-content:center;}
+.visuel-photo{width:100%;height:180px;border-radius:4px;background-size:cover;background-position:center;}
+.visuel-caption{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-dim);margin-top:6px;padding:0 4px;}
+
+.narrative-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);margin:0 0 4px;}
+.editable-text{width:100%;border:none;background:transparent;font-family:var(--font-body);font-size:13px;line-height:1.6;color:var(--ink);resize:vertical;min-height:80px;padding:0;border-bottom:1px dashed rgba(26,18,8,.15);}
+.editable-text:focus{outline:none;border-bottom-color:var(--gold);}
+.editable-text::placeholder{color:var(--ink-dim);font-style:italic;}
+@media print{ .editable-text{border-bottom:none;} }
+
+.box{border:1.5px solid rgba(26,18,8,.09);border-radius:8px;padding:11px 13px;margin:14px 0;background:rgba(255,255,255,.35);}
+.box-t{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);margin:0 0 7px;}
+.infos-row{display:flex;justify-content:space-between;font-size:12px;padding:2.5px 0;}
+.infos-row span:first-child{color:var(--ink-dim);}
+
+.day-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(26,18,8,.09);display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-dim);}
+
+.closing{background:linear-gradient(160deg,#161410,#0f0d09);color:#F5EFE0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px;}
+.closing h2{font-family:var(--font-title);font-size:38px;margin:0 0 10px;}
+.closing p{color:rgba(245,239,224,.7);max-width:420px;margin:0 0 36px;font-size:13px;}
+.closing-stats{display:flex;gap:44px;}
+.closing-stats .stat b{display:block;font-family:var(--font-title);font-size:30px;color:var(--gold-light);}
+.closing-stats .stat span{font-size:11px;color:rgba(245,239,224,.6);text-transform:uppercase;letter-spacing:.08em;}
+
+.empty-state{padding:60px;text-align:center;color:var(--ink-dim);font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="auth-check">
+  <div style="font-size:32px;">📓</div>
+  <p>Préparation du Cahier...</p>
+  <div class="auth-spinner"></div>
+</div>
+
+<div class="toolbar">
+  <div>
+    <h1>📓 Le Cahier</h1>
+    <p>Complète le mot de chaque étape, puis imprime — <span id="save-state">à jour</span></p>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+</div>
+
+<div id="pages"><div class="empty-state">Chargement du Roadbook…</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+
+let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
+let voyage=[];
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',budget_estime:null};
+let RB_DECOUPAGE=null;
+
+function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
+
+async function resoutVoyageId(userId){
+  let sess=null;
+  try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+  if(mem){
+    GROUPE_ID=mem.groupe_id;
+    const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',mem.groupe_id).single();
+    if(g && g.lat_depart!=null && g.lng_depart!=null) DOMICILE={lat:Number(g.lat_depart), lng:Number(g.lng_depart), nom:(g.ville||g.adresse_depart||'la maison')};
+  }
+  if(sess){ VOYAGE_ID=sess; return; }
+  if(!mem) return;
+  const {data:vs}=await sb.from('voyages').select('id,est_principal,created_at').eq('groupe_id',mem.groupe_id).order('created_at',{ascending:true});
+  const liste=vs||[]; const actif=liste.find(v=>v.est_principal)||liste[0];
+  VOYAGE_ID=actif?actif.id:null;
+}
+
+async function chargerRegions(){
+  try{
+    const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
+    const geo=await rep.json();
+    if(window.RNR_CARTO_MOTEUR) RB_DECOUPAGE=RNR_CARTO_MOTEUR.creerDecoupage(geo);
+  }catch(e){ console.warn('Cahier: découpage régions indisponible', e); }
+}
+function regionDe(lat,lng){
+  if(!RB_DECOUPAGE||lat==null||lng==null) return '';
+  const z=RB_DECOUPAGE.zoneDe(+lat,+lng);
+  return z?z.nom:'';
+}
+function regionAuto(){
+  if(!RB_DECOUPAGE||!voyage.length) return '';
+  const compte={};
+  voyage.forEach(p=>{
+    if(p.lat==null||p.lng==null) return;
+    const z=RB_DECOUPAGE.zoneDe(+p.lat,+p.lng); if(!z) return;
+    if(!compte[z.code]) compte[z.code]={n:0,nom:z.nom};
+    compte[z.code].n++;
+  });
+  let meilleur=null;
+  Object.values(compte).forEach(c=>{ if(!meilleur||c.n>meilleur.n) meilleur=c; });
+  return meilleur?meilleur.nom:'';
+}
+
+async function chargerInfosVoyage(){
+  if(!VOYAGE_ID) return;
+  try{
+    const {data}=await sb.from('voyages')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,budget_estime')
+      .eq('id',VOYAGE_ID).single();
+    if(data) RB_INFO=data;
+  }catch(e){ console.warn('Cahier: infos voyage', e); }
+}
+async function chargerItineraire(){
+  if(!VOYAGE_ID){ voyage=[]; return; }
+  try{
+    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,note,nb_nuits').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
+    let infos={};
+    if(ids.length){
+      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,type,photo_url,photos_urls').in('id',ids);
+      (fs||[]).forEach(f=>{ infos[f.id]=f; });
+    }
+    voyage=(rows||[]).map(r=>{
+      const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
+      return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||(f.photos_urls&&f.photos_urls[0])||'', note:r.note||'', nb_nuits:r.nb_nuits||null};
+    }).filter(Boolean);
+  }catch(e){ console.warn('Cahier: itinéraire', e); voyage=[]; }
+}
+
+function calcDist(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+const VITESSE_MOY_KMH=65;
+function dureeEstimee(km){ const h=km/VITESSE_MOY_KMH; const H=Math.floor(h), M=Math.round((h-H)*60); return H>0?(H+'h'+(M>0?String(M).padStart(2,'0'):'')):(M+' min'); }
+
+function datesCumulees(){
+  if(!RB_INFO.date_debut) return voyage.map(()=>null);
+  const debut=new Date(RB_INFO.date_debut+'T00:00:00');
+  if(isNaN(debut)) return voyage.map(()=>null);
+  let cumul=0;
+  return voyage.map(item=>{
+    const d=new Date(debut); d.setDate(d.getDate()+cumul);
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    if(nuit) cumul += (item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
+    return d;
+  });
+}
+function nuitsTotal(){
+  return voyage.reduce((s,item)=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    return s+(nuit?((item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1):0);
+  },0);
+}
+function formatDateCourt(d){ if(!d) return ''; return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }
+
+const METEO_ICONES={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',56:'🌧️',57:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',77:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
+async function fetchMeteo(lat,lng,dateISO){
+  try{
+    const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lng+'&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&start_date='+dateISO+'&end_date='+dateISO;
+    const r=await fetch(url); const d=await r.json();
+    if(d&&d.daily&&d.daily.time&&d.daily.time.length){
+      return {icone:METEO_ICONES[d.daily.weather_code[0]]||'🌡️', tmax:Math.round(d.daily.temperature_2m_max[0]), tmin:Math.round(d.daily.temperature_2m_min[0])};
+    }
+  }catch(e){}
+  return null;
+}
+
+let _saveTimer=null, _saveEnCours=false, _saveRedemande=false;
+function planifierSauvegarde(){
+  clearTimeout(_saveTimer);
+  const el=document.getElementById('save-state'); if(el) el.textContent="en cours d'enregistrement…";
+  _saveTimer=setTimeout(sauvegarderItineraire, 700);
+}
+async function sauvegarderItineraire(){
+  if(!VOYAGE_ID) return;
+  if(_saveEnCours){ _saveRedemande=true; return; }
+  _saveEnCours=true;
+  try{
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null)}));
+    await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
+    if(snapshot.length) await sb.from('voyage_itineraire').insert(snapshot);
+    const el=document.getElementById('save-state'); if(el) el.textContent='à jour ✓';
+  }catch(e){ console.warn('Cahier: sauvegarde', e); const el=document.getElementById('save-state'); if(el) el.textContent="erreur d'enregistrement"; }
+  _saveEnCours=false;
+  if(_saveRedemande){ _saveRedemande=false; sauvegarderItineraire(); }
+}
+function onNoteChange(uid, val){
+  const item=voyage.find(v=>v.uid===uid); if(!item) return;
+  item.note=val;
+  planifierSauvegarde();
+}
+
+function render(){
+  const host=document.getElementById('pages');
+  if(!voyage.length){
+    host.innerHTML='<div class="empty-state">Aucune étape dans ce Roadbook pour l\'instant — ajoute des lieux depuis Horizon avant de générer le Cahier.</div>';
+    return;
+  }
+  const dest=RB_INFO.destination_libre||regionAuto()||'Votre voyage';
+  const dates=datesCumulees();
+  let totalKm=0;
+  if(DOMICILE&&voyage[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,voyage[0].lat,voyage[0].lng);
+  for(let i=1;i<voyage.length;i++) totalKm+=calcDist(voyage[i-1].lat,voyage[i-1].lng,voyage[i].lat,voyage[i].lng);
+
+  const premierePhoto=(voyage.find(v=>v.photo_url)||{}).photo_url;
+
+  let html='';
+  html+='<div class="page cover">'
+    +'<div class="cover-photo" style="'+(premierePhoto?("background-image:url('"+premierePhoto+"');background-size:cover;background-position:center;"):'')+'"></div>'
+    +'<div class="cover-top"><p class="cover-eyebrow">Carnet de voyage</p><h1 class="cover-title">'+esc(dest)+'</h1></div>'
+    +'<div class="cover-bottom"><div class="cover-line"></div><div class="cover-stats">'
+    +'<div class="cover-stat"><b>'+(totalKm>0?('≈'+totalKm):'—')+' km</b><span>Total</span></div>'
+    +'<div class="cover-stat"><b>'+(nuitsTotal()||'—')+'</b><span>Nuits</span></div>'
+    +'<div class="cover-stat"><b>'+(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
+    +'<div class="cover-stat"><b>'+(RB_INFO.nb_animaux?(RB_INFO.nb_animaux+' 🐕'):'—')+'</b><span>Compagnons</span></div>'
+    +'</div></div></div>';
+
+  voyage.forEach((item,i)=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const dEtape=dates[i];
+    let distTxt='', dureeTxt='';
+    if(i===0 && DOMICILE){ const d=calcDist(DOMICILE.lat,DOMICILE.lng,item.lat,item.lng); distTxt=d+' km depuis la maison'; dureeTxt=dureeEstimee(d); }
+    else if(i>0){ const d=calcDist(voyage[i-1].lat,voyage[i-1].lng,item.lat,item.lng); distTxt=d+" km depuis l'étape précédente"; dureeTxt=dureeEstimee(d); }
+    const region=regionDe(item.lat,item.lng);
+    const photoBg=item.photo_url?("background-image:url('"+item.photo_url+"');"):'background:linear-gradient(135deg,#2a2318,#1a1510);';
+    const placeholderTxt = nuit ? "Comment c'était, ce qu'on retient de cette étape…" : "Ce qu'on en a pensé, ce qu'on a fait…";
+
+    html+='<div class="page day-page">'
+      +'<div class="spirale"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>'
+      +'<div class="day-head"><span class="day-num-label">étape '+(i+1)+'</span><span class="day-title">'+esc(item.nom)+'</span></div>'
+      +'<p class="day-sub">'+(dEtape?(esc(formatDateCourt(dEtape))+' · '):'')+esc(region)+(nuit?' · 🌙 nuit sur place':'')+'</p>'
+      +'<div class="day-grid">'
+        +'<div class="visuel-block">'
+          +'<div class="visuel-frame"><div class="visuel-photo" style="'+photoBg+'"></div></div>'
+          +'<div class="visuel-caption"><span>'+distTxt+'</span><span>'+(dureeTxt?('~'+dureeTxt):'')+'</span></div>'
+        +'</div>'
+        +'<div>'
+          +'<p class="narrative-label">'+(nuit?'💬 Le mot sur cette nuit':'💬 Le mot du groupe')+'</p>'
+          +'<textarea class="editable-text" data-uid="'+item.uid+'" placeholder="'+placeholderTxt+'">'+esc(item.note)+'</textarea>'
+          +'<div class="box"><p class="box-t">📋 Infos clés</p>'
+            +(dureeTxt?('<div class="infos-row"><span>🚗 Route</span><span>'+dureeTxt+'</span></div>'):'')
+            +(nuit?('<div class="infos-row"><span>🌙 Nuits</span><span>'+((item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1)+'</span></div>'):'')
+            +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+item.uid+'">'+(nuit?'…':'—')+'</span></div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="day-footer"><span>RockNRoad</span><span>Étape '+(i+1)+' / '+voyage.length+'</span></div>'
+    +'</div>';
+
+    if(nuit && dEtape){
+      const auj=new Date(); auj.setHours(0,0,0,0);
+      const limite=new Date(auj); limite.setDate(limite.getDate()+15);
+      if(dEtape>=auj && dEtape<=limite){
+        const iso=dEtape.toISOString().slice(0,10);
+        fetchMeteo(item.lat,item.lng,iso).then(m=>{
+          const el=document.getElementById('meteo-'+item.uid);
+          if(el) el.textContent = m ? (m.icone+' '+m.tmax+'°/'+m.tmin+'°') : 'indisponible';
+        });
+      }
+    }
+  });
+
+  html+='<div class="page closing"><h2>Bonne route.</h2>'
+    +"<p>Ce carnet vit avec vous — complétez-le au fil des étapes, il s'imprime tel quel dès que vous êtes prêts.</p>"
+    +'<div class="closing-stats">'
+    +'<div class="stat"><b>'+(totalKm>0?('≈'+totalKm):'—')+'</b><span>km</span></div>'
+    +'<div class="stat"><b>'+(nuitsTotal()||'—')+'</b><span>nuits</span></div>'
+    +'<div class="stat"><b>'+voyage.length+'</b><span>étapes</span></div>'
+    +'</div></div>';
+
+  host.innerHTML=html;
+  host.querySelectorAll('.editable-text').forEach(ta=>{
+    ta.addEventListener('input', ()=>onNoteChange(ta.dataset.uid, ta.value));
+  });
+
+  // Météo hors fenêtre (~15j) : message une fois le DOM en place
+  voyage.forEach((item,i)=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const dEtape=dates[i];
+    if(nuit && dEtape){
+      const auj=new Date(); auj.setHours(0,0,0,0);
+      const limite=new Date(auj); limite.setDate(limite.getDate()+15);
+      if(!(dEtape>=auj && dEtape<=limite)){
+        const el=document.getElementById('meteo-'+item.uid);
+        if(el) el.textContent='hors fenêtre (~15 j)';
+      }
+    }
+  });
+}
+
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){ window.location.href='index.html'; return; }
+  document.getElementById('auth-check').style.display='none';
+  await resoutVoyageId(session.user.id);
+  if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
+  await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions()]);
+  render();
+})();
+</script>
+</body>
+</html>
