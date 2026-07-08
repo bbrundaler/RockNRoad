@@ -92,20 +92,18 @@
     let btnNotes, btnMemo;
     if(OPT.railHote){
       btnNotes=document.createElement('button');
-      btnNotes.className='rnrg-rail-btn'; btnNotes.type='button'; btnNotes.title='Notes du groupe';
-      btnNotes.innerHTML='📝<span class="rnrg-rail-badge" id="rnrg-badge-notes"></span>';
+      btnNotes.className='hz-rail-btn'; btnNotes.type='button'; btnNotes.title='Notes du groupe';
+      btnNotes.innerHTML='📝<span class="hz-rail-badge" id="rnrg-badge-notes"></span>';
       btnNotes.onclick=()=>ouvrirNotes();
       const btnGroupe=OPT.railHote.querySelector('#hz-rail-groupe');
       if(btnGroupe && btnGroupe.nextSibling) OPT.railHote.insertBefore(btnNotes, btnGroupe.nextSibling);
       else OPT.railHote.appendChild(btnNotes);
 
       btnMemo=document.createElement('button');
-      btnMemo.className='rnrg-rail-btn'; btnMemo.type='button'; btnMemo.title='Mémo de voyage';
+      btnMemo.className='hz-rail-btn'; btnMemo.type='button'; btnMemo.title='Mémo de voyage';
       btnMemo.innerHTML='🧳';
       btnMemo.onclick=()=>ouvrirMemo();
       OPT.railHote.appendChild(btnMemo);
-      // adapte le style hz-rail-btn existant si besoin (classes différentes) :
-      btnNotes.classList.add('hz-rail-btn'); btnMemo.classList.add('hz-rail-btn');
     } else {
       const rail=document.createElement('div');
       rail.id='rnrg-rail';
@@ -167,7 +165,7 @@
       .on('postgres_changes', {event:'INSERT', schema:'public', table:'voyage_notes', filter:'voyage_id=eq.'+OPT.voyageId}, ()=>{
         chargerNotes();
         const badge=document.getElementById('rnrg-badge-notes');
-        if(badge && !document.getElementById('rnrg-drawer-notes').classList.contains('open')){ badge.textContent='●'; badge.classList.add('on'); }
+        if(badge && !document.getElementById('rnrg-drawer-notes').classList.contains('open')){ badge.textContent='●'; badge.classList.add('on','actif'); }
       })
       .subscribe();
   }
@@ -229,7 +227,7 @@
     }catch(e){ console.warn('RailGroupe: sauvegarde memo', e); if(window.showToast) showToast('Erreur mémo','error'); }
   }
 
-  function ouvrirNotes(){ ensureDom(); document.getElementById('rnrg-drawer-notes').classList.add('open'); const b=document.getElementById('rnrg-badge-notes'); if(b) b.classList.remove('on'); chargerNotes(); subscribeNotes(); }
+  function ouvrirNotes(){ ensureDom(); document.getElementById('rnrg-drawer-notes').classList.add('open'); const b=document.getElementById('rnrg-badge-notes'); if(b) b.classList.remove('on','actif'); chargerNotes(); subscribeNotes(); }
   function fermerNotes(){ const d=document.getElementById('rnrg-drawer-notes'); if(d) d.classList.remove('open'); }
   function ouvrirMemo(){ ensureDom(); document.getElementById('rnrg-drawer-memo').classList.add('open'); chargerMemo(); }
   function fermerMemo(){ const d=document.getElementById('rnrg-drawer-memo'); if(d) d.classList.remove('open'); }

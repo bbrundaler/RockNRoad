@@ -244,7 +244,7 @@
 .rnr-nav-wrap{position:sticky;top:56px;z-index:150;background:rgba(15,13,9,.97);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--gold-a20);box-shadow:0 2px 12px rgba(0,0,0,.4);
-  padding:14px 20px;margin-left:2cm;margin-right:2cm;}
+  padding:14px 20px;}
 .rnr-nav-search input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--surface-line);
   background:var(--paper);color:var(--ink);font-size:13px;margin-bottom:10px;}
 #rnr-nav-map{width:100%;height:180px;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);margin-bottom:10px;}
@@ -1428,7 +1428,7 @@ function createRegionTab(tabId, rk, regionName, lieux){
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
-    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px 28px 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
+    <div class="sh-compact" style="background:${grad};border-radius:10px;padding:22px 28px;margin:16px calc(28px + 2cm) 0;position:relative;overflow:hidden;border:1px solid var(--gold-a20);">
       <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
       <div style="position:absolute;right:20px;top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:65%;">
         <button class="sh-pill active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
