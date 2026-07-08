@@ -254,6 +254,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
       </div>
       <label class="rb-infos-but">Description <span class="rb-infos-optionnel">(optionnel)</span><textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
+      <label class="rb-infos-but">📝 Notes du groupe <span class="rb-infos-optionnel">(optionnel — un espace libre, à plusieurs)</span><textarea id="rb-notes-groupe" rows="3" placeholder="Choses à ne pas oublier, idées en vrac, trucs à vérifier… tout ce qui pourra nourrir Le Cahier."></textarea></label>
       <p class="rb-infos-note">📍 Départ : <span id="rb-infos-resume-depart">la maison du groupe</span> · Retour : <span id="rb-infos-resume-retour">la maison du groupe</span> — modifiables dans la liste des étapes ci-dessous (première et dernière fiche).</p>
       <div class="rb-infos-actions">
         <button class="tb-btn tb-btn-add" type="button" onclick="rbInfosSave()">Enregistrer</button>
@@ -837,7 +838,7 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data,error} = await sb.from('voyages')
-      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,budget_estime,depart_lat,depart_lng,depart_nom,retour_lat,retour_lng,retour_nom')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,budget_estime,depart_lat,depart_lng,depart_nom,retour_lat,retour_lng,retour_nom')
       .eq('id',VOYAGE_ID).single();
     if(error || !data) throw (error||new Error('voyage introuvable'));
     RB_INFO = data;
@@ -983,6 +984,7 @@ function rbInfosRemplirForm(){
   document.getElementById('rb-infos-date-fin').value = RB_INFO.date_fin_envisagee || '';
   document.getElementById('rb-budget').value = (RB_INFO.budget_estime!=null) ? RB_INFO.budget_estime : '';
   document.getElementById('rb-but').value = RB_INFO.but_voyage || '';
+  document.getElementById('rb-notes-groupe').value = RB_INFO.notes_groupe || '';
   const rd=document.getElementById('rb-infos-resume-depart'); if(rd) rd.textContent = (RB_INFO.depart_lat!=null) ? (RB_INFO.depart_nom||'lieu personnalisé') : 'la maison du groupe';
   const rr=document.getElementById('rb-infos-resume-retour'); if(rr) rr.textContent = (RB_INFO.retour_lat!=null) ? (RB_INFO.retour_nom||'lieu personnalisé') : 'la maison du groupe';
   const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
@@ -1010,6 +1012,7 @@ async function rbInfosSave(){
     date_debut:        (document.getElementById('rb-infos-date-debut').value||'').trim() || null,
     date_fin_envisagee:(document.getElementById('rb-infos-date-fin').value||'').trim() || null,
     but_voyage:        (document.getElementById('rb-but').value||'').trim() || null,
+    notes_groupe:      (document.getElementById('rb-notes-groupe').value||'').trim() || null,
     budget_estime:     budgetRaw ? parseFloat(budgetRaw) : null
   };
   try{

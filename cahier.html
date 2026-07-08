@@ -140,7 +140,7 @@ sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIs
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
 let voyage=[];
-let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',budget_estime:null};
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',budget_estime:null};
 let RB_DECOUPAGE=null;
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
@@ -191,7 +191,7 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data}=await sb.from('voyages')
-      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,budget_estime')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,budget_estime')
       .eq('id',VOYAGE_ID).single();
     if(data) RB_INFO=data;
   }catch(e){ console.warn('Cahier: infos voyage', e); }
@@ -240,6 +240,31 @@ function nuitsTotal(){
   },0);
 }
 function formatDateCourt(d){ if(!d) return ''; return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }
+
+// ── Contenu réutilisable "Bon à savoir" (08/07) — générique, valable sur tous
+// les cahiers, pas propre à ce voyage. Statique pour l'instant (v1) ; une
+// vraie banque partagée/enrichissable viendra avec la structure v2 (B40).
+const BON_A_SAVOIR=[
+  { icone:'🔌', titre:'Électricité', items:[
+    { t:'Rallonge', d:'20 à 30 m avec prise européenne (CEE bleue) — la longueur standard des bornes de camping, souvent indiquée sur leur site.' },
+    { t:'Adaptateur', d:'Prévoir l\'adaptateur du pays visité si vous sortez de la zone prise européenne classique.' },
+  ]},
+  { icone:'💧', titre:'Eau', items:[
+    { t:'Tuyau', d:'Un tuyau alimentaire dédié au remplissage — ne pas réutiliser un tuyau de jardin classique.' },
+    { t:'Réserve', d:'Un jerrican de secours pour les nuits hors camping (aire, nature).' },
+  ]},
+  { icone:'🛣️', titre:'Sur la route', items:[
+    { t:'Obligatoire EU', d:'Triangle de signalisation + gilet réfléchissant par personne dans le véhicule.' },
+    { t:'Vignettes', d:'Vérifier les vignettes locales du pays traversé (Crit\'Air en France, environnementale en Allemagne/Autriche, etc.).' },
+    { t:'Cales', d:'Cales de stabilisation ou niveau à bulle pour les nuits sur terrain irrégulier.' },
+  ]},
+  { icone:'🔥', titre:'Gaz', items:[
+    { t:'Rechange', d:'Une bouteille de rechange si le trajet est long — pas toujours facile à retrouver sur la route (norme différente selon le pays).' },
+  ]},
+  { icone:'📄', titre:'Papiers', items:[
+    { t:'À emporter', d:'Carte grise, attestation d\'assurance, permis — et une carte verte si le pays visité est hors UE.' },
+  ]},
+];
 
 const METEO_ICONES={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',56:'🌧️',57:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',77:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
 async function fetchMeteo(lat,lng,dateISO){
@@ -365,6 +390,24 @@ function render(){
       }
     }
   });
+
+  html+='<div class="page day-page" style="padding:54px 46px;">'
+    +'<p class="day-sub" style="margin-bottom:4px;">🧭 Généraliste, valable pour (presque) tous les voyages</p>'
+    +'<span class="day-title" style="display:block;margin-bottom:20px;">Bon à savoir</span>'
+    +BON_A_SAVOIR.map(cat=>
+      '<div class="box"><p class="box-t">'+cat.icone+' '+esc(cat.titre)+'</p>'
+      +cat.items.map(it=>'<div class="infos-row" style="align-items:flex-start;"><span style="min-width:110px;flex-shrink:0;">'+esc(it.t)+'</span><span style="text-align:left;color:var(--ink);">'+esc(it.d)+'</span></div>').join('')
+      +'</div>'
+    ).join('')
+    +'</div>';
+
+  if(RB_INFO.notes_groupe && RB_INFO.notes_groupe.trim()){
+    html+='<div class="page day-page" style="padding:54px 46px;">'
+      +'<p class="day-sub" style="margin-bottom:4px;">📝 Avant de prendre la route</p>'
+      +'<span class="day-title" style="display:block;margin-bottom:18px;">Notes du groupe</span>'
+      +'<div class="box" style="font-size:13.5px;line-height:1.7;white-space:pre-wrap;">'+esc(RB_INFO.notes_groupe)+'</div>'
+      +'</div>';
+  }
 
   html+='<div class="page closing"><h2>Bonne route.</h2>'
     +"<p>Ce carnet vit avec vous — complétez-le au fil des étapes, il s'imprime tel quel dès que vous êtes prêts.</p>"
