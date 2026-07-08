@@ -131,7 +131,52 @@
   +'.rnrc-tabbar a.rnrc-on{color:var(--gold-light);}'
   +'body{padding-bottom:70px;}'
   +'.bsl-btn{bottom:84px !important;}'   /* la Boussole remonte au-dessus de la tabbar */
-  +'}';
+  +'}'
+  /* ── Barre d'avatars + présence (08/07) — un coin en haut à droite,
+     partout, posé par ce seul fichier. ── */
+  +'.rnrc-avs{display:flex;align-items:center;margin-right:4px;}'
+  +'.rnrc-av{position:relative;width:32px;height:32px;border-radius:50%;margin-left:-8px;'
+  +'border:2px solid var(--chrome-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;'
+  +'font-size:14px;font-weight:800;color:#fff;overflow:hidden;background-size:cover;background-position:center;'
+  +'transition:transform .15s;}'
+  +'.rnrc-av:hover{transform:translateY(-2px);z-index:5;}'
+  +'.rnrc-av:first-child{margin-left:0;}'
+  +'.rnrc-av-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;'
+  +'background:#5cb85c;border:2px solid var(--chrome-bg);display:none;}'
+  +'.rnrc-av-dot.on{display:block;}'
+  +'.rnrc-av-plus{background:var(--gold-a10);color:var(--gold-light);border:2px solid var(--chrome-bg);font-size:11px;}'
+  +'.rnrc-av-tip{position:absolute;top:calc(100% + 8px);right:0;background:var(--chrome-bg);color:var(--chrome-ink);'
+  +'border:1px solid var(--gold-a35);border-radius:8px;padding:5px 10px;font-size:11.5px;white-space:nowrap;'
+  +'box-shadow:0 6px 18px rgba(0,0,0,.3);display:none;z-index:1500;font-family:var(--font-body);}'
+  +'.rnrc-av:hover .rnrc-av-tip{display:block;}'
+  +'@media(max-width:700px){.rnrc-avs{display:none;}}'  /* mobile : place limitée, tabbar prioritaire (v1) */
+  /* Modale profil membre */
+  +'#rnrc-profil-overlay{position:fixed;inset:0;background:rgba(15,13,9,.72);z-index:9500;display:none;'
+  +'align-items:flex-start;justify-content:center;padding:70px 16px;overflow-y:auto;}'
+  +'#rnrc-profil-overlay.open{display:flex;}'
+  +'#rnrc-profil-modal{background:var(--paper,#FFFDF8);border-radius:16px;width:100%;max-width:420px;'
+  +'font-family:var(--font-body,\'Inter\',sans-serif);color:var(--ink,#211a10);}'
+  +'.rnrc-pf-tete{padding:20px 22px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--surface-line);}'
+  +'.rnrc-pf-av{width:52px;height:52px;border-radius:50%;background-size:cover;background-position:center;'
+  +'display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;}'
+  +'.rnrc-pf-tete h3{font-family:var(--font-title,\'Playfair Display\',serif);font-size:17px;margin:0;flex:1;}'
+  +'.rnrc-pf-tete p{margin:2px 0 0;font-size:11.5px;color:var(--ink-dim);}'
+  +'.rnrc-pf-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-dim);}'
+  +'.rnrc-pf-corps{padding:16px 22px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;}'
+  +'.rnrc-pf-lbl{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:4px;display:block;}'
+  +'.rnrc-pf-corps input,.rnrc-pf-corps select,.rnrc-pf-corps textarea{width:100%;padding:8px 10px;'
+  +'border:1.5px solid var(--surface-line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);'
+  +'background:var(--paper);box-sizing:border-box;}'
+  +'.rnrc-pf-corps textarea{resize:vertical;min-height:60px;}'
+  +'.rnrc-pf-chips{display:flex;flex-wrap:wrap;gap:6px;}'
+  +'.rnrc-pf-chip{padding:5px 11px;border-radius:16px;border:1.5px solid var(--surface-line);background:var(--paper);'
+  +'font-size:11.5px;cursor:pointer;color:var(--ink-dim);}'
+  +'.rnrc-pf-chip.on{background:var(--gold-a20);border-color:var(--gold);color:var(--ink);font-weight:700;}'
+  +'.rnrc-pf-lecture{font-size:13px;line-height:1.6;color:var(--ink);}'
+  +'.rnrc-pf-lecture .vide{color:var(--ink-dim);font-style:italic;}'
+  +'.rnrc-pf-foot{padding:14px 22px;border-top:1px solid var(--surface-line);}'
+  +'.rnrc-pf-foot button{width:100%;padding:10px;background:var(--ink,#211a10);color:var(--gold,#C8A84B);'
+  +'border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;}';
 
   /* ── 3 · Construction ── */
   function pageActive(href){
@@ -313,10 +358,180 @@
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', inject);
+    document.addEventListener('DOMContentLoaded', function(){ inject(); initAvatarsEtProfil(); });
   } else {
     inject();
+    initAvatarsEtProfil();
   }
+
+  /* ════════════════════════════════════════════════════════════════════
+     BARRE D'AVATARS + PRÉSENCE + PROFIL MEMBRE (08/07)
+     Un coin en haut à droite, sur toutes les pages, posé ici et nulle part
+     ailleurs. Clic sur soi-même → profil éditable (menus déroulants MINIMUM,
+     jamais bloquants, + champs libres toujours dispo — retour Bruno).
+     Clic sur un autre → sa fiche en lecture. Remplace la vision d'un
+     formulaire d'onboarding séparé : la porte d'entrée devient permanente.
+     ──────────────────────────────────────────────────────────────────── */
+  var PASSIONS_CHOIX = [
+    {v:'nature',label:'🌿 Nature'}, {v:'gastronomie',label:'🍽️ Gastronomie'},
+    {v:'culture',label:'🏛️ Culture'}, {v:'sport',label:'🥾 Sport'},
+    {v:'farniente',label:'🏖️ Farniente'}, {v:'rencontres',label:'👋 Rencontres'}
+  ];
+  var VOYAGEUR_DEPUIS_CHOIX = [
+    {v:'', label:'—'},
+    {v:'moins_1_an', label:'Moins d\'1 an'},
+    {v:'1_3_ans', label:'1 à 3 ans'},
+    {v:'3_10_ans', label:'3 à 10 ans'},
+    {v:'veteran', label:'Vétéran(ne)'}
+  ];
+  var _sbChrome=null, _monUserId=null, _monGroupeId=null, _monMembre=null, _tousMembres=[];
+
+  function coord(nom){
+    var palette=['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'];
+    var h=0; var s=nom||'?'; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+    return palette[h%palette.length];
+  }
+  function avatarInnerHtml(membre, email){
+    var av=window.rnrAvatarMembre(membre, email);
+    if(av.photo) return { html:'', bg:'url(\''+av.photo.replace(/'/g,'')+'\') center/cover' };
+    if(av.emoji) return { html:av.emoji, bg:'var(--gold-a20)' };
+    return { html:av.initiale, bg:coord(window.rnrNomMembre(membre, email)) };
+  }
+  function estActif(m){
+    if(!m || !m.derniere_activite) return false;
+    return (Date.now() - new Date(m.derniere_activite).getTime()) < 5*60*1000;
+  }
+
+  async function initAvatarsEtProfil(){
+    try{
+      if(typeof supabase === 'undefined') return;   // CDN pas chargé (cf. B39) — pas de barre plutôt qu'une erreur
+      var _c = supabase.createClient; if(!_c) return;
+      _sbChrome = _c("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+      var sess = await _sbChrome.auth.getSession();
+      var session = sess && sess.data && sess.data.session;
+      if(!session) return;   // page de connexion, ou pas encore authentifié
+      _monUserId = session.user.id;
+      var mres = await _sbChrome.from('membres').select('*').eq('user_id', _monUserId).limit(1).single();
+      if(!mres || !mres.data) return;
+      _monMembre = mres.data; _monGroupeId = mres.data.groupe_id;
+      var lres = await _sbChrome.from('membres').select('*').eq('groupe_id', _monGroupeId);
+      _tousMembres = (lres && lres.data) || [];
+      rendreAvatars();
+      battementCoeur();
+      setInterval(battementCoeur, 60000);
+    }catch(e){ console.warn('chrome.js: barre d\'avatars', e); }
+  }
+  async function battementCoeur(){
+    if(!_sbChrome || !_monMembre) return;
+    try{ await _sbChrome.from('membres').update({derniere_activite:new Date().toISOString()}).eq('id', _monMembre.id); }catch(e){}
+  }
+
+  function rendreAvatars(){
+    var right = document.querySelector('.rnrc-right'); if(!right) return;
+    var wrap = document.createElement('div'); wrap.className='rnrc-avs';
+    var visibles = _tousMembres.slice(0,4);
+    visibles.forEach(function(m){
+      var b = document.createElement('div'); b.className='rnrc-av';
+      var av = avatarInnerHtml(m, m.email);
+      b.style.background = av.bg; b.textContent = av.html;
+      var nom = window.rnrNomMembre(m, m.email);
+      var actif = estActif(m);
+      b.innerHTML = av.html + '<span class="rnrc-av-dot'+(actif?' on':'')+'"></span>'
+        + '<span class="rnrc-av-tip">'+nom+(actif?' · en ligne':'')+'</span>';
+      b.addEventListener('click', function(){ ouvrirProfil(m); });
+      wrap.appendChild(b);
+    });
+    if(_tousMembres.length>4){
+      var plus=document.createElement('div'); plus.className='rnrc-av rnrc-av-plus';
+      plus.textContent='+'+(_tousMembres.length-4);
+      plus.title=(_tousMembres.length-4)+' autre(s) membre(s)';
+      wrap.appendChild(plus);
+    }
+    // posé juste avant le bouton thème, dans l'ordre naturel de lecture droite→gauche
+    var theme = right.querySelector('.rnrc-theme');
+    if(theme) right.insertBefore(wrap, theme); else right.appendChild(wrap);
+  }
+
+  /* ── Modale profil (soi-même : éditable · autre membre : lecture) ── */
+  function ensureProfilDom(){
+    if(document.getElementById('rnrc-profil-overlay')) return;
+    var ov=document.createElement('div'); ov.id='rnrc-profil-overlay';
+    ov.setAttribute('onclick',"if(event.target===this)window.__rnrProfilFerme()");
+    ov.innerHTML =
+      '<div id="rnrc-profil-modal">'+
+        '<div class="rnrc-pf-tete">'+
+          '<div class="rnrc-pf-av" id="rnrc-pf-av"></div>'+
+          '<div style="flex:1;"><h3 id="rnrc-pf-nom"></h3><p id="rnrc-pf-sub"></p></div>'+
+          '<button class="rnrc-pf-close" onclick="window.__rnrProfilFerme()">✕</button>'+
+        '</div>'+
+        '<div class="rnrc-pf-corps" id="rnrc-pf-corps"></div>'+
+        '<div class="rnrc-pf-foot" id="rnrc-pf-foot" style="display:none;"><button onclick="window.__rnrProfilSauver()">💾 Enregistrer</button></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  function ouvrirProfil(m){
+    ensureProfilDom();
+    var estSoi = _monMembre && (m.id===_monMembre.id);
+    var av = avatarInnerHtml(m, m.email);
+    var avEl=document.getElementById('rnrc-pf-av'); avEl.style.background=av.bg; avEl.textContent=av.html;
+    document.getElementById('rnrc-pf-nom').textContent = window.rnrNomMembre(m, m.email) + (estSoi?' (toi)':'');
+    document.getElementById('rnrc-pf-sub').textContent = estActif(m) ? 'En ligne à l\'instant' : '';
+    var corps=document.getElementById('rnrc-pf-corps');
+    var foot=document.getElementById('rnrc-pf-foot');
+    if(estSoi){
+      foot.style.display='block';
+      var passions = m.passions||[];
+      corps.innerHTML =
+        '<div><span class="rnrc-pf-lbl">Voyageur(se) depuis</span><select id="rnrc-pf-depuis">'+
+          VOYAGEUR_DEPUIS_CHOIX.map(function(o){ return '<option value="'+o.v+'"'+(o.v===(m.voyageur_depuis||'')?' selected':'')+'>'+o.label+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div><span class="rnrc-pf-lbl">Ta passion voyage <em style="font-weight:400;opacity:.7;">(optionnel)</em></span>'+
+        '<div class="rnrc-pf-chips" id="rnrc-pf-passions">'+
+          PASSIONS_CHOIX.map(function(p){ return '<span class="rnrc-pf-chip'+(passions.indexOf(p.v)>=0?' on':'')+'" data-v="'+p.v+'" onclick="window.__rnrProfilTogglePassion(this)">'+p.label+'</span>'; }).join('')+
+        '</div></div>'+
+        '<div><span class="rnrc-pf-lbl">Présentation <em style="font-weight:400;opacity:.7;">(optionnel, aucune limite — dis-en autant que tu veux)</em></span>'+
+        '<textarea id="rnrc-pf-presentation" placeholder="Ce que tu veux partager avec le groupe…">'+ (m.presentation? m.presentation.replace(/</g,'&lt;'): '') +'</textarea></div>'+
+        '<div><span class="rnrc-pf-lbl">Photo de profil <em style="font-weight:400;opacity:.7;">(optionnel, une URL pour l\'instant)</em></span>'+
+        '<input id="rnrc-pf-photo" type="text" value="'+(m.photo_url||'').replace(/"/g,'&quot;')+'" placeholder="https://…"></div>';
+      window.__rnrProfilTogglePassion = function(el){ el.classList.toggle('on'); };
+      window.__rnrProfilSauver = async function(){
+        var btn=foot.querySelector('button'); var txt=btn.textContent;
+        btn.disabled=true; btn.textContent='⏳ Enregistrement…';
+        var chosen=[]; corps.querySelectorAll('.rnrc-pf-chip.on').forEach(function(c){ chosen.push(c.dataset.v); });
+        var payload={
+          voyageur_depuis: document.getElementById('rnrc-pf-depuis').value || null,
+          passions: chosen.length?chosen:null,
+          presentation: (document.getElementById('rnrc-pf-presentation').value||'').trim() || null,
+          photo_url: (document.getElementById('rnrc-pf-photo').value||'').trim() || null,
+        };
+        try{
+          var r = await _sbChrome.from('membres').update(payload).eq('id', _monMembre.id);
+          if(r.error) throw r.error;
+          Object.assign(_monMembre, payload);
+          var idx=_tousMembres.findIndex(function(x){return x.id===_monMembre.id;});
+          if(idx>=0) Object.assign(_tousMembres[idx], payload);
+          document.querySelectorAll('.rnrc-avs').forEach(function(w){ w.remove(); });
+          rendreAvatars();
+          btn.textContent='✅ Enregistré !';
+          setTimeout(function(){ btn.disabled=false; btn.textContent=txt; },1400);
+        }catch(e){
+          console.warn('chrome.js: sauvegarde profil', e);
+          btn.disabled=false; btn.textContent='⚠️ Échec — réessayer';
+        }
+      };
+    } else {
+      foot.style.display='none';
+      var depuisLabel=(VOYAGEUR_DEPUIS_CHOIX.find(function(o){return o.v===m.voyageur_depuis;})||{}).label;
+      var passionsLabels=(m.passions||[]).map(function(v){ var f=PASSIONS_CHOIX.find(function(p){return p.v===v;}); return f?f.label:v; });
+      corps.innerHTML = '<div class="rnrc-pf-lecture">'+
+        (depuisLabel&&depuisLabel!=='—' ? '<p><b>Voyageur(se) depuis</b> '+depuisLabel+'</p>' : '')+
+        (passionsLabels.length ? '<p><b>Passions</b> '+passionsLabels.join(' · ')+'</p>' : '')+
+        '<p>'+(m.presentation ? m.presentation.replace(/</g,'&lt;') : '<span class="vide">Pas encore de présentation.</span>')+'</p>'+
+      '</div>';
+    }
+    document.getElementById('rnrc-profil-overlay').classList.add('open');
+  }
+  window.__rnrProfilFerme = function(){ var o=document.getElementById('rnrc-profil-overlay'); if(o) o.classList.remove('open'); };
 
   /* ════════════════════════════════════════════════════════════════════
      IDENTITÉ CANONIQUE — une seule maison pour le nom affiché d'un membre.
@@ -343,9 +558,11 @@
     }
     return _depuisEmail(email);
   };
-  /* avatarMembre(membre, email) — {emoji} si avatar défini, sinon {initiale} du nom.
+  /* avatarMembre(membre, email) — {photo}/{emoji}/{initiale} : priorité à une
+     vraie photo de profil (photo_url, 08/07), puis l'emoji, puis l'initiale.
      La couleur de fond reste gérée côté composant (discussion.js, etc.). */
   window.rnrAvatarMembre = function(membre, email){
+    if(membre && membre.photo_url) return { photo: String(membre.photo_url).trim() };
     var av = membre && membre.avatar ? String(membre.avatar).trim() : '';
     if(av) return { emoji: av };
     var nom = window.rnrNomMembre(membre, email);
