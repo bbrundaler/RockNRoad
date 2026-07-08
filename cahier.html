@@ -140,7 +140,7 @@ sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIs
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
 let voyage=[];
-let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',budget_estime:null};
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',memo_blocs:[],budget_estime:null};
 let RB_DECOUPAGE=null;
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
@@ -191,7 +191,7 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data}=await sb.from('voyages')
-      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,budget_estime')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,memo_blocs,budget_estime')
       .eq('id',VOYAGE_ID).single();
     if(data) RB_INFO=data;
   }catch(e){ console.warn('Cahier: infos voyage', e); }
@@ -391,12 +391,22 @@ function render(){
     }
   });
 
+  // Retour Bruno (08/07) : c'est le texte des blocs du Mémo de voyage (rail
+  // « 🧳 Mémo de voyage », rail-groupe.js) qui doit alimenter cette page — pas
+  // seulement la liste générique statique. On utilise memo_blocs s'il existe
+  // (il existe presque toujours : le rail le pré-remplit dès la 1ère ouverture),
+  // et on ne retombe sur BON_A_SAVOIR que si le voyage n'a vraiment jamais eu
+  // de mémo (personne n'a encore ouvert le rail pour ce voyage).
+  const memoAAfficher = (RB_INFO.memo_blocs && RB_INFO.memo_blocs.length) ? RB_INFO.memo_blocs : BON_A_SAVOIR;
   html+='<div class="page day-page" style="padding:54px 46px;">'
-    +'<p class="day-sub" style="margin-bottom:4px;">🧭 Généraliste, valable pour (presque) tous les voyages</p>'
+    +'<p class="day-sub" style="margin-bottom:4px;">🧭 Le mémo de ce voyage</p>'
     +'<span class="day-title" style="display:block;margin-bottom:20px;">Bon à savoir</span>'
-    +BON_A_SAVOIR.map(cat=>
-      '<div class="box"><p class="box-t">'+cat.icone+' '+esc(cat.titre)+'</p>'
-      +cat.items.map(it=>'<div class="infos-row" style="align-items:flex-start;"><span style="min-width:110px;flex-shrink:0;">'+esc(it.t)+'</span><span style="text-align:left;color:var(--ink);">'+esc(it.d)+'</span></div>').join('')
+    +memoAAfficher.map(cat=>
+      '<div class="box"><p class="box-t">'+esc(cat.icone||'📌')+' '+esc(cat.titre||'')+'</p>'
+      +( cat.items
+          ? cat.items.map(it=>'<div class="infos-row" style="align-items:flex-start;"><span style="min-width:110px;flex-shrink:0;">'+esc(it.t)+'</span><span style="text-align:left;color:var(--ink);">'+esc(it.d)+'</span></div>').join('')
+          : '<div style="font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);">'+esc(cat.texte||'')+'</div>'
+        )
       +'</div>'
     ).join('')
     +'</div>';

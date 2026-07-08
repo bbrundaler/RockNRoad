@@ -156,7 +156,7 @@
     try{
       const {error}=await OPT.sb.from('voyage_notes').insert({voyage_id:OPT.voyageId, membre_id:OPT.membreId, texte});
       if(error) throw error;
-      // pas de rechargement manuel ici : le canal realtime s'en charge (voir subscribeNotes)
+      chargerNotes();   // retour immédiat pour l'auteur, sans dépendre du temps réel
     }catch(e){ console.warn('RailGroupe: envoi note', e); input.value=texte; }
   }
   function subscribeNotes(){
@@ -220,11 +220,19 @@
     rendreMemo();
   }
   async function sauverMemo(){
+    const btn=document.querySelector('#rnrg-drawer-memo .rnrg-memo-save button');
+    const texteInitial=btn?btn.textContent:'';
+    if(btn){ btn.disabled=true; btn.textContent='⏳ Enregistrement…'; }
     try{
       const {error}=await OPT.sb.from('voyages').update({memo_blocs:OPT._memoBlocs||[]}).eq('id',OPT.voyageId);
       if(error) throw error;
       if(window.showToast) showToast('✅ Mémo enregistré','success');
-    }catch(e){ console.warn('RailGroupe: sauvegarde memo', e); if(window.showToast) showToast('Erreur mémo','error'); }
+      if(btn){ btn.textContent='✅ Enregistré !'; setTimeout(()=>{ btn.disabled=false; btn.textContent=texteInitial||'💾 Enregistrer le mémo'; }, 1400); }
+    }catch(e){
+      console.warn('RailGroupe: sauvegarde memo', e);
+      if(window.showToast) showToast('Erreur mémo','error');
+      if(btn){ btn.disabled=false; btn.textContent='⚠️ Échec — réessayer'; }
+    }
   }
 
   function ouvrirNotes(){ ensureDom(); document.getElementById('rnrg-drawer-notes').classList.add('open'); const b=document.getElementById('rnrg-badge-notes'); if(b) b.classList.remove('on','actif'); chargerNotes(); subscribeNotes(); }
