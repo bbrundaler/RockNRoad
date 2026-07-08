@@ -61,7 +61,20 @@
 .rnrg-memo-add{width:100%;padding:10px;border:1.5px dashed var(--gold-a35);border-radius:8px;background:none;color:var(--gold-deep,#8b6914);font-weight:700;font-size:12.5px;cursor:pointer;margin-top:6px;}
 .rnrg-memo-save{position:sticky;bottom:0;background:var(--surface);padding:12px 0 0;}
 .rnrg-memo-save button{width:100%;padding:10px;background:var(--ink,#211a10);color:var(--gold,#C8A84B);border:none;border-radius:8px;font-weight:700;cursor:pointer;}
-`;
+
+/* Le groupe : avatars d'équipe + statut leader */
+.rnrg-crew{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.rnrg-crew-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
+.rnrg-leader{background:var(--gold-a10,rgba(200,168,75,.1));border:1px solid var(--gold-a20);border-radius:8px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;}
+.rnrg-leader b{color:var(--gold-deep,#8b6914);}
+
+/* Mes cœurs : cartes simplifiées, un lien pour agir sur Horizon */
+.rnrg-coeur-carte{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--surface-line);}
+.rnrg-coeur-carte:last-child{border-bottom:none;}
+.rnrg-coeur-photo{width:48px;height:48px;border-radius:8px;background-size:cover;background-position:center;flex-shrink:0;background-color:var(--bg,#F2EFE8);}
+.rnrg-coeur-nom{font-size:13px;font-weight:600;color:var(--ink);}
+.rnrg-coeur-lien{font-size:11px;color:var(--gold-deep,#8b6914);text-decoration:none;font-weight:700;}
+.rnrg-coeur-lien:hover{text-decoration:underline;}`;
     const s=document.createElement('style'); s.id='rnrg-style'; s.textContent=css;
     document.head.appendChild(s);
   }
@@ -108,13 +121,23 @@
       const rail=document.createElement('div');
       rail.id='rnrg-rail';
       rail.innerHTML=`
+        <button class="rnrg-rail-btn" type="button" title="Le groupe" onclick="RNR_RAIL_GROUPE._ouvrirGroupe()">👥<span class="rnrg-rail-badge" id="rnrg-badge-groupe"></span></button>
         <button class="rnrg-rail-btn" type="button" title="Notes du groupe" onclick="RNR_RAIL_GROUPE._ouvrirNotes()">📝<span class="rnrg-rail-badge" id="rnrg-badge-notes"></span></button>
+        <button class="rnrg-rail-btn" type="button" title="Mes cœurs & votes" onclick="RNR_RAIL_GROUPE._ouvrirCoeurs()">❤️<span class="rnrg-rail-badge" id="rnrg-badge-coeurs"></span></button>
         <button class="rnrg-rail-btn" type="button" title="Mémo de voyage" onclick="RNR_RAIL_GROUPE._ouvrirMemo()">🧳</button>`;
       document.body.appendChild(rail);
     }
 
     const drawers=document.createElement('div');
     drawers.innerHTML=`
+      <div id="rnrg-drawer-groupe">
+        <div class="rnrg-dr-tete"><span>👥</span><h3>Le groupe</h3><button class="rnrg-dr-fermer" onclick="RNR_RAIL_GROUPE._fermerGroupe()">✕</button></div>
+        <div class="rnrg-dr-corps">
+          <div class="rnrg-crew" id="rnrg-crew-avts"></div>
+          <div class="rnrg-leader" id="rnrg-leader-box"></div>
+          <div id="rnrg-discussion"></div>
+        </div>
+      </div>
       <div id="rnrg-drawer-notes">
         <div class="rnrg-dr-tete"><span>📝</span><h3>Notes du groupe</h3><button class="rnrg-dr-fermer" onclick="RNR_RAIL_GROUPE._fermerNotes()">✕</button></div>
         <div class="rnrg-dr-corps" id="rnrg-notes-feed"><div class="rnrg-note-empty">Chargement…</div></div>
@@ -122,6 +145,10 @@
           <textarea class="rnrg-note-input" id="rnrg-note-input" placeholder="Une idée, un truc à ne pas oublier…" rows="1"></textarea>
           <button class="rnrg-note-send" onclick="RNR_RAIL_GROUPE._envoyerNote()">➤</button>
         </div>
+      </div>
+      <div id="rnrg-drawer-coeurs">
+        <div class="rnrg-dr-tete"><span>❤️</span><h3>Mes cœurs & votes</h3><button class="rnrg-dr-fermer" onclick="RNR_RAIL_GROUPE._fermerCoeurs()">✕</button></div>
+        <div class="rnrg-dr-corps" id="rnrg-coeurs-corps"><div class="rnrg-note-empty">Chargement…</div></div>
       </div>
       <div id="rnrg-drawer-memo">
         <div class="rnrg-dr-tete"><span>🧳</span><h3>Mémo de voyage</h3><button class="rnrg-dr-fermer" onclick="RNR_RAIL_GROUPE._fermerMemo()">✕</button></div>
@@ -237,6 +264,73 @@
 
   function ouvrirNotes(){ ensureDom(); document.getElementById('rnrg-drawer-notes').classList.add('open'); const b=document.getElementById('rnrg-badge-notes'); if(b) b.classList.remove('on','actif'); chargerNotes(); subscribeNotes(); }
   function fermerNotes(){ const d=document.getElementById('rnrg-drawer-notes'); if(d) d.classList.remove('open'); }
+
+  // ── Le groupe (08/07) : avatars d'équipe + statut leader (lecture) +
+  // discussion partagée (RNRDiscussion, déjà le seul composant de fil du
+  // site — jamais reconstruit ici). Portable partout, contrairement à
+  // Mes cœurs (voir plus bas), parce qu'il ne dépend d'aucune donnée liée
+  // à la carte.
+  async function chargerGroupe(){
+    const avEl=document.getElementById('rnrg-crew-avts');
+    const ldEl=document.getElementById('rnrg-leader-box');
+    try{
+      const {data:membres}=await OPT.sb.from('membres').select('id,user_id,pseudo,prenom,avatar,photo_url').eq('groupe_id',OPT.groupeId).limit(20);
+      OPT.membres = membres||OPT.membres||[];
+      if(avEl){
+        avEl.innerHTML=(membres||[]).slice(0,10).map(m=>{
+          const nom=m.pseudo||m.prenom||'?';
+          const av=avatarDe(m.id, nom);
+          const bgFoto = m.photo_url ? ("background-image:url('"+m.photo_url.replace(/'/g,'')+"');") : ('background:'+av.bg+';');
+          return '<div class="rnrg-crew-av" style="'+bgFoto+'" title="'+esc(nom)+'">'+(m.photo_url?'':esc(av.texte))+'</div>';
+        }).join('');
+      }
+      if(ldEl && OPT.voyageId){
+        const {data:vl}=await OPT.sb.from('voyage_leaders').select('membre_id').eq('voyage_id',OPT.voyageId);
+        const ids=(vl||[]).map(r=>r.membre_id);
+        if(!ids.length){
+          ldEl.innerHTML='👑 Personne ne pilote encore ce voyage. <a href="horizon.html" style="color:var(--gold-deep,#8b6914);">Le désigner sur Horizon →</a>';
+        } else {
+          const noms=ids.map(id=>{ const m=(membres||[]).find(x=>x.id===id); return m?(m.pseudo||m.prenom||'?'):'?'; });
+          ldEl.innerHTML='<b>👑 '+esc(noms.join(', '))+'</b> anime ce voyage.';
+        }
+      }
+      if(window.RNRDiscussion && document.getElementById('rnrg-discussion')){
+        let monNom='Voyageur';
+        const moi=(membres||[]).find(x=>x.user_id===OPT.userId);
+        if(moi) monNom=moi.pseudo||moi.prenom||'Voyageur';
+        RNRDiscussion.monter('rnrg-discussion', { sb:OPT.sb, groupeId:OPT.groupeId, userId:OPT.userId, userNom:monNom, membres:membres||[], hauteur:'clamp(240px, 40vh, 420px)' });
+      }
+    }catch(e){ console.warn('RailGroupe: le groupe', e); }
+  }
+  function ouvrirGroupe(){ ensureDom(); document.getElementById('rnrg-drawer-groupe').classList.add('open'); chargerGroupe(); }
+  function fermerGroupe(){ const d=document.getElementById('rnrg-drawer-groupe'); if(d) d.classList.remove('open'); }
+
+  // ── Mes cœurs & votes (08/07) : version SIMPLIFIÉE — la liste des fiches
+  // candidates du voyage (voyage_fiches.statut='candidate'), sans le moteur
+  // complet d'Horizon (swipe, régions SVG). Un lien renvoie vers Horizon pour
+  // agir (épingler, écarter, voter) — compromis accepté par Bruno (08/07)
+  // plutôt que dupliquer un moteur profondément couplé à la carte.
+  async function chargerCoeurs(){
+    const box=document.getElementById('rnrg-coeurs-corps');
+    if(!OPT.voyageId){ box.innerHTML='<div class="rnrg-note-empty">Aucun voyage actif.</div>'; return; }
+    try{
+      const {data:vf}=await OPT.sb.from('voyage_fiches').select('lieu_id').eq('voyage_id',OPT.voyageId).eq('statut','candidate');
+      const ids=(vf||[]).map(v=>v.lieu_id);
+      if(!ids.length){ box.innerHTML='<div class="rnrg-note-empty">Aucun coup de cœur pour l\'instant. Swipez ❤️ sur Horizon — les fiches apparaissent ici, sur tout le voyage.</div>'; return; }
+      const {data:lieux}=await OPT.sb.from('lieux').select('id,nom,photo_url,photos_urls').in('id',ids);
+      box.innerHTML=(lieux||[]).map(l=>{
+        const photo=l.photo_url||(l.photos_urls&&l.photos_urls[0])||'';
+        return '<div class="rnrg-coeur-carte">'
+          +'<div class="rnrg-coeur-photo" style="'+(photo?("background-image:url('"+photo.replace(/'/g,'')+"');"):'')+'"></div>'
+          +'<div style="flex:1;"><div class="rnrg-coeur-nom">'+esc(l.nom)+'</div>'
+          +'<a class="rnrg-coeur-lien" href="horizon.html?fiche='+encodeURIComponent(l.id)+'">🧭 Voir sur Horizon</a></div>'
+        +'</div>';
+      }).join('');
+    }catch(e){ console.warn('RailGroupe: coeurs', e); box.innerHTML='<div class="rnrg-note-empty">Impossible de charger.</div>'; }
+  }
+  function ouvrirCoeurs(){ ensureDom(); document.getElementById('rnrg-drawer-coeurs').classList.add('open'); chargerCoeurs(); }
+  function fermerCoeurs(){ const d=document.getElementById('rnrg-drawer-coeurs'); if(d) d.classList.remove('open'); }
+
   function ouvrirMemo(){ ensureDom(); document.getElementById('rnrg-drawer-memo').classList.add('open'); chargerMemo(); }
   function fermerMemo(){ const d=document.getElementById('rnrg-drawer-memo'); if(d) d.classList.remove('open'); }
 
@@ -247,5 +341,7 @@
     _ouvrirNotes: ouvrirNotes, _fermerNotes: fermerNotes, _envoyerNote: envoyerNote,
     _ouvrirMemo: ouvrirMemo, _fermerMemo: fermerMemo,
     _majBloc: majBloc, _ajouterBloc: ajouterBloc, _supprBloc: supprBloc, _sauverMemo: sauverMemo,
+    _ouvrirGroupe: ouvrirGroupe, _fermerGroupe: fermerGroupe,
+    _ouvrirCoeurs: ouvrirCoeurs, _fermerCoeurs: fermerCoeurs,
   };
 })();
