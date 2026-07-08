@@ -113,8 +113,8 @@
   +'white-space:nowrap;font-family:var(--font-body);opacity:.8;}'
   +'.rnrc-cgu-link:hover{color:var(--gold-light);opacity:1;}'
   +'@media(max-width:700px){.rnrc-cgu-link{display:none;}}'  /* sur mobile : seulement dans le pied */
-  +'.rnrc-footer{text-align:center;padding:22px 16px calc(22px + env(safe-area-inset-bottom));'
-  +'border-top:1px solid var(--gold-a20);margin-top:40px;}'
+  +'.rnrc-footer{text-align:center;padding:8px 16px calc(8px + env(safe-area-inset-bottom));'
+  +'border-top:1px solid var(--gold-a20);margin-top:10px;}'
   +'.rnrc-footer a{font-size:12px;color:var(--chrome-ink-dim);text-decoration:none;'
   +'font-family:var(--font-body);}'
   +'.rnrc-footer a:hover{color:var(--gold-light);text-decoration:underline;}'
