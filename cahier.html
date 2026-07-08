@@ -88,6 +88,17 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
   <p>Préparation du Cahier...</p>
   <div class="auth-spinner"></div>
 </div>
+<script>
+// Filet de sécurité INDÉPENDANT du script principal (07/07) : si le CDN Supabase
+// ne charge pas ou que le script principal meurt avant même son premier await,
+// le spinner ne doit jamais tourner dans le vide sans explication.
+setTimeout(function(){
+  var ac=document.getElementById('auth-check');
+  if(ac && ac.style.display!=='none'){
+    ac.innerHTML='<div style="max-width:360px;text-align:center;padding:0 20px;">⚠️ Le Cahier met trop de temps à démarrer.<br><br>Vérifie ta connexion et recharge la page. Si ça persiste, ouvre la console du navigateur (F12) et regarde le message d\'erreur en rouge.</div>';
+  }
+}, 8000);
+</script>
 
 <div class="toolbar">
   <div>
@@ -342,13 +353,19 @@ function render(){
 }
 
 (async()=>{
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session){ window.location.href='index.html'; return; }
-  document.getElementById('auth-check').style.display='none';
-  await resoutVoyageId(session.user.id);
-  if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
-  await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions()]);
-  render();
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ window.location.href='index.html'; return; }
+    document.getElementById('auth-check').style.display='none';
+    await resoutVoyageId(session.user.id);
+    if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
+    await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions()]);
+    render();
+  }catch(e){
+    console.error('Cahier: erreur au chargement', e);
+    document.getElementById('auth-check').style.display='none';
+    document.getElementById('pages').innerHTML='<div class="empty-state">⚠️ Une erreur a empêché le Cahier de se charger.<br><br>Détail technique : '+esc(String(e&&e.message||e))+'</div>';
+  }
 })();
 </script>
 </body>
