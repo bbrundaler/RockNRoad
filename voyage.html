@@ -306,6 +306,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
           </div>
         </div>
       </div>
+      <div id="rb-rappel-nuits" style="display:none;background:var(--gold-a10);border:1px solid var(--gold-a35);
+        border-radius:var(--r);padding:8px 12px;font-size:12.5px;color:var(--ink);margin-bottom:10px;"></div>
       <div class="stop-item stop-bookend" id="bookend-depart">
         <div class="stop-num">🏠</div>
         <div class="stop-info">
@@ -447,6 +449,7 @@ async function voyageChargeSelecteurChrome(){
   // la météo qui en dépend) restaient absentes tant qu'un clic ne redessinait pas la liste. On
   // redessine ici, une fois RB_INFO au complet, pour que tout soit juste dès l'arrivée sur la page.
   render();
+  rbVerifieCoherenceDates();   // (09/07) le voyage peut déjà être incohérent avant toute modification
   // Arrivée depuis « ✏️ Modifier ce voyage » (menu du sélecteur, chrome.js) : on ouvre
   // directement le formulaire, sans que la personne ait à deviner où cliquer.
   try{
@@ -463,6 +466,7 @@ async function voyageChargeSelecteurChrome(){
    est à part, on y fait entrer une retenue d'un geste. ── */
 let RETENUES_INFO={};   // id -> {id,nom,lat,lng,type,photo_url} (source du drag)
 let MARKERS_RETENUES={};   // id -> marqueur Leaflet des épingles pas encore placées (08/07, survol)
+let MARKERS_ITINERAIRE={}; // id -> marqueur Leaflet numéroté déjà placé sur le trajet (09/07, survol)
 async function chargerRetenuesVoyage(userId){
   const box=document.getElementById('vr-list');
   const badge=document.getElementById('vr-badge');
@@ -663,6 +667,7 @@ function ajouteRetenueAItineraire(id, insertAt){
   saveVoyage();
   render();
   rafraichitRetenues();
+  rbVerifieCoherenceDates();
 }
 function escVr(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 async function logout(){await sb.auth.signOut();window.location.href='index.html';}
@@ -988,6 +993,57 @@ function rbNuitsTotal(){
   },0);
 }
 
+// ── COHÉRENCE DATES / NUITS (09/07, retour Bruno) : le calendrier de chaque
+// étape se construit en cumulant les nuits (rbDatesCumulees), mais rien ne
+// vérifiait que ce cumul tienne dans la durée réelle du projet (date_debut →
+// date_fin_envisagee) — on pouvait dépasser en silence (calendrier qui glisse
+// après la date de retour) ou laisser des nuits non programmées sans que
+// personne ne le voie. DÉPASSEMENT → popup bloquant (il faut corriger, on ne
+// laisse pas construire un roadbook incohérent). NUITS EN MOINS → simple
+// rappel discret, jamais bloquant (on est peut-être juste en cours de
+// construction, ça n'a rien d'une erreur en soi).
+let RB_DERNIER_DEPASSEMENT_AVERTI=null;   // évite de rouvrir le même popup à chaque re-rendu tant que rien n'a changé
+function rbVerifieCoherenceDates(){
+  if(!RB_INFO.date_debut || !RB_INFO.date_fin_envisagee){ rbFermeRappelNuits(); return; }
+  const debut=new Date(RB_INFO.date_debut+'T00:00:00');
+  const fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
+  if(isNaN(debut)||isNaN(fin)||fin<=debut){ rbFermeRappelNuits(); return; }
+  const nuitsDispo=Math.round((fin-debut)/86400000);
+  const nuitsTotal=rbNuitsTotal();
+  if(nuitsTotal>nuitsDispo){
+    rbFermeRappelNuits();
+    if(RB_DERNIER_DEPASSEMENT_AVERTI!==nuitsTotal){
+      RB_DERNIER_DEPASSEMENT_AVERTI=nuitsTotal;
+      rbOuvrePopupDepassement(nuitsTotal, nuitsDispo, debut, fin);
+    }
+  } else {
+    RB_DERNIER_DEPASSEMENT_AVERTI=null;
+    if(nuitsTotal<nuitsDispo) rbAfficheRappelNuits(nuitsDispo-nuitsTotal);
+    else rbFermeRappelNuits();
+  }
+}
+function rbOuvrePopupDepassement(nuitsTotal, nuitsDispo, debut, fin){
+  const overlay=document.getElementById('rb-depassement-overlay');
+  const msg=document.getElementById('rb-depassement-msg');
+  if(!overlay||!msg) return;
+  msg.innerHTML='Le roadbook programme <b>'+nuitsTotal+' nuits</b>, mais le projet ne couvre que <b>'+nuitsDispo+' nuits</b> ('+rbFormatDateCourt(debut)+' → '+rbFormatDateCourt(fin)+').<br><br>Réduis le nombre de nuits d\'une étape, ou prolonge la durée du projet dans les infos du voyage.';
+  overlay.style.display='flex';
+}
+function rbFermeDepassement(){
+  const overlay=document.getElementById('rb-depassement-overlay');
+  if(overlay) overlay.style.display='none';
+}
+function rbAfficheRappelNuits(reste){
+  const el=document.getElementById('rb-rappel-nuits');
+  if(!el) return;
+  el.textContent='📅 Il reste '+reste+' nuit'+(reste>1?'s':'')+' à programmer dans ce voyage.';
+  el.style.display='block';
+}
+function rbFermeRappelNuits(){
+  const el=document.getElementById('rb-rappel-nuits');
+  if(el) el.style.display='none';
+}
+
 function rbInfosRender(){
   const el = document.getElementById('rb-infos-resume');
   if(!el) return;
@@ -1061,6 +1117,7 @@ async function rbInfosSave(){
     rbRemplirBookends();   // la date de départ vit aussi sur la fiche Départ — les deux se suivent
     render();              // les dates de chaque étape dépendent de RB_INFO.date_debut
     rbInfosToggle();
+    rbVerifieCoherenceDates();
   }catch(e){
     console.warn('Roadbook: sauvegarde infos voyage', e);
     if(err) err.textContent='Enregistrement impossible, réessayez.';
@@ -1132,6 +1189,7 @@ function initListEvents(){
     v.nb_nuits = n;
     saveVoyage();
     render(); // les dates de toutes les étapes suivantes dépendent de ce nombre de nuits
+    rbVerifieCoherenceDates();
   });
 
   // (Le drag natif HTML5 a été RETIRÉ : il entrait en conflit avec le pointer-drag
@@ -1184,11 +1242,16 @@ function initListEvents(){
   const endPointerDrag=()=>{
     if(!pDragEl) return;
     const wasStarted=pStarted;
+    const idFini=pDragEl.dataset.id;
     pDragEl.classList.remove('vy-grabbed');
     // nettoyer les classes/transform d'animation
     list.querySelectorAll('.stop-item.vy-sliding').forEach(el=>{ el.classList.remove('vy-sliding'); el.style.transform=''; });
     pDragEl=null; pStarted=false;
-    if(!wasStarted) return;   // simple clic, pas un drag → ne pas re-render inutilement
+    if(!wasStarted){
+      // simple clic (pas de glisser) → revoir la fiche complète (retour Bruno 09/07)
+      if(idFini) vrOuvreGrandeFiche(idFini);
+      return;
+    }
     // L'ordre final = l'ordre du DOM après l'aperçu en direct
     const order=[...list.querySelectorAll('.stop-item')].map(el=>el.dataset.uid);
     voyage.sort((a,b)=>order.indexOf(a.uid)-order.indexOf(b.uid));
@@ -1238,6 +1301,7 @@ function renderList(){
     const row = document.createElement('div');
     row.className='stop-item';
     row.dataset.uid = item.uid; // ← uid dans le DOM, pas dans un listener
+    row.dataset.id = item.id;   // (09/07) pour la fiche complète + la surbrillance carte au survol
 
     // La nuit change le sens de la note (hébergement) sans changer le champ lui-même —
     // un seul champ libre, jamais deux systèmes (« une info = une maison »).
@@ -1337,6 +1401,7 @@ function renderMap(){
   if(!map||!routeLayer) return;
   // clearLayers déjà appelé dans render() avant renderMap()
   MARKERS_RETENUES={};   // repart à zéro en même temps que la couche visuelle
+  MARKERS_ITINERAIRE={}; // idem pour les pastilles numérotées (09/07, survol colonne gauche)
   const pts = voyage.filter(v=>v.lat&&v.lng);
 
   const bounds=[];
@@ -1359,6 +1424,7 @@ function renderMap(){
         <div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(rbRegionDe(v.lat,v.lng))} ${v.type?'· '+escVr(v.type):''} ${nuit?'· 🌙 nuit':'· ☀️ jour'}</div>
       </div>
     `, {maxWidth:240, autoPan:true, closeButton:true});
+    MARKERS_ITINERAIRE[v.id]=mkNum;
     bounds.push([v.lat,v.lng]);
   });
 
@@ -1460,6 +1526,7 @@ function removeByUid(uid){
   saveVoyage();
   render();
   rafraichitRetenues();
+  rbVerifieCoherenceDates();
 }
 
 function clearAll(){
@@ -1468,6 +1535,7 @@ function clearAll(){
   saveVoyage();
   render();
   rafraichitRetenues();
+  rbVerifieCoherenceDates();
 }
 
 // ── Haversine ─────────────────────────────────────────────────────────────────
@@ -1503,7 +1571,7 @@ function vrFermeGrandeFiche(){
 // se faire une idée d'où elle se trouve avant de la glisser dans le trajet.
 // MARKERS_RETENUES est repeuplé à chaque renderMap() (voir plus haut).
 function vrSurbrilleMarqueur(id, on){
-  const mk=MARKERS_RETENUES[id]; if(!mk) return;
+  const mk=MARKERS_RETENUES[id] || MARKERS_ITINERAIRE[id]; if(!mk) return;
   const el=mk.getElement && mk.getElement();
   if(el) el.classList.toggle('vr-mk-survole', on);
   if(on){ if(mk.openPopup) mk.openPopup(); } else { if(mk.closePopup) mk.closePopup(); }
@@ -1523,6 +1591,21 @@ function vrSurbrilleMarqueur(id, on){
     if(fiche) vrSurbrilleMarqueur(fiche.dataset.id, false);
   });
 })();
+// Même geste sur la colonne de gauche (09/07, retour Bruno) : les étapes déjà
+// placées méritent le même survol → surbrillance carte que les fiches en attente.
+(function initSurvolItineraire(){
+  const list=document.getElementById('stops-list');
+  if(!list || list._hoverCable) return;
+  list._hoverCable=true;
+  list.addEventListener('mouseover', e=>{
+    const item=e.target.closest('.stop-item[data-id]');
+    if(item) vrSurbrilleMarqueur(item.dataset.id, true);
+  });
+  list.addEventListener('mouseout', e=>{
+    const item=e.target.closest('.stop-item[data-id]');
+    if(item) vrSurbrilleMarqueur(item.dataset.id, false);
+  });
+})();
 
 window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 </script>
@@ -1530,6 +1613,17 @@ window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 <div id="vr-gf-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.55);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)vrFermeGrandeFiche()">
   <div style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
     <div id="vr-gf-body"></div>
+  </div>
+</div>
+<!-- Dépassement nuits/durée du projet (09/07, retour Bruno) : un roadbook dont
+     le calendrier déborde de la durée prévue est incohérent — on bloque avec
+     explication plutôt que de laisser filer en silence. -->
+<div id="rb-depassement-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.6);z-index:9200;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--st-bad-vif,#c0392b);border-radius:16px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.5);padding:26px;text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
+    <div style="font-family:var(--font-title);font-size:18px;font-weight:700;color:var(--ink);margin-bottom:10px;">Le calendrier dépasse le projet</div>
+    <div id="rb-depassement-msg" style="font-size:13.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:20px;text-align:left;"></div>
+    <button type="button" onclick="rbFermeDepassement()" style="background:var(--gold);color:var(--chrome-bg);border:1.5px solid var(--gold-deep);border-radius:var(--r);padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;">Compris</button>
   </div>
 </div>
 </body>
