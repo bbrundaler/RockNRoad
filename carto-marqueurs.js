@@ -333,45 +333,81 @@
   // ici en dur pour ne pas dépendre d'une variable propre à une seule page.
   var _VITESSE_FALLBACK_KMH = 65;
 
+  /* FILE D'ATTENTE ORS (10/07, retour Bruno — capture d'écran à l'appui) : avec
+     plusieurs pétales, un render() tire maintenant plusieurs appels ORS EN MÊME
+     TEMPS (le trajet principal + un par jour de séjour). Au-delà d'un certain
+     nombre simultané, OpenRouteService répond en erreur — des 502 quasi
+     instantanés (quelques dizaines de ms), signature d'un plafond de requêtes
+     en parallèle, pas d'un vrai échec de calcul. On sérialise : 2 requêtes en
+     vol maximum, les autres patientent en file — un seul endroit, ça corrige
+     toutes les pages (Hub, Horizon, Voyage) d'un coup. */
+  var _fileOrsEnAttente = [];
+  var _fileOrsEnVol = 0;
+  var _FILE_ORS_MAX = 2;
+  function _fileOrs(tache) {
+    return new Promise(function (resolve, reject) {
+      _fileOrsEnAttente.push({ tache: tache, resolve: resolve, reject: reject });
+      _traiteFileOrs();
+    });
+  }
+  function _traiteFileOrs() {
+    if (_fileOrsEnVol >= _FILE_ORS_MAX || !_fileOrsEnAttente.length) return;
+    var item = _fileOrsEnAttente.shift();
+    _fileOrsEnVol++;
+    item.tache().then(
+      function (r) { _fileOrsEnVol--; item.resolve(r); _traiteFileOrs(); },
+      function (e) { _fileOrsEnVol--; item.reject(e); _traiteFileOrs(); }
+    );
+  }
+
   /* Appelle l'Edge Function pour UNE suite de points donnée (le trajet entier OU
      un seul tronçon). Résout avec { trace, distance_km, duree_h } ou rejette —
      ne dessine rien, ne décide de rien : c'est à l'appelant de choisir le repli.
      Factorisé pour être appelé une fois sur tout le trajet (cas normal, économe
-     en quota) ou une fois par tronçon (repli fin, cf. _routeParTroncons). */
+     en quota) ou une fois par tronçon (repli fin, cf. _routeParTroncons).
+     La requête HTTP elle-même passe par _fileOrs() (ci-dessus) — jamais plus de
+     _FILE_ORS_MAX en vol en même temps, quel que soit le nombre d'appelants. */
   function _appelORS(latlngs, cfg, profile) {
-    // ORS attend [lng,lat] ; Leaflet nous donne [lat,lng] → on inverse.
-    var pts = latlngs.map(function (p) { return [p[1], p[0]]; });
-    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+    return _fileOrs(function () {
+      // ORS attend [lng,lat] ; Leaflet nous donne [lat,lng] → on inverse.
+      var pts = latlngs.map(function (p) { return [p[1], p[0]]; });
+      var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      // (10/07, retour Bruno) : 8s coupait trop tôt les longs tronçons (700+ km,
+      // ex. maison en Alsace → première étape dans les Pyrénées) — le calcul
+      // n'avait pas fini, on retombait en ligne droite alors que le point était
+      // bon. 20s laisse le temps à un vrai grand trajet de se calculer, tout en
+      // continuant à couper une requête réellement bloquée.
+      var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 20000);
 
-    return fetch(cfg.surl + '/functions/v1/dynamic-action', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': cfg.skey,
-        'Authorization': 'Bearer ' + cfg.skey
-      },
-      body: JSON.stringify({
-        action: 'route',
-        points: pts,
-        profile: profile
-      }),
-      signal: ctrl ? ctrl.signal : undefined
-    })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject('http ' + r.status); })
-      .then(function (geo) {
-        clearTimeout(to);
-        var feat = geo && geo.features && geo.features[0];
-        var coords = feat && feat.geometry && feat.geometry.coordinates;
-        if (!coords || !coords.length) throw 'pas de géométrie';
-        // GeoJSON = [lng,lat] → Leaflet veut [lat,lng].
-        var trace = coords.map(function (c) { return [c[1], c[0]]; });
-        var s = (feat.properties && feat.properties.summary) || {};
-        var dist = s.distance ? Math.round(s.distance / 1000) : null;
-        var duree = s.duration ? (s.duration / 3600) : null;
-        return { trace: trace, distance_km: dist, duree_h: duree };
+      return fetch(cfg.surl + '/functions/v1/dynamic-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': cfg.skey,
+          'Authorization': 'Bearer ' + cfg.skey
+        },
+        body: JSON.stringify({
+          action: 'route',
+          points: pts,
+          profile: profile
+        }),
+        signal: ctrl ? ctrl.signal : undefined
       })
-      .catch(function (e) { clearTimeout(to); return Promise.reject(e); });
+        .then(function (r) { return r.ok ? r.json() : Promise.reject('http ' + r.status); })
+        .then(function (geo) {
+          clearTimeout(to);
+          var feat = geo && geo.features && geo.features[0];
+          var coords = feat && feat.geometry && feat.geometry.coordinates;
+          if (!coords || !coords.length) throw 'pas de géométrie';
+          // GeoJSON = [lng,lat] → Leaflet veut [lat,lng].
+          var trace = coords.map(function (c) { return [c[1], c[0]]; });
+          var s = (feat.properties && feat.properties.summary) || {};
+          var dist = s.distance ? Math.round(s.distance / 1000) : null;
+          var duree = s.duration ? (s.duration / 3600) : null;
+          return { trace: trace, distance_km: dist, duree_h: duree };
+        })
+        .catch(function (e) { clearTimeout(to); return Promise.reject(e); });
+    });
   }
 
   /* REPLI FIN (09/07, retour Bruno — Cirque de Gavarnie) : un seul point non
