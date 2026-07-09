@@ -6,13 +6,13 @@
 <title>RockNRoad · Hub · Votre voyage commence ici</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="tokens.css">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="tokens.css?v=100725">
+<link rel="stylesheet" href="app.css?v=100725">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
-<script src="carto-marqueurs.js"></script>
-<script src="chrome.js"></script>
+<script src="carto-marqueurs.js?v=100725"></script>
+<script src="chrome.js?v=100725"></script>
 <script src="discussion.js"></script>
 <style>
 /* HUB reconstruit grammaire v2 (Charte Design v1) — remplace le prototype d'ambiance.
@@ -25,20 +25,22 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
    (05/07 soir : gagner de la hauteur pour révéler "Comment fonctionne RockNRoad"
    sans scroll — sous-titre et ligne de phase retirés, redondants avec le tableau
    de bord ; colonne d'avatars pleine hauteur à droite).
-   (10/07, retour Bruno) : encore trop haut pour ce qu'il montre — padding,
-   titre et espacements resserrés d'environ moitié. ── */.fil{
+   (10/07, retour Bruno) : encore trop haut pour ce qu'il montre, resserré une
+   première fois — puis le bouton « Ouvrir mon Roadbook » du bandeau s'est
+   avéré un pur doublon du même bouton, plus grand, juste en dessous : retiré,
+   et la place regagnée sert à resserrer encore (~20% de plus). ── */.fil{
   background:var(--surface);border:1px solid var(--surface-line);
-  border-radius:var(--r-lg);padding:9px 26px;margin-top:12px;
+  border-radius:var(--r-lg);padding:7px 24px;margin-top:10px;
   box-shadow:var(--shadow);display:flex;gap:20px;align-items:stretch;
 }
 .fil-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.fil-top h1{margin:0;font-size:19px;}
+.fil-top h1{margin:0;font-size:17px;}
 .fil-top-right{display:flex;align-items:center;gap:10px;}
-.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:8px auto 0;width:100%;}
+.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:6px auto 0;width:100%;}
 .fil-step{flex:1;text-align:center;position:relative;cursor:pointer;text-decoration:none;display:block;}
 .fil-step .dot{
-  width:11px;height:11px;border-radius:50%;margin:0 auto 5px;
+  width:10px;height:10px;border-radius:50%;margin:0 auto 4px;
   background:var(--bg);border:2px solid var(--gold-a35);position:relative;z-index:2;
   transition:all .2s;
 }
@@ -48,16 +50,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   box-shadow:0 0 0 4px var(--gold-a20);
 }
 .fil-step::before{
-  content:'';position:absolute;top:4.5px;left:-50%;width:100%;height:2px;
+  content:'';position:absolute;top:4px;left:-50%;width:100%;height:2px;
   background:var(--gold-a20);z-index:1;
 }
 .fil-step.done::before,.fil-step.now::before{background:var(--gold);}
 .fil-step:first-child::before{display:none;}
-.fil-step .lbl{font-size:12px;font-weight:600;color:var(--ink-dim);}
+.fil-step .lbl{font-size:11.5px;font-weight:600;color:var(--ink-dim);}
 .fil-step.now .lbl{color:var(--gold-text);}
-.fil-step .sub{font-size:10px;color:var(--ink-dim);opacity:.7;}
+.fil-step .sub{font-size:9.5px;color:var(--ink-dim);opacity:.7;}
 .fil-step:hover .lbl{color:var(--ink);}
-.fil-cta-row{display:flex;justify-content:flex-end;margin-top:6px;}
 
 /* ── Modal création du premier voyage ── */
 .vy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
@@ -211,9 +212,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
         <a class="fil-step" id="fil-s1" href="horizon.html"><span class="dot"></span><span class="lbl">Tracer</span><br><span class="sub">Horizon</span></a>
         <a class="fil-step" id="fil-s2" href="voyage.html"><span class="dot"></span><span class="lbl">Partir</span><br><span class="sub">Roadbook</span></a>
         <a class="fil-step" id="fil-s3" href="souvenir.html"><span class="dot"></span><span class="lbl">Souvenir</span><br><span class="sub">Souvenir</span></a>
-      </div>
-      <div class="fil-cta-row">
-        <a class="rr-btn rr-btn-primary rr-btn-sm" id="fil-cta" href="carnet.html">Continuer à collecter →</a>
       </div>
     </div>
     <div class="hub-avatars" id="hub-avatars"></div>
@@ -799,13 +797,6 @@ function hubMajFilVoyage(nbFiches, nbRegions){
   else if(nbRetenues>0) etape=1;
 
   const s=(n)=>n>1?'s':'';
-  const CTA=[
-    nbFiches>0
-      ? {label:'Tracer sur Horizon →', href:'horizon.html'}
-      : {label:'Nourrir le Carnet →', href:'carnet.html'},
-    {label:'Continuer sur Horizon →', href:'horizon.html'},
-    {label:'Ouvrir mon Roadbook →', href:'voyage.html'}
-  ];
 
   for(let i=0;i<4;i++){
     const el=document.getElementById('fil-s'+i);
@@ -814,8 +805,6 @@ function hubMajFilVoyage(nbFiches, nbRegions){
     if(i<etape) el.classList.add('done');
     else if(i===etape) el.classList.add('now');
   }
-  const cta=document.getElementById('fil-cta');
-  if(cta){ cta.textContent=CTA[etape].label; cta.setAttribute('href', CTA[etape].href); }
 
   // Tableau de bord (Accueil, 05/07 soir) : mêmes compteurs que ci-dessus, une seule
   // maison — pas de 2ᵉ calcul ailleurs pour les mêmes chiffres.
