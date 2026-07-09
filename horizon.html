@@ -1438,7 +1438,7 @@ function hzPopupFicheHtml(f){
   const ecartee=HZ_ECARTEES.has(f.id);
   const enVote=!!HZ_VOTE_DE_FICHE[f.id];
   const c=hzCoeursDe(f.id).love;
-  const estLeader=(typeof jeSuisLeaderHz==='function') && jeSuisLeaderHz();
+  const estLeader=(typeof peuxEpinglerHz==='function') && peuxEpinglerHz(f);
 
   let badge='', actions='';
   const propId=HZ_VOTE_DE_FICHE[f.id];
@@ -1517,7 +1517,7 @@ function hzGfVoteBarHtml(f){
   const enVote=!!HZ_VOTE_DE_FICHE[f.id];
   const propId=HZ_VOTE_DE_FICHE[f.id];
   const c=hzCoeursDe(f.id).love;
-  const estLeader=(typeof jeSuisLeaderHz==='function') && jeSuisLeaderHz();
+  const estLeader=(typeof peuxEpinglerHz==='function') && peuxEpinglerHz(f);
   if(retenu) return '<span class="rnr-retenue-banner">📌 Retenue pour ce voyage</span>';
   if(ecartee) return '<span class="rnr-ecartee-banner">🚫 Écartée par le groupe</span>';
   let actions='';
@@ -3647,8 +3647,8 @@ function carteFicheDrawer(f){
   const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
   const d=document.createElement('div'); d.className='hz-aimee';
   const enVote=!!HZ_VOTE_DE_FICHE[f.id];
-  const btnLeader=jeSuisLeaderHz()
-    ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
+  const btnLeader=peuxEpinglerHz(f)
+    ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher directement (clôt le vote consultatif en cours)':'Épingler au voyage')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
     : chipNonLeaderHz();
   const btnVote=enVote
     ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
@@ -4156,8 +4156,8 @@ function rendPanier(){
       const items=fiches.map(f=>{
         const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
         const enVote = !!HZ_VOTE_DE_FICHE[f.id];
-        const btnLeader = jeSuisLeaderHz()
-          ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
+        const btnLeader = peuxEpinglerHz(f)
+          ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher directement (clôt le vote consultatif en cours)':'Épingler au voyage')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : chipNonLeaderHzCompacte();
         const btnVote = enVote
           ? '<button class="hz-pr-tag-vote" type="button" title="Voir et voter" onclick="ouvrirCarteVote(\''+HZ_VOTE_DE_FICHE[f.id]+'\')">🗳️</button>'
@@ -4794,6 +4794,25 @@ async function hzEnvoieCandidate(lieuId){
       {onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: envoi candidate direct',error); return; }
     HZ_CANDIDATES.add(lieuId);
+    // Sujet (09/07, retour Bruno) : « un cœur ouvre direct un vote ». Fini le
+    // bouton 🗳️ Vote séparé que personne ne comprenait (test à deux, 08/07) —
+    // le cœur EST la proposition. Le vote reste consultatif : n'importe qui
+    // (leader ou auteur du cœur, voir peuxEpinglerHz) peut épingler à tout
+    // moment sans attendre son issue. Un seul vote par fiche : on vérifie
+    // qu'aucun n'est déjà ouvert avant d'en créer un (ré-héberger un cœur
+    // retiré puis remis ne doit pas empiler les votes).
+    if(!HZ_VOTE_DE_FICHE[lieuId] && HZ_GROUPE_ID && HZ_USER_ID){
+      const f=(typeof ficheParIdHz==='function') ? ficheParIdHz(lieuId) : null;
+      const row={
+        groupe_id:HZ_GROUPE_ID, auteur_id:HZ_USER_ID, type:'elimination',
+        titre:'On garde « '+(f&&f.nom?f.nom:'cette fiche')+' » ?',
+        options:['Garder','Écarter'], voyage_id:HZ_VOYAGE_ID, lieu_id:lieuId,
+        ferme_le:new Date(Date.now()+7*86400000).toISOString()
+      };
+      const {error:eVote}=await sb.from('propositions').insert(row);
+      if(eVote) console.warn('Horizon: vote auto sur cœur',eVote);   // non bloquant — le cœur reste posé même si le vote échoue
+      if(typeof hzChargerVotesOuverts==='function') await hzChargerVotesOuverts();
+    }
     majLigneCockpit();
     if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
   }catch(e){ console.warn('Horizon: envoi candidate direct',e); }
@@ -4836,7 +4855,19 @@ function jeSuisLeaderHz(){
   const moi = (typeof monMembreIdReel==='function') ? monMembreIdReel() : null;
   return !!(moi && HZ_LEADERS_ELUS && HZ_LEADERS_ELUS.length && HZ_LEADERS_ELUS.includes(moi));
 }
-// Le silence total quand on n'est pas leader se lit comme « ça marche pas » pour qui n'a pas
+// Sujet (09/07, retour Bruno) : épingler n'est plus réservé au leader. Le
+// cœur ouvre désormais un vote automatiquement (voir hzEnvoieCandidate) — le
+// vote devient un avis consultatif, pas un verrou. Pour boucler la boucle,
+// celui qui a mis le cœur peut épingler lui-même sa fiche (comme le leader),
+// sans attendre un arbitrage extérieur si personne n'objecte. Un seul
+// endroit qui sait qui a le droit — tous les appelants s'y réfèrent.
+function peuxEpinglerHz(ficheOuId){
+  if(jeSuisLeaderHz()) return true;
+  const lieuId = (ficheOuId && ficheOuId.id) ? ficheOuId.id : ficheOuId;
+  const c = (typeof hzCoeursDe==='function') ? hzCoeursDe(lieuId) : null;
+  return !!(c && c.love && c.love.mine);
+}
+// Le silence total quand on n'a pas le droit se lit comme « ça marche pas » pour qui n'a pas
 // conçu le système (signalé par Bruno, 07/07 — le vrai bug n'était pas technique, ergonomique).
 // On explique toujours QUI peut épingler, et on ouvre le tiroir groupe pour agir (lancer/rejoindre
 // le vote des leaders) au lieu de laisser un vide silencieux à la place du bouton.
@@ -4845,28 +4876,29 @@ function chipNonLeaderHz(){
     return '<span class="hz-non-leader" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');" title="Personne n\'anime encore ce voyage — cliquez pour lancer le vote">👑 Leader à désigner</span>';
   }
   const noms = HZ_LEADERS_ELUS.map(id=>(typeof nomMembre==='function')?nomMembre(id):'').filter(Boolean).join(', ');
-  return '<span class="hz-non-leader" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');" title="Seul(e) '+escapeHtmlHz(noms)+' peut épingler pour ce voyage — cliquez pour voir">👑 '+escapeHtmlHz(noms)+' anime</span>';
+  return '<span class="hz-non-leader" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');" title="'+escapeHtmlHz(noms)+' (ou la personne qui a mis le cœur) peut épingler — cliquez pour voir">👑 '+escapeHtmlHz(noms)+' anime</span>';
 }
 // Variante compacte (icône seule) pour les listes serrées où le texte ne tient pas.
 function chipNonLeaderHzCompacte(){
   const titre = (!HZ_LEADERS_ELUS || !HZ_LEADERS_ELUS.length)
     ? 'Personne n\'anime encore ce voyage — cliquez pour lancer le vote'
-    : 'Seul le leader peut épingler — cliquez pour voir qui';
+    : 'Le leader (ou la personne qui a mis le cœur) peut épingler — cliquez pour voir qui anime';
   return '<button class="hz-pr-epingle hz-pr-epingle-verrou" type="button" title="'+titre+'" onclick="event.stopPropagation();hzOuvrirDrawer(\'hz-drawer-groupe\');">👑</button>';
 }
 async function epinglerDirectementHz(fiche){
-  if(!jeSuisLeaderHz()) return;   // garde de sûreté (le bouton ne s'affiche déjà qu'au leader)
+  if(!peuxEpinglerHz(fiche)) return;   // garde de sûreté (le bouton ne s'affiche déjà qu'à qui a le droit)
   if(!HZ_VOYAGE_ID || !fiche || !fiche.id) return;
   if(HZ_RETENUS.has(fiche.id)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
   if(HZ_ECARTEES.has(fiche.id)){ alert('Cette fiche a été écartée par un vote du groupe.'); return; }
   const propId = HZ_VOTE_DE_FICHE[fiche.id];
+  const enTantQue = jeSuisLeaderHz() ? 'leader' : 'coeur';
   const msg = propId
-    ? 'Un vote est en cours sur « '+(fiche.nom||'cette fiche')+' ».\n\nEn l\'épinglant, tu clôtures ce vote et tranches au nom du groupe — c\'est le rôle d\'arbitre du leader (le vote n\'attend plus de voix, mais reste consultable dans Cockpit).'
-    : 'Tu épingles « '+(fiche.nom||'cette fiche')+' » au voyage, au nom du groupe.\n\nC\'est une décision de leader, sans passer par un vote. On peut toujours la retirer ensuite.';
+    ? 'Un vote est en cours sur « '+(fiche.nom||'cette fiche')+' » — c\'est un avis consultatif, pas un verrou.\n\nEn l\'épinglant, tu clôtures ce vote et tranches directement. On peut toujours la retirer ensuite.'
+    : 'Tu épingles « '+(fiche.nom||'cette fiche')+' » au voyage.\n\nOn peut toujours la retirer ensuite si le groupe change d\'avis.';
   if(!confirm(msg)) return;
   try{
     const {error}=await sb.from('voyage_fiches').upsert(
-      [{voyage_id:HZ_VOYAGE_ID, lieu_id:fiche.id, statut:'retenue', origine:'leader', maj_le:new Date().toISOString()}],
+      [{voyage_id:HZ_VOYAGE_ID, lieu_id:fiche.id, statut:'retenue', origine:enTantQue, maj_le:new Date().toISOString()}],
       {onConflict:'voyage_id,lieu_id'});
     if(error){ console.warn('Horizon: épingle directe',error); alert('Impossible d\'épingler pour le moment.'); return; }
     if(propId){
@@ -5239,8 +5271,8 @@ function rendAimees(){
     const ph=f.photo_url?'url(\''+f.photo_url+'\')':'';
     const d=document.createElement('div'); d.className='hz-aimee';
     const enVote = !!HZ_VOTE_DE_FICHE[f.id];
-    const btnLeader = jeSuisLeaderHz()
-      ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher au nom du groupe (clôt le vote en cours)':'Épingler au voyage, au nom du groupe')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
+    const btnLeader = peuxEpinglerHz(f)
+      ? '<button class="hz-aimee-epingle" type="button" title="'+(enVote?'Trancher directement (clôt le vote consultatif en cours)':'Épingler au voyage')+'">📌 '+(enVote?'Trancher':'Épingler')+'</button>'
       : chipNonLeaderHz();
     const btnVote = enVote
       ? '<button class="hz-aimee-tag-vote" type="button" title="Voir et voter">🗳️ En vote</button>'
