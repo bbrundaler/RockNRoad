@@ -24,38 +24,40 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 /* ── LE FIL DU VOYAGE — la signature ergonomique, fusionnée avec l'ancien header
    (05/07 soir : gagner de la hauteur pour révéler "Comment fonctionne RockNRoad"
    sans scroll — sous-titre et ligne de phase retirés, redondants avec le tableau
-   de bord ; colonne d'avatars pleine hauteur à droite). ── */.fil{
+   de bord ; colonne d'avatars pleine hauteur à droite).
+   (10/07, retour Bruno) : encore trop haut pour ce qu'il montre — padding,
+   titre et espacements resserrés d'environ moitié. ── */.fil{
   background:var(--surface);border:1px solid var(--surface-line);
-  border-radius:var(--r-lg);padding:16px 26px;margin-top:18px;
+  border-radius:var(--r-lg);padding:9px 26px;margin-top:12px;
   box-shadow:var(--shadow);display:flex;gap:20px;align-items:stretch;
 }
 .fil-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.fil-top h1{margin:0;}
+.fil-top h1{margin:0;font-size:19px;}
 .fil-top-right{display:flex;align-items:center;gap:10px;}
-.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:14px auto 0;width:100%;}
+.fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:8px auto 0;width:100%;}
 .fil-step{flex:1;text-align:center;position:relative;cursor:pointer;text-decoration:none;display:block;}
 .fil-step .dot{
-  width:14px;height:14px;border-radius:50%;margin:0 auto 8px;
+  width:11px;height:11px;border-radius:50%;margin:0 auto 5px;
   background:var(--bg);border:2px solid var(--gold-a35);position:relative;z-index:2;
   transition:all .2s;
 }
 .fil-step.done .dot{background:var(--gold);border-color:var(--gold);}
 .fil-step.now .dot{
   background:var(--gold-light);border-color:var(--gold);
-  box-shadow:0 0 0 5px var(--gold-a20);
+  box-shadow:0 0 0 4px var(--gold-a20);
 }
 .fil-step::before{
-  content:'';position:absolute;top:6px;left:-50%;width:100%;height:2px;
+  content:'';position:absolute;top:4.5px;left:-50%;width:100%;height:2px;
   background:var(--gold-a20);z-index:1;
 }
 .fil-step.done::before,.fil-step.now::before{background:var(--gold);}
 .fil-step:first-child::before{display:none;}
-.fil-step .lbl{font-size:13px;font-weight:600;color:var(--ink-dim);}
+.fil-step .lbl{font-size:12px;font-weight:600;color:var(--ink-dim);}
 .fil-step.now .lbl{color:var(--gold-text);}
-.fil-step .sub{font-size:11px;color:var(--ink-dim);opacity:.7;}
+.fil-step .sub{font-size:10px;color:var(--ink-dim);opacity:.7;}
 .fil-step:hover .lbl{color:var(--ink);}
-.fil-cta-row{display:flex;justify-content:flex-end;margin-top:10px;}
+.fil-cta-row{display:flex;justify-content:flex-end;margin-top:6px;}
 
 /* ── Modal création du premier voyage ── */
 .vy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);

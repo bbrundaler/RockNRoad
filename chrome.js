@@ -39,9 +39,13 @@
     /* Cockpit retiré (02/07, B18-Inc.D) : fusionné dans Horizon — le débat,
        le vote et la main du leader vivent désormais sur la carte d'Horizon. */
     {id:'voyage',   label:'Roadbook', href:'voyage.html'},
+    /* Cahier promu dans la barre principale (10/07, retour Bruno) : il avait
+       sa place officielle, pas juste un petit bouton planqué dans Roadbook —
+       retiré de là (voyage.html) au même moment. */
+    {id:'cahier',   label:'Cahier',   href:'cahier.html'},
     {id:'souvenir', label:'Souvenir', href:'souvenir.html'}
   ];
-  var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', souvenir:'📸'};
+  var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', cahier:'📓', souvenir:'📸'};
 
   /* ── 1 · THÈME : posé IMMÉDIATEMENT (avant le rendu) ── */
   var theme = 'clair';
