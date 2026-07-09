@@ -41,15 +41,6 @@
 /* SECTION HEADER COMPACT */
 .sh-compact{border-radius:10px;padding:16px 22px;color:white;margin:20px 28px 0;position:relative;overflow:hidden;}
 .sh-compact::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);background-size:22px 22px;}
-/* Sujet (08/07, retour Bruno) : ces boutons étaient en position:absolute pur
-   inline (right/top fixes, max-width:65%) — sur un écran étroit, le bloc
-   retombait en plusieurs lignes et se posait PAR-DESSUS le titre de région,
-   qui ne réservait aucune place pour lui (hors du flux). Classe dédiée pour
-   que le mobile puisse le repasser en flux normal, au-dessus du titre. */
-.rg-actions{position:absolute;right:20px;top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:65%;}
-@media(max-width:700px){
-  .rg-actions{position:static;max-width:none;justify-content:flex-start;margin-bottom:12px;}
-}
 .sh-pyr{background:linear-gradient(135deg,#0a1a0c,#2C5016);}
 .sh-atl{background:linear-gradient(135deg,#041420,#1a5a7a);}
 .sh-bou{background:linear-gradient(135deg,#160820,#6B3288);}
@@ -250,21 +241,47 @@
 
 /* MENU RÉGIONS UNIQUE (05/07 v2) : mini-carte + recherche, remplace la barre des
    22 onglets — un seul endroit, sticky, pas une copie par page-région. */
+/* MENU RÉGIONS UNIQUE (09/07 v3, retour Bruno) : carte carrée + bandeau région
+   côte à côte (au lieu d'empilés), barre du haut compacte (Jour/Nuit, menu
+   déroulant région, recherche) qui remplace l'ancienne rangée de pastilles —
+   énorme gain de hauteur. Le bandeau devient UNIQUE (partagé, mis à jour à
+   chaque changement de région) plutôt que dupliqué dans chacun des 22 onglets
+   — un seul endroit qui sait afficher « la région active », jamais 22 copies
+   cachées. */
 .rnr-nav-wrap{position:sticky;top:56px;z-index:150;background:rgba(15,13,9,.97);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--gold-a20);box-shadow:0 2px 12px rgba(0,0,0,.4);
   padding:14px 20px;}
+.rnr-nav-topbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.rnr-nav-journuit{display:flex;border-radius:8px;overflow:hidden;border:1.5px solid var(--surface-line);flex-shrink:0;}
+.rnr-nav-jn{background:var(--paper);color:var(--ink);border:none;font-size:12.5px;font-weight:600;
+  padding:8px 14px;cursor:pointer;font-family:'Inter',sans-serif;}
+.rnr-nav-jn.active{background:var(--gold);color:var(--chrome-bg);}
+.rnr-nav-select{flex-shrink:0;width:190px;padding:9px 10px;border-radius:8px;border:1.5px solid var(--surface-line);
+  background:var(--paper);color:var(--ink);font-size:13px;font-family:'Inter',sans-serif;}
+.rnr-nav-search{flex:1;}
 .rnr-nav-search input{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--surface-line);
-  background:var(--paper);color:var(--ink);font-size:13px;margin-bottom:10px;}
-#rnr-nav-map{width:100%;height:180px;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);margin-bottom:10px;}
-#rnr-nav-liste{display:flex;flex-wrap:wrap;gap:6px;max-height:96px;overflow-y:auto;}
-.rnr-nav-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:none;
-  border:1.5px solid rgba(255,255,255,.1);border-radius:20px;color:rgba(245,239,224,.65);
-  font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;
-  transition:all .18s;}
-.rnr-nav-chip:hover{border-color:var(--gold-a35);color:rgba(245,239,224,.9);}
-.rnr-nav-chip.active{border-color:var(--gold);background:var(--gold-a10);color:var(--gold);}
-.rnr-nav-count{font-size:9.5px;font-weight:700;opacity:.6;}
+  background:var(--paper);color:var(--ink);font-size:13px;}
+.rnr-nav-maprow{display:flex;gap:12px;align-items:stretch;}
+#rnr-nav-map{width:230px;height:230px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);}
+.rnr-nav-bandeau{flex:1;min-width:0;border-radius:12px;position:relative;overflow:hidden;
+  padding:18px 20px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;}
+.rnr-nav-bandeau .rg-actions{position:static;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:none;
+  flex-shrink:0;width:190px;}
+@media(max-width:900px){
+  .rnr-nav-topbar{flex-wrap:wrap;}
+  .rnr-nav-search{width:100%;order:1;}
+  .rnr-nav-maprow{flex-direction:column;}
+  #rnr-nav-map{width:100%;}
+  .rnr-nav-bandeau{flex-direction:column;align-items:stretch;}
+  .rnr-nav-bandeau .rg-actions{width:auto;}
+}
+/* Filtre Jour/Nuit (09/07) : au repos, les deux blocs restent visibles comme
+   avant — cliquer sur un des deux boutons masque l'autre groupe partout où le
+   Carnet le construit (populateRegionContent), sans dupliquer la logique par
+   région. */
+body.rnr-filtre-jour .rg-bloc-nuit{display:none!important;}
+body.rnr-filtre-nuit .rg-bloc-jour{display:none!important;}
 
 /* Panneau info dynamique carte */
 #carte-info-panel{background:var(--paper);border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
@@ -904,11 +921,10 @@ function populateRegionContent(rk, regionName, lieux){
   // ── Appliquer le filtre vote actif
   const lieuxFiltres = applyVoteFilter(lieux);
 
-  // ── MONDE 2 : Nuit = monde_nuit explicite OU type Camping/Halte (legacy)
-  const TYPES_NUIT = ['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
-  const nuits     = lieuxFiltres.filter(l => l.monde_nuit || TYPES_NUIT.includes(l.type));
-  // ── MONDE 1 : Activités = tout le reste
-  const activites = lieuxFiltres.filter(l => !l.monde_nuit && !TYPES_NUIT.includes(l.type));
+  // Jour/Nuit (09/07) : classification reprise de estNuitCarnet, une seule
+  // définition partagée avec le bandeau régional (voir plus bas dans ce fichier).
+  const nuits     = lieuxFiltres.filter(estNuitCarnet);
+  const activites = lieuxFiltres.filter(l=>!estNuitCarnet(l));
 
   // Compter pour les badges filtres (collectif : nb de fiches portant le marqueur, sur cette vue)
   const loveCount = lieux.filter(l=>{const c=coeurs[l.id];return c&&c.love.count>0;}).length;
@@ -948,8 +964,9 @@ function populateRegionContent(rk, regionName, lieux){
     contentEl.innerHTML=html; return;
   }
 
-  // ── BLOC ACTIVITÉS ──
+  // ── BLOC ACTIVITÉS (jour) ──
   if(activites.length){
+    html+='<div class="rg-bloc-jour">';
     if(sites.length){
       html+=`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div>
         <div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`;
@@ -962,19 +979,22 @@ function populateRegionContent(rk, regionName, lieux){
       html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">📍 Autres lieux</div></div>
         <div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`;
     }
+    html+='</div>';
   }
 
   // ── BLOC NUIT ──
   if(nuits.length){
     const nuitCount = nuits.length;
     html+=`
+      <div class="rg-bloc-nuit">
       <div class="nuit-section-header">
         <span class="nuit-icon">🌙</span>
         <span class="nuit-title">Où dormir</span>
         <span class="nuit-count">${nuitCount} lieu${nuitCount>1?'x':''}</span>
       </div>
       <div class="nuit-divider"></div>
-      <div class="sites-grid">${nuits.map(l=>makeNuitCard(l)).join('')}</div>`;
+      <div class="sites-grid">${nuits.map(l=>makeNuitCard(l)).join('')}</div>
+      </div>`;
   }
 
   if(html){
@@ -1374,8 +1394,6 @@ function updateOverviewCounts(byRegion){
 function switchRegionView(rk, view){
   document.getElementById('rv-'+rk+'-fiches')?.classList.toggle('active', view==='fiches');
   document.getElementById('rv-'+rk+'-recap')?.classList.toggle('active', view==='recap');
-  document.getElementById('rvt-'+rk+'-fiches')?.classList.toggle('active', view==='fiches');
-  document.getElementById('rvt-'+rk+'-recap')?.classList.toggle('active', view==='recap');
   if(view==='recap'){
     // Lazy init de la carte région
     setTimeout(()=>initRegionMap(rk), 50);
@@ -1427,29 +1445,15 @@ function couleurRegion22(slug){
   return m?m.c:null;
 }
 function createRegionTab(tabId, rk, regionName, lieux){
-  // Coquille COMPLÈTE et identique pour toutes les régions : barre de régions,
-  // bandeau, commutateur Fiches / Carte & Récap. Le contenu vient de
-  // populateRegionContent + buildRecapView (mêmes moteurs pour toutes).
+  // Coquille COMPLÈTE et identique pour toutes les régions : commutateur
+  // Fiches / Carte & Récap (piloté par le bandeau PARTAGÉ, 09/07 — plus de
+  // bandeau dupliqué ici). Le contenu vient de populateRegionContent +
+  // buildRecapView (mêmes moteurs pour toutes).
   const appMain=document.getElementById('carnet-main');
   if(!appMain || document.getElementById(tabId)) return;
-  const couleur=couleurRegion22(rk)||'#8b6914';
-  // Bandeau : dégradé sobre de la couleur signature vers l'anthracite de marque.
-  const grad=`linear-gradient(135deg,${couleur} 0%,${couleur}cc 42%,#1a140c 100%)`;
   const tab=document.createElement('div');
   tab.className='section';tab.id=tabId;tab.setAttribute('data-region-tab',rk);
   tab.innerHTML=`
-    <div class="sh-compact" style="background:${grad};padding:22px 28px;border:1px solid var(--gold-a20);">
-      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
-      <div class="rg-actions">
-        <button class="sh-pill active" onclick="switchRegionView('${rk}','fiches')" id="rvt-${rk}-fiches">Fiches</button>
-        <button class="sh-pill" onclick="switchRegionView('${rk}','recap')" id="rvt-${rk}-recap">Carte &amp; Récap</button>
-        <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
-        <a class="sh-pill" href="horizon.html?region=${rk}" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon">🧭 Horizon</a>
-      </div>
-      <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
-      <h2 style="font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:white;margin-bottom:2px;letter-spacing:-.5px;">${regionName}</h2>
-      <div style="font-size:12px;color:rgba(255,255,255,.6);">${(lieux&&lieux.length)||0} ${((lieux&&lieux.length)||0)>1?'fiches':'fiche'} dans ce coin</div>
-    </div>
     <div class="region-view active" id="rv-${rk}-fiches">
       <div class="inner" id="${rk}-content">
         <div class="region-loader">
@@ -1619,8 +1623,14 @@ function makeNuitCard(l){
 // au survol, et seule la région ACTIVE reste colorée en dehors du survol.
 // Liste passée en pastilles compactes (nom+compteur ensemble), pas des lignes
 // pleine largeur avec le chiffre à l'autre bout de l'écran.
-let RNR_NAV_MAP=null, RNR_NAV_LAYERS={}, RNR_NAV_ACTIVE=null, RNR_NAV_FICHES={};
+let RNR_NAV_MAP=null, RNR_NAV_LAYERS={}, RNR_NAV_ACTIVE=null, RNR_NAV_FICHES={}, RNR_NAV_BYTAB={};
 const RNR_NAV_NEUTRE='#8a8a8a';
+// Classification jour/nuit UNIQUE du Carnet (09/07) : reprise telle quelle de
+// populateRegionContent (qui l'utilisait en dur) — le bandeau régional en a
+// besoin aussi pour son compte « X fiches jour / X fiches nuit ». Un seul
+// endroit, les deux appelants s'y réfèrent.
+const RNR_TYPES_NUIT_CARNET=['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
+function estNuitCarnet(l){ return !!(l && (l.monde_nuit || RNR_TYPES_NUIT_CARNET.includes(l.type))); }
 function rnrNavStyleRegion(rk, survol){
   const aDesFiches=!!RNR_NAV_FICHES[rk];
   if(!aDesFiches) return {fillColor:'#8a8a8a', fillOpacity:0.10, color:'#1a1510', weight:1};
@@ -1636,28 +1646,46 @@ function construitMenuRegionsUnique(byTab){
   host.dataset.built='1';
   const regionsAvecFiches=Object.keys(byTab).filter(rk=>byTab[rk]&&byTab[rk].length);
   RNR_NAV_FICHES={}; regionsAvecFiches.forEach(rk=>RNR_NAV_FICHES[rk]=byTab[rk].length);
+  RNR_NAV_BYTAB=byTab;
+  const options=regionsAvecFiches
+    .sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr'))
+    .map(rk=>`<option value="${rk}">${nomRegion22(rk)} (${byTab[rk].length})</option>`).join('');
+  const datalist=regionsAvecFiches.map(rk=>`<option value="${nomRegion22(rk)}">`).join('');
   host.innerHTML=`
     <div class="rnr-nav-wrap">
-      <div class="rnr-nav-search">
-        <input type="text" id="rnr-nav-search-input" placeholder="🔎 Chercher une région…" oninput="rnrNavFiltre(this.value)">
+      <div class="rnr-nav-topbar">
+        <div class="rnr-nav-journuit">
+          <button type="button" class="rnr-nav-jn" id="rnr-jn-jour" onclick="rnrNavJourNuit('jour')">☀️ Jour</button>
+          <button type="button" class="rnr-nav-jn" id="rnr-jn-nuit" onclick="rnrNavJourNuit('nuit')">🌙 Nuit</button>
+        </div>
+        <select class="rnr-nav-select" id="rnr-nav-select" onchange="if(this.value) showTab('dyn-'+this.value)">
+          <option value="">Région…</option>
+          ${options}
+        </select>
+        <div class="rnr-nav-search">
+          <input type="text" list="rnr-nav-datalist" id="rnr-nav-search-input" placeholder="🔎 Chercher une région…"
+            onchange="rnrNavRechercheChange(this.value)">
+          <datalist id="rnr-nav-datalist">${datalist}</datalist>
+        </div>
       </div>
-      <div id="rnr-nav-map"></div>
-      <div id="rnr-nav-liste"></div>
+      <div class="rnr-nav-maprow">
+        <div id="rnr-nav-map"></div>
+        <div class="sh-compact rnr-nav-bandeau" id="rnr-nav-bandeau" style="visibility:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
+          <div style="min-width:0;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
+            <h2 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;margin-bottom:8px;letter-spacing:-.5px;" id="rnr-band-titre"></h2>
+            <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;" id="rnr-band-info"></div>
+          </div>
+          <div class="rg-actions">
+            <button type="button" class="sh-pill active" id="rnr-band-btn-fiches" onclick="rnrNavVoir('fiches')">Fiches</button>
+            <button type="button" class="sh-pill" id="rnr-band-btn-recap" onclick="rnrNavVoir('recap')">Carte &amp; Récap</button>
+            <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
+            <a class="sh-pill" id="rnr-band-btn-horizon" href="horizon.html" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon">🧭 Horizon</a>
+          </div>
+        </div>
+      </div>
     </div>`;
-  const liste=document.getElementById('rnr-nav-liste');
-  regionsAvecFiches
-    .sort((a,b)=>nomRegion22(a).localeCompare(nomRegion22(b),'fr'))
-    .forEach(rk=>{
-      const btn=document.createElement('button');
-      btn.className='rnr-nav-chip';
-      btn.dataset.rname=nomRegion22(rk);
-      btn.dataset.rk=rk;
-      btn.innerHTML=`${nomRegion22(rk)}<span class="rnr-nav-count">${byTab[rk].length}</span>`;
-      btn.onclick=()=>{ showTab('dyn-'+rk); };
-      btn.onmouseenter=()=>{ const lyr=RNR_NAV_LAYERS[rk]; if(lyr) lyr.setStyle(rnrNavStyleRegion(rk, true)); };
-      btn.onmouseleave=()=>{ const lyr=RNR_NAV_LAYERS[rk]; if(lyr) lyr.setStyle(rnrNavStyleRegion(rk, false)); };
-      liste.appendChild(btn);
-    });
   if(window.RNR_GEOJSON_22 && window.L){
     RNR_NAV_MAP=L.map('rnr-nav-map',{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false});
     const layer=L.geoJSON(window.RNR_GEOJSON_22,{
@@ -1676,19 +1704,66 @@ function construitMenuRegionsUnique(byTab){
     try{ RNR_NAV_MAP.fitBounds(layer.getBounds(), {padding:[6,6]}); }catch(e){}
   }
 }
+// Bandeau région PARTAGÉ (09/07) : mis à jour à chaque changement de région
+// plutôt que dupliqué dans les 22 onglets — appelé par rnrNavSurbrille, elle-
+// même appelée par showTab à chaque bascule d'onglet région.
+function rnrNavMajBandeau(rk){
+  const band=document.getElementById('rnr-nav-bandeau');
+  if(!band) return;
+  if(!rk || !RNR_NAV_BYTAB[rk]){ band.style.visibility='hidden'; return; }
+  const lieux=RNR_NAV_BYTAB[rk];
+  const couleur=couleurRegion22(rk)||'#8b6914';
+  band.style.background=`linear-gradient(135deg,${couleur} 0%,${couleur}cc 42%,#1a140c 100%)`;
+  band.dataset.rk=rk;
+  document.getElementById('rnr-band-titre').textContent=nomRegion22(rk);
+  const nNuit=lieux.filter(estNuitCarnet).length, nJour=lieux.length-nNuit;
+  document.getElementById('rnr-band-info').innerHTML='Dans cette région :<br>'+
+    '<b style="color:#fff;">'+nJour+' fiche'+(nJour>1?'s':'')+'</b> jour<br>'+
+    '<b style="color:#fff;">'+nNuit+' fiche'+(nNuit>1?'s':'')+'</b> nuit';
+  document.getElementById('rnr-band-btn-horizon').href='horizon.html?region='+rk;
+  document.getElementById('rnr-band-btn-fiches').classList.add('active');
+  document.getElementById('rnr-band-btn-recap').classList.remove('active');
+  const sel=document.getElementById('rnr-nav-select'); if(sel) sel.value=rk;
+  band.style.visibility='visible';
+}
+// Bascule Fiches / Carte & Récap depuis le bandeau partagé — la région
+// concernée est celle actuellement affichée (band.dataset.rk), jamais
+// figée dans l'attribut onclick comme avant (un seul bandeau pour les 22).
+function rnrNavVoir(view){
+  const band=document.getElementById('rnr-nav-bandeau');
+  const rk=band && band.dataset.rk;
+  if(!rk) return;
+  switchRegionView(rk, view);
+  document.getElementById('rnr-band-btn-fiches').classList.toggle('active', view==='fiches');
+  document.getElementById('rnr-band-btn-recap').classList.toggle('active', view==='recap');
+}
+// Jour/Nuit (09/07) : re-cliquer sur le bouton déjà actif désélectionne (retour
+// au repos, les deux groupes affichés) — un seul état global, jamais par région.
+let RNR_JOURNUIT=null;
+function rnrNavJourNuit(mode){
+  RNR_JOURNUIT = (RNR_JOURNUIT===mode) ? null : mode;
+  document.body.classList.toggle('rnr-filtre-jour', RNR_JOURNUIT==='jour');
+  document.body.classList.toggle('rnr-filtre-nuit', RNR_JOURNUIT==='nuit');
+  document.getElementById('rnr-jn-jour').classList.toggle('active', RNR_JOURNUIT==='jour');
+  document.getElementById('rnr-jn-nuit').classList.toggle('active', RNR_JOURNUIT==='nuit');
+}
 // Marque la région ACTIVE (celle affichée) — seule à rester colorée sur la
-// mini-carte hors survol ; les autres retombent en neutre.
+// mini-carte hors survol ; les autres retombent en neutre. Met aussi à jour
+// le bandeau partagé (09/07) : les deux vivaient déjà ensemble en pratique,
+// autant qu'un seul appel les synchronise.
 function rnrNavSurbrille(rk){
   RNR_NAV_ACTIVE=rk;
-  document.querySelectorAll('.rnr-nav-chip').forEach(b=>b.classList.toggle('active', b.dataset.rk===rk));
   Object.keys(RNR_NAV_LAYERS).forEach(k=>{ RNR_NAV_LAYERS[k].setStyle(rnrNavStyleRegion(k, false)); });
+  rnrNavMajBandeau(rk);
 }
-function rnrNavFiltre(texte){
-  const q=(texte||'').toLowerCase().trim();
-  document.querySelectorAll('.rnr-nav-chip').forEach(b=>{
-    const match=!q || (b.dataset.rname||'').toLowerCase().includes(q);
-    b.style.display=match?'inline-flex':'none';
-  });
+// Recherche (09/07) : datalist native (autocomplete du navigateur, pas de
+// filtre à réécrire à la main) — on saute à la région dès qu'un nom exact
+// est reconnu, comme un clic sur la carte ou le menu déroulant.
+function rnrNavRechercheChange(texte){
+  const nom=(texte||'').trim().toLowerCase();
+  if(!nom) return;
+  const rk=Object.keys(RNR_NAV_FICHES).find(k=>nomRegion22(k).toLowerCase()===nom);
+  if(rk) showTab('dyn-'+rk);
 }
 
 // ── ÉDITION DE FICHE — délègue à fiche-edit.js (module partagé Carnet+
