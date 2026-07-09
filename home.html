@@ -258,19 +258,19 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
     </div>
     <div class="hub-carte-cote">
       <div class="hub-dashboard" id="hub-tableau">
-        <div class="hdb-cell">
+        <a class="hdb-cell hdb-cell-clic" href="carnet.html" title="Voir toutes les fiches dans le Carnet">
           <div class="hdb-val" id="htFiches">—</div>
           <div class="hdb-label" id="htFichesLabel">fiches</div>
-        </div>
-        <div class="hdb-cell">
+        </a>
+        <a class="hdb-cell hdb-cell-clic" href="voyage.html" title="Voir les étapes retenues dans le Roadbook">
           <div class="hdb-val" id="htRetenues">—</div>
           <div class="hdb-label" id="htRetenuesLabel">retenues</div>
-        </div>
-        <a class="hdb-cell hdb-cell-clic" id="htVotesCell" href="horizon.html?ouvrir=coeurs" style="display:none;"
-          title="Voir les votes en cours">
+        </a>
+        <button type="button" class="hdb-cell hdb-cell-clic" id="htVotesCell" style="display:none;border:none;font:inherit;background:none;width:100%;"
+          title="Voir les votes en cours" onclick="hubOuvrirPopupVotesManuel()">
           <div class="hdb-val" id="htVotes">—</div>
           <div class="hdb-label" id="htVotesLabel">vote en cours</div>
-        </a>
+        </button>
       </div>
       <div class="hub-dashboard" id="hub-dashboard" style="display:none;">
         <div class="hdb-cell">
@@ -717,12 +717,16 @@ async function hubMajVotesEnCours(voyageId, userId){
         .in('proposition_id',ids).eq('votant_id',userId);
       const dejaVotes=new Set((mesVotes||[]).map(v=>v.proposition_id));
       const enAttente=(props||[]).filter(p=>!dejaVotes.has(p.id));
+      HUB_VOTES_EN_ATTENTE=enAttente;
       hubProposePopupVotes(voyageId, enAttente);
+    } else {
+      HUB_VOTES_EN_ATTENTE=[];
     }
   }catch(e){ console.warn('Hub: votes en cours',e); }
 }
 // Mémoire locale (par appareil, par voyage) des votes déjà proposés en popup —
 // pour ne relancer le popup QUE si un vote vraiment nouveau apparaît.
+let HUB_VOTES_EN_ATTENTE=[];
 function hubProposePopupVotes(voyageId, votes){
   if(!votes.length) return;
   let vus=[];
@@ -738,6 +742,22 @@ function hubProposePopupVotes(voyageId, votes){
     const tousIds=votes.map(v=>v.id);
     localStorage.setItem('rnr_votes_popup_vus_'+voyageId, JSON.stringify([...new Set([...vus,...tousIds])]));
   }catch(e){}
+}
+// Déclenchement MANUEL (09/07, retour Bruno) : clic sur la pastille « votes en
+// cours » — toujours montrer le popup, même si déjà vu (contrairement à
+// l'arrivée automatique, un clic explicite n'est jamais du harcèlement).
+function hubOuvrirPopupVotesManuel(){
+  const overlay=document.getElementById('hub-arrivee-overlay');
+  const liste=document.getElementById('hub-arrivee-liste');
+  if(!overlay || !liste) return;
+  if(!HUB_VOTES_EN_ATTENTE.length){
+    // La pastille est visible (des votes existent) mais j'ai peut-être déjà
+    // voté partout de mon côté — direction Horizon pour voir l'état complet.
+    window.location.href='horizon.html?ouvrir=coeurs';
+    return;
+  }
+  liste.innerHTML=HUB_VOTES_EN_ATTENTE.map(v=>'<li>'+escapeHubHtml(v.titre||'Vote')+'</li>').join('');
+  overlay.style.display='flex';
 }
 function hubFermeArriveePopup(){
   const overlay=document.getElementById('hub-arrivee-overlay');

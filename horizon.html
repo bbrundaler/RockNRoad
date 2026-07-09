@@ -3972,6 +3972,26 @@ function hzOuvrirDrawer(id){
     cible.classList.add('ouvert');
     const btn=document.getElementById(id==='hz-drawer-groupe'?'hz-rail-groupe':'hz-rail-coeurs');
     if(btn) btn.classList.add('actif');
+    // Sujet (09/07, retour Bruno) : le tag « En vote » pouvait pointer vers un
+    // vote déjà clos ailleurs (un autre membre, ou nous en base ce matin) sans
+    // que le tiroir le sache — clic silencieux, aucun retour. On rafraîchit à
+    // chaque ouverture, l'état affiché est donc toujours le vrai état.
+    if(id==='hz-drawer-coeurs' && typeof hzChargerVotesOuverts==='function'){
+      hzChargerVotesOuverts().then(()=>{
+        // Sujet (09/07, retour Bruno, test à deux) : le petit tag « En vote »
+        // sur une carte ne suffisait pas — les gens ne comprenaient pas qu'une
+        // décision les attendait. En ouvrant le tiroir, si un vote est encore
+        // sans ma voix, on l'ouvre DIRECTEMENT en grand (même carte que partout
+        // ailleurs, avec son accès à la fiche complète) plutôt que de laisser
+        // deviner. Un seul à la fois (le premier), pas une rafale de popups.
+        const fiches=(HZ_FICHES||[]).filter(f=>HZ_CANDIDATES.has(f.id));
+        const enAttente=fiches.find(f=>{
+          const pid=HZ_VOTE_DE_FICHE[f.id];
+          return pid && !monVoteHz(pid);
+        });
+        if(enAttente) ouvrirCarteVote(HZ_VOTE_DE_FICHE[enAttente.id]);
+      });
+    }
   }
 }
 function brancheRail(){
@@ -5086,7 +5106,20 @@ function lancerVoteSurFiche(lieuId){
 function votesDeHz(pid){ return HZ_VOTES[pid]||[]; }
 function monVoteHz(pid){ return votesDeHz(pid).find(v=>v.votant_id===HZ_USER_ID); }
 function ouvrirCarteVote(pid){
-  const p=HZ_PROPS_PAR_ID[pid]; if(!p) return;
+  const p=HZ_PROPS_PAR_ID[pid];
+  if(!p){
+    // Sujet (09/07, retour Bruno) : « le bouton vote ne marche plus » — en
+    // réalité un clic silencieux : HZ_PROPS_PAR_ID était périmé (le tiroir ne
+    // rafraîchissait pas les votes à l'ouverture, voir hzOuvrirDrawer). On
+    // recharge une fois et on réessaie, plutôt que de ne rien faire.
+    if(typeof hzChargerVotesOuverts==='function'){
+      hzChargerVotesOuverts().then(()=>{
+        if(HZ_PROPS_PAR_ID[pid]) ouvrirCarteVote(pid);
+        else alert('Ce vote n\'est plus disponible — il vient peut-être d\'être clôturé.');
+      });
+    }
+    return;
+  }
   const bg=document.createElement('div');
   bg.className='vmodal-bg'; bg.id='vmodal-bg';
   bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
