@@ -902,8 +902,18 @@ function hubTraceVoyage(){
         html:`<div style="width:24px;height:24px;border-radius:50%;border:3px solid ${couleurSejour};box-shadow:0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.3);"></div>`,
         className:'', iconSize:[24,24], iconAnchor:[12,12]
       });
-      L.marker([night.lat,night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche)
-        .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;"><div style="font-weight:700;font-size:13px;padding:0 2px;">🏕️ Base du séjour</div><div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">'+escapeHubHtml(night.nom||'')+' · point de départ des excursions</div></div>', {maxWidth:220, autoPan:false, closeButton:false});
+      const photoBase = night.photo_url
+        ? '<div style="height:110px;background:#ddd center/cover no-repeat url(\''+escapeHubHtml(night.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
+        : '';
+      const mkBase = L.marker([night.lat,night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche)
+        .bindPopup('<div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">'+
+          photoBase+
+          '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">🏕️ '+escapeHubHtml(night.nom||'—')+'</div>'+
+          '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(night.region||'')+' · base du séjour</div>'+
+          '<a href="horizon.html?region='+encodeURIComponent(night.region||'')+'" style="display:block;font-size:12px;font-weight:600;color:var(--gold-text);padding:2px 2px 0;">Voir sur Horizon →</a>'+
+          '</div>', {maxWidth:240, autoPan:false, closeButton:false});
+      mkBase.on('mouseover', ()=>{ if(!HUB_TACTILE) mkBase.openPopup(); });
+      mkBase.on('mouseout',  ()=>{ if(!HUB_TACTILE) mkBase.closePopup(); });
       const parJour={};
       excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
       Object.keys(parJour).forEach(j=>{
@@ -915,11 +925,13 @@ function hubTraceVoyage(){
             html:`<div style="background:${couleurSejour};color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:8px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${x.row.jour_offset||1}</div>`,
             className:'', iconSize:[20,20], iconAnchor:[10,10]
           });
-          L.marker([x.f.lat,x.f.lng],{icon:iconExc}).addTo(couche).bindPopup(
+          const mkExc = L.marker([x.f.lat,x.f.lng],{icon:iconExc}).addTo(couche).bindPopup(
             '<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;">'+
             '<div style="font-weight:700;font-size:13px;margin-bottom:3px;padding:0 2px;">🥾 '+escapeHubHtml(x.f.nom||'—')+'</div>'+
             '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Jour '+(x.row.jour_offset||1)+' · excursion depuis '+escapeHubHtml(night.nom||'')+'</div>'+
             '</div>', {maxWidth:220, autoPan:false, closeButton:false});
+          mkExc.on('mouseover', ()=>{ if(!HUB_TACTILE) mkExc.openPopup(); });
+          mkExc.on('mouseout',  ()=>{ if(!HUB_TACTILE) mkExc.closePopup(); });
         });
       });
     });

@@ -1440,7 +1440,9 @@ function hzTraceVoyage(){
         html:`<div style="width:22px;height:22px;border-radius:50%;border:3px solid ${couleurSejour};box-shadow:0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.3);"></div>`,
         className:'', iconSize:[22,22], iconAnchor:[11,11]
       });
-      L.marker([+night.lat,+night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche);
+      const mkBase = L.marker([+night.lat,+night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche);
+      mkBase.bindTooltip(()=>hzTooltipFicheHtml(night), {direction:'top', offset:[0,-10], opacity:1});
+      mkBase.on('click', (ev)=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; hzOuvreGrandeFiche(night.id, {currentTarget:mkBase.getElement?mkBase.getElement():null}); });
       const parJour={};
       excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
       Object.keys(parJour).forEach(j=>{
