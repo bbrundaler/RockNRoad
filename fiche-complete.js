@@ -3,14 +3,21 @@
 // Sujet (05/07, retour Bruno) : Horizon doit pouvoir montrer la même fiche
 // riche que le Carnet ("elle est super belle") sans jamais la reconstruire à
 // côté. Ce module rend UNIQUEMENT le contenu (photo, description, mot de la
-// famille, conseil, infos pratiques, tags) — le vote et les actions restent
-// injectés par l'appelant, pour ne jamais dupliquer le moteur de vote
+// famille, conseil, infos pratiques, tags) — les actions utilitaires restent
+// injectées par l'appelant, pour ne jamais dupliquer le moteur de vote
 // (B20 : ❤️→candidate reste dans hzToggleVote/toggleVote, jamais ailleurs).
+//
+// Sujet (09/07, retour Bruno, test à deux) : le vote (Garder/Écarter) ne vit
+// plus DANS ce gabarit. Enterré tout en bas d'une fiche avec photo+description
+// +bloc pratique, il fallait scroller pour le voir — la testeuse pensait que
+// la fiche s'arrêtait à la description. Le vote vit maintenant dans un bandeau
+// fixe hors du scroll (hz-gf-vote-footer / gf-vote-footer), posé par CHAQUE
+// page hôte à côté de son conteneur (jamais ici, pour ne pas forker ce
+// gabarit en une "fiche à voter" différente d'une "fiche à lire").
 //
 // Usage : RNR_FICHE_COMPLETE.html(lieu, {
 //   noteG, noteF, dogBadge,     // badges déjà formatés — utiliser badgeNoteGoogle/
 //                               // badgeNoteFamille ci-dessous pour rester lisibles
-//   voteBarHtml,                // barre de vote/actions de LA page appelante
 //   extraActionsHtml,           // ex: bouton crayon (Carnet uniquement)
 //   closeButtonHtml,            // bouton fermer, propre à chaque page
 // })
@@ -85,7 +92,6 @@
         ${pratique?`<div class="gf-grid">${pratique}</div>`:''}
         ${tags?`<div class="gf-tags">${tags}</div>`:''}
         <div class="gf-bottom-row">
-          <div class="gf-bottom-vote">${opts.voteBarHtml||''}</div>
           <div class="gf-bottom-actions">
             <a href="${mapsUrl}" target="_blank" class="gf-btn-dark">📍 Maps</a>
             ${horizonUrl?`<a href="${horizonUrl}" class="gf-btn-dark">🧭 Horizon</a>`:''}

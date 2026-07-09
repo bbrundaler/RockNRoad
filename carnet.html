@@ -1815,10 +1815,13 @@ function openGrandeFiche(id){
 
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
     noteG, noteF, dogBadge,
-    voteBarHtml: makeVoteBar(l),
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
     extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button>`
   });
+  // Bandeau vote hors du scroll (09/07, même principe que Horizon) — posé à
+  // part dans #gf-vote-footer, jamais mélangé au contenu de la fiche.
+  const foot = document.getElementById('gf-vote-footer');
+  if(foot) foot.innerHTML = makeVoteBar(l);
   document.getElementById('gf-overlay').style.display = 'flex';
 }
 function closeGrandeFiche(){
@@ -1853,13 +1856,18 @@ function showToast(msg){
 
 <!-- ═══ GRANDE FICHE (lecture riche) ═══ -->
 <div id="gf-overlay" onclick="if(event.target===this)closeGrandeFiche()">
-  <div id="gf-modal"><div id="gf-body"></div></div>
+  <div id="gf-modal">
+    <div id="gf-body"></div>
+    <div id="gf-vote-footer" class="gf-vote-footer"></div>
+  </div>
 </div>
 <style>
-#gf-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
-#gf-modal{ /* GRANDE FICHE : suit les rôles (papier en clair, sombre en sombre) — décision Bruno 12/06 */
-  background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;}
-#gf-body{border-radius:16px;overflow:hidden;}
+#gf-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3500;align-items:center;justify-content:center;padding:20px;}
+#gf-modal{ /* GRANDE FICHE : suit les rôles (papier en clair, sombre en sombre) — décision Bruno 12/06.
+  09/07 : colonne scrollable (gf-body) + bandeau vote fixe (gf-vote-footer), même principe qu'Horizon —
+  le vote de la testeuse doit rester visible sans scroller la fiche. */
+  background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;max-height:86vh;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;}
+#gf-body{overflow-y:auto;}
 </style>
 
 </body>

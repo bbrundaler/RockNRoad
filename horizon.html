@@ -1084,8 +1084,9 @@ body.hz-explo-on #hz-rail{display:none;}
      toujours "sur Horizon". Effet d'ouverture : la fiche grossit depuis le
      point cliqué (voir hzOuvreGrandeFiche). -->
 <div id="hz-gf-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,0);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;transition:background .35s ease;" onclick="if(event.target===this)hzFermeGrandeFiche()">
-  <div id="hz-gf-modal" style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
-    <div id="hz-gf-body"></div>
+  <div id="hz-gf-modal" style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5);display:flex;flex-direction:column;">
+    <div id="hz-gf-body" style="overflow-y:auto;"></div>
+    <div id="hz-gf-vote-footer" class="gf-vote-footer"></div>
   </div>
 </div>
 
@@ -1564,10 +1565,15 @@ function hzGfConstruitHtml(f){
   const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(f.note_famille);
   return RNR_FICHE_COMPLETE.html(f, {
     noteG, noteF,
-    voteBarHtml: hzGfVoteBarHtml(f),
     closeButtonHtml: '<button class="gf-close" onclick="hzFermeGrandeFiche()">✕</button>',
     extraActionsHtml: '<button class="gf-btn-dark" data-lid="'+f.id+'" onclick="hzFermeGrandeFiche();hzOuvreEditModal(this.dataset.lid)">✏️ Modifier</button>'
   });
+}
+// Le bandeau vote est hors du contenu scrollable (09/07) : posé/rafraîchi à
+// part, dans #hz-gf-vote-footer — jamais mélangé au HTML de hzGfConstruitHtml.
+function hzGfPoseVoteFooter(f){
+  const foot=document.getElementById('hz-gf-vote-footer');
+  if(foot) foot.innerHTML = hzGfVoteBarHtml(f);
 }
 // Retour Bruno (07/07) : le stylo d'édition manquait sur Horizon. Délègue au
 // module partagé fiche-edit.js (même modale que le Carnet, un seul endroit) —
@@ -1592,6 +1598,7 @@ function hzOuvreGrandeFiche(ficheId, evt){
   if(!f) return;
   HZ_GF_FICHE_ID=ficheId;
   document.getElementById('hz-gf-body').innerHTML = hzGfConstruitHtml(f);
+  hzGfPoseVoteFooter(f);
   const overlay=document.getElementById('hz-gf-overlay');
   const modal=document.getElementById('hz-gf-modal');
   if(!overlay||!modal) return;
@@ -1627,8 +1634,10 @@ function hzGfRafraichir(lieuId){
   if(HZ_GF_FICHE_ID!==lieuId) return;   // la grande fiche affiche autre chose, ou est fermée
   const f=(HZ_FICHES||[]).find(x=>x.id===lieuId);
   if(!f) return;
-  const body=document.getElementById('hz-gf-body');
-  if(body) body.innerHTML = hzGfConstruitHtml(f);
+  // Seul le bandeau vote change après ❤️/vote/épingler (09/07) — le contenu
+  // (photo, description...) ne bouge pas ; ne rafraîchir que le footer évite
+  // de faire sauter le scroll de la fiche si le lecteur était en train de lire.
+  hzGfPoseVoteFooter(f);
 }
 function hzFermeGrandeFiche(){
   const overlay=document.getElementById('hz-gf-overlay');

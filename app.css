@@ -444,9 +444,18 @@ a.rr-paper:hover, .rr-paper.rr-hover:hover {
 .gf-cell-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
 .gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
 .gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
-.gf-bottom-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--gold-a20);padding-top:10px;}
-.gf-bottom-vote{display:flex;flex-wrap:wrap;gap:6px;}
+.gf-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;border-top:1px solid var(--gold-a20);padding-top:10px;}
 .gf-bottom-actions{display:flex;flex-wrap:wrap;gap:8px;}
 .gf-btn-dark{background:var(--chrome-bg);border:1px solid var(--gold-a35);color:var(--gold-light);font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
 .rnr-retenue-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--mk-epingle,#2c5016);}
 .rnr-ecartee-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--ink-dim,#666);}
+
+/* ── BANDEAU VOTE (09/07, retour Bruno) ─────────────────────────────────────
+   Hors du scroll de la fiche, toujours visible : la testeuse ne voyait pas
+   le choix Garder/Écarter, caché tout en bas d'une fiche avec photo+texte.
+   Style partagé (look identique Carnet/Horizon) ; chaque page hôte l'ancre
+   elle-même hors de sa zone scrollable (#hz-gf-vote-footer / #gf-vote-footer)
+   — le CONTENU de la fiche reste un gabarit unique et standard, seul le
+   conteneur qui l'entoure change d'une page à l'autre, comme pour gf-close. */
+.gf-vote-footer{flex-shrink:0;background:var(--paper);border-top:1px solid var(--gold-a35);padding:12px 22px;box-shadow:0 -8px 18px rgba(0,0,0,.15);}
+.gf-vote-footer:empty{display:none;}
