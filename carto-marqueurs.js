@@ -244,11 +244,11 @@
   function _ligneDroite(layer, latlngs, leger, couleur) {
     var col = couleur || couleurTrace();
     if (leger) {
-      // (10/07) Tracé EXCURSION : couleur propre au séjour (couleurExcursion),
-      // mais toujours plus fin, plus transparent, pointillé serré — pour qu'on
-      // le distingue au premier coup d'œil sans avoir besoin d'une légende.
-      // Jamais de flèches : c'est un aller-retour court, pas un sens.
-      L.polyline(latlngs, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
+      // (10/07, retour Bruno) : « sans le chemin principal les pétales sont pas
+      // très lisibles » — trait remonté à 4px et bien opaque (avant 2px/.55 :
+      // trop fin dès qu'il devient la SEULE chose affichée sur la carte).
+      // Toujours distinct du trajet principal (pas de halo, pointillé plus long).
+      L.polyline(latlngs, { color: col, opacity: 0.85, weight: 4, dashArray: '9,6' }).addTo(layer);
     } else {
       L.polyline(latlngs, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
       L.polyline(latlngs, { color: col, weight: 3, dashArray: '10,6' }).addTo(layer);
@@ -296,7 +296,7 @@
   function _dessineTrace(layer, trace, leger, couleur) {
     var col = couleur || couleurTrace();
     if (leger) {
-      L.polyline(trace, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
+      L.polyline(trace, { color: col, opacity: 0.85, weight: 4, dashArray: '9,6' }).addTo(layer);
     } else {
       L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
       L.polyline(trace, { color: col, weight: 3 }).addTo(layer);

@@ -954,38 +954,18 @@ function hubToggleExcursionLayer(nightUid){
   if(HUB_EXCURSIONS_MASQUEES.has(nightUid)){ HUB_EXCURSIONS_MASQUEES.delete(nightUid); couche.addTo(HUB_MAP); }
   else { HUB_EXCURSIONS_MASQUEES.add(nightUid); HUB_MAP.removeLayer(couche); }
   hubRendLegendeExcursions();
-  hubRecadreCarte();
+  // (10/07, retour Bruno) : PAS de recadrage/zoom automatique — supportable une
+  // fois, insupportable à chaque clic. Seul un vrai changement de trajet
+  // (initHubCarte) justifie un nouveau cadrage.
 }
 /* Montrer/masquer le trajet principal (10/07) — coupe HUB_TRACE_VOYAGE (route +
-   flèches), sans toucher aux couches d'excursion. Recadre sur ce qui reste visible. */
+   flèches), sans toucher aux couches d'excursion. Pas de recadrage automatique. */
 function hubToggleRoutePrincipale(){
   if(!HUB_MAP || !HUB_TRACE_VOYAGE) return;
   HUB_ROUTE_PRINCIPALE_VISIBLE=!HUB_ROUTE_PRINCIPALE_VISIBLE;
   if(HUB_ROUTE_PRINCIPALE_VISIBLE) HUB_TRACE_VOYAGE.addTo(HUB_MAP);
   else HUB_MAP.removeLayer(HUB_TRACE_VOYAGE);
   hubRendLegendeExcursions();
-  hubRecadreCarte();
-}
-/* Recadre sur ce qui est réellement visible (trajet principal si montré, chaque
-   séjour non masqué) — sans redessiner ni rappeler ORS. */
-function hubRecadreCarte(){
-  if(!HUB_MAP) return;
-  const bounds=[];
-  if(HUB_ROUTE_PRINCIPALE_VISIBLE){
-    HUB_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid).forEach(r=>{
-      const f=HUB_FICHES[r.lieu_id]; if(f && f.lat!=null) bounds.push([f.lat,f.lng]);
-    });
-    if(HUB_DOMICILE) bounds.push([HUB_DOMICILE.lat,HUB_DOMICILE.lng]);
-  }
-  Object.keys(HUB_EXCURSION_LAYERS).forEach(uid=>{
-    if(HUB_EXCURSIONS_MASQUEES.has(uid)) return;
-    HUB_ITINERAIRE_ROWS.filter(r=>r.rattache_a_nuit_uid===uid).forEach(r=>{
-      const f=HUB_FICHES[r.lieu_id]; if(f && f.lat!=null) bounds.push([f.lat,f.lng]);
-    });
-  });
-  if(!bounds.length) return;
-  if(bounds.length===1) HUB_MAP.setView(bounds[0],12);
-  else HUB_MAP.fitBounds(bounds,{padding:[40,40]});
 }
 
 // Tableau de bord du Hub : affiché dès qu'il y a au moins une étape ; rempli avec la

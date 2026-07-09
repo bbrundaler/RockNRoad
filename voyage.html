@@ -114,6 +114,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-info{flex:1;min-width:0;}
 .stop-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stop-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
+/* (10/07, retour Bruno) : bouton trajet principal, posé à côté de la date de
+   la 1re étape seulement — coupe/remontre routeLayer entier (route + pastilles
+   + maison), pour isoler un pétale d'excursion à l'écran. Couleur = celle du
+   trajet principal (--mk-trace), pour s'identifier tout seul. */
+.rb-toggle-principal-inline{display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:50%;border:1.5px solid var(--mk-trace,#2159A8);
+  background:var(--mk-trace,#2159A8);color:#fff;font-size:8px;line-height:1;
+  cursor:pointer;padding:0;vertical-align:-2px;margin:0 2px;transition:opacity .15s;}
+.rb-toggle-principal-inline.rb-principal-off{background:transparent;opacity:.6;}
 /* Nombre de nuits + météo : sur leur PROPRE ligne, pleine largeur de la fiche — plus de combat
    avec le titre pour la place (l'ancien agencement en colonne serrée coupait systématiquement
    le nom, quelle que soit la largeur essayée — signalé deux fois par Bruno, 07/07). Le 🌙 vit
@@ -198,18 +207,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 
 #map-wrap{flex:1;min-height:0;position:relative;display:flex;}
 #map{flex:1;min-height:0;height:auto;}
-/* (10/07, retour Bruno) : couper le trajet principal pour isoler un pétale à
-   l'écran — même mécanique que les pastilles de séjour, posé sur la carte
-   comme un contrôle Leaflet, coin haut-droit. Couleur = celle du trajet
-   principal (--mk-trace), pour que le bouton s'identifie tout seul. */
-#rb-toggle-principal{position:absolute;top:10px;right:10px;z-index:900;
-  display:flex;align-items:center;gap:6px;
-  background:var(--surface);border:1.5px solid var(--mk-trace,#2159A8);border-radius:var(--r-pill);
-  padding:6px 12px 6px 10px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);transition:opacity .15s;}
-#rb-toggle-principal::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--mk-trace,#2159A8);flex-shrink:0;}
-#rb-toggle-principal.rb-principal-off{opacity:.45;}
-#rb-toggle-principal:hover{background:var(--gold-a10);}
+/* (10/07, retour Bruno) : le bouton trajet principal vit maintenant à côté de
+   la date de la première fiche (colonne de gauche), plus sur la carte — voir
+   .rb-toggle-principal-inline. */
 /* ── BANDE RETENUES (invariant partagé avec le Cockpit) ──
    Sujet (08/07, retour Bruno) : la fiche Hango était rognée par le bas — pas
    à cause du rail (position:fixed, hors flux, ne mange aucune hauteur), mais
@@ -387,7 +387,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div id="voyage-right">
       <div id="map-wrap">
         <div id="map"></div>
-        <button id="rb-toggle-principal" type="button" onclick="rbToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale d'excursion">🧭 Trajet principal</button>
       </div>
       <!-- ── BANDE RETENUES : sous la carte, alignée à droite du panneau itinéraire ── -->
       <div id="voyage-retenues">
@@ -1298,6 +1297,7 @@ function initListEvents(){
     if(e.target.closest('.stop-note-toggle')) return;  // le picto note aussi — même bug que la croix, oublié à sa création (07/07)
     if(e.target.closest('.stop-note')) return;  // la note elle-même (édition, sélection de texte) ne doit jamais déclencher un glisser
     if(e.target.closest('.stop-nuits')) return;  // le nombre de nuits non plus
+    if(e.target.closest('.rb-toggle-principal-inline')) return;  // bouton trajet principal (10/07) — cliquable, pas un drag
     const item=e.target.closest('.stop-item');
     if(!item||!item.dataset.uid) return;
     pDragEl=item; pStarted=false; pSx=e.clientX; pSy=e.clientY;
@@ -1467,7 +1467,7 @@ function renderList(){
       </div>
       <div class="stop-info">
         <div class="stop-name">${item.nom||'—'}</div>
-        <div class="stop-meta">${dEtape?rbFormatDateCourt(dEtape)+' · ':''}${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
+        <div class="stop-meta">${dEtape?rbFormatDateCourt(dEtape):''}${i===0?` <button class="rb-toggle-principal-inline${RB_ROUTE_PRINCIPALE_VISIBLE?'':' rb-principal-off'}" type="button" onclick="event.stopPropagation();rbToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale">🧭</button>`:''}${(dEtape||i===0)?' · ':''}${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
         ${distHtml}
         ${nuit ? `<div class="stop-nuits-ligne">
           <span class="stop-nuits-txt">Nb nuits</span>
@@ -1750,28 +1750,6 @@ function renderMap(){
    cache. L'état masqué/visible est mémorisé (RB_EXCURSIONS_MASQUEES) pour
    survivre aux prochains render() de la session (pas persisté en base — c'est
    un réglage d'affichage, pas une décision de voyage). */
-/* Recadre la carte sur ce qui est RÉELLEMENT visible (trajet principal si
-   montré, chaque séjour non masqué) — sans redessiner ni rappeler ORS, juste
-   un fitBounds sur les coordonnées déjà connues. Appelé après chaque bascule
-   (10/07) pour que isoler un pétale le rapproche vraiment à l'écran. */
-function rbRecadreCarte(){
-  if(!map) return;
-  const bounds=[];
-  if(RB_ROUTE_PRINCIPALE_VISIBLE){
-    voyage.filter(v=>!v.rattache && v.lat && v.lng).forEach(v=>bounds.push([v.lat,v.lng]));
-    const dep=rbPointDepart(), ret=rbPointRetour();
-    if(dep) bounds.push([dep.lat,dep.lng]);
-    if(ret) bounds.push([ret.lat,ret.lng]);
-  }
-  Object.keys(EXCURSION_LAYERS).forEach(nightUid=>{
-    if(RB_EXCURSIONS_MASQUEES.has(nightUid)) return;
-    voyage.filter(v=>v.rattache===nightUid && v.lat && v.lng).forEach(v=>bounds.push([v.lat,v.lng]));
-  });
-  if(!bounds.length) return;
-  if(bounds.length===1) map.setView(bounds[0],12);
-  else map.fitBounds(bounds,{padding:[40,40]});
-}
-
 function rbToggleExcursionLayer(nightUid){
   if(!map) return;
   const couche=EXCURSION_LAYERS[nightUid];
@@ -1786,22 +1764,24 @@ function rbToggleExcursionLayer(nightUid){
   // Le pastille-swatch dans la colonne de gauche reflète l'état sans tout redessiner.
   const swatch=document.querySelector('.excursion-swatch[data-night-uid="'+nightUid+'"]');
   if(swatch) swatch.classList.toggle('excursion-swatch-off', RB_EXCURSIONS_MASQUEES.has(nightUid));
-  rbRecadreCarte();
+  // (10/07, retour Bruno) : PAS de recadrage/zoom automatique ici — supportable
+  // une fois, insupportable à chaque clic. La carte ne bouge plus toute seule ;
+  // seul un vrai changement de trajet (render()) justifie un nouveau cadrage.
 }
 
 /* Montrer/masquer LE TRAJET PRINCIPAL (10/07, retour Bruno) — pour isoler un
    pétale d'excursion à l'écran. Coupe routeLayer entier (route + pastilles
    numérotées + maison) : ce qu'on veut voir seul, c'est le pétale, pas la
    route ET ses marqueurs qui restent dessus. Ne touche à aucune couche
-   d'excursion. Re-cadre la carte sur ce qui reste visible. */
+   d'excursion. Pas de recadrage automatique (retour Bruno, zooms « insupportables »). */
 function rbToggleRoutePrincipale(){
   if(!map||!routeLayer) return;
   RB_ROUTE_PRINCIPALE_VISIBLE=!RB_ROUTE_PRINCIPALE_VISIBLE;
   if(RB_ROUTE_PRINCIPALE_VISIBLE) routeLayer.addTo(map);
   else map.removeLayer(routeLayer);
-  const btn=document.getElementById('rb-toggle-principal');
-  if(btn) btn.classList.toggle('rb-principal-off', !RB_ROUTE_PRINCIPALE_VISIBLE);
-  rbRecadreCarte();
+  document.querySelectorAll('.rb-toggle-principal-inline').forEach(btn=>{
+    btn.classList.toggle('rb-principal-off', !RB_ROUTE_PRINCIPALE_VISIBLE);
+  });
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
