@@ -1449,7 +1449,6 @@ function hzPopupFicheHtml(f){
   } else {
     if(enVote){
       badge='<span class="hz-pop-badge" style="background:#DC3C64">🗳️ En vote</span>';
-      actions+='<button class="hz-aimee-tag-vote" type="button" onclick="event.stopPropagation();ouvrirCarteVote(\''+propId+'\')">🗳️ Voir et voter</button>';
     } else if(c.count>0){
       badge='<span class="hz-pop-badge" style="background:var(--mk-coeur-moi,#DC3C64)">❤️ Coup de cœur</span>';
       actions+='<button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();lancerVoteSurFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
@@ -1479,7 +1478,7 @@ function hzPopupFicheHtml(f){
     '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(regionLabel)+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
     apercu+
     (actions?'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 2px 2px;">'+actions+'</div>':'')+
-    '<div style="padding:4px 2px 2px;"><button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();hzOuvreGrandeFiche(\''+f.id+'\',event)" style="width:100%;">📖 Lire la fiche complète</button></div>'+
+    '<div style="padding:4px 2px 2px;"><button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();hzOuvreGrandeFiche(\''+f.id+'\',event)" style="width:100%;">'+(enVote?'📖 Voir la fiche et voter':'📖 Lire la fiche complète')+'</button></div>'+
   '</div>';
 }
 // ❤️ cliqué DEPUIS la fiche riche : agit (hzToggleVote porte déjà tout, 02/07),
@@ -1520,13 +1519,43 @@ function hzGfVoteBarHtml(f){
   const estLeader=(typeof peuxEpinglerHz==='function') && peuxEpinglerHz(f);
   if(retenu) return '<span class="rnr-retenue-banner">📌 Retenue pour ce voyage</span>';
   if(ecartee) return '<span class="rnr-ecartee-banner">🚫 Écartée par le groupe</span>';
+  let html='';
+  // Sujet (09/07, retour Bruno, test à deux) : « Voir et voter » renvoyait vers
+  // un second popup minimal (juste le nom) — la testeuse ne connaissait pas le
+  // lieu et ne pouvait pas juger. Le choix Garder/Écarter vit maintenant ICI,
+  // directement sous la fiche complète (photo, description, tout) — une seule
+  // action, plus de va-et-vient entre deux popups.
+  if(enVote){
+    const vts=(typeof votesDeHz==='function')?votesDeHz(propId):[];
+    const mien=(typeof monVoteHz==='function')?monVoteHz(propId):null;
+    const cnt={}; vts.forEach(v=>{ cnt[v.valeur]=(cnt[v.valeur]||0)+1; });
+    const clotureLeader=(typeof jeSuisLeaderHz==='function' && jeSuisLeaderHz())
+      ? '<button class="hz-aimee-vote" type="button" style="margin-top:6px;" onclick="cloreVoteHz(\''+propId+'\')" title="Clôturer officiellement ce vote à la majorité des voix">🏁 Clôturer &amp; trancher à la majorité</button>' : '';
+    html+='<div class="hz-gf-vote-inline">'+
+      '<div class="vhint" style="margin-bottom:6px;">🗳️ '+vts.length+' / '+HZ_NB_MEMBRES+' ont voté</div>'+
+      '<div class="q-opts">'+['Garder','Écarter'].map(o=>{
+        const n=cnt[o]||0, chosen=(mien&&mien.valeur===o)?' q-chosen':'';
+        return '<div class="q-opt'+chosen+'" onclick="voterHzInline(\''+propId+'\',\''+o+'\',\''+f.id+'\')"><span class="t">'+o+'</span><span class="v">'+n+' voix'+(chosen?' ✓':'')+'</span></div>';
+      }).join('')+'</div>'+clotureLeader+'</div>';
+  }
   let actions='';
-  if(enVote) actions+='<button class="hz-aimee-tag-vote" type="button" onclick="ouvrirCarteVote(\''+propId+'\')">🗳️ Voir et voter</button>';
   actions+='<button class="vote-btn love'+(c.mine?' active':'')+'" type="button" onclick="hzPopupToggleLove(\''+f.id+'\')">❤️ '+(c.count>0?('J\'adore · '+c.count):'J\'adore')+'</button>';
   if(!enVote && c.count>0) actions+='<button class="hz-aimee-vote" type="button" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️ Lancer un vote</button>';
   if(estLeader) actions+='<button class="hz-aimee-epingle" type="button" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌 '+(enVote?'Trancher':'Épingler')+'</button>';
   else actions+=chipNonLeaderHz();
-  return '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+actions+'</div>';
+  return html+'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+actions+'</div>';
+}
+// Vote Garder/Écarter posé DEPUIS la grande fiche (09/07) — même écriture que
+// voterHz (table votes), mais rafraîchit la grande fiche en place au lieu du
+// petit popup modal.
+async function voterHzInline(pid, valeur, lieuId){
+  if(!HZ_USER_ID) return;
+  const {error}=await sb.from('votes')
+    .upsert({proposition_id:pid, votant_id:HZ_USER_ID, valeur:valeur},{onConflict:'proposition_id,votant_id'});
+  if(error){ console.warn('Horizon: voter (fiche complète)',error); alert('Vote non enregistré.'); return; }
+  const {data:vts}=await sb.from('votes').select('*').eq('proposition_id',pid);
+  HZ_VOTES[pid]=vts||[];
+  if(typeof hzGfRafraichir==='function') hzGfRafraichir(lieuId);
 }
 // Construit le HTML de la grande fiche (utilisé à l'ouverture ET au rafraîchissement
 // en place — un seul endroit, jamais deux versions qui divergent).
@@ -3661,7 +3690,7 @@ function carteFicheDrawer(f){
   const be=d.querySelector('.hz-aimee-epingle');
   if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
   const bv=d.querySelector('.hz-aimee-vote,.hz-aimee-tag-vote');
-  if(bv) bv.addEventListener('click',()=>{ enVote ? ouvrirCarteVote(HZ_VOTE_DE_FICHE[f.id]) : lancerVoteSurFiche(f.id); });
+  if(bv) bv.addEventListener('click',()=>{ enVote ? hzOuvreGrandeFiche(f.id) : lancerVoteSurFiche(f.id); });
   d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retirerCandidateVoyage(f.id));
   return d;
 }
@@ -3981,15 +4010,16 @@ function hzOuvrirDrawer(id){
         // Sujet (09/07, retour Bruno, test à deux) : le petit tag « En vote »
         // sur une carte ne suffisait pas — les gens ne comprenaient pas qu'une
         // décision les attendait. En ouvrant le tiroir, si un vote est encore
-        // sans ma voix, on l'ouvre DIRECTEMENT en grand (même carte que partout
-        // ailleurs, avec son accès à la fiche complète) plutôt que de laisser
-        // deviner. Un seul à la fois (le premier), pas une rafale de popups.
+        // sans ma voix, on ouvre DIRECTEMENT la fiche complète (photo,
+        // description) avec le choix Garder/Écarter juste en dessous — une
+        // seule action, jamais un petit popup minimal que personne ne peut
+        // juger sans connaître le lieu. Un seul à la fois (le premier).
         const fiches=(HZ_FICHES||[]).filter(f=>HZ_CANDIDATES.has(f.id));
         const enAttente=fiches.find(f=>{
           const pid=HZ_VOTE_DE_FICHE[f.id];
           return pid && !monVoteHz(pid);
         });
-        if(enAttente) ouvrirCarteVote(HZ_VOTE_DE_FICHE[enAttente.id]);
+        if(enAttente) hzOuvreGrandeFiche(enAttente.id);
       });
     }
   }
@@ -4160,7 +4190,7 @@ function rendPanier(){
           ? '<button class="hz-pr-epingle" type="button" title="'+(enVote?'Trancher directement (clôt le vote consultatif en cours)':'Épingler au voyage')+'" onclick="epinglerDirectementHzId(\''+f.id+'\')">📌</button>'
           : chipNonLeaderHzCompacte();
         const btnVote = enVote
-          ? '<button class="hz-pr-tag-vote" type="button" title="Voir et voter" onclick="ouvrirCarteVote(\''+HZ_VOTE_DE_FICHE[f.id]+'\')">🗳️</button>'
+          ? '<button class="hz-pr-tag-vote" type="button" title="Voir la fiche et voter" onclick="hzOuvreGrandeFiche(\''+f.id+'\')">🗳️</button>'
           : '<button class="hz-pr-vote" type="button" title="Lancer un vote du groupe" onclick="lancerVoteSurFiche(\''+f.id+'\')">🗳️</button>';
         return '<div class="hz-pr-fiche"><span class="hz-pr-mini" style="background-image:'+ph+'"></span>'+
           '<span class="hz-pr-nom">'+escapeHtmlHz(f.nom||'—')+'</span>'+btnVote+btnLeader+'</div>';
@@ -5117,7 +5147,7 @@ let NV_FICHE_PREREMPLIE=null;
 function lancerVoteSurFiche(lieuId){
   if(HZ_RETENUS.has(lieuId)){ alert('Cette fiche est déjà retenue pour ce voyage.'); return; }
   if(HZ_ECARTEES.has(lieuId)){ alert('Cette fiche a déjà été écartée par un vote du groupe.'); return; }
-  if(HZ_VOTE_DE_FICHE[lieuId]){ ouvrirCarteVote(HZ_VOTE_DE_FICHE[lieuId]); return; }
+  if(HZ_VOTE_DE_FICHE[lieuId]){ hzOuvreGrandeFiche(lieuId); return; }
   const f=hzFichesAimeesListe().find(x=>x.id===lieuId); if(!f) return;
   NV_FICHE_PREREMPLIE=lieuId;
   ouvrirCreationVote();
@@ -5133,66 +5163,15 @@ function lancerVoteSurFiche(lieuId){
 // ── VOIR ET VOTER LE VRAI VOTE (retour Bruno : « aucun endroit où tu vois le
 // vrai vote »). Porté de cockpit.html (carteVote/voter/cloreVote/
 // propagerVerdict), simplifié au seul type 'elimination' (Garder/Écarter) —
-// c'est le seul type que Horizon crée depuis une fiche. Ouvre dans la même
-// modale que la création de vote (vmodal), pas besoin d'un 2e système.
+// c'est le seul type que Horizon crée depuis une fiche.
+// Sujet (09/07, retour Bruno, test à deux) : le petit popup dédié
+// (ouvrirCarteVote/rendCarteVoteHz/voterHz) montrait le nom seul — personne
+// ne pouvait juger sans connaître le lieu. Retiré : le vote Garder/Écarter
+// vit maintenant DANS la fiche complète (hzGfVoteBarHtml/voterHzInline),
+// ouverte partout via hzOuvreGrandeFiche — un seul endroit, jamais deux
+// popups pour la même décision.
 function votesDeHz(pid){ return HZ_VOTES[pid]||[]; }
 function monVoteHz(pid){ return votesDeHz(pid).find(v=>v.votant_id===HZ_USER_ID); }
-function ouvrirCarteVote(pid){
-  const p=HZ_PROPS_PAR_ID[pid];
-  if(!p){
-    // Sujet (09/07, retour Bruno) : « le bouton vote ne marche plus » — en
-    // réalité un clic silencieux : HZ_PROPS_PAR_ID était périmé (le tiroir ne
-    // rafraîchissait pas les votes à l'ouverture, voir hzOuvrirDrawer). On
-    // recharge une fois et on réessaie, plutôt que de ne rien faire.
-    if(typeof hzChargerVotesOuverts==='function'){
-      hzChargerVotesOuverts().then(()=>{
-        if(HZ_PROPS_PAR_ID[pid]) ouvrirCarteVote(pid);
-        else alert('Ce vote n\'est plus disponible — il vient peut-être d\'être clôturé.');
-      });
-    }
-    return;
-  }
-  const bg=document.createElement('div');
-  bg.className='vmodal-bg'; bg.id='vmodal-bg';
-  bg.onclick=e=>{ if(e.target===bg) fermerCreationVote(); };
-  bg.innerHTML='<div class="vmodal" id="vmodal-inner"></div>';
-  document.body.appendChild(bg);
-  rendCarteVoteHz(pid);
-}
-function rendCarteVoteHz(pid){
-  const p=HZ_PROPS_PAR_ID[pid]; const box=document.getElementById('vmodal-inner');
-  if(!p || !box) return;
-  const mien=monVoteHz(pid), vts=votesDeHz(pid);
-  const c={}; vts.forEach(v=>{ c[v.valeur]=(c[v.valeur]||0)+1; });
-  const opts=['Garder','Écarter'];
-  const f=ficheParIdHz(p.lieu_id);
-  let html='<h3>'+escapeHtmlHz(p.titre)+'</h3>';
-  // Sujet (08/07, retour Bruno, test à deux) : le nom seul ne suffit pas pour
-  // juger une fiche qu'on ne connaît pas — il faut la fiche complète (photo,
-  // description) ET voir où se trouve le point. Réutilise hzOuvreGrandeFiche,
-  // le même mécanisme que partout ailleurs sur Horizon (jamais une 2ᵉ vue
-  // construite à côté) ; son bandeau de vote sait déjà revenir ici.
-  if(f) html+='<button type="button" class="vhint-fiche-btn" style="margin-bottom:10px" '+
-    'onclick="fermerCreationVote();hzOuvreGrandeFiche(\''+f.id+'\',event)">📖 Voir la fiche complète — <b>'+escapeHtmlHz(f.nom||'')+'</b></button>';
-  html+='<div class="vhint" style="margin-bottom:10px">'+vts.length+' / '+HZ_NB_MEMBRES+' ont voté'+
-    (p.ferme_le?(' · ferme le '+new Date(p.ferme_le).toLocaleDateString('fr-FR')):' · pas d\'échéance')+'</div>';
-  html+='<div class="q-opts">'+opts.map(o=>{
-    const n=c[o]||0, chosen=(mien&&mien.valeur===o)?' q-chosen':'';
-    return '<div class="q-opt'+chosen+'" onclick="voterHz(\''+pid+'\',\''+o+'\')"><span class="t">'+o+'</span><span class="v">'+n+' voix'+(chosen?' ✓':'')+'</span></div>';
-  }).join('')+'</div>';
-  html+='<div class="vmodal-foot"><button class="vbtn vbtn-no" onclick="fermerCreationVote()">Fermer</button>'+
-    (jeSuisLeaderHz()?'<button class="vbtn vbtn-go" onclick="cloreVoteHz(\''+pid+'\')">Clôturer &amp; trancher</button>':'')+'</div>';
-  box.innerHTML=html;
-}
-async function voterHz(pid, valeur){
-  if(!HZ_USER_ID) return;
-  const {error}=await sb.from('votes')
-    .upsert({proposition_id:pid, votant_id:HZ_USER_ID, valeur:valeur},{onConflict:'proposition_id,votant_id'});
-  if(error){ console.warn('Horizon: voter',error); alert('Vote non enregistré.'); return; }
-  const {data:vts}=await sb.from('votes').select('*').eq('proposition_id',pid);
-  HZ_VOTES[pid]=vts||[];
-  rendCarteVoteHz(pid);
-}
 async function cloreVoteHz(pid){
   const p=HZ_PROPS_PAR_ID[pid]; if(!p) return;
   if(!confirm('Clôturer ce vote ? Il n\'acceptera plus de voix, et la fiche part directement au résultat du vote. C\'est définitif.')) return;
@@ -5204,6 +5183,7 @@ async function cloreVoteHz(pid){
   fermerCreationVote();
   await hzChargerCoeurs();          // HZ_RETENUS/ECARTEES à jour
   await hzChargerVotesOuverts();    // la fiche n'est plus « en vote »
+  if(typeof hzGfRafraichir==='function' && p.lieu_id) hzGfRafraichir(p.lieu_id);
 }
 // Propage le verdict d'un vote clos vers voyage_fiches — même règle que le
 // Cockpit (majorité des VOTANTS, pas de tous les membres ; égalité → retenue).
@@ -5285,7 +5265,7 @@ function rendAimees(){
     const be=d.querySelector('.hz-aimee-epingle');
     if(be) be.addEventListener('click',()=>epinglerDirectementHz(f));
     const bv=d.querySelector('.hz-aimee-vote,.hz-aimee-tag-vote');
-    if(bv) bv.addEventListener('click',()=>{ enVote ? ouvrirCarteVote(HZ_VOTE_DE_FICHE[f.id]) : lancerVoteSurFiche(f.id); });
+    if(bv) bv.addEventListener('click',()=>{ enVote ? hzOuvreGrandeFiche(f.id) : lancerVoteSurFiche(f.id); });
     d.querySelector('.hz-aimee-retirer').addEventListener('click',()=>retireAimee(f.id));
     return d;
   };
