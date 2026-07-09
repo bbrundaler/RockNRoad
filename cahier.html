@@ -11,6 +11,7 @@
 <script src="tags.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js"></script>
+<script src="fiche-complete.js"></script>
 <style>
 *{box-sizing:border-box;}
 body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
@@ -94,6 +95,57 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .team-chip{font-size:9.5px;background:var(--gold-a10,rgba(200,168,75,.1));border:1px solid rgba(200,168,75,.2);border-radius:10px;padding:2px 8px;color:var(--ink-dim);}
 .team-presentation{font-size:11.5px;line-height:1.5;color:var(--ink-dim);font-style:italic;}
 @media(max-width:700px){.team-grid{grid-template-columns:1fr;}}
+
+/* ── FICHE COMPLÈTE, reprise d'app.css (10/07) — le Cahier n'a jamais chargé
+   app.css (toutes les autres pages en dépendent, lui a son propre habillage
+   papier) : on ne recopie QUE les classes .gf-* utilisées par fiche-complete.js,
+   pour que la même fiche riche (photo, description, conseil, pratique, tags)
+   s'imprime ici comme elle s'affiche partout ailleurs sur le site. */
+.gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:10px 10px 0 0;}
+.gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
+.gf-cover-overlay{padding:14px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.7));}
+.gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
+.gf-content{padding:16px 0 0;}
+.gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:var(--ink)!important;}
+.gf-sub{font-size:12px;color:var(--gold-deep);margin:0 0 14px;}
+.gf-desc{font-size:13.5px;line-height:1.6;color:var(--ink);margin:0 0 14px;}
+.gf-quote{background:rgba(255,255,255,.5);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
+.gf-quote-t{font-size:10px;color:var(--gold-deep);font-weight:700;margin-bottom:4px;}
+.gf-quote p{font-size:13px;line-height:1.6;color:var(--ink-dim);margin:0;font-style:italic;}
+.gf-conseil{background:var(--gold-a10,rgba(200,168,75,.1));border:1px solid var(--gold-a20,rgba(200,168,75,.2));padding:11px 14px;border-radius:8px;margin-bottom:16px;}
+.gf-conseil-t{font-size:11px;color:var(--gold-deep);font-weight:700;}
+.gf-conseil p{font-size:13px;color:var(--ink);margin:4px 0 0;line-height:1.5;}
+.gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.gf-cell{background:rgba(255,255,255,.5);padding:10px 12px;border-radius:8px;}
+.gf-cell-t{font-size:10px;color:var(--gold-deep);font-weight:700;margin-bottom:4px;}
+.gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
+.gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
+.gf-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;border-top:1px solid rgba(26,18,8,.09);padding-top:10px;}
+.gf-bottom-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.gf-btn-dark{background:#161410;border:1px solid var(--gold-a35,rgba(200,168,75,.35));color:#E8C86B;font-size:11px;padding:6px 11px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
+@media print{.gf-bottom-row{display:none;}} /* liens cliquables inutiles sur papier */
+.dog-info-box{font-size:11px;color:#1f4d16;background:#e8f4e8;border-left:2px solid #1f4d16;padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:12px;line-height:1.5;font-style:italic;}
+
+/* ── Page « fiche complète » du Cahier (10/07) : une étape = sa vraie fiche,
+   pas un résumé. accent = liseré de la couleur du séjour pour les pages
+   d'excursion (pétale), transparent pour une étape simple. */
+.fiche-page{padding:0;}
+.fiche-page-inner{padding:34px 40px 30px 54px;}
+.fiche-embed{margin-bottom:4px;}
+
+/* ── Page « Le chemin complet » (10/07) : vue d'ensemble avant le détail
+   page à page — chaque étape principale, avec ses excursions nichées et
+   colorées comme sur la carte (même palette, RNR_MARQUEURS.couleurExcursion). */
+.chemin-liste{position:relative;padding-left:8px;}
+.chemin-etape{display:flex;gap:14px;position:relative;padding-bottom:18px;}
+.chemin-etape:not(:last-child)::before{content:'';position:absolute;left:13px;top:28px;bottom:0;width:2px;background:rgba(26,18,8,.12);}
+.chemin-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;z-index:1;}
+.chemin-corps{flex:1;padding-top:2px;}
+.chemin-nom{font-family:var(--font-title);font-size:15px;font-weight:700;color:var(--ink);}
+.chemin-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
+.chemin-excursions{margin-top:8px;display:flex;flex-direction:column;gap:5px;}
+.chemin-exc{font-size:11.5px;color:var(--ink);border-left:3px solid;padding:3px 0 3px 10px;}
 </style>
 </head>
 <body>
@@ -220,16 +272,28 @@ async function chargerMembres(){
 async function chargerItineraire(){
   if(!VOYAGE_ID){ voyage=[]; return; }
   try{
-    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,note,nb_nuits').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const {data:rows}=await sb.from('voyage_itineraire')
+      .select('uid,lieu_id,ordre,note,nb_nuits,rattache_a_nuit_uid,jour_offset')
+      .eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
-      const {data:fs}=await sb.from('lieux').select('id,nom,lat,lng,type,photo_url,photos_urls').in('id',ids);
+      // (10/07) La fiche COMPLÈTE, pas un sous-ensemble : le Cahier affiche
+      // maintenant chaque étape en grande fiche (RNR_FICHE_COMPLETE), il lui
+      // faut description/conseil/pratique/tags, pas juste photo+nom.
+      const {data:fs}=await sb.from('lieux').select('*').in('id',ids);
       (fs||[]).forEach(f=>{ infos[f.id]=f; });
     }
     voyage=(rows||[]).map(r=>{
       const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-      return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||(f.photos_urls&&f.photos_urls[0])||'', note:r.note||'', nb_nuits:r.nb_nuits||null};
+      // On garde TOUS les champs de la fiche (spread f) — uid/note/nb_nuits/
+      // rattache/jour viennent de l'itinéraire et priment sur d'éventuels
+      // homonymes. lat/lng recasts en Number (Postgres les renvoie en texte).
+      return Object.assign({}, f, {
+        uid:r.uid, id:f.id, lat:Number(f.lat), lng:Number(f.lng),
+        note:r.note||'', nb_nuits:r.nb_nuits||null,
+        rattache:r.rattache_a_nuit_uid||null, jour:r.jour_offset||null
+      });
     }).filter(Boolean);
   }catch(e){ console.warn('Cahier: itinéraire', e); voyage=[]; }
 }
@@ -242,12 +306,14 @@ function calcDist(lat1,lng1,lat2,lng2){
 const VITESSE_MOY_KMH=65;
 function dureeEstimee(km){ const h=km/VITESSE_MOY_KMH; const H=Math.floor(h), M=Math.round((h-H)*60); return H>0?(H+'h'+(M>0?String(M).padStart(2,'0'):'')):(M+' min'); }
 
+function chaineDe(v){ return (v||voyage).filter(item=>!item.rattache); }
 function datesCumulees(){
-  if(!RB_INFO.date_debut) return voyage.map(()=>null);
+  const chaine=chaineDe();
+  if(!RB_INFO.date_debut) return chaine.map(()=>null);
   const debut=new Date(RB_INFO.date_debut+'T00:00:00');
-  if(isNaN(debut)) return voyage.map(()=>null);
+  if(isNaN(debut)) return chaine.map(()=>null);
   let cumul=0;
-  return voyage.map(item=>{
+  return chaine.map(item=>{
     const d=new Date(debut); d.setDate(d.getDate()+cumul);
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
     if(nuit) cumul += (item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
@@ -255,12 +321,26 @@ function datesCumulees(){
   });
 }
 function nuitsTotal(){
-  return voyage.reduce((s,item)=>{
+  return chaineDe().reduce((s,item)=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
     return s+(nuit?((item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1):0);
   },0);
 }
 function formatDateCourt(d){ if(!d) return ''; return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }
+
+// Même attribution de couleur que Voyage/Hub/Horizon (RNR_MARQUEURS.couleurExcursion,
+// index = position dans la chaîne principale) — un séjour a la même couleur partout.
+function calculeIndexSejours(){
+  const idx=new Map(); let n=0;
+  chaineDe().forEach(item=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const nb=(item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
+    if(!nuit||nb<2) return;
+    if(!voyage.some(v=>v.rattache===item.uid)) return;
+    idx.set(item.uid, n++);
+  });
+  return idx;
+}
 
 // ── Contenu réutilisable "Bon à savoir" (08/07) — générique, valable sur tous
 // les cahiers, pas propre à ce voyage. Statique pour l'instant (v1) ; une
@@ -310,7 +390,7 @@ async function sauvegarderItineraire(){
   if(_saveEnCours){ _saveRedemande=true; return; }
   _saveEnCours=true;
   try{
-    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null)}));
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null), rattache_a_nuit_uid:(v.rattache||null), jour_offset:(v.jour||null)}));
     await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
     if(snapshot.length) await sb.from('voyage_itineraire').insert(snapshot);
     const el=document.getElementById('save-state'); if(el) el.textContent='à jour ✓';
@@ -324,13 +404,72 @@ function onNoteChange(uid, val){
   planifierSauvegarde();
 }
 
+// (10/07) Une étape = sa vraie fiche complète (RNR_FICHE_COMPLETE), pas un
+// résumé maison — même moteur que Carnet/Horizon/Voyage, un seul endroit pour
+// le contenu riche. accent = liseré dans la couleur du séjour (pages
+// d'excursion), transparent pour une étape simple du parcours principal.
+function pageFicheComplete(item, opts){
+  opts=opts||{};
+  const noteG=RNR_FICHE_COMPLETE.badgeNoteGoogle(item.note);
+  const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(item.note_famille);
+  const contenu=RNR_FICHE_COMPLETE.html(item, {noteG, noteF});
+  const notePlaceholder=opts.notePlaceholder || (opts.nuit ? "Comment c'était, ce qu'on retient de cette étape…" : "Ce qu'on en a pensé, ce qu'on a fait…");
+  const accentStyle=opts.accent ? ('border-top:6px solid '+opts.accent+';') : '';
+  return '<div class="page day-page fiche-page" style="'+accentStyle+'">'
+    +'<div class="spirale"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>'
+    +'<div class="fiche-page-inner">'
+      +'<div class="day-head"><span class="day-num-label">'+esc(opts.label||'')+'</span></div>'
+      +(opts.sousLabel?('<p class="day-sub">'+opts.sousLabel+'</p>'):'')
+      +'<div class="fiche-embed">'+contenu+'</div>'
+      +'<p class="narrative-label" style="margin-top:10px;">'+(opts.nuit?'💬 Le mot sur cette nuit':'💬 Le mot du groupe')+'</p>'
+      +'<textarea class="editable-text" data-uid="'+item.uid+'" placeholder="'+notePlaceholder+'">'+esc(item.note)+'</textarea>'
+      +(opts.infosBox||'')
+      +'<div class="day-footer"><span>RockNRoad</span><span>'+(opts.footerRight||'')+'</span></div>'
+    +'</div>'
+  +'</div>';
+}
+
+// (10/07) « Le chemin complet » — vue d'ensemble juste après Couverture +
+// Équipe : toute la chaîne principale d'un coup d'œil, avec les excursions de
+// chaque séjour nichées dessous, colorées comme sur la carte (même palette,
+// RNR_MARQUEURS.couleurExcursion — un séjour a la même couleur ici et sur
+// Voyage/Hub/Horizon).
+function pageCheminComplet(chaine, dates, sejourIdx){
+  let rows='';
+  chaine.forEach((item,i)=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const nbNuits=(item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
+    const dEtape=dates[i];
+    const excs=voyage.filter(v=>v.rattache===item.uid).sort((a,b)=>(a.jour||1)-(b.jour||1));
+    const excsHtml = excs.length ? ('<div class="chemin-excursions">'+excs.map(e=>{
+      const couleur=RNR_MARQUEURS.couleurExcursion(sejourIdx.has(item.uid)?sejourIdx.get(item.uid):0);
+      return '<div class="chemin-exc" style="border-left-color:'+couleur+';"><b style="color:'+couleur+';">Jour '+(e.jour||1)+'</b> · '+esc(e.nom)+'</div>';
+    }).join('')+'</div>') : '';
+    rows += '<div class="chemin-etape">'
+      +'<div class="chemin-num">'+(i+1)+'</div>'
+      +'<div class="chemin-corps">'
+        +'<div class="chemin-nom">'+esc(item.nom)+(nuit?' 🌙':'')+'</div>'
+        +'<div class="chemin-meta">'+(dEtape?esc(formatDateCourt(dEtape))+' · ':'')+esc(regionDe(item.lat,item.lng))+(nuit?' · '+nbNuits+' nuit'+(nbNuits>1?'s':''):'')+'</div>'
+        +excsHtml
+      +'</div>'
+    +'</div>';
+  });
+  return '<div class="page day-page" style="padding:54px 46px;">'
+    +'<p class="day-sub" style="margin-bottom:4px;">🗺️ Vue d\'ensemble</p>'
+    +'<span class="day-title" style="display:block;margin-bottom:22px;">Le chemin complet</span>'
+    +'<div class="chemin-liste">'+rows+'</div>'
+    +'</div>';
+}
+
 function render(){
   const host=document.getElementById('pages');
   const dest=RB_INFO.destination_libre||regionAuto()||'Votre voyage';
+  const chaine=chaineDe();
   const dates=datesCumulees();
+  const sejourIdx=calculeIndexSejours();
   let totalKm=0;
-  if(DOMICILE&&voyage[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,voyage[0].lat,voyage[0].lng);
-  for(let i=1;i<voyage.length;i++) totalKm+=calcDist(voyage[i-1].lat,voyage[i-1].lng,voyage[i].lat,voyage[i].lng);
+  if(DOMICILE&&chaine[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,chaine[0].lat,chaine[0].lng);
+  for(let i=1;i<chaine.length;i++) totalKm+=calcDist(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
 
   const html0=''
     +'<div class="page cover">'
@@ -395,6 +534,12 @@ function render(){
       +'</div></div>';
   }
 
+  // (10/07) « Le chemin complet » — juste après Couverture + Équipe, avant le
+  // détail page à page (retour Bruno : on veut voir le trajet entier d'abord).
+  if(chaine.length){
+    html += pageCheminComplet(chaine, dates, sejourIdx);
+  }
+
   if(!voyage.length){
     html+='<div class="page day-page" style="align-items:center;justify-content:center;text-align:center;display:flex;flex-direction:column;">'
       +'<p style="font-size:40px;margin-bottom:12px;">🗺️</p>'
@@ -402,49 +547,58 @@ function render(){
       +'<p style="color:var(--ink-dim);font-size:13px;max-width:320px;">Ajoutez des lieux depuis Horizon pour que le voyage prenne forme ici, page après page.</p>'
       +'</div>';
   }
-  voyage.forEach((item,i)=>{
+  // (10/07, retour Bruno) : on ne fait plus feuille par feuille (une page par
+  // fiche dans l'ordre plat) — on marche la CHAÎNE PRINCIPALE, et chaque
+  // séjour à excursions déroule son pétale juste après lui (base, puis une
+  // page par excursion, dans l'ordre du jour). Chaque page est la vraie
+  // fiche complète, jamais un résumé.
+  const meteoPoints=[]; // {uid,lat,lng,dEtape} — programmés une fois le DOM en place
+  chaine.forEach((item,i)=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const nbNuits=(item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
     const dEtape=dates[i];
     let distTxt='', dureeTxt='';
     if(i===0 && DOMICILE){ const d=calcDist(DOMICILE.lat,DOMICILE.lng,item.lat,item.lng); distTxt=d+' km depuis la maison'; dureeTxt=dureeEstimee(d); }
-    else if(i>0){ const d=calcDist(voyage[i-1].lat,voyage[i-1].lng,item.lat,item.lng); distTxt=d+" km depuis l'étape précédente"; dureeTxt=dureeEstimee(d); }
+    else if(i>0){ const d=calcDist(chaine[i-1].lat,chaine[i-1].lng,item.lat,item.lng); distTxt=d+" km depuis l'étape précédente"; dureeTxt=dureeEstimee(d); }
     const region=regionDe(item.lat,item.lng);
-    const photoBg=item.photo_url?("background-image:url('"+item.photo_url+"');"):'background:linear-gradient(135deg,#2a2318,#1a1510);';
-    const placeholderTxt = nuit ? "Comment c'était, ce qu'on retient de cette étape…" : "Ce qu'on en a pensé, ce qu'on a fait…";
+    const excs=voyage.filter(v=>v.rattache===item.uid).sort((a,b)=>(a.jour||1)-(b.jour||1));
+    const estSejour = nuit && nbNuits>1 && excs.length>0;
+    const couleur = estSejour ? RNR_MARQUEURS.couleurExcursion(sejourIdx.has(item.uid)?sejourIdx.get(item.uid):0) : null;
 
-    html+='<div class="page day-page">'
-      +'<div class="spirale"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>'
-      +'<div class="day-head"><span class="day-num-label">étape '+(i+1)+'</span><span class="day-title">'+esc(item.nom)+'</span></div>'
-      +'<p class="day-sub">'+(dEtape?(esc(formatDateCourt(dEtape))+' · '):'')+esc(region)+(nuit?' · 🌙 nuit sur place':'')+'</p>'
-      +'<div class="day-grid">'
-        +'<div class="visuel-block">'
-          +'<div class="visuel-frame"><div class="visuel-photo" style="'+photoBg+'"></div></div>'
-          +'<div class="visuel-caption"><span>'+distTxt+'</span><span>'+(dureeTxt?('~'+dureeTxt):'')+'</span></div>'
-        +'</div>'
-        +'<div>'
-          +'<p class="narrative-label">'+(nuit?'💬 Le mot sur cette nuit':'💬 Le mot du groupe')+'</p>'
-          +'<textarea class="editable-text" data-uid="'+item.uid+'" placeholder="'+placeholderTxt+'">'+esc(item.note)+'</textarea>'
-          +'<div class="box"><p class="box-t">📋 Infos clés</p>'
-            +(dureeTxt?('<div class="infos-row"><span>🚗 Route</span><span>'+dureeTxt+'</span></div>'):'')
-            +(nuit?('<div class="infos-row"><span>🌙 Nuits</span><span>'+((item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1)+'</span></div>'):'')
-            +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+item.uid+'">'+(nuit?'…':'—')+'</span></div>'
-          +'</div>'
-        +'</div>'
-      +'</div>'
-      +'<div class="day-footer"><span>RockNRoad</span><span>Étape '+(i+1)+' / '+voyage.length+'</span></div>'
-    +'</div>';
+    const infosBox='<div class="box"><p class="box-t">📋 Infos clés</p>'
+      +(dureeTxt?('<div class="infos-row"><span>🚗 Route</span><span>'+dureeTxt+'</span></div>'):'')
+      +(nuit?('<div class="infos-row"><span>🌙 Nuits</span><span>'+nbNuits+'</span></div>'):'')
+      +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+item.uid+'">'+(nuit?'…':'—')+'</span></div>'
+      +'</div>';
 
-    if(nuit && dEtape){
-      const auj=new Date(); auj.setHours(0,0,0,0);
-      const limite=new Date(auj); limite.setDate(limite.getDate()+15);
-      if(dEtape>=auj && dEtape<=limite){
-        const iso=dEtape.toISOString().slice(0,10);
-        fetchMeteo(item.lat,item.lng,iso).then(m=>{
-          const el=document.getElementById('meteo-'+item.uid);
-          if(el) el.textContent = m ? (m.icone+' '+m.tmax+'°/'+m.tmin+'°') : 'indisponible';
-        });
-      }
-    }
+    html += pageFicheComplete(item, {
+      label:'étape '+(i+1),
+      sousLabel:(dEtape?esc(formatDateCourt(dEtape))+' · ':'')+esc(region)+(nuit?' · 🌙 '+nbNuits+' nuit'+(nbNuits>1?'s':''):'')+(estSejour?' · base d\'excursions':''),
+      nuit, accent:couleur, infosBox,
+      footerRight:'Étape '+(i+1)+' / '+chaine.length
+    });
+    if(nuit) meteoPoints.push({uid:item.uid, lat:item.lat, lng:item.lng, dEtape});
+
+    // Le pétale : une page par excursion, juste après sa base, dans l'ordre
+    // du jour — teintée dans LA couleur du séjour, jamais noyée plus loin
+    // dans la pile plate des étapes.
+    excs.forEach(e=>{
+      const jourExc=e.jour||1;
+      const dExc = dEtape ? (()=>{ const d=new Date(dEtape); d.setDate(d.getDate()+(jourExc-1)); return d; })() : null;
+      const dJour = (item.lat!=null&&e.lat!=null) ? calcDist(item.lat,item.lng,e.lat,e.lng) : null;
+      const infosBoxExc='<div class="box"><p class="box-t">📋 Infos clés</p>'
+        +(dJour!=null?('<div class="infos-row"><span>🥾 Aller-retour</span><span>'+dJour+' km depuis '+esc(item.nom)+'</span></div>'):'')
+        +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+e.uid+'">…</span></div>'
+        +'</div>';
+      html += pageFicheComplete(e, {
+        label:'jour '+jourExc,
+        sousLabel:(dExc?esc(formatDateCourt(dExc))+' · ':'')+esc(regionDe(e.lat,e.lng))+' · excursion depuis '+esc(item.nom),
+        nuit:false, accent:couleur, infosBox:infosBoxExc,
+        footerRight:'Séjour à '+esc(item.nom)+' · jour '+jourExc,
+        notePlaceholder:"Ce qu'on a vu, ce qu'on en a pensé…"
+      });
+      meteoPoints.push({uid:e.uid, lat:e.lat, lng:e.lng, dEtape:dExc});
+    });
   });
 
   // Retour Bruno (08/07) : c'est le texte des blocs du Mémo de voyage (rail
@@ -488,17 +642,20 @@ function render(){
     ta.addEventListener('input', ()=>onNoteChange(ta.dataset.uid, ta.value));
   });
 
-  // Météo hors fenêtre (~15j) : message une fois le DOM en place
-  voyage.forEach((item,i)=>{
-    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
-    const dEtape=dates[i];
-    if(nuit && dEtape){
-      const auj=new Date(); auj.setHours(0,0,0,0);
-      const limite=new Date(auj); limite.setDate(limite.getDate()+15);
-      if(!(dEtape>=auj && dEtape<=limite)){
-        const el=document.getElementById('meteo-'+item.uid);
-        if(el) el.textContent='hors fenêtre (~15 j)';
-      }
+  // Météo hors fenêtre (~15j) : message une fois le DOM en place. Une seule
+  // passe pour les étapes ET les excursions (meteoPoints les couvre toutes les deux).
+  meteoPoints.forEach(pt=>{
+    if(!pt.dEtape || pt.lat==null) return;
+    const auj=new Date(); auj.setHours(0,0,0,0);
+    const limite=new Date(auj); limite.setDate(limite.getDate()+15);
+    const el=document.getElementById('meteo-'+pt.uid);
+    if(pt.dEtape>=auj && pt.dEtape<=limite){
+      const iso=pt.dEtape.toISOString().slice(0,10);
+      fetchMeteo(pt.lat,pt.lng,iso).then(m=>{
+        if(el) el.textContent = m ? (m.icone+' '+m.tmax+'°/'+m.tmin+'°') : 'indisponible';
+      });
+    } else if(el){
+      el.textContent='hors fenêtre (~15 j)';
     }
   });
 }
