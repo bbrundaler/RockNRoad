@@ -4790,6 +4790,19 @@ async function hzRetireCandidate(lieuId){
       .eq('voyage_id',HZ_VOYAGE_ID).eq('lieu_id',lieuId).eq('statut','candidate');
     if(error){ console.warn('Horizon: retrait candidate',error); return; }
     HZ_CANDIDATES.delete(lieuId);
+    // Sujet (09/07, retour Bruno) : retirer le cœur ne fermait jamais un vote
+    // ouvert sur cette fiche — le vote restait « ouvert » en base, invisible
+    // dans le tiroir (qui ne lit que HZ_CANDIDATES) mais toujours compté par
+    // la pastille de l'Accueil (qui lit propositions.statut='ouvert' en direct).
+    // D'où l'écart signalé : 4 votes annoncés, tiroir vide. Un vote n'a plus de
+    // sens sur une fiche qu'on ne considère plus — on le clôt avec le cœur.
+    const propId=HZ_VOTE_DE_FICHE[lieuId];
+    if(propId){
+      const {error:eClot}=await sb.from('propositions').update({statut:'clos'}).eq('id',propId);
+      if(eClot) console.warn('Horizon: clôture vote (cœur retiré)',eClot);   // non bloquant
+      delete HZ_VOTE_DE_FICHE[lieuId];
+      if(typeof hzChargerVotesOuverts==='function') await hzChargerVotesOuverts();
+    }
     majLigneCockpit();
     if(typeof rendDrawerCoeurs==='function') rendDrawerCoeurs();
   }catch(e){ console.warn('Horizon: retrait candidate',e); }
