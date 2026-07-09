@@ -168,6 +168,23 @@
   /* Couleur du tracé reliant l'itinéraire (pour que les pages ne la codent pas en dur). */
   function couleurTrace() { return couleurs().trace; }
 
+  /* (10/07, retour Bruno) : chaque SÉJOUR à excursions a SA PROPRE couleur —
+     le trajet principal garde toujours la même (couleurTrace, D-MK inchangée),
+     mais les pétales doivent se distinguer les uns des autres au premier coup
+     d'œil, y compris quand plusieurs séjours à excursions coexistent sur le
+     même voyage. Palette dédiée, SANS rapport avec la grammaire de statut des
+     marqueurs (jour/nuit/épingle/cœur) — jamais la même couleur qu'une de ces
+     4-là, pour ne jamais laisser croire qu'un pétale est un statut de fiche.
+     Un seul endroit pour l'attribution : Hub, Horizon et Voyage utilisent tous
+     cette fonction, avec le même index (position du séjour dans la chaîne
+     principale) → même séjour = même couleur, quelle que soit la page. */
+  var EXCURSION_PALETTE = ['--mk-excursion-1', '--mk-excursion-2', '--mk-excursion-3', '--mk-excursion-4', '--mk-excursion-5'];
+  var EXCURSION_PALETTE_REPLI = ['#B8631F', '#6B3288', '#3D6B35', '#A83250', '#4A5FA8'];
+  function couleurExcursion(index) {
+    var i = ((index % EXCURSION_PALETTE.length) + EXCURSION_PALETTE.length) % EXCURSION_PALETTE.length;
+    return tok(EXCURSION_PALETTE[i], EXCURSION_PALETTE_REPLI[i]);
+  }
+
   /* Marqueur MAISON : le point de départ/retour du groupe (groupes.*_depart).
      Pastille or au token --mk-jour, contour blanc, petite maison dedans.
      Volontairement distincte des pastilles numérotées (ce n'est pas une étape,
@@ -224,13 +241,13 @@
      qu'un GeoJSON exploitable, on dessine la LIGNE DROITE (comportement d'avant).
      Le tracé n'est JAMAIS absent. Le site ne casse pas.
   */
-  function _ligneDroite(layer, latlngs, leger) {
-    var col = couleurTrace();
+  function _ligneDroite(layer, latlngs, leger, couleur) {
+    var col = couleur || couleurTrace();
     if (leger) {
-      // (10/07) Tracé EXCURSION : même couleur que le trajet principal (une seule
-      // grammaire de couleur, D-MK), mais plus fin, plus transparent, pointillé
-      // serré — pour qu'on le distingue au premier coup d'œil sans avoir besoin
-      // d'une légende. Jamais de flèches : c'est un aller-retour court, pas un sens.
+      // (10/07) Tracé EXCURSION : couleur propre au séjour (couleurExcursion),
+      // mais toujours plus fin, plus transparent, pointillé serré — pour qu'on
+      // le distingue au premier coup d'œil sans avoir besoin d'une légende.
+      // Jamais de flèches : c'est un aller-retour court, pas un sens.
       L.polyline(latlngs, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
     } else {
       L.polyline(latlngs, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
@@ -250,9 +267,9 @@
     var dLat = b[0] - a[0];
     return Math.atan2(dLat, dLng) * 180 / Math.PI;
   }
-  function _flechesSens(layer, trace) {
+  function _flechesSens(layer, trace, couleur) {
     if (!trace || trace.length < 2) return;
-    var col = couleurTrace();
+    var col = couleur || couleurTrace();
     // Une flèche à intervalles réguliers (~10 au total), jamais trop pour ne pas charger.
     var pas = Math.max(6, Math.floor(trace.length / 10));
     for (var i = pas; i < trace.length - 1; i += pas) {
@@ -274,15 +291,16 @@
   }
 
   /* Dessine un tracé routier déjà calculé (liste de [lat,lng]) dans le layer.
-     leger=true (10/07) : style EXCURSION — plus fin, pointillé, sans flèches. */
-  function _dessineTrace(layer, trace, leger) {
-    var col = couleurTrace();
+     leger=true (10/07) : style EXCURSION — plus fin, pointillé, sans flèches.
+     couleur : override explicite (10/07, palette par séjour) — sinon couleurTrace(). */
+  function _dessineTrace(layer, trace, leger, couleur) {
+    var col = couleur || couleurTrace();
     if (leger) {
       L.polyline(trace, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
     } else {
       L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
       L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
-      _flechesSens(layer, trace);
+      _flechesSens(layer, trace, col);
     }
   }
 
@@ -364,7 +382,7 @@
      tronçon garde son propre repli (ligne droite + estimation Haversine) pour
      que le total affiché reste cohérent même si un morceau n'a pas pu être
      routé. Un seul cache (_routeCache), qu'on l'appelle en gros ou par bouts. */
-  function _routeParTroncons(layer, latlngs, cfg, profile, leger) {
+  function _routeParTroncons(layer, latlngs, cfg, profile, leger, couleur) {
     var troncons = [];
     for (var i = 0; i < latlngs.length - 1; i++) troncons.push([latlngs[i], latlngs[i + 1]]);
 
@@ -386,8 +404,8 @@
     return Promise.all(promesses).then(function (resultats) {
       var distTot = 0, dureeTot = 0, unTronconRoute = false, unTronconEnPanne = false;
       resultats.forEach(function (r) {
-        if (r.ok) { _dessineTrace(layer, r.trace, leger); unTronconRoute = true; }
-        else { _ligneDroite(layer, r.trace, leger); unTronconEnPanne = true; }
+        if (r.ok) { _dessineTrace(layer, r.trace, leger, couleur); unTronconRoute = true; }
+        else { _ligneDroite(layer, r.trace, leger, couleur); unTronconEnPanne = true; }
         if (r.distance_km != null) distTot += r.distance_km;
         if (r.duree_h != null) dureeTot += r.duree_h;
       });
@@ -407,21 +425,22 @@
     }
     var profile = opts.profile || 'driving-car';
     // (10/07) opts.leger=true : style EXCURSION (nuit ↔ fiches du jour, aller-
-    // retour) — visuellement distinct du trajet principal, sans être une autre
-    // couleur (D-MK reste la seule grammaire de couleur du site).
+    // retour) — visuellement plus fin/pointillé. opts.couleur : override explicite
+    // (ex. couleurExcursion(index)) — sinon couleurTrace() comme avant.
     var leger = !!opts.leger;
+    var couleur = opts.couleur || null;
 
     // (0) CACHE : itinéraire déjà routé → on redessine sans appeler ORS.
     var cle = _cleRoute(latlngs, profile);
     var hit = _routeCache[cle];
     if (hit) {
-      _dessineTrace(layer, hit.trace, leger);
+      _dessineTrace(layer, hit.trace, leger, couleur);
       return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
     }
 
     // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
     if (!cfg || !cfg.surl || !cfg.skey) {
-      _ligneDroite(layer, latlngs, leger);
+      _ligneDroite(layer, latlngs, leger, couleur);
       return Promise.resolve({ ok: false });
     }
 
@@ -430,14 +449,14 @@
     return _appelORS(latlngs, cfg, profile)
       .then(function (res) {
         _routeCache[cle] = res;
-        _dessineTrace(layer, res.trace, leger);
+        _dessineTrace(layer, res.trace, leger, couleur);
         return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h };
       })
       .catch(function () {
         // (2) Repli fin, tronçon par tronçon (09/07) — AVANT la ligne droite
         // globale : un point isolé impossible à router ne doit plus emporter
         // tout le trajet avec lui. Le tracé n'est toujours JAMAIS absent.
-        return _routeParTroncons(layer, latlngs, cfg, profile, leger);
+        return _routeParTroncons(layer, latlngs, cfg, profile, leger, couleur);
       });
   }
 
@@ -446,6 +465,7 @@
     iconeMaison: iconeMaison,
     estNuit: estNuit,
     couleurTrace: couleurTrace,
+    couleurExcursion: couleurExcursion,
     traceRoute: traceRoute,
     legende: legende,
     invalideCache: invalideCache

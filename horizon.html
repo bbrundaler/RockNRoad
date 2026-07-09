@@ -1309,7 +1309,9 @@ let HZ_CARTE_REPOS_MARQ_PAR_ID={};    // id fiche → {marker} — pour rafraîc
 // seul, sans mécanisme séparé à entretenir.
 let HZ_DOMICILE=null;        // point de départ/retour du groupe (groupes.lat_depart/lng_depart)
 let HZ_MAISON_MK=null;       // marqueur Leaflet de la maison
-let HZ_PLACEES={};           // lieu_id → numéro d'ordre (voyage_itineraire) — rond numéroté + tracé
+let HZ_PLACEES={};           // lieu_id → numéro d'ordre (chaîne principale seule, 10/07) — rond numéroté + tracé
+let HZ_ITINERAIRE_ROWS=[];   // lignes brutes voyage_itineraire (10/07 : séjours/excursions, comme Hub et Voyage)
+let HZ_EXCURSION_LAYERS={};  // nightUid -> layerGroup du pétale (10/07)
 let HZ_TRACE_VOYAGE=null;    // layerGroup du tracé routier (reflet de Voyage, même moteur)
 const HZ_SURL="https://cazqllstxhuecoqpktwm.supabase.co";
 const HZ_SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
@@ -1317,8 +1319,12 @@ const HZ_SKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 // Charge le domicile du groupe + l'itinéraire déjà ordonné (voyage_itineraire).
 // Horizon LIT cette table (miroir, comme le Hub) mais ne l'écrit jamais — la
 // construction du trajet reste le rôle de Voyage (D-MK).
+// (10/07) Ne numérote que la chaîne principale (fiches non rattachées à un
+// séjour) — une excursion n'est plus une étape de la chaîne, elle vit dans le
+// pétale de son séjour (hzTraceVoyage), comme sur Hub et Voyage.
 async function hzChargeDomicileEtPlacees(){
   HZ_PLACEES={};
+  HZ_ITINERAIRE_ROWS=[];
   try{
     if(HZ_GROUPE_ID){
       const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',HZ_GROUPE_ID).single();
@@ -1327,8 +1333,10 @@ async function hzChargeDomicileEtPlacees(){
         : null;
     }
     if(HZ_VOYAGE_ID){
-      const {data:ri}=await sb.from('voyage_itineraire').select('lieu_id,ordre').eq('voyage_id',HZ_VOYAGE_ID).order('ordre',{ascending:true});
-      let n=0; (ri||[]).forEach(r=>{ if(HZ_PLACEES[r.lieu_id]==null){ HZ_PLACEES[r.lieu_id]=(++n); } });
+      const {data:ri}=await sb.from('voyage_itineraire')
+        .select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid,jour_offset').eq('voyage_id',HZ_VOYAGE_ID).order('ordre',{ascending:true});
+      HZ_ITINERAIRE_ROWS=ri||[];
+      let n=0; HZ_ITINERAIRE_ROWS.forEach(r=>{ if(!r.rattache_a_nuit_uid && HZ_PLACEES[r.lieu_id]==null){ HZ_PLACEES[r.lieu_id]=(++n); } });
     }
   }catch(e){ console.warn('Horizon: domicile/itinéraire',e); }
 }
@@ -1370,12 +1378,28 @@ function hzMajDashboard(d){
     }
   }
 }
+// (10/07) Index couleur des séjours à excursions — même logique que Hub/Voyage,
+// même ordre (chaîne principale) → même séjour, même couleur sur toutes les cartes.
+function hzIndexSejours(){
+  const idx=new Map(); let n=0;
+  HZ_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid).forEach(r=>{
+    const f=(HZ_FICHES||[]).find(x=>x.id===r.lieu_id);
+    const nuit=(f && window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
+    const nb=(r.nb_nuits && r.nb_nuits>0)?r.nb_nuits:1;
+    if(!nuit || nb<2) return;
+    if(!HZ_ITINERAIRE_ROWS.some(x=>x.rattache_a_nuit_uid===r.uid)) return;
+    idx.set(r.uid, n++);
+  });
+  return idx;
+}
 function hzTraceVoyage(){
   if(!HZ_CARTE_REPOS) return;
   if(HZ_TRACE_VOYAGE){ HZ_CARTE_REPOS.removeLayer(HZ_TRACE_VOYAGE); HZ_TRACE_VOYAGE=null; }
-  const ordonne=Object.keys(HZ_PLACEES)
-    .sort((a,b)=>HZ_PLACEES[a]-HZ_PLACEES[b])
-    .map(id=>(HZ_FICHES||[]).find(f=>f.id===id))
+  Object.values(HZ_EXCURSION_LAYERS).forEach(l=>{ l.clearLayers(); HZ_CARTE_REPOS.removeLayer(l); });
+  HZ_EXCURSION_LAYERS={};
+  const chaine=HZ_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid);
+  const ordonne=chaine
+    .map(r=>(HZ_FICHES||[]).find(f=>f.id===r.lieu_id))
     .filter(f=>f && f.lat!=null && f.lng!=null)
     .map(f=>[+f.lat,+f.lng]);
   let pts=ordonne;
@@ -1383,12 +1407,41 @@ function hzTraceVoyage(){
     const m=[HZ_DOMICILE.lat,HZ_DOMICILE.lng];
     pts=[m, ...ordonne, m];   // boucle départ/retour, même langage que Voyage
   }
-  hzMajDashboard({stops:Object.keys(HZ_PLACEES).length});
+  hzMajDashboard({stops:chaine.length});
   if(pts.length>=2 && window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
     HZ_TRACE_VOYAGE=L.layerGroup().addTo(HZ_CARTE_REPOS);
     RNR_MARQUEURS.traceRoute(HZ_CARTE_REPOS, HZ_TRACE_VOYAGE, pts, {surl:HZ_SURL, skey:HZ_SKEY})
       .then(r=>{ if(r && r.ok) hzMajDashboard(r); })
       .catch(()=>{});
+  }
+  // ── Pétales d'excursions (10/07) : un par séjour, sa couleur, sa couche —
+  // même principe que Voyage/Hub. Pas d'interrupteur individuel ici (carte de
+  // repos déjà dense d'outils) : les pétales sont toujours visibles, mais dans
+  // leur propre couche pour rester séparés du tracé principal.
+  if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+    const idxMap=hzIndexSejours();
+    chaine.forEach(r=>{
+      const night=(HZ_FICHES||[]).find(f=>f.id===r.lieu_id);
+      if(!night || night.lat==null) return;
+      const nuit=RNR_MARQUEURS.estNuit(night);
+      const nb=(r.nb_nuits && r.nb_nuits>0)?r.nb_nuits:1;
+      if(!nuit || nb<2) return;
+      const excs=HZ_ITINERAIRE_ROWS.filter(x=>x.rattache_a_nuit_uid===r.uid)
+        .map(x=>({row:x, f:(HZ_FICHES||[]).find(ff=>ff.id===x.lieu_id)}))
+        .filter(x=>x.f && x.f.lat!=null);
+      if(!excs.length) return;
+      const idx=idxMap.has(r.uid)?idxMap.get(r.uid):0;
+      const couleurSejour=RNR_MARQUEURS.couleurExcursion(idx);
+      const couche=L.layerGroup().addTo(HZ_CARTE_REPOS);
+      HZ_EXCURSION_LAYERS[r.uid]=couche;
+      const parJour={};
+      excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
+      Object.keys(parJour).forEach(j=>{
+        const duJour=parJour[j];
+        const latlngsExc=[[+night.lat,+night.lng], ...duJour.map(x=>[+x.f.lat,+x.f.lng]), [+night.lat,+night.lng]];
+        RNR_MARQUEURS.traceRoute(HZ_CARTE_REPOS, couche, latlngsExc, {surl:HZ_SURL, skey:HZ_SKEY}, {leger:true, couleur:couleurSejour}).catch(()=>{});
+      });
+    });
   }
 }
 // ════════════════════════════════════════════════════════════════

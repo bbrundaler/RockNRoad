@@ -159,7 +159,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .excursion-block{margin:-2px 0 5px 26px;padding-left:10px;border-left:2px solid var(--gold-a35);}
 .excursion-block-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;cursor:pointer;border-radius:6px;}
 .excursion-block-head:hover{background:var(--gold-a10);}
-.excursion-block-title{font-size:11px;color:var(--gold-text);font-weight:600;}
+.excursion-block-title{flex:1;font-size:11px;color:var(--gold-text);font-weight:600;}
+/* Pastille de couleur du séjour, cliquable — coupe SES excursions sur la carte
+   sans toucher aux autres séjours ni au trajet principal (10/07, retour Bruno). */
+.excursion-swatch{flex-shrink:0;width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7);cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.excursion-swatch-off{opacity:.3;border-style:dashed;}
 .excursion-block-chevron{font-size:10px;color:var(--ink-dim);}
 .excursion-block-body{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
 .excursion-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r);background:var(--surface);border:1px solid var(--paper-line);}
@@ -194,15 +198,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 
 #map-wrap{flex:1;min-height:0;position:relative;display:flex;}
 #map{flex:1;min-height:0;height:auto;}
-/* (10/07) Bouton montrer/masquer les excursions — posé sur la carte comme un
-   contrôle Leaflet, coin haut-droit, jamais dans le flux (n'empiète pas sur
-   le dashboard ni la liste). */
-#rb-toggle-excursions{position:absolute;top:10px;right:10px;z-index:900;
-  background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r);
-  padding:6px 10px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);transition:opacity .15s;}
-#rb-toggle-excursions.rb-excursions-off{opacity:.5;}
-#rb-toggle-excursions:hover{background:var(--gold-a10);}
 /* ── BANDE RETENUES (invariant partagé avec le Cockpit) ──
    Sujet (08/07, retour Bruno) : la fiche Hango était rognée par le bas — pas
    à cause du rail (position:fixed, hors flux, ne mange aucune hauteur), mais
@@ -380,7 +375,6 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div id="voyage-right">
       <div id="map-wrap">
         <div id="map"></div>
-        <button id="rb-toggle-excursions" type="button" onclick="rbToggleExcursionsCarte()" title="Montrer/masquer les excursions sur la carte" style="display:none;">🥾 Excursions</button>
       </div>
       <!-- ── BANDE RETENUES : sous la carte, alignée à droite du panneau itinéraire ── -->
       <div id="voyage-retenues">
@@ -396,11 +390,28 @@ const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
 const sb=supabase.createClient(SURL,SKEY);
 
-let map, routeLayer, excursionLayer;
-// (10/07) Couche à part pour les excursions (tracé + marqueurs) — permet de les
-// montrer/masquer d'un bouton sans toucher au trajet principal, jamais mélangées
-// dans le même layerGroup que routeLayer.
-let RB_EXCURSIONS_VISIBLES = true;
+let map, routeLayer;
+// (10/07, retour Bruno) : une couche PAR SÉJOUR à excursions (pas une seule
+// couche partagée) — chacune montrable/masquable indépendamment, chacune sa
+// couleur (RNR_MARQUEURS.couleurExcursion). Clé = uid de la fiche-nuit.
+let EXCURSION_LAYERS = {};          // nightUid -> L.layerGroup
+let RB_EXCURSIONS_MASQUEES = new Set(); // nightUid des séjours actuellement masqués sur la carte
+// Index couleur des séjours à excursions (nightUid -> 0,1,2...), calculé UNE
+// fois par render() — Hub, Horizon et Voyage utilisent le même ordre (chaîne
+// principale) donc le même séjour a la même couleur partout.
+let RB_SEJOUR_INDEX = new Map();
+function rbCalculeIndexSejours(){
+  const idx = new Map();
+  let n=0;
+  voyage.filter(v=>!v.rattache).forEach(item=>{
+    const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
+    const nb=(item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
+    if(!nuit || nb<2) return;
+    if(!voyage.some(v=>v.rattache===item.uid)) return; // séjour sans excursion : pas de couleur à réserver
+    idx.set(item.uid, n++);
+  });
+  return idx;
+}
 // Tactile : pas de survol au doigt → la fiche s'ouvre au tap, pas en passant dessus.
 // (Détection tactile retirée le 07/07 : la carte gère désormais l'ouverture des bulles par
 // simple clic natif — souris ET tactile — plus fiable que notre survol maison, qui entrait
@@ -550,7 +561,7 @@ async function chargerRetenuesVoyage(userId){
     initRetenueDrag();
     // 3c : maintenant que RETENUES_INFO est peuplé, redessiner pour faire
     // apparaître les épingles non placées sur la carte.
-    if(routeLayer){ routeLayer.clearLayers(); if(excursionLayer) excursionLayer.clearLayers(); renderMap(); }
+    if(routeLayer){ routeLayer.clearLayers(); Object.values(EXCURSION_LAYERS).forEach(l=>{ l.clearLayers(); if(map) map.removeLayer(l); }); EXCURSION_LAYERS={}; RB_SEJOUR_INDEX=rbCalculeIndexSejours(); renderMap(); }
   }catch(e){ console.warn('chargerRetenuesVoyage',e); box.innerHTML='<div class="vr-empty">Indisponible.</div>'; }
 }
 /* re-rend la bande pour refléter l'état placé/non-placé après ajout/retrait */
@@ -735,8 +746,6 @@ function initMap(){
   map=L.map('map').setView([46.5,2.5],6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
   routeLayer=L.layerGroup().addTo(map);
-  excursionLayer=L.layerGroup();
-  if(RB_EXCURSIONS_VISIBLES) excursionLayer.addTo(map);
   setTimeout(()=>map.invalidateSize(),200);
 }
 
@@ -782,7 +791,9 @@ async function loadVoyage(){
 function render(){
   // Toujours vider la carte en premier — synchrone, garanti
   if(routeLayer) routeLayer.clearLayers();
-  if(excursionLayer) excursionLayer.clearLayers();
+  Object.values(EXCURSION_LAYERS).forEach(l=>{ l.clearLayers(); if(map) map.removeLayer(l); });
+  EXCURSION_LAYERS={};
+  RB_SEJOUR_INDEX = rbCalculeIndexSejours();
   renderList();
   // Redessiner si itinéraire OU épingles non placées (3c : la carte montre les deux)
   const aDesEpingles = (typeof RETENUES_INFO==='object') && Object.keys(RETENUES_INFO).length>0;
@@ -1463,11 +1474,16 @@ function renderList(){
         .sort((a,b)=>(a.jour||1)-(b.jour||1));
       if(mesExcursions.length){
         const ouvert = !RB_EXCURSIONS_FERMEES.has(item.uid);
+        const idxCouleur = RB_SEJOUR_INDEX.has(item.uid) ? RB_SEJOUR_INDEX.get(item.uid) : 0;
+        const couleurSejour = (window.RNR_MARQUEURS && RNR_MARQUEURS.couleurExcursion) ? RNR_MARQUEURS.couleurExcursion(idxCouleur) : 'var(--gold)';
+        const masque = RB_EXCURSIONS_MASQUEES.has(item.uid);
         const bloc = document.createElement('div');
         bloc.className='excursion-block';
         bloc.dataset.nightUid = item.uid;
+        bloc.style.borderLeftColor = couleurSejour;
         bloc.innerHTML = `
           <div class="excursion-block-head" onclick="rbToggleExcursions('${item.uid}')">
+            <button class="excursion-swatch${masque?' excursion-swatch-off':''}" type="button" data-night-uid="${item.uid}" style="background:${couleurSejour};" title="Afficher/masquer ce séjour sur la carte" onclick="event.stopPropagation();rbToggleExcursionLayer('${item.uid}')"></button>
             <span class="excursion-block-title">🥾 ${mesExcursions.length} excursion${mesExcursions.length>1?'s':''} depuis ce séjour</span>
             <span class="excursion-block-chevron">${ouvert?'▾':'▸'}</span>
           </div>
@@ -1475,7 +1491,7 @@ function renderList(){
             ${mesExcursions.map(exc=>{
               const distExc = (item.lat&&exc.lat) ? calcDist(item.lat,item.lng,exc.lat,exc.lng) : null;
               const jourExc = exc.jour||1;
-              return `<div class="excursion-item" data-uid="${exc.uid}" data-id="${exc.id}">
+              return `<div class="excursion-item" data-uid="${exc.uid}" data-id="${exc.id}" style="border-left:3px solid ${couleurSejour};">
                 <button class="excursion-jour" type="button" title="Changer de jour" onclick="event.stopPropagation();rbCycleJour('${exc.uid}')">Jour ${jourExc}</button>
                 <div class="excursion-info" onclick="vrOuvreGrandeFiche('${exc.id}')">
                   <div class="excursion-name">${exc.nom||'—'}</div>
@@ -1629,35 +1645,40 @@ function renderMap(){
     }
   }
 
-  // (2bis) LES EXCURSIONS (10/07) : un pétale aller-retour par jour de séjour,
-  // dans excursionLayer — jamais mêlé au tracé principal, montré/masqué par le
-  // bouton dédié (rbToggleExcursionsCarte). Style « léger » (traceRoute leger:true) :
-  // même couleur que le trajet principal, juste plus fin et pointillé.
-  if(excursionLayer && window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
-    let auMoinsUneExcursion=false;
+  // (2bis) LES EXCURSIONS (10/07) : un pétale aller-retour par jour de séjour.
+  // CHAQUE SÉJOUR a sa propre couche (EXCURSION_LAYERS[nightUid]) et sa propre
+  // couleur (RNR_MARQUEURS.couleurExcursion, index = RB_SEJOUR_INDEX) — jamais
+  // mêlées entre elles ni au trajet principal, coupables indépendamment
+  // (rbToggleExcursionLayer). Style « léger » (traceRoute leger:true) : plus fin,
+  // pointillé, mais dans LA couleur du séjour.
+  if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
     pts.forEach(night=>{
       const nuit=RNR_MARQUEURS.estNuit(night);
       const nbNuits=(night.nb_nuits && night.nb_nuits>0)?night.nb_nuits:1;
       if(!nuit || nbNuits<2) return;
       const excs = voyage.filter(v=>v.rattache===night.uid && v.lat && v.lng);
       if(!excs.length) return;
-      auMoinsUneExcursion=true;
+      const idx = RB_SEJOUR_INDEX.has(night.uid) ? RB_SEJOUR_INDEX.get(night.uid) : 0;
+      const couleurSejour = RNR_MARQUEURS.couleurExcursion(idx);
+      const coucheSejour = L.layerGroup();
+      EXCURSION_LAYERS[night.uid]=coucheSejour;
+      if(!RB_EXCURSIONS_MASQUEES.has(night.uid)) coucheSejour.addTo(map);
       // Groupées par jour — un pétale par jour, dans l'ordre de pose au sein du jour.
       const parJour={};
       excs.forEach(e=>{ const j=e.jour||1; (parJour[j]=parJour[j]||[]).push(e); });
       Object.keys(parJour).forEach(j=>{
         const duJour=parJour[j];
         const latlngsExc=[[night.lat,night.lng], ...duJour.map(e=>[e.lat,e.lng]), [night.lat,night.lng]];
-        RNR_MARQUEURS.traceRoute(map, excursionLayer, latlngsExc, {surl:SURL, skey:SKEY}, {leger:true}).catch(()=>{});
+        RNR_MARQUEURS.traceRoute(map, coucheSejour, latlngsExc, {surl:SURL, skey:SKEY}, {leger:true, couleur:couleurSejour}).catch(()=>{});
         duJour.forEach(e=>{
           const iconExc=L.divIcon({
-            html:`<div style="background:var(--mk-jour,#F5C518);color:var(--mk-jour-ink,#5a4a00);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:9px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${e.jour||1}</div>`,
+            html:`<div style="background:${couleurSejour};color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:9px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${e.jour||1}</div>`,
             className:'', iconSize:[22,22], iconAnchor:[11,11]
           });
           const phExc = e.photo_url
             ? '<div style="height:100px;background:var(--gold-a20) center/cover no-repeat url(\''+escVr(e.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
             : '';
-          const mkExc=L.marker([e.lat,e.lng],{icon:iconExc}).addTo(excursionLayer).bindPopup(`
+          const mkExc=L.marker([e.lat,e.lng],{icon:iconExc}).addTo(coucheSejour).bindPopup(`
             <div style="font-family:Inter,sans-serif;min-width:160px;max-width:210px;">
               ${phExc}
               <div style="font-weight:700;font-size:13px;margin-bottom:3px;padding:0 2px;">🥾 ${escVr(e.nom||'—')}</div>
@@ -1665,16 +1686,12 @@ function renderMap(){
             </div>
           `, {maxWidth:230, autoPan:true, closeButton:true});
           MARKERS_ITINERAIRE[e.id]=mkExc;
-          bounds.push([e.lat,e.lng]);
+          // Un séjour masqué ne doit pas tirer le cadrage de la carte vers ses
+          // excursions invisibles — seuls les points VUS comptent pour bounds.
+          if(!RB_EXCURSIONS_MASQUEES.has(night.uid)) bounds.push([e.lat,e.lng]);
         });
       });
     });
-    const btnExc=document.getElementById('rb-toggle-excursions');
-    if(btnExc){
-      btnExc.style.display = auMoinsUneExcursion ? 'block' : 'none';
-      btnExc.classList.toggle('rb-excursions-off', !RB_EXCURSIONS_VISIBLES);
-      btnExc.textContent = RB_EXCURSIONS_VISIBLES ? '🥾 Excursions' : '🥾 Excursions (masquées)';
-    }
   }
 
   // (3) Les ÉPINGLES PAS ENCORE PLACÉES : validées pour le voyage mais hors
@@ -1709,20 +1726,26 @@ function renderMap(){
   else map.fitBounds(bounds,{padding:[40,40]});
 }
 
-/* Montrer/masquer les excursions sur la carte (10/07) — ajoute/retire
-   excursionLayer de la carte, sans jamais toucher routeLayer (le trajet
-   principal reste visible dans tous les cas). Pas de re-render, pas de
-   nouvel appel ORS : la couche existe déjà, on la montre ou on la cache. */
-function rbToggleExcursionsCarte(){
-  if(!map||!excursionLayer) return;
-  RB_EXCURSIONS_VISIBLES=!RB_EXCURSIONS_VISIBLES;
-  if(RB_EXCURSIONS_VISIBLES) excursionLayer.addTo(map);
-  else map.removeLayer(excursionLayer);
-  const btnExc=document.getElementById('rb-toggle-excursions');
-  if(btnExc){
-    btnExc.classList.toggle('rb-excursions-off', !RB_EXCURSIONS_VISIBLES);
-    btnExc.textContent = RB_EXCURSIONS_VISIBLES ? '🥾 Excursions' : '🥾 Excursions (masquées)';
+/* Montrer/masquer LES EXCURSIONS D'UN SÉJOUR (10/07) — ajoute/retire SA couche
+   de la carte, sans jamais toucher aux autres séjours ni au trajet principal.
+   Pas de re-render complet : la couche existe déjà, on la montre ou on la
+   cache. L'état masqué/visible est mémorisé (RB_EXCURSIONS_MASQUEES) pour
+   survivre aux prochains render() de la session (pas persisté en base — c'est
+   un réglage d'affichage, pas une décision de voyage). */
+function rbToggleExcursionLayer(nightUid){
+  if(!map) return;
+  const couche=EXCURSION_LAYERS[nightUid];
+  if(!couche) return;
+  if(RB_EXCURSIONS_MASQUEES.has(nightUid)){
+    RB_EXCURSIONS_MASQUEES.delete(nightUid);
+    couche.addTo(map);
+  } else {
+    RB_EXCURSIONS_MASQUEES.add(nightUid);
+    map.removeLayer(couche);
   }
+  // Le pastille-swatch dans la colonne de gauche reflète l'état sans tout redessiner.
+  const swatch=document.querySelector('.excursion-swatch[data-night-uid="'+nightUid+'"]');
+  if(swatch) swatch.classList.toggle('excursion-swatch-off', RB_EXCURSIONS_MASQUEES.has(nightUid));
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────

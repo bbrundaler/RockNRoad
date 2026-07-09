@@ -161,4 +161,18 @@
   --mk-bord:         #FFFFFF;   /* liseré pastille                          */
   --mk-bord-epingle: #E24B4A;   /* liseré de l'épingle — rouge accent pour ressortir (Bruno 29/06) */
   --mk-trace:        #2159A8;   /* tracé reliant l'itinéraire — bleu soutenu (l'or se fondait dans les tuiles OSM, 02/07) */
+
+  /* PALETTE EXCURSIONS (10/07, retour Bruno) : chaque séjour à excursions a SA
+     couleur, pour distinguer ses pétales des autres séjours ET du trajet
+     principal (--mk-trace). SANS RAPPORT avec la grammaire de statut ci-dessus
+     (jour/nuit/épingle/cœur) — ne jamais réutiliser --mk-jour, --mk-nuit,
+     --mk-epingle ou --mk-coeur-* ici, pour ne pas laisser croire qu'un pétale
+     est un statut de fiche. Rotation à 5 teintes (RNR_MARQUEURS.couleurExcursion,
+     carto-marqueurs.js) — un seul endroit attribue l'index, donc même séjour =
+     même couleur sur Hub, Horizon et Voyage. */
+  --mk-excursion-1:  #B8631F;   /* rouille */
+  --mk-excursion-2:  #6B3288;   /* violet (= --bou) */
+  --mk-excursion-3:  #3D6B35;   /* vert forêt */
+  --mk-excursion-4:  #A83250;   /* bordeaux */
+  --mk-excursion-5:  #4A5FA8;   /* bleu-violet */
 }

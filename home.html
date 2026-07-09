@@ -163,6 +163,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hdb-val .u{font-size:11px;font-weight:700;}
 .hdb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
 .hub-itin-aide{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:8px;}
+/* (10/07) Légende des séjours à excursions — une pastille par séjour, cliquable
+   pour couper/remontrer SON pétale sans toucher aux autres ni au trajet principal. */
+#hub-excursions-legende{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.hub-excursion-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1.5px solid;border-radius:var(--r-pill);padding:4px 9px 4px 6px;font-size:11px;font-weight:600;color:var(--ink);cursor:pointer;transition:opacity .15s;}
+.hub-excursion-chip-off{opacity:.45;}
+.hub-excursion-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .hub-itin-liste{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0;padding:0;}
 .hub-itin-liste li{display:flex;align-items:center;gap:9px;padding:7px 9px;background:var(--surface);
   border:1px solid var(--surface-line);border-radius:var(--r-sm);font-size:13px;}
@@ -286,6 +292,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
           <div class="hdb-label">étapes</div>
         </div>
       </div>
+      <div id="hub-excursions-legende" style="display:none;"></div>
       <div class="rr-surface">
         <h3>La carte, en un coup d'œil</h3>
         <div class="hub-itin-aide">Survole (ou touche) un point pour le voir ; les <b>numérotés</b> sont déjà dans ton trajet (<a href="voyage.html" style="color:var(--gold-text);font-weight:600;">Roadbook</a>).</div>
@@ -568,6 +575,13 @@ async function loadHubData(userId, email){
    voyage_itineraire) reste affiché — lecture seule, reflet de Voyage.
    ════════════════════════════════════════════════════════════════════════ */
 let HUB_MAP=null, HUB_MARKERS={}, HUB_FICHES={}, HUB_GROUPE_ID=null, HUB_ETATS={}, HUB_PLACEES={}, HUB_TRACE_VOYAGE=null, HUB_DOMICILE=null, HUB_MAISON_MK=null;
+// (10/07, retour Bruno) : le Hub reflète maintenant les séjours/excursions du
+// Roadbook, pas seulement la chaîne à plat — mêmes règles, même palette de
+// couleurs (RNR_MARQUEURS.couleurExcursion) que Voyage et Horizon.
+let HUB_ITINERAIRE_ROWS=[];       // lignes brutes voyage_itineraire (uid, lieu_id, ordre, nb_nuits, rattache, jour)
+let HUB_EXCURSION_LAYERS={};      // nightUid -> L.layerGroup, coupable indépendamment
+let HUB_EXCURSIONS_MASQUEES=new Set();
+let HUB_SEJOUR_INDEX=new Map();   // nightUid -> index couleur (même ordre que Voyage/Horizon)
 // Tactile : sur mobile le survol n'existe pas → bindPopup gère déjà l'ouverture au tap.
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
@@ -607,14 +621,20 @@ async function initHubCarte(fiches, groupeId, userId){
   //    carte du Hub et celle de Voyage parlent la même langue (correspondance bidi).
   HUB_ETATS={};
   HUB_PLACEES={};   // lieu_id -> numéro d'ordre (1-based), pour le rond numéroté + tracé
+  HUB_ITINERAIRE_ROWS=[];
   try{
     const voyageId=await hubResoutVoyage(userId);
     if(voyageId){
       const {data:rf}=await sb.from('voyage_fiches').select('lieu_id,statut').eq('voyage_id',voyageId).eq('statut','retenue');
       (rf||[]).forEach(r=>{ HUB_ETATS[r.lieu_id]={epingle:true}; });
       // L'itinéraire ordonné du voyage : ces fiches sont PLACÉES (numéro + tracé).
-      const {data:ri}=await sb.from('voyage_itineraire').select('lieu_id,ordre').eq('voyage_id',voyageId).order('ordre',{ascending:true});
-      let n=0; (ri||[]).forEach(r=>{ if(HUB_PLACEES[r.lieu_id]==null){ HUB_PLACEES[r.lieu_id]=(++n); } });
+      // (10/07) On lit aussi rattache_a_nuit_uid/jour_offset : seule la chaîne
+      // principale (non rattachée) est numérotée — une excursion n'est plus une
+      // étape de la chaîne, elle vit dans le pétale de son séjour (hubTraceVoyage).
+      const {data:ri}=await sb.from('voyage_itineraire')
+        .select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid,jour_offset').eq('voyage_id',voyageId).order('ordre',{ascending:true});
+      HUB_ITINERAIRE_ROWS=ri||[];
+      let n=0; HUB_ITINERAIRE_ROWS.forEach(r=>{ if(!r.rattache_a_nuit_uid && HUB_PLACEES[r.lieu_id]==null){ HUB_PLACEES[r.lieu_id]=(++n); } });
       // Tableau de bord : signal « votes en cours » — la NOTIFICATION vit ici, VOTER reste
       // exclusivement sur Horizon (aucune action de vote ajoutée sur ce tableau).
       hubMajVotesEnCours(voyageId, userId);
@@ -631,6 +651,9 @@ async function initHubCarte(fiches, groupeId, userId){
     }).addTo(HUB_MAP);
   }
   geo.forEach(f=>{
+    // (10/07) Une fiche rattachée à un séjour (excursion) a déjà son marqueur
+    // coloré propre au séjour, dessiné dans hubTraceVoyage — pas de doublon ici.
+    if(HUB_ITINERAIRE_ROWS.some(r=>r.lieu_id===f.id && r.rattache_a_nuit_uid)) return;
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
     const etat=HUB_ETATS[f.id]||{};
     // Fiche déjà placée dans le trajet (voyage_itineraire) → rond numéroté, comme Voyage.
@@ -803,13 +826,33 @@ function hubMajFilVoyage(nbFiches, nbRegions){
 // Suit l'ordre de voyage_itineraire (HUB_PLACEES = lieu_id -> numéro).
 // TRACÉ ROUTIER (29/06) : passe par le moteur unique (→ Edge Function 'route' →
 // OpenRouteService), repli ligne droite si indisponible. Même langage que Voyage.
+// (10/07) La chaîne principale (fiches non rattachées) porte seul le tracé/la
+// numérotation ; les excursions dessinent leur propre pétale coloré par séjour,
+// exactement comme sur Voyage — un point isolé (Gavarnie...) ni une excursion
+// ne cassent plus le trajet du groupe.
+function hubIndexSejours(){
+  const idx=new Map(); let n=0;
+  HUB_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid).forEach(r=>{
+    const f=HUB_FICHES[r.lieu_id];
+    const nuit=(f && window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(f):false;
+    const nb=(r.nb_nuits && r.nb_nuits>0)?r.nb_nuits:1;
+    if(!nuit || nb<2) return;
+    if(!HUB_ITINERAIRE_ROWS.some(x=>x.rattache_a_nuit_uid===r.uid)) return;
+    idx.set(r.uid, n++);
+  });
+  return idx;
+}
 function hubTraceVoyage(){
   if(!HUB_MAP) return;
   // HUB_TRACE_VOYAGE est désormais un layerGroup (le tracé routier = plusieurs polylignes).
   if(HUB_TRACE_VOYAGE){ HUB_MAP.removeLayer(HUB_TRACE_VOYAGE); HUB_TRACE_VOYAGE=null; }
-  const ordonne=Object.keys(HUB_PLACEES)
-    .sort((a,b)=>HUB_PLACEES[a]-HUB_PLACEES[b])
-    .map(id=>HUB_FICHES[id]).filter(f=>f&&f.lat!=null&&f.lng!=null)
+  Object.values(HUB_EXCURSION_LAYERS).forEach(l=>{ l.clearLayers(); HUB_MAP.removeLayer(l); });
+  HUB_EXCURSION_LAYERS={};
+  HUB_SEJOUR_INDEX=hubIndexSejours();
+
+  const chaine=HUB_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid);
+  const ordonne=chaine
+    .map(r=>HUB_FICHES[r.lieu_id]).filter(f=>f&&f.lat!=null&&f.lng!=null)
     .map(f=>[f.lat,f.lng]);
   // BOUCLE : départ et retour à la maison (même langage que Voyage).
   let pts=ordonne;
@@ -817,8 +860,8 @@ function hubTraceVoyage(){
     const m=[HUB_DOMICILE.lat,HUB_DOMICILE.lng];
     pts=[m, ...ordonne, m];
   }
-  // Nombre d'étapes placées (pour le tableau de bord).
-  const nbEtapes=Object.keys(HUB_PLACEES).length;
+  // Nombre d'étapes placées (pour le tableau de bord) — la chaîne principale seule.
+  const nbEtapes=chaine.length;
   hubMajDashboard({stops:nbEtapes});
 
   if(pts.length>=2){
@@ -832,6 +875,73 @@ function hubTraceVoyage(){
       L.polyline(pts,{color:col,weight:3,dashArray:'10,6'}).addTo(HUB_TRACE_VOYAGE);
     }
   }
+
+  // ── Pétales d'excursions, un par séjour, sa couleur, sa couche (10/07) ──
+  if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
+    chaine.forEach(r=>{
+      const night=HUB_FICHES[r.lieu_id];
+      if(!night || night.lat==null) return;
+      const nuit=RNR_MARQUEURS.estNuit(night);
+      const nb=(r.nb_nuits && r.nb_nuits>0)?r.nb_nuits:1;
+      if(!nuit || nb<2) return;
+      const excs=HUB_ITINERAIRE_ROWS.filter(x=>x.rattache_a_nuit_uid===r.uid)
+        .map(x=>({row:x, f:HUB_FICHES[x.lieu_id]}))
+        .filter(x=>x.f && x.f.lat!=null);
+      if(!excs.length) return;
+      const idx=HUB_SEJOUR_INDEX.has(r.uid)?HUB_SEJOUR_INDEX.get(r.uid):0;
+      const couleurSejour=RNR_MARQUEURS.couleurExcursion(idx);
+      const couche=L.layerGroup();
+      HUB_EXCURSION_LAYERS[r.uid]=couche;
+      if(!HUB_EXCURSIONS_MASQUEES.has(r.uid)) couche.addTo(HUB_MAP);
+      const parJour={};
+      excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
+      Object.keys(parJour).forEach(j=>{
+        const duJour=parJour[j];
+        const latlngsExc=[[night.lat,night.lng], ...duJour.map(x=>[x.f.lat,x.f.lng]), [night.lat,night.lng]];
+        RNR_MARQUEURS.traceRoute(HUB_MAP, couche, latlngsExc, {surl:SURL, skey:SKEY}, {leger:true, couleur:couleurSejour}).catch(()=>{});
+        duJour.forEach(x=>{
+          const iconExc=L.divIcon({
+            html:`<div style="background:${couleurSejour};color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:8px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${x.row.jour_offset||1}</div>`,
+            className:'', iconSize:[20,20], iconAnchor:[10,10]
+          });
+          L.marker([x.f.lat,x.f.lng],{icon:iconExc}).addTo(couche).bindPopup(
+            '<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;">'+
+            '<div style="font-weight:700;font-size:13px;margin-bottom:3px;padding:0 2px;">🥾 '+escapeHubHtml(x.f.nom||'—')+'</div>'+
+            '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Jour '+(x.row.jour_offset||1)+' · excursion depuis '+escapeHubHtml(night.nom||'')+'</div>'+
+            '</div>', {maxWidth:220, autoPan:false, closeButton:false});
+        });
+      });
+    });
+  }
+  hubRendLegendeExcursions();
+}
+
+/* Légende des séjours à excursions — une pastille de couleur par séjour,
+   cliquable pour couper/remontrer SON pétale. Masquée s'il n'y en a aucun. */
+function hubRendLegendeExcursions(){
+  const box=document.getElementById('hub-excursions-legende');
+  if(!box) return;
+  const sejours=[...HUB_SEJOUR_INDEX.keys()];
+  if(!sejours.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='flex';
+  box.innerHTML = sejours.map(uid=>{
+    const row=HUB_ITINERAIRE_ROWS.find(r=>r.uid===uid);
+    const f=row?HUB_FICHES[row.lieu_id]:null;
+    const couleur=RNR_MARQUEURS.couleurExcursion(HUB_SEJOUR_INDEX.get(uid));
+    const masque=HUB_EXCURSIONS_MASQUEES.has(uid);
+    return '<button type="button" class="hub-excursion-chip'+(masque?' hub-excursion-chip-off':'')+'" data-night-uid="'+uid+'" '
+      +'style="border-color:'+couleur+';" onclick="hubToggleExcursionLayer(\''+uid+'\')" title="Afficher/masquer les excursions de ce séjour">'
+      +'<span class="hub-excursion-dot" style="background:'+couleur+';"></span>'+escapeHubHtml((f&&f.nom)||'Séjour')
+      +'</button>';
+  }).join('');
+}
+function hubToggleExcursionLayer(nightUid){
+  if(!HUB_MAP) return;
+  const couche=HUB_EXCURSION_LAYERS[nightUid];
+  if(!couche) return;
+  if(HUB_EXCURSIONS_MASQUEES.has(nightUid)){ HUB_EXCURSIONS_MASQUEES.delete(nightUid); couche.addTo(HUB_MAP); }
+  else { HUB_EXCURSIONS_MASQUEES.add(nightUid); HUB_MAP.removeLayer(couche); }
+  hubRendLegendeExcursions();
 }
 
 // Tableau de bord du Hub : affiché dès qu'il y a au moins une étape ; rempli avec la
