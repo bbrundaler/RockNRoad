@@ -351,7 +351,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div class="stop-item stop-bookend" id="bookend-depart">
         <div class="stop-num">🏠</div>
         <div class="stop-info">
-          <div class="stop-name">Départ <input id="rb-dates" type="date" class="bookend-date" onchange="rbSauverDepartRetourDate()"></div>
+          <div class="stop-name">Départ <input id="rb-dates" type="date" class="bookend-date" onchange="rbSauverDepartRetourDate()"> <button id="rb-toggle-principal-btn" class="rb-toggle-principal-inline" type="button" onclick="rbToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale">🧭</button></div>
           <div class="stop-meta bookend-lieu-row">
             <span class="bookend-lieu-txt" id="rb-depart-affiche">🏠 Maison</span>
             <button class="bookend-modifier" type="button" onclick="rbBookendEditToggle('depart')">✎ Modifier</button>
@@ -1467,7 +1467,7 @@ function renderList(){
       </div>
       <div class="stop-info">
         <div class="stop-name">${item.nom||'—'}</div>
-        <div class="stop-meta">${dEtape?rbFormatDateCourt(dEtape):''}${i===0?` <button class="rb-toggle-principal-inline${RB_ROUTE_PRINCIPALE_VISIBLE?'':' rb-principal-off'}" type="button" onclick="event.stopPropagation();rbToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale">🧭</button>`:''}${(dEtape||i===0)?' · ':''}${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
+        <div class="stop-meta">${dEtape?rbFormatDateCourt(dEtape)+' · ':''}${rbRegionDe(item.lat,item.lng)} ${item.type?'· '+item.type:''}</div>
         ${distHtml}
         ${nuit ? `<div class="stop-nuits-ligne">
           <span class="stop-nuits-txt">Nb nuits</span>
@@ -1681,6 +1681,17 @@ function renderMap(){
       const coucheSejour = L.layerGroup();
       EXCURSION_LAYERS[night.uid]=coucheSejour;
       if(!RB_EXCURSIONS_MASQUEES.has(night.uid)) coucheSejour.addTo(map);
+      // (10/07, retour Bruno) : matérialiser le lieu de nuit DANS la couleur du
+      // séjour — sans ça, le pétale semble juste relier les fiches-jour entre
+      // elles, sans montrer où est la base. Un halo autour de la pastille
+      // numérotée existante (jamais un doublon qui la cache), dans SA couche
+      // à lui : il se coupe avec le reste du pétale, pas indépendamment.
+      const iconBase=L.divIcon({
+        html:`<div style="width:26px;height:26px;border-radius:50%;border:3px solid ${couleurSejour};box-shadow:0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.3);"></div>`,
+        className:'', iconSize:[26,26], iconAnchor:[13,13]
+      });
+      L.marker([night.lat,night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(coucheSejour)
+        .bindPopup(`<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;"><div style="font-weight:700;font-size:13px;padding:0 2px;">🏕️ Base du séjour</div><div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">${escVr(night.nom||'')} · point de départ des excursions</div></div>`, {maxWidth:220, autoPan:true, closeButton:true});
       // Groupées par jour — un pétale par jour, dans l'ordre de pose au sein du jour.
       const parJour={};
       excs.forEach(e=>{ const j=e.jour||1; (parJour[j]=parJour[j]||[]).push(e); });

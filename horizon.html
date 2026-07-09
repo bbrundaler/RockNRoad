@@ -1434,6 +1434,13 @@ function hzTraceVoyage(){
       const couleurSejour=RNR_MARQUEURS.couleurExcursion(idx);
       const couche=L.layerGroup().addTo(HZ_CARTE_REPOS);
       HZ_EXCURSION_LAYERS[r.uid]=couche;
+      // (10/07, retour Bruno) : même halo qu'sur Voyage/Hub — matérialise la
+      // base du séjour dans SA couleur.
+      const iconBase=L.divIcon({
+        html:`<div style="width:22px;height:22px;border-radius:50%;border:3px solid ${couleurSejour};box-shadow:0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.3);"></div>`,
+        className:'', iconSize:[22,22], iconAnchor:[11,11]
+      });
+      L.marker([+night.lat,+night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche);
       const parJour={};
       excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
       Object.keys(parJour).forEach(j=>{

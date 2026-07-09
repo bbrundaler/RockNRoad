@@ -895,6 +895,15 @@ function hubTraceVoyage(){
       const couche=L.layerGroup();
       HUB_EXCURSION_LAYERS[r.uid]=couche;
       if(!HUB_EXCURSIONS_MASQUEES.has(r.uid)) couche.addTo(HUB_MAP);
+      // (10/07, retour Bruno) : même halo qu'sur Voyage — matérialise la base
+      // du séjour dans SA couleur, sans quoi le pétale semble juste relier les
+      // fiches-jour entre elles.
+      const iconBase=L.divIcon({
+        html:`<div style="width:24px;height:24px;border-radius:50%;border:3px solid ${couleurSejour};box-shadow:0 0 0 2px #fff, 0 1px 4px rgba(0,0,0,.3);"></div>`,
+        className:'', iconSize:[24,24], iconAnchor:[12,12]
+      });
+      L.marker([night.lat,night.lng],{icon:iconBase, zIndexOffset:-200}).addTo(couche)
+        .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;"><div style="font-weight:700;font-size:13px;padding:0 2px;">🏕️ Base du séjour</div><div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">'+escapeHubHtml(night.nom||'')+' · point de départ des excursions</div></div>', {maxWidth:220, autoPan:false, closeButton:false});
       const parJour={};
       excs.forEach(x=>{ const j=x.row.jour_offset||1; (parJour[j]=parJour[j]||[]).push(x); });
       Object.keys(parJour).forEach(j=>{
