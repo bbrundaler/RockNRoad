@@ -16,6 +16,8 @@
 <script src="carto-marqueurs.js"></script>
 <script src="discussion.js"></script>
 <script src="rail-groupe.js"></script>
+<script src="fiche-complete.js"></script>
+<script src="lightbox.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -185,6 +187,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .vr-badge{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
   border:1px solid var(--gold);border-radius:999px;padding:0 8px;}
 .vr-bande{display:flex;gap:10px;align-items:stretch;overflow-x:auto;overflow-y:hidden;min-height:128px;}
+/* Sujet (08/07, retour Bruno) : survoler une fiche retenue doit la faire
+   ressortir sur la carte, pour juger d'où elle est avant de la glisser dans
+   le trajet. filter (pas transform : Leaflet pose déjà un transform inline
+   pour le positionnement, un 2e transform en CSS l'aurait écrasé). */
+.vr-mk-survole{filter:drop-shadow(0 0 5px var(--gold)) drop-shadow(0 0 10px var(--gold));z-index:1000!important;}
 .vr-fiche{width:120px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;position:relative;
   border:1px solid var(--surface-line);border-radius:var(--r);padding:6px;background:var(--paper);}
 .vr-fiche .vrf-ph{width:100%;height:78px;border-radius:6px;background-size:cover;background-position:center;
@@ -455,6 +462,7 @@ async function voyageChargeSelecteurChrome(){
    dans l'itinéraire (cf. initRetenueDrag). Décision Bruno 25/06 : l'itinéraire
    est à part, on y fait entrer une retenue d'un geste. ── */
 let RETENUES_INFO={};   // id -> {id,nom,lat,lng,type,photo_url} (source du drag)
+let MARKERS_RETENUES={};   // id -> marqueur Leaflet des épingles pas encore placées (08/07, survol)
 async function chargerRetenuesVoyage(userId){
   const box=document.getElementById('vr-list');
   const badge=document.getElementById('vr-badge');
@@ -472,7 +480,7 @@ async function chargerRetenuesVoyage(userId){
       box.innerHTML='<div class="vr-empty">Aucune fiche retenue. Les fiches retenues sur Horizon arrivent ici.</div>';
       return;
     }
-    const {data:fs}=await sb.from('lieux').select('id,nom,photo_url,lat,lng,type').in('id',ids);
+    const {data:fs}=await sb.from('lieux').select('*').in('id',ids);
     RETENUES_INFO={}; (fs||[]).forEach(f=>{ RETENUES_INFO[f.id]=f; });
     const placed=new Set(voyage.map(v=>v.id));   // déjà sur l'itinéraire
     box.innerHTML = ids.map(id=>{
@@ -547,14 +555,17 @@ function initRetenueDrag(){
     const id=fiche.dataset.id;
     const f=RETENUES_INFO[id];
     if(!f) return;
-    if(f.lat==null||f.lng==null) return;   // pas de coordonnées → pas plaçable sur la carte
-    if(voyage.some(v=>v.id===id)) return;  // déjà sur l'itinéraire → on ne re-traîne pas
-    src={fiche,id,f}; started=false; sx=e.clientX; sy=e.clientY;
+    // Sujet (08/07, retour Bruno) : avant, une fiche sans coordonnées ou déjà
+    // placée ne déclenchait RIEN au clic (sortie précoce ici). On garde le tap
+    // dans tous les cas — seul le GLISSER reste réservé aux fiches plaçables —
+    // pour pouvoir toujours ouvrir la fiche complète en tapant dessus.
+    const draggable = (f.lat!=null && f.lng!=null) && !voyage.some(v=>v.id===id);
+    src={fiche,id,f,draggable}; started=false; sx=e.clientX; sy=e.clientY;
     try{ box.setPointerCapture(e.pointerId); }catch(_){}
   });
 
   box.addEventListener('pointermove', e=>{
-    if(!src) return;
+    if(!src || !src.draggable) return;   // pas plaçable → pas de fantôme, mais le tap reste détecté
     if(!started){
       if(Math.abs(e.clientX-sx)<6 && Math.abs(e.clientY-sy)<6) return; // seuil anti-clic
       started=true;
@@ -582,7 +593,12 @@ function initRetenueDrag(){
     if(ghost){ ghost.remove(); ghost=null; }
     cur.fiche.classList.remove('vrf-dragging');
     list.classList.remove('vr-drop-on');
-    if(!wasStarted) return;  // simple tap, pas un drag
+    if(!wasStarted){
+      // simple tap (pas de glisser) → ouvrir la fiche complète (retour Bruno 08/07)
+      vrOuvreGrandeFiche(cur.id);
+      return;
+    }
+    if(!cur.draggable) return;   // sécurité : started implique déjà draggable ci-dessus
     const x=e.clientX, y=e.clientY;
     const overList=document.elementFromPoint(x,y)?.closest('#stops-list');
     if(!overList) return;    // lâché ailleurs → on n'ajoute pas
@@ -1320,6 +1336,7 @@ function majTotauxRoute(r){
 function renderMap(){
   if(!map||!routeLayer) return;
   // clearLayers déjà appelé dans render() avant renderMap()
+  MARKERS_RETENUES={};   // repart à zéro en même temps que la couche visuelle
   const pts = voyage.filter(v=>v.lat&&v.lng);
 
   const bounds=[];
@@ -1416,6 +1433,7 @@ function renderMap(){
           <div style="font-size:11px;color:var(--mk-epingle,#1d9e75);font-weight:700;margin-top:3px;padding:0 2px;">Épinglée — à placer dans le trajet</div>
         </div>
       `, {maxWidth:240, autoPan:true, closeButton:true});
+      MARKERS_RETENUES[f.id]=mkEp;
       bounds.push([f.lat,f.lng]);
     });
   }
@@ -1459,7 +1477,60 @@ function calcDist(lat1,lng1,lat2,lng2){
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 
+// ── GRANDE FICHE (08/07, retour Bruno) : plus moyen de rouvrir une fiche
+// stockée en bas pour se refaire une idée avant de la placer. Réutilise
+// RNR_FICHE_COMPLETE (fiche-complete.js), le même rendu que Carnet/Horizon —
+// jamais reconstruit à côté. Lecture seule ici : voter reste exclusivement
+// sur Horizon (aucune voteBarHtml passée).
+function vrOuvreGrandeFiche(id){
+  const f=RETENUES_INFO[id]; if(!f) return;
+  const body=document.getElementById('vr-gf-body');
+  const overlay=document.getElementById('vr-gf-overlay');
+  if(!body||!overlay) return;
+  const noteG=RNR_FICHE_COMPLETE.badgeNoteGoogle(f.note);
+  const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(f.note_famille);
+  body.innerHTML=RNR_FICHE_COMPLETE.html(f,{
+    noteG, noteF,
+    closeButtonHtml:'<button class="gf-close" onclick="vrFermeGrandeFiche()">✕</button>'
+  });
+  overlay.style.display='flex';
+}
+function vrFermeGrandeFiche(){
+  const overlay=document.getElementById('vr-gf-overlay');
+  if(overlay) overlay.style.display='none';
+}
+// ── SURBRILLANCE CARTE au survol d'une fiche retenue (08/07, retour Bruno) :
+// se faire une idée d'où elle se trouve avant de la glisser dans le trajet.
+// MARKERS_RETENUES est repeuplé à chaque renderMap() (voir plus haut).
+function vrSurbrilleMarqueur(id, on){
+  const mk=MARKERS_RETENUES[id]; if(!mk) return;
+  const el=mk.getElement && mk.getElement();
+  if(el) el.classList.toggle('vr-mk-survole', on);
+  if(on){ if(mk.openPopup) mk.openPopup(); } else { if(mk.closePopup) mk.closePopup(); }
+}
+(function initSurvolRetenues(){
+  const box=document.getElementById('vr-list');
+  if(!box || box._hoverCable) return;
+  box._hoverCable=true;
+  // délégation : les cartes sont reconstruites à chaque chargerRetenuesVoyage,
+  // un seul jeu d'écouteurs sur le conteneur, jamais un par carte.
+  box.addEventListener('mouseover', e=>{
+    const fiche=e.target.closest('.vr-fiche[data-id]');
+    if(fiche) vrSurbrilleMarqueur(fiche.dataset.id, true);
+  });
+  box.addEventListener('mouseout', e=>{
+    const fiche=e.target.closest('.vr-fiche[data-id]');
+    if(fiche) vrSurbrilleMarqueur(fiche.dataset.id, false);
+  });
+})();
+
 window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 </script>
+<!-- Grande fiche (lecture seule) — même rendu que Carnet/Horizon (fiche-complete.js) -->
+<div id="vr-gf-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.55);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)vrFermeGrandeFiche()">
+  <div style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
+    <div id="vr-gf-body"></div>
+  </div>
+</div>
 </body>
 </html>

@@ -157,6 +157,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   border:1px solid var(--gold-a35);border-radius:var(--r);margin-bottom:10px;overflow:hidden;}
 .hdb-cell{flex:1;text-align:center;padding:9px 4px;}
 .hdb-cell + .hdb-cell{border-left:1px solid var(--gold-a20);}
+.hdb-cell-clic{display:block;text-decoration:none;color:inherit;cursor:pointer;border-radius:6px;transition:background .15s;}
+.hdb-cell-clic:hover,.hdb-cell-clic:focus-visible{background:var(--gold-a10);}
 .hdb-val{font-family:var(--font-title);font-size:21px;font-weight:800;color:var(--gold-text);line-height:1;}
 .hdb-val .u{font-size:11px;font-weight:700;}
 .hdb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
@@ -264,10 +266,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
           <div class="hdb-val" id="htRetenues">—</div>
           <div class="hdb-label" id="htRetenuesLabel">retenues</div>
         </div>
-        <div class="hdb-cell" id="htVotesCell" style="display:none;">
+        <a class="hdb-cell hdb-cell-clic" id="htVotesCell" href="horizon.html?ouvrir=coeurs" style="display:none;"
+          title="Voir les votes en cours">
           <div class="hdb-val" id="htVotes">—</div>
           <div class="hdb-label" id="htVotesLabel">vote en cours</div>
-        </div>
+        </a>
       </div>
       <div class="hub-dashboard" id="hub-dashboard" style="display:none;">
         <div class="hdb-cell">
@@ -614,7 +617,7 @@ async function initHubCarte(fiches, groupeId, userId){
       let n=0; (ri||[]).forEach(r=>{ if(HUB_PLACEES[r.lieu_id]==null){ HUB_PLACEES[r.lieu_id]=(++n); } });
       // Tableau de bord : signal « votes en cours » — la NOTIFICATION vit ici, VOTER reste
       // exclusivement sur Horizon (aucune action de vote ajoutée sur ce tableau).
-      hubMajVotesEnCours(voyageId);
+      hubMajVotesEnCours(voyageId, userId);
     }
     const {data:rx}=await sb.from('reactions').select('cible_id')
       .eq('cible_type','lieu').eq('membre_id',userId).eq('emoji','❤️');
@@ -688,20 +691,57 @@ async function initHubCarte(fiches, groupeId, userId){
 //    HUB_ETATS/HUB_PLACEES connus.
 // Signal « votes en cours » du tableau de bord — lecture seule (propositions.statut='ouvert').
 // Cliquer envoie sur Horizon pour trancher : voter reste UN SEUL comportement, jamais ici.
-async function hubMajVotesEnCours(voyageId){
+async function hubMajVotesEnCours(voyageId, userId){
   try{
-    const {count}=await sb.from('propositions').select('*',{count:'exact',head:true})
+    const {data:props}=await sb.from('propositions').select('id,titre')
       .eq('voyage_id',voyageId).eq('statut','ouvert');
     const cell=document.getElementById('htVotesCell');
-    if(!cell) return;
-    if(count>0){
-      document.getElementById('htVotes').textContent=count;
-      document.getElementById('htVotesLabel').textContent='vote'+(count>1?'s':'')+' en cours';
-      cell.style.display='';
-    } else {
-      cell.style.display='none';
+    const count=(props||[]).length;
+    if(cell){
+      if(count>0){
+        document.getElementById('htVotes').textContent=count;
+        document.getElementById('htVotesLabel').textContent='vote'+(count>1?'s':'')+' en cours';
+        cell.style.display='';
+      } else {
+        cell.style.display='none';
+      }
+    }
+    // Popup d'arrivée (08/07, retour Bruno, test à deux) : sa femme est arrivée
+    // sur l'Accueil sans AUCUN signal qu'un vote l'attendait. Ne montrer que les
+    // votes où JE n'ai pas encore voté — jamais harceler pour un vote déjà tranché
+    // de mon côté, ni le remontrer deux fois pour le même vote (mémorisé sur
+    // l'appareil, clé par voyage).
+    if(count>0 && userId){
+      const ids=(props||[]).map(p=>p.id);
+      const {data:mesVotes}=await sb.from('votes').select('proposition_id')
+        .in('proposition_id',ids).eq('votant_id',userId);
+      const dejaVotes=new Set((mesVotes||[]).map(v=>v.proposition_id));
+      const enAttente=(props||[]).filter(p=>!dejaVotes.has(p.id));
+      hubProposePopupVotes(voyageId, enAttente);
     }
   }catch(e){ console.warn('Hub: votes en cours',e); }
+}
+// Mémoire locale (par appareil, par voyage) des votes déjà proposés en popup —
+// pour ne relancer le popup QUE si un vote vraiment nouveau apparaît.
+function hubProposePopupVotes(voyageId, votes){
+  if(!votes.length) return;
+  let vus=[];
+  try{ vus=JSON.parse(localStorage.getItem('rnr_votes_popup_vus_'+voyageId)||'[]'); }catch(e){}
+  const nouveaux=votes.filter(v=>!vus.includes(v.id));
+  if(!nouveaux.length) return;   // rien de neuf à annoncer
+  const overlay=document.getElementById('hub-arrivee-overlay');
+  const liste=document.getElementById('hub-arrivee-liste');
+  if(!overlay || !liste) return;
+  liste.innerHTML=votes.map(v=>'<li>'+escapeHubHtml(v.titre||'Vote')+'</li>').join('');
+  overlay.style.display='flex';
+  try{
+    const tousIds=votes.map(v=>v.id);
+    localStorage.setItem('rnr_votes_popup_vus_'+voyageId, JSON.stringify([...new Set([...vus,...tousIds])]));
+  }catch(e){}
+}
+function hubFermeArriveePopup(){
+  const overlay=document.getElementById('hub-arrivee-overlay');
+  if(overlay) overlay.style.display='none';
 }
 
 function hubMajFilVoyage(nbFiches, nbRegions){
@@ -891,6 +931,23 @@ function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=
 
     <button id="vy-creer" class="vy-btn" type="button">Créer ce voyage →</button>
     <div id="vy-err" class="vy-err"></div>
+  </div>
+</div>
+
+<!-- Popup d'arrivée (08/07, retour Bruno, test à deux) : sa femme est arrivée
+     sans aucun signal qu'un vote l'attendait — elle a dû chercher, puis
+     demander de vive voix. Ce popup annonce direct ce qui attend une décision,
+     avec le lien pour y aller. Ne réapparaît pas pour un vote déjà vu
+     (mémorisé sur l'appareil, voir hubProposePopupVotes). -->
+<div id="hub-arrivee-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)hubFermeArriveePopup()">
+  <div style="background:var(--surface);border:1px solid var(--gold-a35);border-radius:16px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.5);padding:28px 26px;text-align:center;">
+    <div style="font-size:34px;margin-bottom:10px;">🗳️</div>
+    <div style="font-family:var(--font-title);font-size:20px;font-weight:700;color:var(--ink);margin-bottom:8px;">Le groupe attend ton avis</div>
+    <ul id="hub-arrivee-liste" style="text-align:left;font-size:13.5px;color:var(--ink-dim);line-height:1.7;margin:0 0 20px;padding-left:20px;"></ul>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button type="button" onclick="hubFermeArriveePopup()" style="background:none;border:1px solid var(--surface-line);color:var(--ink-dim);border-radius:var(--r);padding:10px 16px;font-size:13px;cursor:pointer;">Plus tard</button>
+      <a href="horizon.html?ouvrir=coeurs" style="background:var(--gold);color:var(--chrome-bg);border:1.5px solid var(--gold-deep);border-radius:var(--r);padding:10px 18px;font-size:13px;font-weight:600;text-decoration:none;">Voir maintenant</a>
+    </div>
   </div>
 </div>
 </body>

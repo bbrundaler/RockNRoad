@@ -405,6 +405,8 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 .hz-drawer-fermer:hover{color:var(--ink);}
 .hz-drawer-corps{flex:1;overflow:auto;scrollbar-width:thin;padding:9px 16px 16px;min-height:0;}
 .hz-drawer-vide{font-size:13px;color:var(--ink-dim);line-height:1.6;padding:8px 2px;}
+.hz-drawer-attente{font-size:13px;color:var(--ink);line-height:1.5;background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:var(--r);padding:10px 12px;margin-bottom:12px;}
 @media(max-width:680px){
   #hz-rail{right:10px;top:auto;bottom:90px;transform:none;}
 }
@@ -508,6 +510,10 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
 .hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
 .hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
+.hz-swipe-jn{position:absolute;top:10px;left:10px;font-size:11px;font-weight:700;color:#fff;
+  padding:4px 10px;border-radius:12px;}
+.hz-swipe-jn.jour{background:rgba(190,130,10,.88);}
+.hz-swipe-jn.nuit{background:rgba(30,38,85,.88);}
 .hz-swipe-card .body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:6px;justify-content:flex-start;overflow:auto;scrollbar-width:thin;scrollbar-gutter:stable;}
 .hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
 .hz-swipe-card .nom{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);line-height:1.2;}
@@ -617,6 +623,10 @@ body.hz-explo-on #hz-rail{display:none;}
 .vbtn-go{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;}
 .vbtn-no{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}
 .vhint{font-size:11px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
+.vhint-fiche-btn{display:block;width:100%;text-align:left;font-size:13px;font-family:var(--font-body);
+  color:var(--ink);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r);
+  padding:10px 12px;cursor:pointer;}
+.vhint-fiche-btn:hover{background:var(--gold-a20);}
 .int-cards{display:flex;flex-direction:column;gap:9px;margin-top:6px;}
 .int-card{padding:13px 15px;border:1.5px solid var(--surface-line);border-radius:11px;cursor:pointer;transition:all .15s;background:var(--paper);}
 .int-card:hover{border-color:var(--gold);background:var(--gold-a10);transform:translateX(2px);}
@@ -3687,6 +3697,20 @@ function rendDrawerCoeurs(){
   const parReg={};
   fiches.forEach(f=>{ const r=f._regionSvg||f.region||'?'; (parReg[r]=parReg[r]||[]).push(f); });
   box.innerHTML='';
+  // Sujet (08/07, retour Bruno, test à deux) : un petit tag « 🗳️ En vote » sur
+  // une carte ne dit pas qu'une DÉCISION est attendue de la personne — elle
+  // voyait 3 fiches sans comprendre quoi faire. Bandeau explicite en tête,
+  // seulement s'il reste au moins un vote ouvert où JE n'ai pas encore voté.
+  const enAttente=fiches.filter(f=>{
+    const pid=HZ_VOTE_DE_FICHE[f.id];
+    return pid && !monVoteHz(pid);
+  });
+  if(enAttente.length){
+    const bandeau=document.createElement('div');
+    bandeau.className='hz-drawer-attente';
+    bandeau.innerHTML='🗳️ <b>'+enAttente.length+' '+(enAttente.length>1?'fiches attendent':'fiche attend')+' ton vote</b> — clique « En vote » sur '+(enAttente.length>1?'les fiches concernées':'la fiche concernée')+' pour voir et trancher.';
+    box.appendChild(bandeau);
+  }
   Object.keys(parReg).forEach(slug=>{
     const tt=document.createElement('div'); tt.className='hz-aimee-grp-tt';
     tt.innerHTML='<span>📍 '+escapeHtmlHz(labelRegionSvg(slug))+'</span><span class="hz-aimee-grp-n">'+parReg[slug].length+'</span>';
@@ -4493,9 +4517,17 @@ function initSwipe(paquet){
   //    On EXCLUT les fiches déjà retenues pour ce voyage (HZ_RETENUS) : elles
   //    restent visibles sur la carte (✓ vert, pour juger les distances) mais ne
   //    repassent JAMAIS dans le swipe — décision Bruno 25/06.
+  //    Sujet (08/07, retour Bruno, test à deux) : même règle pour HZ_CANDIDATES
+  //    (déjà cœur, d'une session ou d'un coin précédent) et HZ_ECARTEES (déjà
+  //    tranchées par un vote). Sans ça, une fiche déjà aimée réapparaît si on
+  //    coupe et relance le swipe — et une croix un peu rapide sur cette
+  //    « nouvelle » carte défait en réalité un cœur qu'on croyait acquis
+  //    (le geste ✕-sur-fiche-aimée retire le cœur, réversibilité du 28/06,
+  //    voulue PENDANT une même passe, pas des semaines après).
   const parRegCoeur={}, parRegLimit={};
-  paquet.coeur.forEach(f=>{ if(HZ_RETENUS.has(f.id)) return; const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
-  paquet.limitrophes.forEach(f=>{ if(HZ_RETENUS.has(f.id)) return; const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
+  const dejaTranche=f=>HZ_RETENUS.has(f.id) || HZ_CANDIDATES.has(f.id) || HZ_ECARTEES.has(f.id);
+  paquet.coeur.forEach(f=>{ if(dejaTranche(f)) return; const r=f._regionSvg||f.region||'?'; (parRegCoeur[r]=parRegCoeur[r]||[]).push(f); });
+  paquet.limitrophes.forEach(f=>{ if(dejaTranche(f)) return; const r=f._regionSvg||f.region||'?'; (parRegLimit[r]=parRegLimit[r]||[]).push(f); });
 
   // 2) construire la SÉQUENCE région par région (ordre : régions choisies)
   HZ_SWIPE_SEQ=[];
@@ -4578,6 +4610,13 @@ function rendSwipeCarte(){
   const typeLine=(f.type||'Lieu')+(f.sous_region?(' · '+f.sous_region):'')+(e.limit?' · à côté':'');
   const noteF=f.note_famille?('★'.repeat(Number(f.note_famille)||0)):'';
   const tags=(f.tags&&f.tags.length)?'<div class="tags">'+f.tags.slice(0,3).map(t=>'<span>'+escapeHtmlHz(t)+'</span>').join('')+'</div>':'';
+  // Sujet (08/07, retour Bruno, test à deux) : le mode rond mélange jour et nuit
+  // en un seul passage, sans transition (décision 02/07, pour ne pas ralentir
+  // le swipe) — mais rien ne montrait qu'on venait de changer de monde. Badge
+  // léger sur chaque carte plutôt qu'un écran de transition : le repère existe
+  // sans rien ralentir.
+  const estNuitF=(window.RNR_MARQUEURS && RNR_MARQUEURS.estNuit) ? RNR_MARQUEURS.estNuit(f) : false;
+  const jnBadge='<span class="hz-swipe-jn '+(estNuitF?'nuit':'jour')+'">'+(estNuitF?'🌙 Nuit':'☀️ Jour')+'</span>';
   // Complète la carte avec ce que le Carnet sait déjà de la fiche — de la place
   // sous le titre, retour Bruno du 01/07 : commentaire famille en priorité,
   // sinon la description, puis adresse/site si renseignés.
@@ -4588,7 +4627,7 @@ function rendSwipeCarte(){
   if(f.site_web) infosBits.push('🔗 <a href="'+escapeHtmlHz(f.site_web)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+escapeHtmlHz(f.site_web.replace(/^https?:\/\//,'').replace(/\/$/,''))+'</a>');
   const infos=infosBits.length?'<div class="infos">'+infosBits.join('')+'</div>':'';
   card.innerHTML=
-    '<div class="ph" style="background-image:'+ph+'"><span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="ph" style="background-image:'+ph+'">'+jnBadge+'<span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+desc+infos+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
@@ -5050,7 +5089,13 @@ function rendCarteVoteHz(pid){
   const opts=['Garder','Écarter'];
   const f=ficheParIdHz(p.lieu_id);
   let html='<h3>'+escapeHtmlHz(p.titre)+'</h3>';
-  if(f) html+='<div class="vhint" style="margin-bottom:10px">Fiche : <b>'+escapeHtmlHz(f.nom||'')+'</b></div>';
+  // Sujet (08/07, retour Bruno, test à deux) : le nom seul ne suffit pas pour
+  // juger une fiche qu'on ne connaît pas — il faut la fiche complète (photo,
+  // description) ET voir où se trouve le point. Réutilise hzOuvreGrandeFiche,
+  // le même mécanisme que partout ailleurs sur Horizon (jamais une 2ᵉ vue
+  // construite à côté) ; son bandeau de vote sait déjà revenir ici.
+  if(f) html+='<button type="button" class="vhint-fiche-btn" style="margin-bottom:10px" '+
+    'onclick="fermerCreationVote();hzOuvreGrandeFiche(\''+f.id+'\',event)">📖 Voir la fiche complète — <b>'+escapeHtmlHz(f.nom||'')+'</b></button>';
   html+='<div class="vhint" style="margin-bottom:10px">'+vts.length+' / '+HZ_NB_MEMBRES+' ont voté'+
     (p.ferme_le?(' · ferme le '+new Date(p.ferme_le).toLocaleDateString('fr-FR')):' · pas d\'échéance')+'</div>';
   html+='<div class="q-opts">'+opts.map(o=>{
@@ -5451,14 +5496,19 @@ async function loadHorizonData(userId){
     const nFiches=fiches.length;
     const regions=[...new Set(fiches.map(f=>f.region).filter(Boolean))];
     const notes=fiches.map(f=>Number(f.note_famille)).filter(n=>!isNaN(n)&&n>0);
-    const coupsDeCoeur=notes.filter(n=>n>=4).length;
     const noteMoy=notes.length?(notes.reduce((a,b)=>a+b,0)/notes.length):0;
 
     const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
     set('hz-n-fiches',nFiches);
     set('hz-n-regions',regions.length);
     set('hz-n-visites',nFiches);          // "visites" = fiches enregistrées (donnée réelle dispo)
-    set('hz-n-coupdecoeur',coupsDeCoeur);
+    // Sujet (08/07, retour Bruno, test à deux) : cette pastille affichait le
+    // nombre de fiches notées 4-5 étoiles par la famille (notes.filter(n=>n>=4))
+    // — rien à voir avec un cœur/candidate. « Cœurs » ne doit désigner qu'UNE
+    // seule chose sur tout le site : HZ_CANDIDATES, le même compte qui remplit
+    // le tiroir ❤️. Deux chiffres différents pour le même mot, c'est ce qui
+    // semait la confusion (Hub vs tiroir Horizon).
+    set('hz-n-coupdecoeur',HZ_CANDIDATES.size);
     set('hz-n-notemoy',noteMoy?noteMoy.toFixed(1):'—');
 
     // 4) Mettre en avant la fiche la mieux notée
@@ -5547,6 +5597,17 @@ async function loadHorizonData(userId){
         }
       }
     }catch(e){ console.warn('Horizon: lien fiche depuis Carnet', e); }
+
+    // 8ter) Pastille « votes en cours » de l'Accueil (08/07, retour Bruno) :
+    // ?ouvrir=coeurs saute direct au tiroir des votes, même geste que le
+    // bouton du rail (hzOuvrirDrawer) — un seul endroit qui sait ouvrir ce
+    // tiroir, jamais une 2ᵉ écriture.
+    try{
+      const ouvrirParam=new URLSearchParams(window.location.search).get('ouvrir');
+      if(ouvrirParam==='coeurs' && typeof hzOuvrirDrawer==='function'){
+        setTimeout(()=>hzOuvrirDrawer('hz-drawer-coeurs'), 350);
+      }
+    }catch(e){ console.warn('Horizon: lien votes depuis Accueil', e); }
   }catch(err){ console.warn('Horizon load error',err); }
 }
 async function logout(){try{await sb.auth.signOut();}catch(e){}location.replace('index.html');}
