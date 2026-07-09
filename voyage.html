@@ -198,6 +198,18 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 
 #map-wrap{flex:1;min-height:0;position:relative;display:flex;}
 #map{flex:1;min-height:0;height:auto;}
+/* (10/07, retour Bruno) : couper le trajet principal pour isoler un pétale à
+   l'écran — même mécanique que les pastilles de séjour, posé sur la carte
+   comme un contrôle Leaflet, coin haut-droit. Couleur = celle du trajet
+   principal (--mk-trace), pour que le bouton s'identifie tout seul. */
+#rb-toggle-principal{position:absolute;top:10px;right:10px;z-index:900;
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1.5px solid var(--mk-trace,#2159A8);border-radius:var(--r-pill);
+  padding:6px 12px 6px 10px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);transition:opacity .15s;}
+#rb-toggle-principal::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--mk-trace,#2159A8);flex-shrink:0;}
+#rb-toggle-principal.rb-principal-off{opacity:.45;}
+#rb-toggle-principal:hover{background:var(--gold-a10);}
 /* ── BANDE RETENUES (invariant partagé avec le Cockpit) ──
    Sujet (08/07, retour Bruno) : la fiche Hango était rognée par le bas — pas
    à cause du rail (position:fixed, hors flux, ne mange aucune hauteur), mais
@@ -375,6 +387,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div id="voyage-right">
       <div id="map-wrap">
         <div id="map"></div>
+        <button id="rb-toggle-principal" type="button" onclick="rbToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale d'excursion">🧭 Trajet principal</button>
       </div>
       <!-- ── BANDE RETENUES : sous la carte, alignée à droite du panneau itinéraire ── -->
       <div id="voyage-retenues">
@@ -391,6 +404,11 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const sb=supabase.createClient(SURL,SKEY);
 
 let map, routeLayer;
+// (10/07, retour Bruno) : le trajet principal peut lui aussi être masqué, pour
+// isoler un seul pétale d'excursion à l'écran — même mécanique que les séjours,
+// mais sur routeLayer (qui reste attaché/détaché de la carte d'un render à
+// l'autre, pas recréé comme les couches par séjour).
+let RB_ROUTE_PRINCIPALE_VISIBLE = true;
 // (10/07, retour Bruno) : une couche PAR SÉJOUR à excursions (pas une seule
 // couche partagée) — chacune montrable/masquable indépendamment, chacune sa
 // couleur (RNR_MARQUEURS.couleurExcursion). Clé = uid de la fiche-nuit.
@@ -1732,6 +1750,28 @@ function renderMap(){
    cache. L'état masqué/visible est mémorisé (RB_EXCURSIONS_MASQUEES) pour
    survivre aux prochains render() de la session (pas persisté en base — c'est
    un réglage d'affichage, pas une décision de voyage). */
+/* Recadre la carte sur ce qui est RÉELLEMENT visible (trajet principal si
+   montré, chaque séjour non masqué) — sans redessiner ni rappeler ORS, juste
+   un fitBounds sur les coordonnées déjà connues. Appelé après chaque bascule
+   (10/07) pour que isoler un pétale le rapproche vraiment à l'écran. */
+function rbRecadreCarte(){
+  if(!map) return;
+  const bounds=[];
+  if(RB_ROUTE_PRINCIPALE_VISIBLE){
+    voyage.filter(v=>!v.rattache && v.lat && v.lng).forEach(v=>bounds.push([v.lat,v.lng]));
+    const dep=rbPointDepart(), ret=rbPointRetour();
+    if(dep) bounds.push([dep.lat,dep.lng]);
+    if(ret) bounds.push([ret.lat,ret.lng]);
+  }
+  Object.keys(EXCURSION_LAYERS).forEach(nightUid=>{
+    if(RB_EXCURSIONS_MASQUEES.has(nightUid)) return;
+    voyage.filter(v=>v.rattache===nightUid && v.lat && v.lng).forEach(v=>bounds.push([v.lat,v.lng]));
+  });
+  if(!bounds.length) return;
+  if(bounds.length===1) map.setView(bounds[0],12);
+  else map.fitBounds(bounds,{padding:[40,40]});
+}
+
 function rbToggleExcursionLayer(nightUid){
   if(!map) return;
   const couche=EXCURSION_LAYERS[nightUid];
@@ -1746,6 +1786,22 @@ function rbToggleExcursionLayer(nightUid){
   // Le pastille-swatch dans la colonne de gauche reflète l'état sans tout redessiner.
   const swatch=document.querySelector('.excursion-swatch[data-night-uid="'+nightUid+'"]');
   if(swatch) swatch.classList.toggle('excursion-swatch-off', RB_EXCURSIONS_MASQUEES.has(nightUid));
+  rbRecadreCarte();
+}
+
+/* Montrer/masquer LE TRAJET PRINCIPAL (10/07, retour Bruno) — pour isoler un
+   pétale d'excursion à l'écran. Coupe routeLayer entier (route + pastilles
+   numérotées + maison) : ce qu'on veut voir seul, c'est le pétale, pas la
+   route ET ses marqueurs qui restent dessus. Ne touche à aucune couche
+   d'excursion. Re-cadre la carte sur ce qui reste visible. */
+function rbToggleRoutePrincipale(){
+  if(!map||!routeLayer) return;
+  RB_ROUTE_PRINCIPALE_VISIBLE=!RB_ROUTE_PRINCIPALE_VISIBLE;
+  if(RB_ROUTE_PRINCIPALE_VISIBLE) routeLayer.addTo(map);
+  else map.removeLayer(routeLayer);
+  const btn=document.getElementById('rb-toggle-principal');
+  if(btn) btn.classList.toggle('rb-principal-off', !RB_ROUTE_PRINCIPALE_VISIBLE);
+  rbRecadreCarte();
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────

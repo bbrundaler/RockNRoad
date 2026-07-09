@@ -582,6 +582,7 @@ let HUB_ITINERAIRE_ROWS=[];       // lignes brutes voyage_itineraire (uid, lieu_
 let HUB_EXCURSION_LAYERS={};      // nightUid -> L.layerGroup, coupable indépendamment
 let HUB_EXCURSIONS_MASQUEES=new Set();
 let HUB_SEJOUR_INDEX=new Map();   // nightUid -> index couleur (même ordre que Voyage/Horizon)
+let HUB_ROUTE_PRINCIPALE_VISIBLE=true; // (10/07) coupe le trajet principal pour isoler un pétale
 // Tactile : sur mobile le survol n'existe pas → bindPopup gère déjà l'ouverture au tap.
 const HUB_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 
@@ -865,7 +866,8 @@ function hubTraceVoyage(){
   hubMajDashboard({stops:nbEtapes});
 
   if(pts.length>=2){
-    HUB_TRACE_VOYAGE=L.layerGroup().addTo(HUB_MAP);
+    HUB_TRACE_VOYAGE=L.layerGroup();
+    if(HUB_ROUTE_PRINCIPALE_VISIBLE) HUB_TRACE_VOYAGE.addTo(HUB_MAP);
     if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
       RNR_MARQUEURS.traceRoute(HUB_MAP, HUB_TRACE_VOYAGE, pts, {surl:SURL, skey:SKEY})
         .then(r=>{ if(r && r.ok) hubMajDashboard(r); })
@@ -917,14 +919,23 @@ function hubTraceVoyage(){
 }
 
 /* Légende des séjours à excursions — une pastille de couleur par séjour,
-   cliquable pour couper/remontrer SON pétale. Masquée s'il n'y en a aucun. */
+   cliquable pour couper/remontrer SON pétale, PLUS une pastille pour le trajet
+   principal (10/07, retour Bruno) : couper la route principale isole un pétale
+   à l'écran. Masquée s'il n'y a ni trajet ni séjour à excursions. */
 function hubRendLegendeExcursions(){
   const box=document.getElementById('hub-excursions-legende');
   if(!box) return;
   const sejours=[...HUB_SEJOUR_INDEX.keys()];
-  if(!sejours.length){ box.style.display='none'; box.innerHTML=''; return; }
+  const aTrajet = !!HUB_TRACE_VOYAGE;
+  if(!sejours.length && !aTrajet){ box.style.display='none'; box.innerHTML=''; return; }
   box.style.display='flex';
-  box.innerHTML = sejours.map(uid=>{
+  const colTrace=(getComputedStyle(document.documentElement).getPropertyValue('--mk-trace')||'').trim()||'#2159A8';
+  const chipTrajet = aTrajet
+    ? '<button type="button" class="hub-excursion-chip'+(HUB_ROUTE_PRINCIPALE_VISIBLE?'':' hub-excursion-chip-off')+'" '
+      +'style="border-color:'+colTrace+';" onclick="hubToggleRoutePrincipale()" title="Afficher/masquer le trajet principal — pour isoler un pétale">'
+      +'<span class="hub-excursion-dot" style="background:'+colTrace+';"></span>🧭 Trajet principal</button>'
+    : '';
+  const chipsSejours = sejours.map(uid=>{
     const row=HUB_ITINERAIRE_ROWS.find(r=>r.uid===uid);
     const f=row?HUB_FICHES[row.lieu_id]:null;
     const couleur=RNR_MARQUEURS.couleurExcursion(HUB_SEJOUR_INDEX.get(uid));
@@ -934,6 +945,7 @@ function hubRendLegendeExcursions(){
       +'<span class="hub-excursion-dot" style="background:'+couleur+';"></span>'+escapeHubHtml((f&&f.nom)||'Séjour')
       +'</button>';
   }).join('');
+  box.innerHTML = chipTrajet + chipsSejours;
 }
 function hubToggleExcursionLayer(nightUid){
   if(!HUB_MAP) return;
@@ -942,6 +954,38 @@ function hubToggleExcursionLayer(nightUid){
   if(HUB_EXCURSIONS_MASQUEES.has(nightUid)){ HUB_EXCURSIONS_MASQUEES.delete(nightUid); couche.addTo(HUB_MAP); }
   else { HUB_EXCURSIONS_MASQUEES.add(nightUid); HUB_MAP.removeLayer(couche); }
   hubRendLegendeExcursions();
+  hubRecadreCarte();
+}
+/* Montrer/masquer le trajet principal (10/07) — coupe HUB_TRACE_VOYAGE (route +
+   flèches), sans toucher aux couches d'excursion. Recadre sur ce qui reste visible. */
+function hubToggleRoutePrincipale(){
+  if(!HUB_MAP || !HUB_TRACE_VOYAGE) return;
+  HUB_ROUTE_PRINCIPALE_VISIBLE=!HUB_ROUTE_PRINCIPALE_VISIBLE;
+  if(HUB_ROUTE_PRINCIPALE_VISIBLE) HUB_TRACE_VOYAGE.addTo(HUB_MAP);
+  else HUB_MAP.removeLayer(HUB_TRACE_VOYAGE);
+  hubRendLegendeExcursions();
+  hubRecadreCarte();
+}
+/* Recadre sur ce qui est réellement visible (trajet principal si montré, chaque
+   séjour non masqué) — sans redessiner ni rappeler ORS. */
+function hubRecadreCarte(){
+  if(!HUB_MAP) return;
+  const bounds=[];
+  if(HUB_ROUTE_PRINCIPALE_VISIBLE){
+    HUB_ITINERAIRE_ROWS.filter(r=>!r.rattache_a_nuit_uid).forEach(r=>{
+      const f=HUB_FICHES[r.lieu_id]; if(f && f.lat!=null) bounds.push([f.lat,f.lng]);
+    });
+    if(HUB_DOMICILE) bounds.push([HUB_DOMICILE.lat,HUB_DOMICILE.lng]);
+  }
+  Object.keys(HUB_EXCURSION_LAYERS).forEach(uid=>{
+    if(HUB_EXCURSIONS_MASQUEES.has(uid)) return;
+    HUB_ITINERAIRE_ROWS.filter(r=>r.rattache_a_nuit_uid===uid).forEach(r=>{
+      const f=HUB_FICHES[r.lieu_id]; if(f && f.lat!=null) bounds.push([f.lat,f.lng]);
+    });
+  });
+  if(!bounds.length) return;
+  if(bounds.length===1) HUB_MAP.setView(bounds[0],12);
+  else HUB_MAP.fitBounds(bounds,{padding:[40,40]});
 }
 
 // Tableau de bord du Hub : affiché dès qu'il y a au moins une étape ; rempli avec la
