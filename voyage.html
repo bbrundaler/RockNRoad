@@ -149,6 +149,28 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .stop-remove{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;line-height:1;transition:all .15s;}
 .stop-remove:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
 
+/* ── RATTACHEMENT EXCURSION ↔ SÉJOUR (10/07) ─────────────────────────────────
+   Zone d'attache : la fiche-nuit survolée par le centre pendant un glisser se
+   distingue nettement d'un simple point d'insertion — anneau doré, pas de
+   simple ombre, pour que le geste "je vais rattacher" soit sans ambiguïté. */
+.stop-item.stop-attach-hover{outline:2.5px solid var(--gold);outline-offset:2px;background:var(--gold-a10);}
+/* Bloc excursions : rattaché visuellement à sa fiche-nuit (léger retrait +
+   trait vertical doré), mais jamais confondu avec une étape numérotée. */
+.excursion-block{margin:-2px 0 5px 26px;padding-left:10px;border-left:2px solid var(--gold-a35);}
+.excursion-block-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;cursor:pointer;border-radius:6px;}
+.excursion-block-head:hover{background:var(--gold-a10);}
+.excursion-block-title{font-size:11px;color:var(--gold-text);font-weight:600;}
+.excursion-block-chevron{font-size:10px;color:var(--ink-dim);}
+.excursion-block-body{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+.excursion-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r);background:var(--surface);border:1px solid var(--paper-line);}
+.excursion-jour{flex-shrink:0;font-family:var(--font-body);font-size:10px;font-weight:700;color:var(--gold-deep);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:10px;padding:3px 8px;cursor:pointer;white-space:nowrap;}
+.excursion-jour:hover{background:var(--gold-a20);}
+.excursion-info{flex:1;min-width:0;cursor:pointer;}
+.excursion-name{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.excursion-meta{font-size:10px;color:var(--ink-dim);margin-top:1px;}
+.excursion-detach{flex-shrink:0;background:none;border:none;color:var(--ink-dim);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px;transition:all .15s;}
+.excursion-detach:hover{background:var(--st-bad-bg);color:var(--st-bad-ink);}
+
 /* ── NOTE PAR ÉTAPE : un seul champ libre, sert de commentaire (jour) ou
    d'hébergement (nuit) — jamais deux systèmes. Repliée par défaut (elle ne doit
    pas alourdir la lecture de l'itinéraire), un clic sur le petit picto l'ouvre. ── */
@@ -550,7 +572,7 @@ function initRetenueDrag(){
   const list=document.getElementById('stops-list');
   if(!box||!list||box._dragCable) return;
   box._dragCable=true;
-  let src=null, ghost=null, started=false, sx=0, sy=0;
+  let src=null, ghost=null, started=false, sx=0, sy=0, attCible=null;
 
   box.addEventListener('pointerdown', e=>{
     if(e.target.closest('.vrf-x')) return;   // clic sur la croix → retrait, pas drag
@@ -588,6 +610,16 @@ function initRetenueDrag(){
     // l'itinéraire est-il survolé ?
     const overList=document.elementFromPoint(e.clientX,e.clientY)?.closest('#stops-list');
     list.classList.toggle('vr-drop-on', !!overList);
+    // (10/07) Zone de rattachement : survoler le centre d'une fiche-nuit à
+    // plusieurs nuits propose de rattacher plutôt que d'insérer avant/après —
+    // sauf si la fiche tenue est elle-même une fiche-nuit (jamais un séjour en
+    // excursion d'un autre séjour).
+    const overItem0=document.elementFromPoint(e.clientX,e.clientY)?.closest('.stop-item');
+    const ficheEstNuit = (window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(src.f):false;
+    const cible = ficheEstNuit ? null : rbZoneRattache(overItem0, e.clientY);
+    if(attCible && attCible!==overItem0) attCible.classList.remove('stop-attach-hover');
+    if(cible && overItem0){ overItem0.classList.add('stop-attach-hover'); attCible=overItem0; }
+    else { attCible=null; }
   });
 
   const finish=e=>{
@@ -597,6 +629,8 @@ function initRetenueDrag(){
     if(ghost){ ghost.remove(); ghost=null; }
     cur.fiche.classList.remove('vrf-dragging');
     list.classList.remove('vr-drop-on');
+    if(attCible) attCible.classList.remove('stop-attach-hover');
+    const cibleFinale=attCible; attCible=null;
     if(!wasStarted){
       // simple tap (pas de glisser) → ouvrir la fiche complète (retour Bruno 08/07)
       vrOuvreGrandeFiche(cur.id);
@@ -606,6 +640,11 @@ function initRetenueDrag(){
     const x=e.clientX, y=e.clientY;
     const overList=document.elementFromPoint(x,y)?.closest('#stops-list');
     if(!overList) return;    // lâché ailleurs → on n'ajoute pas
+    if(cibleFinale && cibleFinale.dataset.uid){
+      // Lâchée sur le centre d'un séjour → popup de rattachement, PAS un ajout classique.
+      rbOuvrePopupRattache(cibleFinale.dataset.uid, {type:'nouvelle', ficheId:cur.id, nom:cur.f.nom});
+      return;
+    }
     // position d'insertion : au-dessus de l'étape survolée, sinon à la fin
     const overItem=document.elementFromPoint(x,y)?.closest('.stop-item');
     let insertAt=voyage.length;
@@ -623,6 +662,7 @@ function initRetenueDrag(){
     if(ghost){ ghost.remove(); ghost=null; }
     if(src) src.fiche.classList.remove('vrf-dragging');
     list.classList.remove('vr-drop-on');
+    if(attCible){ attCible.classList.remove('stop-attach-hover'); attCible=null; }
     src=null; started=false;
   });
 
@@ -661,7 +701,7 @@ function ajouteRetenueAItineraire(id, insertAt){
   if(!f || f.lat==null || f.lng==null) return;
   if(voyage.some(v=>v.id===id)) return;   // anti-doublon
   const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:'', nb_nuits:null};
+  const item={uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:'', nb_nuits:null, rattache:null, jour:null};
   const pos=(typeof insertAt==='number' && insertAt>=0 && insertAt<=voyage.length)?insertAt:voyage.length;
   voyage.splice(pos,0,item);
   saveVoyage();
@@ -691,7 +731,7 @@ async function saveVoyage(){
   if(_saveEnCours){ _saveRedemande=true; return; }  // sérialise les écritures rapprochées
   _saveEnCours=true;
   try{
-    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null)}));
+    const snapshot=voyage.map((v,i)=>({voyage_id:VOYAGE_ID, uid:v.uid, lieu_id:v.id, ordre:i, note:(v.note||null), nb_nuits:(v.nb_nuits||null), rattache_a_nuit_uid:(v.rattache||null), jour_offset:(v.jour||null)}));
     await sb.from('voyage_itineraire').delete().eq('voyage_id',VOYAGE_ID);
     if(snapshot.length){ await sb.from('voyage_itineraire').insert(snapshot); }
   }catch(e){ console.warn('saveVoyage',e); }
@@ -703,7 +743,7 @@ async function loadVoyage(){
   if(!VOYAGE_ID){ voyage=[]; render(); return; }
   try{
     const {data:rows}=await sb.from('voyage_itineraire')
-      .select('uid,lieu_id,ordre,note,nb_nuits').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+      .select('uid,lieu_id,ordre,note,nb_nuits,rattache_a_nuit_uid,jour_offset').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let infos={};
     if(ids.length){
@@ -712,7 +752,7 @@ async function loadVoyage(){
     }
     voyage=(rows||[])
       .map(r=>{ const f=infos[r.lieu_id]; if(!f||f.lat==null||f.lng==null) return null;
-        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||'', note:r.note||'', nb_nuits:r.nb_nuits||null}; })
+        return {uid:r.uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', photo_url:f.photo_url||'', note:r.note||'', nb_nuits:r.nb_nuits||null, rattache:r.rattache_a_nuit_uid||null, jour:r.jour_offset||null}; })
       .filter(Boolean);
   }catch(e){ console.warn('loadVoyage',e); voyage=[]; }
   render();
@@ -975,11 +1015,16 @@ function rbFormatDateCourt(d){
 // daté une visite au jour près n'aurait rien apporté. Chaque étape porte la date du jour où on y
 // est ; en passant une halte de nuit, on avance le calendrier de son nombre de nuits (1 par défaut).
 function rbDatesCumulees(){
-  if(!RB_INFO.date_debut) return voyage.map(()=>null);
+  // (10/07) Une excursion rattachée à un séjour se déroule PENDANT les nuits déjà
+  // comptées par sa fiche-nuit — elle n'avance jamais le calendrier elle-même.
+  // On cumule donc uniquement sur la chaîne principale (fiches non rattachées) ;
+  // la date d'une excursion se lit sur sa fiche-nuit, pas sur elle.
+  const chaine = voyage.filter(v=>!v.rattache);
+  if(!RB_INFO.date_debut) return chaine.map(()=>null);
   const debut = new Date(RB_INFO.date_debut+'T00:00:00');
-  if(isNaN(debut)) return voyage.map(()=>null);
+  if(isNaN(debut)) return chaine.map(()=>null);
   let cumul=0;
-  return voyage.map(item=>{
+  return chaine.map(item=>{
     const d=new Date(debut); d.setDate(d.getDate()+cumul);
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
     if(nuit) cumul += (item.nb_nuits && item.nb_nuits>0) ? item.nb_nuits : 1;
@@ -1197,7 +1242,7 @@ function initListEvents(){
   //  écartement et sans réordon réel. Tout passe désormais par les pointer events.)
   // ── Réordonner via POINTER EVENTS : couvre le TACTILE et la souris.
   // (Le D&D HTML5 a été retiré : il n'émettait rien au doigt et parasitait la souris.)
-  let pDragEl=null, pStarted=false, pSx=0, pSy=0;
+  let pDragEl=null, pStarted=false, pSx=0, pSy=0, pAttCible=null;
   list.addEventListener('pointerdown', e=>{
     if(e.target.closest('.stop-remove')) return;   // la croix reste cliquable, pas un drag
     if(e.target.closest('.stop-note-toggle')) return;  // le picto note aussi — même bug que la croix, oublié à sa création (07/07)
@@ -1220,6 +1265,16 @@ function initListEvents(){
     }
     e.preventDefault();
     const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('.stop-item');
+    // (10/07) Zone de rattachement : survoler le centre d'une AUTRE fiche-nuit à
+    // plusieurs nuits propose de rattacher plutôt que de réordonner — sauf si
+    // l'étape tenue est elle-même une fiche-nuit (un séjour ne devient pas
+    // l'excursion d'un autre séjour).
+    const draggedItem = voyage.find(v=>v.uid===pDragEl.dataset.uid);
+    const draggedEstNuit = draggedItem && (window.RNR_MARQUEURS?RNR_MARQUEURS.estNuit(draggedItem):false);
+    const cible = (over && over!==pDragEl && !draggedEstNuit) ? rbZoneRattache(over, e.clientY) : null;
+    if(pAttCible && pAttCible!==over) pAttCible.classList.remove('stop-attach-hover');
+    if(cible && over){ over.classList.add('stop-attach-hover'); pAttCible=over; return; } // pas de FLIP tant qu'on vise l'attache
+    pAttCible=null;
     if(over&&over!==pDragEl){
       const r=over.getBoundingClientRect();
       const avant=(e.clientY < r.top + r.height/2);
@@ -1243,13 +1298,24 @@ function initListEvents(){
     if(!pDragEl) return;
     const wasStarted=pStarted;
     const idFini=pDragEl.dataset.id;
+    const uidFini=pDragEl.dataset.uid;
     pDragEl.classList.remove('vy-grabbed');
     // nettoyer les classes/transform d'animation
     list.querySelectorAll('.stop-item.vy-sliding').forEach(el=>{ el.classList.remove('vy-sliding'); el.style.transform=''; });
-    pDragEl=null; pStarted=false;
+    if(pAttCible) pAttCible.classList.remove('stop-attach-hover');
+    const cibleFinale=pAttCible;
+    pDragEl=null; pStarted=false; pAttCible=null;
     if(!wasStarted){
       // simple clic (pas de glisser) → revoir la fiche complète (retour Bruno 09/07)
       if(idFini) vrOuvreGrandeFiche(idFini);
+      return;
+    }
+    if(cibleFinale && cibleFinale.dataset.uid){
+      // Lâchée sur le centre d'un séjour → popup de rattachement, PAS un réordon.
+      // Le DOM n'a pas bougé (le FLIP est sauté tant qu'on vise l'attache), donc
+      // `voyage` reste dans son ordre d'avant — rien à corriger si on annule.
+      const nom = (voyage.find(v=>v.uid===uidFini)||{}).nom||'';
+      rbOuvrePopupRattache(cibleFinale.dataset.uid, {type:'existante', uid:uidFini, nom});
       return;
     }
     // L'ordre final = l'ordre du DOM après l'aperçu en direct
@@ -1262,13 +1328,23 @@ function initListEvents(){
   list.addEventListener('pointercancel', endPointerDrag);
 }
 
+// État d'affichage pur (jamais persisté, ne fait pas partie du voyage) : quels
+// blocs « excursions » sont repliés. Ouvert par défaut — une excursion qu'on
+// vient de rattacher doit se voir tout de suite, pas se cacher.
+let RB_EXCURSIONS_FERMEES = new Set();
+function rbToggleExcursions(nightUid){
+  if(RB_EXCURSIONS_FERMEES.has(nightUid)) RB_EXCURSIONS_FERMEES.delete(nightUid);
+  else RB_EXCURSIONS_FERMEES.add(nightUid);
+  renderList();
+}
+
 function renderList(){
   const list = document.getElementById('stops-list');
   const empty = document.getElementById('emptyVoyage');
 
   if(!voyage.length){
     // Vider uniquement les stop-items, pas l'empty
-    list.querySelectorAll('.stop-item').forEach(el=>el.remove());
+    list.querySelectorAll('.stop-item, .excursion-block').forEach(el=>el.remove());
     list.appendChild(empty);
     empty.style.display='flex';
     document.getElementById('totalDist').innerHTML='—<span class="u"> km</span>';
@@ -1279,12 +1355,17 @@ function renderList(){
   }
 
   // Vider uniquement les stop-items
-  list.querySelectorAll('.stop-item').forEach(el=>el.remove());
+  list.querySelectorAll('.stop-item, .excursion-block').forEach(el=>el.remove());
   empty.style.display='none';
 
-  const datesCumulees = rbDatesCumulees(); // une seule passe, pas recalculée à chaque étape
+  // (10/07) Chaîne principale = fiches non rattachées à un séjour — c'est elle
+  // qui porte la numérotation, les dates et les distances point-à-point, EXACTEMENT
+  // comme avant. Les excursions se rattachent visuellement à leur fiche-nuit,
+  // juste après elle, sans jamais compter comme une étape de la chaîne.
+  const chaine = voyage.filter(v=>!v.rattache);
+  const datesCumulees = rbDatesCumulees(); // une seule passe, indexée sur `chaine`
 
-  voyage.forEach((item, i)=>{
+  chaine.forEach((item, i)=>{
     let distHtml='';
     if(i===0){
       // 1re étape : distance depuis le point de départ (maison du groupe, sauf override)
@@ -1294,8 +1375,8 @@ function renderList(){
         const estMaison = (dep===DOMICILE);
         distHtml=`<div class="stop-dist stop-dist-home">${estMaison?'🏠':'🚏'} ${d} km depuis ${estMaison?'la maison':escVr(dep.nom||'le départ')} <span class="stop-duree">· ~${_fmtDuree(rbDureeEstimee(d))}</span></div>`;
       }
-    } else if(voyage[i-1].lat && item.lat){
-      const d=calcDist(voyage[i-1].lat, voyage[i-1].lng, item.lat, item.lng);
+    } else if(chaine[i-1].lat && item.lat){
+      const d=calcDist(chaine[i-1].lat, chaine[i-1].lng, item.lat, item.lng);
       distHtml=`<div class="stop-dist">↑ ${d} km <span class="stop-duree">· ~${_fmtDuree(rbDureeEstimee(d))}</span></div>`;
     }
 
@@ -1351,29 +1432,67 @@ function renderList(){
       </div>
     `;
     list.appendChild(row);
+
+    // (10/07) Bloc excursions : les fiches rattachées à CE séjour, groupées par
+    // jour puis par ordre de pose au sein d'un même jour (Bruno, 09/07) — un tri
+    // stable sur `jour` suffit, l'ordre du tableau `voyage` porte déjà l'ordre de pose.
+    if(nuit && nbNuits>1){
+      const mesExcursions = voyage.filter(v=>v.rattache===item.uid)
+        .slice()
+        .sort((a,b)=>(a.jour||1)-(b.jour||1));
+      if(mesExcursions.length){
+        const ouvert = !RB_EXCURSIONS_FERMEES.has(item.uid);
+        const bloc = document.createElement('div');
+        bloc.className='excursion-block';
+        bloc.dataset.nightUid = item.uid;
+        bloc.innerHTML = `
+          <div class="excursion-block-head" onclick="rbToggleExcursions('${item.uid}')">
+            <span class="excursion-block-title">🥾 ${mesExcursions.length} excursion${mesExcursions.length>1?'s':''} depuis ce séjour</span>
+            <span class="excursion-block-chevron">${ouvert?'▾':'▸'}</span>
+          </div>
+          <div class="excursion-block-body" style="${ouvert?'':'display:none;'}">
+            ${mesExcursions.map(exc=>{
+              const distExc = (item.lat&&exc.lat) ? calcDist(item.lat,item.lng,exc.lat,exc.lng) : null;
+              const jourExc = exc.jour||1;
+              return `<div class="excursion-item" data-uid="${exc.uid}" data-id="${exc.id}">
+                <button class="excursion-jour" type="button" title="Changer de jour" onclick="event.stopPropagation();rbCycleJour('${exc.uid}')">Jour ${jourExc}</button>
+                <div class="excursion-info" onclick="vrOuvreGrandeFiche('${exc.id}')">
+                  <div class="excursion-name">${exc.nom||'—'}</div>
+                  <div class="excursion-meta">${distExc!=null?distExc+' km depuis '+escVr(item.nom)+' · aller-retour':''}</div>
+                </div>
+                <button class="excursion-detach" type="button" title="Détacher (redevient une étape du parcours principal)" onclick="event.stopPropagation();rbDetacheExcursion('${exc.uid}')">↩</button>
+              </div>`;
+            }).join('')}
+          </div>
+        `;
+        list.appendChild(bloc);
+      }
+    }
   });
 
   // Totaux PROVISOIRES « à vol d'oiseau » (affichage immédiat, sans attendre le
   // réseau). Remplacés par la vraie distance/durée routières dès que traceRoute
   // répond (majTotauxRoute). Si le routage échoue, ce provisoire reste affiché.
+  // (10/07) Calculé sur la CHAÎNE PRINCIPALE — les excursions ne sont pas des
+  // étapes du trajet, ce total ne doit pas zigzaguer à travers elles.
   let total=0;
   const ptDepTot = rbPointDepart(), ptRetTot = rbPointRetour();
-  if(ptDepTot && voyage[0] && voyage[0].lat){
-    total+=calcDist(ptDepTot.lat, ptDepTot.lng, voyage[0].lat, voyage[0].lng);
+  if(ptDepTot && chaine[0] && chaine[0].lat){
+    total+=calcDist(ptDepTot.lat, ptDepTot.lng, chaine[0].lat, chaine[0].lng);
   }
-  for(let i=1;i<voyage.length;i++){
-    const a=voyage[i-1], b=voyage[i];
+  for(let i=1;i<chaine.length;i++){
+    const a=chaine[i-1], b=chaine[i];
     if(a.lat&&b.lat) total+=calcDist(a.lat,a.lng,b.lat,b.lng);
   }
   // retour (boucle) dans l'estimation provisoire aussi — son propre point, pas forcément la maison
-  if(ptRetTot && voyage.length>0){
-    const last=voyage[voyage.length-1];
+  if(ptRetTot && chaine.length>0){
+    const last=chaine[chaine.length-1];
     if(last.lat) total+=calcDist(last.lat, last.lng, ptRetTot.lat, ptRetTot.lng);
   }
   document.getElementById('totalDist').innerHTML = total>0
     ? ('≈ '+Math.round(total)+'<span class="u"> km</span>')
     : '—<span class="u"> km</span>';
-  document.getElementById('totalStops').textContent=voyage.length;
+  document.getElementById('totalStops').textContent=chaine.length;
   const elP1=document.getElementById('rb-route-partiel'); if(elP1) elP1.style.display='none';
 }
 
@@ -1524,6 +1643,11 @@ function removeByUid(uid){
     return;
   }
   const before = voyage.length;
+  // (10/07) Si on retire une fiche-nuit qui avait des excursions rattachées, on
+  // les détache d'abord — sinon elles pointeraient vers un uid qui n'existe
+  // plus. Elles redeviennent de simples étapes du parcours principal, jamais
+  // orphelines ni perdues.
+  voyage.forEach(v=>{ if(v.rattache===uid){ v.rattache=null; v.jour=null; } });
   voyage = voyage.filter(v=>v.uid!==uid);
   const after = voyage.length;
   if(before===after){
@@ -1534,6 +1658,92 @@ function removeByUid(uid){
   render();
   rafraichitRetenues();
   rbVerifieCoherenceDates();
+}
+
+/* ── RATTACHEMENT EXCURSION ↔ SÉJOUR (10/07) ─────────────────────────────────
+   Une fiche peut être rattachée à une fiche-nuit qui a plusieurs nuits, avec un
+   jour précis (Jour 1..N). Le geste : glisser sur la fiche-nuit → popup de
+   confirmation qui demande le jour (jamais silencieux). Rien n'est écrit tant
+   que le jour n'est pas choisi — annuler ne laisse aucune trace. */
+let RB_RATTACHE_PENDING=null; // {type:'existante', uid, nom, nightUid} | {type:'nouvelle', ficheId, nom, nightUid}
+
+function rbOuvrePopupRattache(nightUid, pending){
+  const nightItem = voyage.find(v=>v.uid===nightUid);
+  if(!nightItem) return;
+  const n = (nightItem.nb_nuits && nightItem.nb_nuits>0) ? nightItem.nb_nuits : 1;
+  if(n<2) return; // pas un séjour multi-nuits : rien à proposer, sécurité (ne devrait pas arriver)
+  RB_RATTACHE_PENDING = Object.assign({nightUid}, pending);
+  const overlay=document.getElementById('rb-rattache-overlay');
+  const titre=document.getElementById('rb-rattache-titre');
+  const boutons=document.getElementById('rb-rattache-jours');
+  if(!overlay||!titre||!boutons) return;
+  titre.innerHTML='Rattacher <b>'+escVr(pending.nom||'cette fiche')+'</b> à quel jour du séjour à <b>'+escVr(nightItem.nom||'')+'</b> ?';
+  boutons.innerHTML = Array.from({length:n},(_,i)=>i+1)
+    .map(j=>'<button type="button" class="tb-btn tb-btn-add" onclick="rbConfirmeRattache('+j+')">Jour '+j+'</button>')
+    .join('');
+  overlay.style.display='flex';
+}
+function rbFermeRattache(){
+  const overlay=document.getElementById('rb-rattache-overlay');
+  if(overlay) overlay.style.display='none';
+  RB_RATTACHE_PENDING=null; // annuler ne laisse rien — rien n'a encore été écrit
+}
+function rbConfirmeRattache(jour){
+  if(!RB_RATTACHE_PENDING) return;
+  const {type, nightUid} = RB_RATTACHE_PENDING;
+  if(type==='existante'){
+    const it=voyage.find(v=>v.uid===RB_RATTACHE_PENDING.uid);
+    if(it){ it.rattache=nightUid; it.jour=jour; }
+  } else if(type==='nouvelle'){
+    const f=RETENUES_INFO[RB_RATTACHE_PENDING.ficheId];
+    if(f && f.lat!=null && f.lng!=null && !voyage.some(v=>v.id===f.id)){
+      const uid=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+      voyage.push({uid, id:f.id, nom:f.nom, lat:Number(f.lat), lng:Number(f.lng), type:f.type||'', note:'', nb_nuits:null, rattache:nightUid, jour:jour});
+    }
+  }
+  RB_RATTACHE_PENDING=null;
+  const overlay=document.getElementById('rb-rattache-overlay');
+  if(overlay) overlay.style.display='none';
+  saveVoyage();
+  render();
+  rafraichitRetenues();
+  rbVerifieCoherenceDates();
+}
+/* Détacher : l'excursion redevient une simple étape du parcours principal —
+   elle reste sur la carte et dans le voyage, juste plus rattachée à un jour. */
+function rbDetacheExcursion(uid){
+  const it=voyage.find(v=>v.uid===uid);
+  if(!it || !it.rattache) return;
+  it.rattache=null; it.jour=null;
+  saveVoyage();
+  render();
+}
+/* Changer de jour sans repasser par le glisser : un clic sur le badge « Jour X »
+   fait tourner 1→2→…→N→1 (N = nombre de nuits du séjour). */
+function rbCycleJour(uid){
+  const it=voyage.find(v=>v.uid===uid);
+  if(!it || !it.rattache) return;
+  const night=voyage.find(v=>v.uid===it.rattache);
+  const n=(night && night.nb_nuits && night.nb_nuits>0) ? night.nb_nuits : 1;
+  it.jour = ((it.jour||1)%n)+1;
+  saveVoyage();
+  render();
+}
+/* Zone d'attache : survoler la bande CENTRALE d'une fiche-nuit à plusieurs
+   nuits (bords haut/bas = 25% chacun) propose de rattacher plutôt que
+   d'insérer avant/après. Ne s'applique jamais si la fiche visée n'est pas un
+   séjour multi-nuits, ni si la fiche tenue est elle-même une fiche-nuit (un
+   séjour ne devient pas l'excursion d'un autre séjour). */
+function rbZoneRattache(overEl, clientY){
+  if(!overEl || !overEl.dataset || !overEl.dataset.uid) return null;
+  const it=voyage.find(v=>v.uid===overEl.dataset.uid);
+  if(!it) return null;
+  const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(it):false;
+  const n=(it.nb_nuits && it.nb_nuits>0)?it.nb_nuits:1;
+  if(!nuit || n<2) return null;
+  const r=overEl.getBoundingClientRect();
+  const rel=(clientY-r.top)/r.height;
+  return (rel>0.25 && rel<0.75) ? it : null;
 }
 
 function clearAll(){
@@ -1605,11 +1815,11 @@ function vrSurbrilleMarqueur(id, on){
   if(!list || list._hoverCable) return;
   list._hoverCable=true;
   list.addEventListener('mouseover', e=>{
-    const item=e.target.closest('.stop-item[data-id]');
+    const item=e.target.closest('.stop-item[data-id], .excursion-item[data-id]');
     if(item) vrSurbrilleMarqueur(item.dataset.id, true);
   });
   list.addEventListener('mouseout', e=>{
-    const item=e.target.closest('.stop-item[data-id]');
+    const item=e.target.closest('.stop-item[data-id], .excursion-item[data-id]');
     if(item) vrSurbrilleMarqueur(item.dataset.id, false);
   });
 })();
@@ -1631,6 +1841,17 @@ window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
     <div style="font-family:var(--font-title);font-size:18px;font-weight:700;color:var(--ink);margin-bottom:10px;">Le calendrier dépasse le projet</div>
     <div id="rb-depassement-msg" style="font-size:13.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:20px;text-align:left;"></div>
     <button type="button" onclick="rbFermeDepassement()" style="background:var(--gold);color:var(--chrome-bg);border:1.5px solid var(--gold-deep);border-radius:var(--r);padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;">Compris</button>
+  </div>
+</div>
+<!-- Rattachement excursion ↔ séjour (10/07, retour Bruno) : glisser sur une
+     fiche-nuit à plusieurs nuits ouvre ce choix — jamais silencieux, jamais
+     automatique. Annuler ne rattache rien. -->
+<div id="rb-rattache-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.6);z-index:9200;display:none;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)rbFermeRattache()">
+  <div style="background:var(--surface);border:1px solid var(--gold-a35);border-radius:16px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.5);padding:26px;text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">🥾</div>
+    <div id="rb-rattache-titre" style="font-family:var(--font-title);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:18px;line-height:1.4;"></div>
+    <div id="rb-rattache-jours" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:16px;"></div>
+    <button type="button" onclick="rbFermeRattache()" style="background:none;border:1px solid var(--paper-line);color:var(--ink-dim);border-radius:var(--r);padding:9px 18px;font-size:13px;cursor:pointer;">Annuler</button>
   </div>
 </div>
 </body>
