@@ -294,7 +294,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <div class="dashboard">
           <div class="db-cell">
             <div class="db-val" id="totalDist">—<span class="u"> km</span></div>
-            <div class="db-label">aller-retour</div>
+            <div class="db-label">aller-retour <span id="rb-route-partiel" style="display:none;cursor:help;" title="Un tronçon n'a pas pu suivre les routes (point isolé, hors réseau routier) — distance estimée à vol d'oiseau pour ce morceau. Vérifiez les coordonnées de la fiche concernée.">⚠️</span></div>
           </div>
           <div class="db-cell">
             <div class="db-val" id="totalDuree">—</div>
@@ -1274,6 +1274,7 @@ function renderList(){
     document.getElementById('totalDist').innerHTML='—<span class="u"> km</span>';
     document.getElementById('totalDuree').textContent='—';
     document.getElementById('totalStops').textContent='0';
+    const elP0=document.getElementById('rb-route-partiel'); if(elP0) elP0.style.display='none';
     return;
   }
 
@@ -1373,6 +1374,7 @@ function renderList(){
     ? ('≈ '+Math.round(total)+'<span class="u"> km</span>')
     : '—<span class="u"> km</span>';
   document.getElementById('totalStops').textContent=voyage.length;
+  const elP1=document.getElementById('rb-route-partiel'); if(elP1) elP1.style.display='none';
 }
 
 // Petit format de distance/durée pour le tableau de bord.
@@ -1389,12 +1391,17 @@ function _fmtDuree(h){
 
 // Remplace les totaux provisoires par la vraie distance + durée routières
 // renvoyées par le tracé (ORS). Format durée : « 3h12 ».
+// r.partiel (09/07) : un ou plusieurs tronçons n'ont pas pu suivre les routes
+// (point isolé, hors réseau routier — ex. Cirque de Gavarnie) et sont restés en
+// estimation à vol d'oiseau. Signalé discrètement plutôt que caché en silence.
 function majTotauxRoute(r){
   if(!r) return;
   const elD=document.getElementById('totalDist');
   const elT=document.getElementById('totalDuree');
+  const elP=document.getElementById('rb-route-partiel');
   if(elD && r.distance_km!=null) elD.innerHTML=r.distance_km+'<span class="u"> km</span>';
   if(elT && r.duree_h!=null) elT.innerHTML=_fmtDuree(r.duree_h);
+  if(elP) elP.style.display = r.partiel ? 'inline' : 'none';
 }
 
 function renderMap(){

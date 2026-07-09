@@ -275,7 +275,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       <div class="hub-dashboard" id="hub-dashboard" style="display:none;">
         <div class="hdb-cell">
           <div class="hdb-val" id="hubDist">—<span class="u"> km</span></div>
-          <div class="hdb-label">aller-retour</div>
+          <div class="hdb-label">aller-retour <span id="hub-route-partiel" style="display:none;cursor:help;" title="Un tronçon n'a pas pu suivre les routes (point isolé, hors réseau routier) — distance estimée à vol d'oiseau pour ce morceau.">⚠️</span></div>
         </div>
         <div class="hdb-cell">
           <div class="hdb-val" id="hubDuree">—</div>
@@ -836,6 +836,7 @@ function hubTraceVoyage(){
 
 // Tableau de bord du Hub : affiché dès qu'il y a au moins une étape ; rempli avec la
 // vraie distance/durée routières quand le tracé répond (mêmes valeurs que Voyage).
+// d.partiel (09/07) : un tronçon est resté en estimation (point isolé, hors route).
 function hubMajDashboard(d){
   const box=document.getElementById('hub-dashboard');
   if(!box) return;
@@ -853,6 +854,8 @@ function hubMajDashboard(d){
       el.innerHTML = H>0 ? (H+'<span class="u">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span class="u"> min</span>');
     }
   }
+  const elP=document.getElementById('hub-route-partiel');
+  if(elP) elP.style.display = d.partiel ? 'inline' : 'none';
 }
 
 // Résolution du voyage actif (même logique que voyage.html : session → principal → premier).

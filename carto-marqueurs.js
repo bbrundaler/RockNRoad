@@ -276,7 +276,8 @@
   /* CACHE MÉMOIRE du tracé (le temps de la page ouverte). Économise le quota ORS :
      tant que la suite des étapes est identique, on ne rappelle PAS le routeur.
      Vidé au rechargement de page (volontaire — cf. décision « cache option 1 »).
-     Clé = profil + coordonnées arrondies (5 décimales ≈ 1 m, largement assez). */
+     Clé = profil + coordonnées arrondies (5 décimales ≈ 1 m, largement assez).
+     Sert aussi bien pour le trajet entier que pour un tronçon isolé (09/07). */
   var _routeCache = {};
   function _cleRoute(latlngs, profile) {
     return profile + '|' + latlngs.map(function (p) {
@@ -284,26 +285,29 @@
     }).join(';');
   }
 
-  function traceRoute(map, layer, latlngs, cfg, opts) {
-    opts = opts || {};
-    if (!layer || !Array.isArray(latlngs) || latlngs.length < 2) {
-      return Promise.resolve({ ok: false });
-    }
-    var profile = opts.profile || 'driving-car';
+  /* Distance à vol d'oiseau (km, formule de Haversine). Sert de repli quand un
+     tronçon ne peut pas être routé (cf. _routeParTroncons) : mieux qu'un chiffre
+     manquant, et cohérent avec l'estimation « à vol d'oiseau » déjà affichée
+     ailleurs (Roadbook, Hub) avant que le tracé réel ne réponde. */
+  function _haversineKm(a, b) {
+    var R = 6371;
+    var dLat = (b[0] - a[0]) * Math.PI / 180;
+    var dLng = (b[1] - a[1]) * Math.PI / 180;
+    var la1 = a[0] * Math.PI / 180, la2 = b[0] * Math.PI / 180;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+  // Vitesse moyenne route pour estimer la durée d'un tronçon non routable — même
+  // valeur que l'estimation provisoire du Roadbook (RB_VITESSE_MOY_KMH), gardée
+  // ici en dur pour ne pas dépendre d'une variable propre à une seule page.
+  var _VITESSE_FALLBACK_KMH = 65;
 
-    // (0) CACHE : itinéraire déjà routé → on redessine sans appeler ORS.
-    var cle = _cleRoute(latlngs, profile);
-    var hit = _routeCache[cle];
-    if (hit) {
-      _dessineTrace(layer, hit.trace);
-      return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
-    }
-
-    // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
-    if (!cfg || !cfg.surl || !cfg.skey) {
-      _ligneDroite(layer, latlngs);
-      return Promise.resolve({ ok: false });
-    }
+  /* Appelle l'Edge Function pour UNE suite de points donnée (le trajet entier OU
+     un seul tronçon). Résout avec { trace, distance_km, duree_h } ou rejette —
+     ne dessine rien, ne décide de rien : c'est à l'appelant de choisir le repli.
+     Factorisé pour être appelé une fois sur tout le trajet (cas normal, économe
+     en quota) ou une fois par tronçon (repli fin, cf. _routeParTroncons). */
+  function _appelORS(latlngs, cfg, profile) {
     // ORS attend [lng,lat] ; Leaflet nous donne [lat,lng] → on inverse.
     var pts = latlngs.map(function (p) { return [p[1], p[0]]; });
     var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -334,15 +338,89 @@
         var s = (feat.properties && feat.properties.summary) || {};
         var dist = s.distance ? Math.round(s.distance / 1000) : null;
         var duree = s.duration ? (s.duration / 3600) : null;
-        // Range au cache AVANT de dessiner (réutilisable au prochain render identique).
-        _routeCache[cle] = { trace: trace, distance_km: dist, duree_h: duree };
-        _dessineTrace(layer, trace);
-        return { ok: true, distance_km: dist, duree_h: duree };
+        return { trace: trace, distance_km: dist, duree_h: duree };
+      })
+      .catch(function (e) { clearTimeout(to); return Promise.reject(e); });
+  }
+
+  /* REPLI FIN (09/07, retour Bruno — Cirque de Gavarnie) : un seul point non
+     routable (un site accessible seulement à pied, hors de toute route) faisait
+     échouer l'appel groupé, et TOUT le trajet retombait en ligne droite — même
+     les tronçons qui, eux, se routaient très bien. Ici, on route chaque tronçon
+     séparément : un point capricieux ne casse plus que SON tronçon. Chaque
+     tronçon garde son propre repli (ligne droite + estimation Haversine) pour
+     que le total affiché reste cohérent même si un morceau n'a pas pu être
+     routé. Un seul cache (_routeCache), qu'on l'appelle en gros ou par bouts. */
+  function _routeParTroncons(layer, latlngs, cfg, profile) {
+    var troncons = [];
+    for (var i = 0; i < latlngs.length - 1; i++) troncons.push([latlngs[i], latlngs[i + 1]]);
+
+    var promesses = troncons.map(function (seg) {
+      var cle = _cleRoute(seg, profile);
+      var hit = _routeCache[cle];
+      if (hit) return Promise.resolve({ ok: true, trace: hit.trace, distance_km: hit.distance_km, duree_h: hit.duree_h });
+      return _appelORS(seg, cfg, profile)
+        .then(function (res) {
+          _routeCache[cle] = res;
+          return { ok: true, trace: res.trace, distance_km: res.distance_km, duree_h: res.duree_h };
+        })
+        .catch(function () {
+          var km = _haversineKm(seg[0], seg[1]);
+          return { ok: false, trace: seg, distance_km: km, duree_h: km / _VITESSE_FALLBACK_KMH };
+        });
+    });
+
+    return Promise.all(promesses).then(function (resultats) {
+      var distTot = 0, dureeTot = 0, unTronconRoute = false, unTronconEnPanne = false;
+      resultats.forEach(function (r) {
+        if (r.ok) { _dessineTrace(layer, r.trace); unTronconRoute = true; }
+        else { _ligneDroite(layer, r.trace); unTronconEnPanne = true; }
+        if (r.distance_km != null) distTot += r.distance_km;
+        if (r.duree_h != null) dureeTot += r.duree_h;
+      });
+      return {
+        ok: unTronconRoute,          // au moins un tronçon routé = total exploitable
+        distance_km: Math.round(distTot),
+        duree_h: dureeTot,
+        partiel: unTronconEnPanne    // un ou plusieurs tronçons repliés en ligne droite
+      };
+    });
+  }
+
+  function traceRoute(map, layer, latlngs, cfg, opts) {
+    opts = opts || {};
+    if (!layer || !Array.isArray(latlngs) || latlngs.length < 2) {
+      return Promise.resolve({ ok: false });
+    }
+    var profile = opts.profile || 'driving-car';
+
+    // (0) CACHE : itinéraire déjà routé → on redessine sans appeler ORS.
+    var cle = _cleRoute(latlngs, profile);
+    var hit = _routeCache[cle];
+    if (hit) {
+      _dessineTrace(layer, hit.trace);
+      return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
+    }
+
+    // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
+    if (!cfg || !cfg.surl || !cfg.skey) {
+      _ligneDroite(layer, latlngs);
+      return Promise.resolve({ ok: false });
+    }
+
+    // (1) Appel groupé — un seul appel ORS pour tout le trajet, comme avant
+    // (le cas normal reste aussi économe en quota qu'aujourd'hui).
+    return _appelORS(latlngs, cfg, profile)
+      .then(function (res) {
+        _routeCache[cle] = res;
+        _dessineTrace(layer, res.trace);
+        return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h };
       })
       .catch(function () {
-        clearTimeout(to);
-        _ligneDroite(layer, latlngs); // REPLI : on ne laisse jamais la carte sans tracé.
-        return { ok: false };
+        // (2) Repli fin, tronçon par tronçon (09/07) — AVANT la ligne droite
+        // globale : un point isolé impossible à router ne doit plus emporter
+        // tout le trajet avec lui. Le tracé n'est toujours JAMAIS absent.
+        return _routeParTroncons(layer, latlngs, cfg, profile);
       });
   }
 
