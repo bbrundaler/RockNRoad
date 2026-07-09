@@ -224,10 +224,18 @@
      qu'un GeoJSON exploitable, on dessine la LIGNE DROITE (comportement d'avant).
      Le tracé n'est JAMAIS absent. Le site ne casse pas.
   */
-  function _ligneDroite(layer, latlngs) {
+  function _ligneDroite(layer, latlngs, leger) {
     var col = couleurTrace();
-    L.polyline(latlngs, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
-    L.polyline(latlngs, { color: col, weight: 3, dashArray: '10,6' }).addTo(layer);
+    if (leger) {
+      // (10/07) Tracé EXCURSION : même couleur que le trajet principal (une seule
+      // grammaire de couleur, D-MK), mais plus fin, plus transparent, pointillé
+      // serré — pour qu'on le distingue au premier coup d'œil sans avoir besoin
+      // d'une légende. Jamais de flèches : c'est un aller-retour court, pas un sens.
+      L.polyline(latlngs, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
+    } else {
+      L.polyline(latlngs, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
+      L.polyline(latlngs, { color: col, weight: 3, dashArray: '10,6' }).addTo(layer);
+    }
   }
 
   /* Flèches de SENS le long du tracé (chevrons orientés dans la direction de marche).
@@ -265,12 +273,17 @@
     }
   }
 
-  /* Dessine un tracé routier déjà calculé (liste de [lat,lng]) dans le layer. */
-  function _dessineTrace(layer, trace) {
+  /* Dessine un tracé routier déjà calculé (liste de [lat,lng]) dans le layer.
+     leger=true (10/07) : style EXCURSION — plus fin, pointillé, sans flèches. */
+  function _dessineTrace(layer, trace, leger) {
     var col = couleurTrace();
-    L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
-    L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
-    _flechesSens(layer, trace);
+    if (leger) {
+      L.polyline(trace, { color: col, opacity: 0.55, weight: 2, dashArray: '3,5' }).addTo(layer);
+    } else {
+      L.polyline(trace, { color: col, opacity: 0.2, weight: 10 }).addTo(layer);
+      L.polyline(trace, { color: col, weight: 3 }).addTo(layer);
+      _flechesSens(layer, trace);
+    }
   }
 
   /* CACHE MÉMOIRE du tracé (le temps de la page ouverte). Économise le quota ORS :
@@ -351,7 +364,7 @@
      tronçon garde son propre repli (ligne droite + estimation Haversine) pour
      que le total affiché reste cohérent même si un morceau n'a pas pu être
      routé. Un seul cache (_routeCache), qu'on l'appelle en gros ou par bouts. */
-  function _routeParTroncons(layer, latlngs, cfg, profile) {
+  function _routeParTroncons(layer, latlngs, cfg, profile, leger) {
     var troncons = [];
     for (var i = 0; i < latlngs.length - 1; i++) troncons.push([latlngs[i], latlngs[i + 1]]);
 
@@ -373,8 +386,8 @@
     return Promise.all(promesses).then(function (resultats) {
       var distTot = 0, dureeTot = 0, unTronconRoute = false, unTronconEnPanne = false;
       resultats.forEach(function (r) {
-        if (r.ok) { _dessineTrace(layer, r.trace); unTronconRoute = true; }
-        else { _ligneDroite(layer, r.trace); unTronconEnPanne = true; }
+        if (r.ok) { _dessineTrace(layer, r.trace, leger); unTronconRoute = true; }
+        else { _ligneDroite(layer, r.trace, leger); unTronconEnPanne = true; }
         if (r.distance_km != null) distTot += r.distance_km;
         if (r.duree_h != null) dureeTot += r.duree_h;
       });
@@ -393,18 +406,22 @@
       return Promise.resolve({ ok: false });
     }
     var profile = opts.profile || 'driving-car';
+    // (10/07) opts.leger=true : style EXCURSION (nuit ↔ fiches du jour, aller-
+    // retour) — visuellement distinct du trajet principal, sans être une autre
+    // couleur (D-MK reste la seule grammaire de couleur du site).
+    var leger = !!opts.leger;
 
     // (0) CACHE : itinéraire déjà routé → on redessine sans appeler ORS.
     var cle = _cleRoute(latlngs, profile);
     var hit = _routeCache[cle];
     if (hit) {
-      _dessineTrace(layer, hit.trace);
+      _dessineTrace(layer, hit.trace, leger);
       return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
     }
 
     // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
     if (!cfg || !cfg.surl || !cfg.skey) {
-      _ligneDroite(layer, latlngs);
+      _ligneDroite(layer, latlngs, leger);
       return Promise.resolve({ ok: false });
     }
 
@@ -413,14 +430,14 @@
     return _appelORS(latlngs, cfg, profile)
       .then(function (res) {
         _routeCache[cle] = res;
-        _dessineTrace(layer, res.trace);
+        _dessineTrace(layer, res.trace, leger);
         return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h };
       })
       .catch(function () {
         // (2) Repli fin, tronçon par tronçon (09/07) — AVANT la ligne droite
         // globale : un point isolé impossible à router ne doit plus emporter
         // tout le trajet avec lui. Le tracé n'est toujours JAMAIS absent.
-        return _routeParTroncons(layer, latlngs, cfg, profile);
+        return _routeParTroncons(layer, latlngs, cfg, profile, leger);
       });
   }
 
