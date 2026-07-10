@@ -178,6 +178,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   background:var(--gold-a10);color:var(--ink);cursor:pointer;transition:all .15s;}
 .hz-porte-btn:hover{background:var(--gold-a20);}
 .hz-porte-btn.ouvert{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
+.hz-porte-btn.hz-off{opacity:.5;border-style:dashed;}
 .hz-porte-btn .ic-compass,.hz-porte-btn .ic-moon{font-size:16px;}
 .hz-porte-chev{font-size:12.5px;transition:transform .2s;}
 .hz-porte-btn.ouvert .hz-porte-chev{transform:rotate(180deg);}
@@ -903,6 +904,13 @@ body.hz-explo-on #hz-rail{display:none;}
           </button>
         </div>
       </div>
+      <!-- (10/07, retour Bruno) : alléger la carte au repos — masquer les points
+           « en veille » (jour/nuit neutres, jamais engagés) pour ne garder que
+           ce qui compte : cœurs et épingles. Coin resté libre. -->
+      <div class="hz-ov hz-ov-br">
+        <button class="hz-porte-btn" id="hz-btn-dormants" type="button" onclick="hzToggleDormants()"
+          title="Masquer les fiches pas encore engagées (ni cœur, ni épingle) — pour alléger la carte">😴 Points en veille</button>
+      </div>
       <!-- Rond de précision (2b-2/2b-3) : clic-glisser-relâcher directement sur
            la carte. Hint tant qu'aucun geste n'a eu lieu ; lecture rayon+compte
            pendant le geste et une fois la zone figée. -->
@@ -1295,7 +1303,12 @@ function _svgFrance(){ return document.querySelector('.francemap'); }
 let HZ_CARTE_REPOS=null;
 const HZ_TACTILE = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);   // repris du Hub : sur tactile, pas de survol
 let HZ_REGION_LAYERS={};   // slug → layer Leaflet (référence directe, utile aux étapes suivantes)
-let HZ_CARTE_REPOS_MARQ=null;         // layerGroup des points de fiches, visibles au repos par-dessus les régions
+let HZ_CARTE_REPOS_MARQ=null;         // layerGroup des points de fiches ACTIFS (cœur/épingle), toujours visibles
+// (10/07, retour Bruno) : les fiches jamais engagées (jour/nuit neutres) vivent
+// dans LEUR PROPRE couche, coupable indépendamment — « alléger la carte »,
+// même principe que couper un pétale sur Voyage/Hub.
+let HZ_CARTE_REPOS_MARQ_DORMANTS=null;
+let HZ_POINTS_DORMANTS_MASQUES=false;
 let HZ_CARTE_REPOS_MARQ_PAR_ID={};    // id fiche → {marker} — pour rafraîchir l'icône (❤️, épingle) en direct
 // Report Hub → Horizon (02/07) : au repos, TOUS les points se voient — pas
 // seulement au clic région. Survol = mini-fiche AVEC PHOTO (même gabarit que
@@ -1734,12 +1747,15 @@ function hzRafraichitPopup(lieuId){
 function hzAfficheTousLesPoints(){
   if(!HZ_CARTE_REPOS) return;
   if(!HZ_CARTE_REPOS_MARQ) HZ_CARTE_REPOS_MARQ=L.layerGroup();
+  if(!HZ_CARTE_REPOS_MARQ_DORMANTS) HZ_CARTE_REPOS_MARQ_DORMANTS=L.layerGroup();
   // La couche a pu être détachée de la carte (afficheCarteCoin la retire pour
   // laisser place aux points du coin) — on la raccroche à CHAQUE appel, pas
   // seulement à sa création, sinon les points restent orphelins en mémoire
   // après un passage par le coin (bug : la carte se vide, ne reste que la maison).
   if(!HZ_CARTE_REPOS.hasLayer(HZ_CARTE_REPOS_MARQ)) HZ_CARTE_REPOS_MARQ.addTo(HZ_CARTE_REPOS);
+  if(!HZ_POINTS_DORMANTS_MASQUES && !HZ_CARTE_REPOS.hasLayer(HZ_CARTE_REPOS_MARQ_DORMANTS)) HZ_CARTE_REPOS_MARQ_DORMANTS.addTo(HZ_CARTE_REPOS);
   HZ_CARTE_REPOS_MARQ.clearLayers();
+  HZ_CARTE_REPOS_MARQ_DORMANTS.clearLayers();
   HZ_CARTE_REPOS_MARQ_PAR_ID={};
   (HZ_FICHES||[]).forEach(f=>{
     if(f.lat==null||f.lng==null) return;
@@ -1770,9 +1786,25 @@ function hzAfficheTousLesPoints(){
     // UN clic = directement la grande fiche (RNR_FICHE_COMPLETE). On oublie la
     // fiche intermédiaire (l'ancien popup Leaflet) dans le geste de clic.
     m.on('click', (ev)=>{ if(document.body.classList.contains('hz-explo-on')||HZ_ROND_EN_COURS||HZ_ROND_VIENT_DE_FINIR) return; hzOuvreGrandeFiche(f.id, {currentTarget:m.getElement?m.getElement():null}); });
-    HZ_CARTE_REPOS_MARQ.addLayer(m);
-    HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m};
+    // (10/07) Dormant = jamais engagé (ni cœur, ni épingle) — un point placé
+    // dans le Roadbook (num!=null) a nécessairement déjà été épinglé (A6), donc
+    // il reste toujours dans la couche active sans cas particulier à écrire.
+    const etat=hzEtatLieu(f.id);
+    const dormant = !etat.epingle && !etat.coeurMoi && !etat.coeurAutre;
+    (dormant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ).addLayer(m);
+    HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m, dormant:dormant};
   });
+}
+/* Montrer/masquer les points en veille (10/07, retour Bruno) — même principe
+   que couper un pétale sur Voyage/Hub : la couche existe déjà, on la montre ou
+   on la cache, pas de nouvel appel réseau. */
+function hzToggleDormants(){
+  if(!HZ_CARTE_REPOS || !HZ_CARTE_REPOS_MARQ_DORMANTS) return;
+  HZ_POINTS_DORMANTS_MASQUES=!HZ_POINTS_DORMANTS_MASQUES;
+  if(HZ_POINTS_DORMANTS_MASQUES) HZ_CARTE_REPOS.removeLayer(HZ_CARTE_REPOS_MARQ_DORMANTS);
+  else HZ_CARTE_REPOS_MARQ_DORMANTS.addTo(HZ_CARTE_REPOS);
+  const btn=document.getElementById('hz-btn-dormants');
+  if(btn) btn.classList.toggle('hz-off', HZ_POINTS_DORMANTS_MASQUES);
 }
 function hzInitCarteRepos(){
   const el=document.getElementById('hz-carte-repos');
@@ -2024,6 +2056,7 @@ function afficheCarteCoin(slug){
   // — deux couches identiques superposées, un doublon, pas un enrichissement).
   Object.values(HZ_REGION_LAYERS).forEach(l=>{ if(HZ_CARTE_COIN.hasLayer(l)) HZ_CARTE_COIN.removeLayer(l); });
   if(HZ_CARTE_REPOS_MARQ && HZ_CARTE_COIN.hasLayer(HZ_CARTE_REPOS_MARQ)) HZ_CARTE_COIN.removeLayer(HZ_CARTE_REPOS_MARQ);
+  if(HZ_CARTE_REPOS_MARQ_DORMANTS && HZ_CARTE_COIN.hasLayer(HZ_CARTE_REPOS_MARQ_DORMANTS)) HZ_CARTE_COIN.removeLayer(HZ_CARTE_REPOS_MARQ_DORMANTS);
   // marqueurs : TOUTES les fiches géolocalisées (le rond 2b-2 pourra tout
   // capturer ; le zoom limite naturellement ce qu'on voit)
   HZ_CARTE_COIN_MARQ.clearLayers();
@@ -4335,6 +4368,8 @@ function hzIcone(fiche, opts){
 }
 // Repose la bonne icône d'un marqueur selon l'état courant du lieu. Appelé à
 // chaque ❤️ et à chaque retrait, pour que la carte suive les choix en direct.
+// (10/07) Change aussi de COUCHE si le statut dormant/actif a changé — sinon
+// un cœur ajouté à un point resterait invisible si « points en veille » est masqué.
 function hzMajMarqueur(lieuId, type){
   const fiche = (typeof ficheParIdHz==='function' ? ficheParIdHz(lieuId) : null)
              || {id:lieuId, type:type};
@@ -4345,7 +4380,18 @@ function hzMajMarqueur(lieuId, type){
   const c=HZ_CARTE_COIN_MARQ_PAR_ID && HZ_CARTE_COIN_MARQ_PAR_ID[lieuId];
   if(c && c.marker) c.marker.setIcon(icon);
   const r=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[lieuId];
-  if(r && r.marker) r.marker.setIcon(icon);
+  if(r && r.marker){
+    r.marker.setIcon(icon);
+    const etat=hzEtatLieu(lieuId);
+    const dormantMaintenant = !etat.epingle && !etat.coeurMoi && !etat.coeurAutre;
+    if(dormantMaintenant!==r.dormant && HZ_CARTE_REPOS_MARQ && HZ_CARTE_REPOS_MARQ_DORMANTS){
+      const coucheAvant = r.dormant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ;
+      const coucheApres = dormantMaintenant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ;
+      coucheAvant.removeLayer(r.marker);
+      coucheApres.addLayer(r.marker);
+      r.dormant=dormantMaintenant;
+    }
+  }
 }
 
 let HZ_EXPLO_MAP=null;

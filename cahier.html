@@ -31,6 +31,25 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
   background-image:radial-gradient(ellipse at top left, rgba(200,168,75,.05), transparent 60%), repeating-linear-gradient(rgba(26,18,8,.015) 0 1px, transparent 1px 3px);}
 @media print{ #auth-check,.toolbar{display:none !important;} body{background:none;} .page{margin:0;box-shadow:none;} }
 
+/* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
+   mobile — elle s'affichait à sa largeur réelle quel que soit l'écran. Deux
+   symptômes d'un coup : il fallait zoomer pour tout voir (texte écrasé), et
+   le débordement horizontal faisait glisser la barre de menu (position:sticky
+   = fixée verticalement, PAS horizontalement — elle suit le défilement latéral
+   du contenu qui déborde). On met la page à l'échelle de l'écran plutôt que de
+   redéfinir chaque taille de police une par une : proportions A4 gardées,
+   plus aucun débordement possible. */
+@media (max-width:850px){
+  body{overflow-x:hidden;}
+  #pages{overflow-x:hidden;}
+  .page{
+    --pg-echelle: calc((100vw - 20px) / 210mm);
+    transform:scale(var(--pg-echelle));
+    transform-origin:top center;
+    margin-bottom:calc(-297mm * (1 - var(--pg-echelle)) + 14px);
+  }
+}
+
 .spirale{position:absolute;left:10px;top:30px;bottom:30px;width:14px;display:flex;flex-direction:column;justify-content:space-between;z-index:5;}
 .spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid #8a8272;background:transparent;box-shadow:inset 0 0 0 3px #FDF9EF;}
 
@@ -44,10 +63,10 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .cover-bottom{position:relative;margin-top:auto;padding:0 50px 40px;}
 .cover-line{width:60px;height:2px;background:var(--gold);margin:20px 0;}
 .cover-stats{display:flex;background:rgba(15,13,9,.55);border:1px solid rgba(245,239,224,.15);border-radius:12px;overflow:hidden;margin-top:18px;}
-.cover-stat{flex:1;padding:14px 10px;text-align:center;border-right:1px solid rgba(245,239,224,.12);}
+.cover-stat{flex:1;padding:14px 6px;text-align:center;border-right:1px solid rgba(245,239,224,.12);}
 .cover-stat:last-child{border-right:none;}
-.cover-stat b{display:block;font-family:var(--font-title);font-size:19px;color:var(--gold-light);}
-.cover-stat span{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:rgba(245,239,224,.65);}
+.cover-stat b{display:block;font-family:var(--font-title);font-size:16px;line-height:1.2;color:var(--gold-light);word-break:keep-all;}
+.cover-stat span{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(245,239,224,.65);}
 
 .day-page{padding:36px 40px 36px 54px;display:flex;flex-direction:column;}
 .day-head{display:flex;align-items:baseline;gap:14px;margin-bottom:4px;}
