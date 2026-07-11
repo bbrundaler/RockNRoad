@@ -37,6 +37,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .fil-top h1{margin:0;font-size:17px;}
 .fil-top-right{display:flex;align-items:center;gap:10px;}
+/* (10/07, retour Bruno) : « Réglages [Nom du groupe] » est maintenant le SEUL
+   chemin vers les réglages du groupe (le doublon de la barre a été retiré) —
+   il ne doit plus jamais se chercher. Nom du groupe en toutes lettres (pas
+   qu'une icône ⚙️ à deviner), fond légèrement marqué pour qu'il se voie
+   vraiment dans le bandeau, pas juste au survol comme un bouton fantôme. */
+.gr-lien-groupe{background:var(--gold-a10)!important;font-weight:600;}
+.gr-lien-groupe:hover{background:var(--gold-a20)!important;}
+#gr-lien-nom{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom;}
 .fil-steps{display:flex;align-items:flex-start;max-width:640px;margin:6px auto 0;width:100%;}
 .fil-step{flex:1;text-align:center;position:relative;cursor:pointer;text-decoration:none;display:block;}
 .fil-step .dot{
@@ -203,7 +211,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
       <div class="fil-top">
         <h1 id="hub-salut">Bonjour</h1>
         <div class="fil-top-right">
-          <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm" title="Réglages du groupe (nom, membres)">⚙️</a>
+          <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm gr-lien-groupe" title="Réglages du groupe (nom, membres)">⚙️ <span id="gr-lien-nom">Mon groupe</span></a>
           <a class="rr-btn rr-btn-ghost rr-btn-sm" href="admin.html">＋ Nouvelle fiche</a>
         </div>
       </div>
@@ -501,6 +509,7 @@ async function loadHubData(userId, email){
     } catch(e){}
     if(window.rnrChrome){ rnrChrome.setGroupe(nomGroupe); if(mem.is_superadmin) rnrChrome.setSuperAdmin(true); }
     const grLien=document.getElementById('gr-lien'); if(grLien) grLien.title='Réglages de '+nomGroupe;
+    const grLienNom=document.getElementById('gr-lien-nom'); if(grLienNom) grLienNom.textContent=nomGroupe;
 
     /* ── Voyage actif dans le chrome (titre + sélecteur) — même moteur qu'Horizon/Carnet
        (chargeVoyageActif/CR_chargeVoyageActif) : sans ça, le Hub n'affichait jamais le nom
