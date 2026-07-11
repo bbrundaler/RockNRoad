@@ -288,7 +288,10 @@
 
     /* API minimale pour les pages */
     window.rnrChrome = {
-      setGroupe:     function(nom){ if(nom){ grp.textContent = nom + ' ⚙️'; } },
+      // (10/07) setGroupe ne fait plus rien de visible — « Mon groupe ⚙️ » a
+      // été retiré de la barre (doublon du Hub). Gardé en no-op plutôt que
+      // supprimé : les pages qui l'appellent encore ne doivent jamais planter.
+      setGroupe:     function(nom){},
       setSuperAdmin: function(ok){ if(ok){ cons.classList.add('rnrc-sa-visible'); } },
       /* setVoyage(actifNom, liste[{id,nom}], onChange(id|'__new__')) */
       setVoyage: function(actifNom, liste, onChange){
@@ -329,7 +332,6 @@
       var cached = sessionStorage.getItem('rnr_groupe');
       if(cached){
         var g = JSON.parse(cached);
-        if(g.nom) grp.textContent = g.nom + ' ⚙️';
         if(g.is_superadmin) cons.classList.add('rnrc-sa-visible');
       }
       var cv = sessionStorage.getItem('rnr_voyage_nom');
