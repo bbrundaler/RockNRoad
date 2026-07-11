@@ -252,6 +252,28 @@ async function resoutVoyageId(userId){
   VOYAGE_ID=actif?actif.id:null;
 }
 
+// (10/07, retour Bruno) : le sélecteur de voyage de la barre restait invisible
+// ici — cette page ne l'alimentait jamais. Même patron que Roadbook, pas une
+// 2e logique : seule la fiche « nom » diffère (pas besoin de plus pour l'affichage).
+async function cahierChargeSelecteurChrome(){
+  if(!GROUPE_ID) return;
+  try{
+    const {data:vs}=await sb.from('voyages')
+      .select('id,nom,est_principal,created_at').eq('groupe_id',GROUPE_ID)
+      .order('created_at',{ascending:true});
+    const liste=vs||[];
+    if(!liste.length) return;
+    const actif=liste.find(v=>v.id===VOYAGE_ID)||liste.find(v=>v.est_principal)||liste[0];
+    if(window.rnrChrome && rnrChrome.setVoyage){
+      rnrChrome.setVoyage(actif.nom, liste, function(id){
+        if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        window.location.reload();
+      });
+    }
+  }catch(e){ console.warn('Cahier: sélecteur de voyage', e); }
+}
+
 async function chargerRegions(){
   try{
     const rep=await fetch('decoupage-france-regions.json?v=22r',{cache:'no-cache'});
@@ -693,6 +715,7 @@ function render(){
     document.getElementById('auth-check').style.display='none';
     await resoutVoyageId(session.user.id);
     if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
+    cahierChargeSelecteurChrome();   // nom du voyage + liste, visible dans la barre (chrome.js)
     await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions(), chargerMembres()]);
     render();
   }catch(e){

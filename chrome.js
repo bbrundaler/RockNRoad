@@ -70,13 +70,6 @@
   +'.rnrc-links a.rnrc-phase::after{content:"";position:absolute;left:50%;bottom:1px;'
   +'transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--gold);}'
   +'.rnrc-right{display:flex;align-items:center;gap:12px;}'
-+'.rnrc-add{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;'
-+'letter-spacing:.5px;color:var(--gold);background:var(--gold-a10);'
-+'border:1px solid var(--gold-a35);border-radius:var(--r-pill);'
-+'padding:6px 13px;text-decoration:none;white-space:nowrap;'
-+'transition:background .15s,color .15s;font-family:var(--font-body);}'
-+'.rnrc-add:hover{background:var(--gold);color:var(--chrome-bg);}'
-+'@media(max-width:700px){.rnrc-add span.rnrc-add-label{display:none;}}'
   +'.rnrc-voyage-wrap{position:relative;display:flex;align-items:center;margin-right:6px;}'
   +'.rnrc-voyage{font-family:var(--font-title);font-size:16px;font-weight:600;color:var(--gold-light);'
   +'background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:8px;}'
@@ -94,9 +87,6 @@
   +'.rnrc-vy-new{color:var(--gold-light);font-weight:600;}'
   +'.rnrc-vy-modifier{text-decoration:none;}'
   +'@media(max-width:700px){.rnrc-voyage{font-size:14px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}'
-  +'.rnrc-groupe{font-size:13.5px;color:var(--chrome-ink-dim);text-decoration:none;'
-  +'white-space:nowrap;font-family:var(--font-body);}'
-  +'.rnrc-groupe:hover{color:var(--gold-light);}'
   +'.rnrc-console{width:30px;height:30px;border-radius:50%;cursor:pointer;display:none;'
   +'background:var(--gold-a10);border:1px solid var(--gold-a35);font-size:14px;'
   +'display:none;align-items:center;justify-content:center;text-decoration:none;'
@@ -120,7 +110,7 @@
   +'.rnrc-footer a:hover{color:var(--gold-light);text-decoration:underline;}'
   +'@media(max-width:700px){.rnrc-footer{margin-bottom:70px;}}'  /* au-dessus de la tabbar */
   +'@media(max-width:700px){'
-  +'.rnrc-links,.rnrc-groupe{display:none;}'
+  +'.rnrc-links{display:none;}'
   +'.rnrc-nav{gap:12px;justify-content:space-between;}'
   +'.rnrc-tabbar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:950;'
   +'background:var(--chrome-bg);border-top:1px solid var(--gold-a20);'
@@ -234,11 +224,11 @@
     vyWrap.style.display = 'none'; // caché tant qu'aucun voyage n'est posé
     right.appendChild(vyWrap);
 
-    var grp = document.createElement('a');
-    grp.className = 'rnrc-groupe';
-    grp.href = 'onboarding.html';
-    grp.textContent = 'Mon groupe ⚙️';
-    right.appendChild(grp);
+    /* (10/07, retour Bruno) : « Mon groupe ⚙️ » et « + Fiche » retirés d'ici —
+       doublons exacts de ce que le Hub affiche déjà dans son propre bandeau
+       (même liens, onboarding.html et admin.html). Une barre plus légère sur
+       CHAQUE page plutôt qu'une action répétée partout ; ces deux actions
+       restent à un seul endroit logique, l'accueil, pas retirées du site. */
 
     /* Console plateforme — cachée par défaut, révélée par setSuperAdmin(true) */
     var cons = document.createElement('a');
@@ -248,13 +238,6 @@
     cons.textContent = '🛠️';
     if(pageActive('console.html')) cons.style.color = 'var(--gold-light)';
     right.appendChild(cons);
-
-    var add = document.createElement('a');
-    add.className = 'rnrc-add';
-    add.href = 'admin.html';
-    add.title = 'Créer une nouvelle fiche lieu';
-    add.innerHTML = '+ <span class="rnrc-add-label">Fiche</span>';
-    right.appendChild(add);
 
     // Sujet (08/07, retour Bruno) : le lien Conditions vivait ICI ET dans le
     // pied de page — doublon inutile qui encombrait une barre déjà chargée.
