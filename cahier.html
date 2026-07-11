@@ -38,13 +38,20 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
    = fixée verticalement, PAS horizontalement — elle suit le défilement latéral
    du contenu qui déborde). On met la page à l'échelle de l'écran plutôt que de
    redéfinir chaque taille de police une par une : proportions A4 gardées,
-   plus aucun débordement possible. */
+   plus aucun débordement possible.
+   (10/07, 2e retour) : centrage par margin:auto échoue sur une boîte PLUS
+   LARGE que son conteneur (les navigateurs ramènent les marges auto à 0 →
+   la page collait à un bord). left:50% + translateX(-50%) centre sur la
+   position réelle, quelle que soit la largeur de la boîte avant mise à l'échelle. ── */
 @media (max-width:850px){
   body{overflow-x:hidden;}
   #pages{overflow-x:hidden;}
   .page{
     --pg-echelle: calc((100vw - 20px) / 210mm);
-    transform:scale(var(--pg-echelle));
+    position:relative;
+    left:50%;
+    margin-left:0;
+    transform:translateX(-50%) scale(var(--pg-echelle));
     transform-origin:top center;
     margin-bottom:calc(-297mm * (1 - var(--pg-echelle)) + 14px);
   }

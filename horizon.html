@@ -179,6 +179,13 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-porte-btn:hover{background:var(--gold-a20);}
 .hz-porte-btn.ouvert{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
 .hz-porte-btn.hz-off{opacity:.5;border-style:dashed;}
+/* (10/07, retour Bruno) : le fond de base (--gold-a10, quasi transparent) se
+   perdait sur le fond chargé de la carte — même traitement opaque + ombre que
+   les boutons Par envie/Où dormir (.hz-ov-portes), pour rester lisible
+   n'importe où sur les tuiles. */
+.hz-ov-br .hz-porte-btn{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
+  box-shadow:0 2px 10px rgba(0,0,0,.14);font-weight:500;}
+.hz-ov-br .hz-porte-btn:hover{background:var(--gold-a10);}
 .hz-porte-btn .ic-compass,.hz-porte-btn .ic-moon{font-size:16px;}
 .hz-porte-chev{font-size:12.5px;transition:transform .2s;}
 .hz-porte-btn.ouvert .hz-porte-chev{transform:rotate(180deg);}
