@@ -325,6 +325,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div id="voyage-panel">
       <div class="panel-actions panel-actions-top">
         <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="tb-btn tb-btn-print" id="rb-btn-gmaps" onclick="rbExporteGoogleMaps()" title="Envoie ce trajet dans Google Maps, prêt à naviguer">📍 Envoyer vers le GPS</button>
         <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
       </div>
       <div id="panel-header">
@@ -897,6 +898,63 @@ function rbPointDepart(){
 function rbPointRetour(){
   if(RB_INFO.retour_lat!=null && RB_INFO.retour_lng!=null) return {lat:Number(RB_INFO.retour_lat), lng:Number(RB_INFO.retour_lng), nom:RB_INFO.retour_nom||'Retour'};
   return DOMICILE;
+}
+
+/* Export un clic vers Google Maps (Bloc③, benchmark Cahier nº3) — le TRAJET
+   PRINCIPAL seulement, jamais les pétales d'excursion : Google Maps est fait
+   pour naviguer d'un point à un autre dans l'ordre, pas pour des allers-retours
+   depuis une base (même distinction que partout ailleurs aujourd'hui — le
+   pétale se regarde sur notre carte, pas dans une appli de guidage routier).
+   Aucune clé API : le lien public "maps/dir" ouvre l'appli/le site Google Maps
+   directement, avec origine/destination/étapes déjà remplies. */
+function rbExporteGoogleMaps(){
+  const chaine = voyage.filter(v=>!v.rattache && v.lat!=null && v.lng!=null);
+  if(!chaine.length){
+    alert('Ajoutez au moins une étape au trajet avant d\'exporter vers Google Maps.');
+    return;
+  }
+  const dep = rbPointDepart(), ret = rbPointRetour();
+  const points = [];
+  if(dep && dep.lat!=null) points.push([dep.lat, dep.lng]);
+  chaine.forEach(v=>points.push([v.lat, v.lng]));
+  if(ret && ret.lat!=null) points.push([ret.lat, ret.lng]);
+
+  if(points.length<2){
+    // Un seul point connu (pas de maison, une seule étape) : Maps ne peut pas
+    // "naviguer" nulle part — on centre au moins dessus en mode recherche.
+    const p=points[0];
+    window.open('https://www.google.com/maps/search/?api=1&query='+p[0]+','+p[1], '_blank');
+    return;
+  }
+
+  const origine = points[0];
+  const destination = points[points.length-1];
+  let etapes = points.slice(1, -1);
+
+  // Google Maps limite les étapes intermédiaires du lien public à 9 — au-delà,
+  // il tronque ou échoue silencieusement. On coupe nous-mêmes et on prévient,
+  // plutôt que de livrer un lien qui semble marcher puis se plante à l'usage.
+  const MAX_ETAPES = 9;
+  let tronque = false;
+  if(etapes.length > MAX_ETAPES){
+    etapes = etapes.slice(0, MAX_ETAPES);
+    tronque = true;
+  }
+
+  let url = 'https://www.google.com/maps/dir/?api=1'
+    + '&origin=' + origine[0] + ',' + origine[1]
+    + '&destination=' + destination[0] + ',' + destination[1]
+    + '&travelmode=driving';
+  if(etapes.length) url += '&waypoints=' + etapes.map(p=>p[0]+','+p[1]).join('|');
+
+  window.open(url, '_blank');
+
+  if(tronque){
+    alert('Le trajet a plus de 9 étapes intermédiaires : Google Maps ne peut en '
+      +'afficher que 9 à la fois. Les '+(points.length-2-MAX_ETAPES)+' dernières '
+      +'ont été laissées de côté dans ce lien — le trajet complet reste correct '
+      +'ici, sur le Roadbook.');
+  }
 }
 
 // Météo par halte de nuit — jamais par visite (voir la logique des dates ci-dessus : les
