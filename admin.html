@@ -540,7 +540,7 @@ const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
-let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedEnvies=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[];
+let currentUser=null,photoFile=null,dogVal='inconnu',dogSource='google',familyStarVal=0,selectedTags=[],selectedEnvies=[],selectedGooglePhotoUrl=null,googlePhotoRefs=[],selectedPlaceId=null;
 let mondeNuitVal=false;
 let currentGroupeId=null; // groupe de l'utilisateur connecté
 let importLock=false; // prevent multiple simultaneous imports
@@ -778,6 +778,7 @@ async function importFromMaps(){
   document.querySelectorAll('.star.on').forEach(s=>s.classList.remove('on'));
   selectedGooglePhotoUrl=null;
   googlePhotoRefs=[];
+  selectedPlaceId=null;
   // Si ce n'est pas une URL, traiter comme recherche par nom direct
   const isUrl=url.startsWith('http')||url.startsWith('maps.');
   if(!isUrl){
@@ -785,7 +786,7 @@ async function importFromMaps(){
     try{
       const apiKey=getApiKey();
       if(apiKey){
-        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
+        const fields='place_id,name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
         // Normaliser pour scoring
         const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
         const inputNorm=norm(url);
@@ -1030,12 +1031,16 @@ async function fetchFromPlacesApiProxy(coords, apiKey, originalUrl, preloadedRes
         if(d?.results?.[0]?.place_id) placeId=d.results[0].place_id;
       }
       if(!placeId){console.warn('place_id introuvable');return false;}
-      const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
+      const fields='place_id,name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
       const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
       if(!det?.result) return false;
       p=det.result;
     }
     if(!p) return false;
+    // B67 (15/07) : place_id conservé pour permettre le rafraîchissement
+    // automatique des photos plus tard (JURIDIQUE v2.1 — permanent, jamais
+    // la photo elle-même).
+    selectedPlaceId=p.place_id||null;
 
     // ── Remplir les champs ────────────────────────────────────────────────────
     fillFieldForce('nom', p.name||'');
@@ -1281,7 +1286,7 @@ async function tryResolveShortUrl(url){
       const best=d?.results?.find(r=>!r.types?.every(t=>cityTypes.includes(t)))||d?.results?.[0];
       if(best?.place_id){
         const placeId=best.place_id;
-        const fields='name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
+        const fields='place_id,name,formatted_address,address_components,geometry,formatted_phone_number,website,rating,user_ratings_total,types,photos,opening_hours,utc_offset,wheelchair_accessible_entrance';
         const det=await callPlacesApi('details',{place_id:placeId,fields},apiKey);
         if(det?.result){
           await fetchFromPlacesApiProxy(null,apiKey,url,det.result);
@@ -1524,6 +1529,7 @@ async function saveFiche(){
   btn.disabled=true;btn.textContent='⏳ Enregistrement...';
   try{
     let photo_url=null;
+    let vientDeGoogle=false;
     // Photo locale prioritaire, sinon Google
     if(photoFile){
       const ext=photoFile.name.split('.').pop();
@@ -1531,10 +1537,12 @@ async function saveFiche(){
       const {error:ue}=await sb.storage.from('photos-lieux').upload(fname,photoFile,{contentType:photoFile.type,upsert:true});
       if(!ue){const {data:{publicUrl}}=sb.storage.from('photos-lieux').getPublicUrl(fname);photo_url=publicUrl;}
     } else if(selectedGooglePhotoUrl){
-      photo_url=selectedGooglePhotoUrl;
+      // B67 (15/07) : l'URL finale (get_photo?lieu_id=...) a besoin de l'id
+      // généré par l'insertion — renseignée juste après, ci-dessous.
+      vientDeGoogle=true;
     }
     const dv=dogVal;
-    const {error}=await sb.from('lieux').insert({
+    const {data:inserted,error}=await sb.from('lieux').insert({
       nom,region,type,
       sous_region:document.getElementById('sousRegion').value||null,
       description:document.getElementById('description').value||null,
@@ -1549,7 +1557,10 @@ async function saveFiche(){
       tags:selectedTags.length?selectedTags:null,
       envies:dispenseEnvie?['nuit']:(selectedEnvies.length?selectedEnvies:null),
       photo_url,
-      photos_urls:googlePhotoRefs.length?googlePhotoRefs.map(r=>googlePhotoUrl(r,null,800)):null,
+      photos_urls:null,
+      place_id:selectedPlaceId||null,
+      photo_refs:googlePhotoRefs.length?googlePhotoRefs:null,
+      photo_ref_maj_le:googlePhotoRefs.length?new Date().toISOString():null,
       lat:latVal,
       lng:lngVal,
       adresse:document.getElementById('adresse').value||null,
@@ -1573,8 +1584,20 @@ async function saveFiche(){
       nb_emplacements:parseInt(document.getElementById('nbEmplacements')?.value)||null,
       prix_indicatif:document.getElementById('prixIndicatif')?.value||null,
       contact_proprio:document.getElementById('contactProprio')?.value||null,
-    });
+    }).select('id').single();
     if(error)throw error;
+
+    // B67 (15/07) : pour une photo Google, l'URL publique pointe désormais
+    // vers NOTRE endpoint (get_photo?lieu_id=...), stable pour toujours — le
+    // jeton Google réel derrière (photo_refs) peut être rafraîchi sans jamais
+    // changer cette URL affichée. Toujours de la lecture en direct, jamais
+    // de copie de l'image (JURIDIQUE v2.1) : seul le POINTEUR change de forme.
+    if(vientDeGoogle && inserted?.id){
+      const lieuId=inserted.id;
+      const photoUrlFinal=`${EDGE_FN}?action=get_photo&lieu_id=${lieuId}&idx=0&maxwidth=800`;
+      const photosUrlsFinal=googlePhotoRefs.map((_,i)=>`${EDGE_FN}?action=get_photo&lieu_id=${lieuId}&idx=${i}&maxwidth=800`);
+      await sb.from('lieux').update({photo_url:photoUrlFinal, photos_urls:photosUrlsFinal}).eq('id',lieuId);
+    }
     showConfirmation(nom, region, type, regionSlug);
   }catch(e){
     showToast('Erreur: '+e.message,'error');
