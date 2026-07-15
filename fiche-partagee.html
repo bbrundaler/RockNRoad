@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="sombre">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Fiche partagée</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+/* Page publique — B66. Ne charge JAMAIS chrome.js (redirige vers index.html
+   si pas de session) : cette page doit fonctionner sans compte, pour
+   n'importe qui qui reçoit un lien par SMS/WhatsApp/etc. */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;padding:24px 14px 48px;}
+.fp-brand{display:flex;align-items:center;gap:8px;margin-bottom:20px;color:var(--gold);
+  font-family:var(--font-title);font-weight:700;font-size:17px;letter-spacing:.02em;}
+.fp-brand span.tag{color:var(--ink-dim,#999);font-weight:500;font-size:12px;}
+.fp-card{background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;
+  max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;}
+.fp-state{padding:48px 24px;text-align:center;color:var(--ink);}
+.fp-state .ic{font-size:40px;margin-bottom:14px;}
+.fp-state h2{font-family:var(--font-title);font-size:19px;margin-bottom:8px;}
+.fp-state p{opacity:.7;font-size:14px;line-height:1.5;}
+.fp-cta{margin-top:28px;text-align:center;font-size:13px;opacity:.6;}
+.fp-cta a{color:var(--gold);text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="fp-brand">🐾 RockNRoad <span class="tag">· fiche partagée</span></div>
+<div class="fp-card" id="fp-card">
+  <div class="fp-state" id="fp-loading">
+    <div class="ic">⏳</div>
+    <h2>Chargement de la fiche…</h2>
+  </div>
+</div>
+<div class="fp-cta">Envoyé depuis RockNRoad, l'appli de voyage en groupe.</div>
+
+<script src="lightbox.js"></script>
+<script src="fiche-complete.js"></script>
+<script>
+const SURL = "https://cazqllstxhuecoqpktwm.supabase.co";
+const SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
+const EDGE_FN = SURL + '/functions/v1/dynamic-action';
+
+function fpEtat(icone, titre, texte){
+  document.getElementById('fp-card').innerHTML =
+    '<div class="fp-state"><div class="ic">'+icone+'</div><h2>'+titre+'</h2><p>'+(texte||'')+'</p></div>';
+}
+
+(async function(){
+  const jeton = new URLSearchParams(window.location.search).get('j');
+  if(!jeton){ fpEtat('🔗','Lien incomplet','Ce lien de fiche partagée est incomplet ou invalide.'); return; }
+
+  try{
+    const r = await fetch(EDGE_FN, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({ action:'get_shared_fiche', jeton })
+    });
+    const j = await r.json();
+
+    if(j.error === 'lien_expire'){
+      fpEtat('⌛','Ce lien a expiré','Les fiches partagées restent accessibles 30 jours. Demande un nouveau lien à la personne qui te l\'a envoyé.');
+      return;
+    }
+    if(!r.ok || j.error){
+      fpEtat('🤷','Fiche introuvable','Ce lien ne correspond à aucune fiche RockNRoad valide.');
+      return;
+    }
+
+    const l = j.lieu;
+    const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(l.note, l.user_ratings_total);
+    const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(l.note_famille);
+
+    document.getElementById('fp-card').innerHTML = RNR_FICHE_COMPLETE.html(l, { noteG, noteF });
+
+    // Cette fiche vit hors de tout compte : le bouton Horizon (posé par le
+    // gabarit partagé pour tout autre contexte) demande une session — inutile
+    // et trompeur ici. Retrait ciblé, sans forker le gabarit (loi : un seul
+    // moteur de rendu, jamais une variante "publique" du template).
+    document.querySelectorAll('#fp-card a[href*="horizon.html"]').forEach(el => el.remove());
+
+  }catch(e){
+    fpEtat('⚠️','Impossible de charger la fiche','Vérifie ta connexion et réessaie dans un instant.');
+  }
+})();
+</script>
+</body>
+</html>

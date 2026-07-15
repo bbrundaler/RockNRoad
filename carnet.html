@@ -411,6 +411,7 @@ body.rnr-filtre-nuit .rg-bloc-jour{display:none!important;}
 <script>
 const {createClient}=supabase;
 const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+const EDGE_FN="https://cazqllstxhuecoqpktwm.supabase.co/functions/v1/dynamic-action";
 
 // ── Perf monitor ────────────────────────────────────────────────────────────
 const RNR_PERF={_m:{},start(l){this._m[l]=performance.now();},end(l){const ms=Math.round(performance.now()-(this._m[l]||0));const col=ms<300?'var(--green)':ms<1000?'var(--gold)':'var(--st-bad-ink)';console.log('%c⏱ RNR '+l+': '+ms+'ms','color:'+col+';font-weight:700');return ms;}};
@@ -1816,7 +1817,7 @@ function openGrandeFiche(id){
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
     noteG, noteF, dogBadge,
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
-    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button>`
+    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-dark" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid)">📤 Partager</button>`
   });
   // Bandeau vote hors du scroll (09/07, même principe que Horizon) — posé à
   // part dans #gf-vote-footer, jamais mélangé au contenu de la fiche.
@@ -1827,6 +1828,40 @@ function openGrandeFiche(id){
 function closeGrandeFiche(){
   const o = document.getElementById('gf-overlay');
   if(o) o.style.display = 'none';
+}
+
+// ── PARTAGE FICHE (B66) — lien public en lecture seule, 30 jours ──
+async function partagerFiche(id){
+  const l = allLieux.find(x => x.id === id || x.id === String(id));
+  const nom = l?.nom || 'ce lieu';
+  const btn = document.querySelector('.gf-btn-dark[onclick*="partagerFiche"]');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Génération…'; }
+  try{
+    const {data:{session}} = await sb.auth.getSession();
+    if(!session){ showToast('Connexion requise pour partager','error'); return; }
+
+    const r = await fetch(EDGE_FN, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body: JSON.stringify({ action:'create_share', lieu_id: id })
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok){ showToast('Erreur : '+(j.reason||j.error||'partage impossible'),'error'); return; }
+
+    const lienPartage = window.location.origin + window.location.pathname.replace(/carnet\.html$/,'') + 'fiche-partagee.html?j=' + j.jeton;
+    const texte = 'Regarde cette fiche RockNRoad : ' + nom;
+
+    if(navigator.share){
+      await navigator.share({ title: nom, text: texte, url: lienPartage }).catch(()=>{});
+    } else {
+      await navigator.clipboard.writeText(lienPartage);
+      showToast('🔗 Lien copié — colle-le dans ton SMS','success');
+    }
+  }catch(e){
+    showToast('Erreur de partage : '+e.message,'error');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = '📤 Partager'; }
+  }
 }
 
 window.showTab=function(id){
