@@ -279,6 +279,21 @@
         </div>
       </div>
 
+      <!-- Rattrapage photos (B68, 15/07) -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="ico">🔧</span>
+          <h2>Rattraper les photos</h2>
+          <span class="admin-badge">Super admin</span>
+        </div>
+        <div class="panel-body">
+          <p class="inv-note" style="margin-bottom:10px;">Fiches créées avant le 15/07 : sans identifiant Google (place_id), leurs photos finiront par expirer sans recours automatique. Ce bouton redemande le lieu à Google (nom + GPS, comme à l'import) pour chacune — jamais besoin de la ressaisir à la main.</p>
+          <div id="repair-list">
+            <div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement…</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -316,6 +331,7 @@ async function checkAuth(){
   if(window.rnrChrome) rnrChrome.setSuperAdmin(true);
   document.getElementById('console-main').style.display='block';
   loadAdminData();
+  loadRepairList();
 }
 window.addEventListener('load', checkAuth);
 
@@ -832,6 +848,73 @@ async function destroyOrphan(userId, label){
     showToast('🗑️ Compte détruit', 'error');
     loadAdminData();
   }catch(e){ showToast('Erreur : '+e.message, 'error'); }
+}
+
+// ── Rattrapage photos (B68, 15/07) ─────────────────────────────────────────
+// Fiches créées avant B67 : pas de place_id, jamais rafraîchies. Retrouve le
+// lieu sur Google par nom + GPS (même principe qu'à l'import) — jamais besoin
+// de ressaisir la fiche. Fiche par fiche, jamais en aveugle.
+async function loadRepairList(){
+  const container = document.getElementById('repair-list');
+  if(!container) return;
+  container.innerHTML = '<div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">⏳ Chargement…</div>';
+  try{
+    const json = await callEdge('list_missing_place_id', {});
+    const lieux = json.lieux || [];
+    if(!lieux.length){
+      container.innerHTML = '<div style="color:var(--ink-dim);font-size:12px;padding:8px 0;">✅ Toutes les fiches ont déjà un place_id.</div>';
+      return;
+    }
+    container.innerHTML =
+      '<div style="margin-bottom:8px;font-size:12px;color:var(--ink-dim);">'+lieux.length+' fiche'+(lieux.length>1?'s':'')+' à rattraper</div>'+
+      '<button class="refresh-btn" style="margin-bottom:10px;" onclick="rattraperTout()">🔧 Tout rattraper (une par une)</button>'+
+      '<div id="repair-rows">'+
+      lieux.map(l => `
+        <div class="repair-row" id="repair-row-${l.id}" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--surface-line);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">${l.nom||'(sans nom)'}</div>
+            <div style="font-size:11px;color:var(--ink-dim);">${l.region||''}${l.sous_region?' · '+l.sous_region:''}</div>
+          </div>
+          <div id="repair-status-${l.id}" style="font-size:11px;color:var(--ink-dim);min-width:160px;text-align:right;"></div>
+          <button class="ag-limit-btn" onclick="rattraperFiche('${l.id}')">🔍 Rattraper</button>
+        </div>
+      `).join('') +
+      '</div>';
+  }catch(e){
+    container.innerHTML = '<div style="color:var(--st-bad-ink);font-size:12px;">Erreur : '+e.message+'</div>';
+  }
+}
+
+async function rattraperFiche(lieuId){
+  const statusEl = document.getElementById('repair-status-'+lieuId);
+  const row = document.getElementById('repair-row-'+lieuId);
+  if(statusEl) statusEl.textContent = '⏳ Recherche…';
+  try{
+    const json = await callEdge('repair_photo_refs', { lieu_id: lieuId });
+    if(json.deja_ok){
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--green);">déjà à jour</span>';
+      if(row) row.style.opacity = '0.5';
+      return true;
+    }
+    const nom = json.matched?.name || 'trouvé';
+    const n = json.photos_count || 0;
+    if(statusEl) statusEl.innerHTML = '<span style="color:var(--green);">✅ '+nom+' · '+n+' photo'+(n>1?'s':'')+'</span>';
+    if(row) row.style.opacity = '0.5';
+    return true;
+  }catch(e){
+    if(statusEl) statusEl.innerHTML = '<span style="color:var(--st-bad-ink);">❌ '+e.message+'</span>';
+    return false;
+  }
+}
+
+async function rattraperTout(){
+  const rows = document.querySelectorAll('.repair-row');
+  for(const row of rows){
+    const lieuId = row.id.replace('repair-row-','');
+    await rattraperFiche(lieuId);
+    await new Promise(r => setTimeout(r, 400)); // ne pas rafaler Google d'appels
+  }
+  showToast('Rattrapage terminé — vérifie les résultats ligne par ligne');
 }
 </script>
 <!-- ── MODAL FICHE MEMBRE ────────────────────────────────────────────────── -->
