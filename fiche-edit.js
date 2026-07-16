@@ -180,10 +180,14 @@
         </div>
         <div class="rnr-fe-body" style="padding-top:0;border-top:1px solid var(--surface-line);margin-top:4px;">
           <div class="rnr-fe-fg full" style="margin-top:14px;">
-            <label class="rnr-fe-label">Photos (URLs séparées par une virgule)</label>
-            <textarea class="rnr-fe-textarea" id="rnr-fe-photos" placeholder="https://... , https://..." style="min-height:56px;font-size:11px;font-family:monospace;"></textarea>
-            <div style="font-size:10px;color:var(--ink-dim);margin-top:3px;">Photo principale en premier · max 5 photos</div>
-            <div id="rnr-fe-photos-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;"></div>
+            <label class="rnr-fe-label">Photos (5 max)</label>
+            <div id="rnr-fe-photos-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;"></div>
+            <input type="file" id="rnr-fe-photo-file" accept="image/*" style="display:none;" onchange="RNR_FICHE_EDIT._ajouterPhotoFichier(this)">
+            <details style="margin-top:8px;">
+              <summary style="font-size:10px;color:var(--ink-dim);cursor:pointer;">Coller des URLs directement (avancé)</summary>
+              <textarea class="rnr-fe-textarea" id="rnr-fe-photos" placeholder="https://... , https://..." style="min-height:56px;font-size:11px;font-family:monospace;margin-top:6px;" oninput="RNR_FICHE_EDIT._renderPreview()"></textarea>
+              <div style="font-size:10px;color:var(--ink-dim);margin-top:3px;">Photo principale en premier · max 5 photos</div>
+            </details>
           </div>
         </div>
         <div class="rnr-fe-footer">
@@ -270,9 +274,44 @@
       : `https://www.google.com/search?q=${lieu}+chien+admis+accept%C3%A9`;
     window.open(url,'_blank','noopener');
   }
+  function listePhotosActuelle(){
+    return document.getElementById('rnr-fe-photos').value.split(',').map(s=>s.trim()).filter(s=>s.startsWith('http')).slice(0,5);
+  }
+  function ecrirePhotos(urls){
+    document.getElementById('rnr-fe-photos').value = urls.slice(0,5).join(', ');
+    renderPhotosPreview();
+  }
+  function retirerPhoto(url){
+    ecrirePhotos(listePhotosActuelle().filter(u=>u!==url));
+  }
+  // (16/07, retour Bruno) : jusqu'ici, une photo Google ratée ne pouvait
+  // jamais être retirée, et un lieu sans photo Google ne pouvait jamais en
+  // recevoir une — la seule porte était de taper une URL à la main dans la
+  // zone "avancé", impraticable avec les nouvelles URLs internes (get_photo).
+  // Upload direct vers le même bucket que l'import (admin.html), même
+  // principe : jamais de photo Google copiée/stockée (JURIDIQUE v2.1) — ici
+  // c'est toujours une photo PERSO du membre, stockage explicitement autorisé.
+  async function ajouterPhotoFichier(input){
+    const file = input.files && input.files[0];
+    input.value = '';
+    if(!file) return;
+    const actuelles = listePhotosActuelle();
+    if(actuelles.length >= 5){ toast('Déjà 5 photos — retire-en une avant d\'en ajouter une nouvelle','error'); return; }
+    try{
+      const ext = file.name.split('.').pop();
+      const fname = `fiches/${Date.now()}-edit-${(editingLieu?.id||'x').slice(0,8)}.${ext}`;
+      const {error:ue} = await sb.storage.from('photos-lieux').upload(fname, file, {contentType:file.type, upsert:true});
+      if(ue){ toast('Erreur upload : '+ue.message,'error'); return; }
+      const {data:{publicUrl}} = sb.storage.from('photos-lieux').getPublicUrl(fname);
+      ecrirePhotos([...actuelles, publicUrl]);
+      toast('Photo ajoutée','success');
+    }catch(e){
+      toast('Erreur : '+e.message,'error');
+    }
+  }
   function renderPhotosPreview(){
     const prev=document.getElementById('rnr-fe-photos-preview');
-    const urls=document.getElementById('rnr-fe-photos').value.split(',').map(s=>s.trim()).filter(s=>s.startsWith('http')).slice(0,5);
+    const urls=listePhotosActuelle();
     prev.innerHTML='';
     urls.forEach((u,i)=>{
       const wrapper=document.createElement('div');
@@ -288,15 +327,29 @@
         lbl.style.cssText='position:absolute;bottom:2px;right:3px;background:var(--gold);color:var(--ink);font-size:9px;font-weight:800;padding:1px 4px;border-radius:3px;';
         wrapper.appendChild(lbl);
       }
+      const retirer=document.createElement('div');
+      retirer.textContent='✕';
+      retirer.title='Retirer cette photo';
+      retirer.style.cssText='position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--chrome-bg,#1a1510);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);';
+      retirer.addEventListener('click', (ev)=>{ ev.stopPropagation(); retirerPhoto(u); });
       wrapper.addEventListener('click', ()=>{
-        const allUrls=document.getElementById('rnr-fe-photos').value.split(',').map(s=>s.trim()).filter(s=>s.startsWith('http'));
+        const allUrls=listePhotosActuelle();
         const reordered=[u,...allUrls.filter(x=>x!==u)].slice(0,5);
-        document.getElementById('rnr-fe-photos').value=reordered.join(', ');
-        renderPhotosPreview();
+        ecrirePhotos(reordered);
       });
       wrapper.appendChild(img);
+      wrapper.appendChild(retirer);
       prev.appendChild(wrapper);
     });
+    // Tuile d'ajout — seulement s'il reste de la place (max 5)
+    if(urls.length<5){
+      const ajout=document.createElement('div');
+      ajout.title='Ajouter une photo';
+      ajout.style.cssText='width:64px;height:48px;border-radius:6px;border:2px dashed var(--gold-a35);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gold-deep);font-size:20px;font-weight:700;';
+      ajout.textContent='+';
+      ajout.addEventListener('click', ()=>document.getElementById('rnr-fe-photo-file').click());
+      prev.appendChild(ajout);
+    }
   }
 
   function open(lieu, opts){
@@ -400,5 +453,6 @@
     _toggleEnvie: toggleEnvie, _suggereEnvies: suggereEnvies,
     _setDog: setDog, _dogSearch: dogSearch,
     _save: save, _delete: del,
+    _ajouterPhotoFichier: ajouterPhotoFichier, _renderPreview: renderPhotosPreview,
   };
 })();
