@@ -63,7 +63,12 @@
     if(l.tel) pratique += `<div class="gf-cell"><div class="gf-cell-t">📞 CONTACT</div><div class="gf-cell-v"><a href="tel:${esc(l.tel)}" style="color:var(--ink);">${esc(l.tel)}</a></div></div>`;
     if(l.adresse||l.sous_region) pratique += `<div class="gf-cell"><div class="gf-cell-t">📍 ADRESSE</div><div class="gf-cell-v">${esc(l.adresse||l.sous_region)}</div></div>`;
 
-    const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(t)}</span>`).join('') : '';
+    // (16/07) : l.tags contient des CLÉS internes stables (ex. "teardrop" =
+    // Camping-car), jamais des libellés — tags.js (window.RNR_TAGS) est LE
+    // seul endroit qui sait les traduire en français. Repli sur la clé brute
+    // si le module n'est pas chargé (jamais planter l'affichage pour ça).
+    const libelleDeTag = t => (window.RNR_TAGS && RNR_TAGS.libelleTag(t)) || t;
+    const tags = (l.tags&&l.tags.length) ? l.tags.map(t=>`<span style="background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:3px 9px;border-radius:10px;border:1px solid var(--gold-a20);">${esc(libelleDeTag(t))}</span>`).join('') : '';
 
     // Retour Bruno (07/07) : depuis le Carnet, repérer où se trouve une fiche sur
     // la carte Horizon (au milieu des autres) — un seul bouton, ici, partagé par
