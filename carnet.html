@@ -1563,6 +1563,11 @@ function makeNuitCard(l){
 
   const noteG = l.note?`<span style="background:rgba(44,80,22,.5);color:var(--st-ok-vif);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">★ ${l.note}</span>`:'';
   const noteF = l.note_famille?`<span style="background:var(--gold-a20);color:rgba(200,168,75,.9);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">${coeursFamille(l.note_famille)}</span>`:'';
+  // (16/07) : classement officiel du camping, distinct de la note Google —
+  // même fonction que la grande fiche (fiche-complete.js), format compact ici.
+  const etoilesBadge = (l.etoiles!==null&&l.etoiles!==undefined)
+    ? `<span style="background:rgba(60,90,160,.2);color:#7d9fdb;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">${l.etoiles>0?'⭐'.repeat(l.etoiles):'Non classé'}</span>`
+    : '';
 
   return `<div class="nuit-card" id="dyncard-${l.id}" style="cursor:pointer;" onclick="openGrandeFiche('${l.id}')">
     ${(()=>{
@@ -1595,7 +1600,7 @@ function makeNuitCard(l){
     </div>`;
     })()}
     <div class="nuit-body">
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">${noteG}${noteF}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">${noteG}${noteF}${etoilesBadge}</div>
       <h3 class="nuit-name">${l.nom||'—'}</h3>
       <div class="nuit-sous-region">${l.adresse||l.sous_region||''}</div>
       ${l.description?`<p class="nuit-desc">${l.description}</p>`:''}

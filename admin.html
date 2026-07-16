@@ -1542,6 +1542,11 @@ async function saveFiche(){
       vientDeGoogle=true;
     }
     const dv=dogVal;
+    // (16/07) : classement officiel camping ("3 ***", "0 *"...) extrait du nom
+    // — le chiffre fait foi (parfois pas de correspondance stricte avec le
+    // nombre d'astérisques, ex. "0 *" = non classé). Distinct de note (Google).
+    const matchEtoiles = nom.match(/([0-5])\s*\*+/);
+    const etoilesVal = matchEtoiles ? parseInt(matchEtoiles[1], 10) : null;
     const {data:inserted,error}=await sb.from('lieux').insert({
       nom,region,type,
       sous_region:document.getElementById('sousRegion').value||null,
@@ -1554,6 +1559,7 @@ async function saveFiche(){
       dog_info:document.getElementById('dogInfo').value||null,
       note:parseFloat(document.getElementById('noteGoogle').value)||null,
       note_famille:familyStarVal||null,
+      etoiles:etoilesVal,
       tags:selectedTags.length?selectedTags:null,
       envies:dispenseEnvie?['nuit']:(selectedEnvies.length?selectedEnvies:null),
       photo_url,

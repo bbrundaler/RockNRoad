@@ -38,6 +38,15 @@
     const note=Number(n)||0; if(!note) return '';
     return '<span style="background:var(--gold-a20);color:var(--gold-light,var(--gold-deep));font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">Famille '+'★'.repeat(note)+'</span>';
   }
+  // (16/07) : classement officiel camping — distinct de la note Google (avis)
+  // et de la note famille (ressenti maison). 0 étoile = "non classé", affiché
+  // quand même (info utile), jamais confondu avec "pas de donnée" (null).
+  function badgeEtoiles(n){
+    if(n===null||n===undefined) return '';
+    const etoiles=Number(n);
+    if(isNaN(etoiles)||etoiles<0||etoiles>5) return '';
+    return '<span style="background:rgba(60,90,160,.15);color:#7d9fdb;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;">'+(etoiles>0?'⭐'.repeat(etoiles)+' officiel':'Non classé')+'</span>';
+  }
   function ouvrirLightbox(photosJson, idx){
     if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.open(JSON.parse(photosJson), idx);
   }
@@ -87,7 +96,7 @@
       </div>
       ${galerie}
       <div class="gf-content">
-        <div class="gf-badges">${opts.noteG||''}${opts.noteF||''}${opts.dogBadge||''}</div>
+        <div class="gf-badges">${opts.noteG||''}${opts.noteF||''}${badgeEtoiles(l.etoiles)}${opts.dogBadge||''}</div>
         <h2 class="gf-title">${esc(l.nom||'—')}</h2>
         ${l.adresse||l.sous_region?`<p class="gf-sub">${esc(l.adresse||l.sous_region)}</p>`:''}
         ${l.description?`<p class="gf-desc">${esc(l.description)}</p>`:''}
@@ -107,5 +116,5 @@
       </div>
     `;
   }
-  window.RNR_FICHE_COMPLETE = { html, photosDe, badgeNoteGoogle, badgeNoteFamille, _openLb:ouvrirLightbox };
+  window.RNR_FICHE_COMPLETE = { html, photosDe, badgeNoteGoogle, badgeNoteFamille, badgeEtoiles, _openLb:ouvrirLightbox };
 })();
