@@ -1817,7 +1817,7 @@ function openGrandeFiche(id){
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
     noteG, noteF, dogBadge,
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
-    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-dark" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid)">📤 Partager</button>`
+    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-gold" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid)">📤 Partager cette fiche</button>`
   });
   // Bandeau vote hors du scroll (09/07, même principe que Horizon) — posé à
   // part dans #gf-vote-footer, jamais mélangé au contenu de la fiche.
@@ -1834,7 +1834,7 @@ function closeGrandeFiche(){
 async function partagerFiche(id){
   const l = allLieux.find(x => x.id === id || x.id === String(id));
   const nom = l?.nom || 'ce lieu';
-  const btn = document.querySelector('.gf-btn-dark[onclick*="partagerFiche"]');
+  const btn = document.querySelector('.gf-btn-gold[onclick*="partagerFiche"]');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Génération…'; }
   try{
     const {data:{session}} = await sb.auth.getSession();
@@ -1860,7 +1860,7 @@ async function partagerFiche(id){
   }catch(e){
     showToast('Erreur de partage : '+e.message,'error');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '📤 Partager'; }
+    if(btn){ btn.disabled = false; btn.textContent = '📤 Partager cette fiche'; }
   }
 }
 
