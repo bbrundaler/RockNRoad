@@ -163,6 +163,15 @@
 .vote-filter-btn.active-save{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);color:var(--st-save);}
 .vote-filter-btn.active-all{background:var(--chrome-bg);border-color:var(--chrome-bg);color:var(--gold);}
 .vote-filter-count{font-size:9px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:8px;}
+/* Filtre tags/étoiles par région (16/07) — même style que les filtres votes
+   ci-dessus, classe séparée exprès : setVoteFilter() réinitialise TOUS les
+   .vote-filter-btn de la page d'un coup, ce qui effacerait ces pastilles-ci
+   si elles partageaient la même classe. */
+.filtre-tag-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;
+  border:1.5px solid var(--surface-line);background:var(--paper);font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;color:var(--ink-dim);}
+.filtre-tag-btn:hover{border-color:var(--gold);color:var(--gold-text);}
+.filtre-tag-btn.active{background:var(--gold-a20);border-color:var(--gold);color:var(--gold-text);}
 
 /* HORAIRES */
 .card-horaires{font-size:10px;color:var(--ink-dim);margin-top:4px;line-height:1.5;}
@@ -265,15 +274,18 @@
 .rnr-nav-maprow{display:flex;gap:12px;align-items:stretch;}
 #rnr-nav-map{width:230px;height:230px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid var(--gold-a20);}
 .rnr-nav-bandeau{flex:1;min-width:0;border-radius:12px;position:relative;overflow:hidden;
-  padding:18px 20px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;}
+  padding:18px 20px;display:flex;flex-direction:column;gap:14px;}
+.rg-bandeau-top{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;}
 .rnr-nav-bandeau .rg-actions{position:static;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:none;
   flex-shrink:0;width:190px;}
+.rg-filtres-bandeau{display:flex;flex-direction:column;gap:8px;}
+.rg-filtres-bandeau:empty{display:none;}
 @media(max-width:900px){
   .rnr-nav-topbar{flex-wrap:wrap;}
   .rnr-nav-search{width:100%;order:1;}
   .rnr-nav-maprow{flex-direction:column;}
   #rnr-nav-map{width:100%;}
-  .rnr-nav-bandeau{flex-direction:column;align-items:stretch;}
+  .rg-bandeau-top{flex-direction:column;align-items:stretch;}
   .rnr-nav-bandeau .rg-actions{width:auto;}
 }
 /* Filtre Jour/Nuit (09/07) : au repos, les deux blocs restent visibles comme
@@ -953,6 +965,10 @@ function populateRegionContent(rk, regionName, lieux){
       ${activeVoteFilter?`<button class="vote-filter-btn active-all" onclick="setVoteFilter(null,null)">✕ Tout voir</button>`:''}
     </div>`;
   }
+
+  // (16/07, retour Bruno) : le filtre tags/étoiles vit dans le bandeau région
+  // partagé (à côté du nom + compteurs jour/nuit), pas ici — voir
+  // rnrNavMajBandeau(). Pas de doublon d'interface pour la même chose.
 
   // Message si filtre actif mais aucun résultat
   if(activeVoteFilter && lieuxFiltres.length===0) {
@@ -1639,6 +1655,85 @@ const RNR_NAV_NEUTRE='#8a8a8a';
 // endroit, les deux appelants s'y réfèrent.
 const RNR_TYPES_NUIT_CARNET=['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
 function estNuitCarnet(l){ return !!(l && (l.monde_nuit || RNR_TYPES_NUIT_CARNET.includes(l.type))); }
+
+// ── FILTRE TAGS/ÉTOILES PAR RÉGION (16/07) ──────────────────────────────
+// Toujours visible (retour Bruno : jamais derrière un clic/menu à chercher).
+// Deux listes séparées — jour et nuit n'ont pas le même vocabulaire (chien/
+// piscine/étoiles n'ont de sens que pour dormir, nature/historique/vue que
+// pour visiter). Calculées sur les tags RÉELLEMENT présents dans la région,
+// jamais une liste figée qui afficherait des pastilles mortes.
+function construitFiltreTagsRegion(rk, lieux){
+  const jourLieux = lieux.filter(l=>!estNuitCarnet(l));
+  const nuitLieux = lieux.filter(l=>estNuitCarnet(l));
+
+  const tagsPresents = (liste) => {
+    const set = new Set();
+    liste.forEach(l => (l.tags||[]).forEach(t => set.add(t)));
+    return [...set];
+  };
+  const libelleTag = (t) => (window.RNR_TAGS && RNR_TAGS.libelleTag(t)) || t;
+
+  const pillsTags = (tags, prefixe) => tags.map(t =>
+    `<button class="filtre-tag-btn" data-filtre="${prefixe}-tag-${t}" onclick="toggleFiltreTag(this,'${rk}')">${libelleTag(t)}</button>`
+  ).join('');
+
+  const tagsJour = tagsPresents(jourLieux);
+  const tagsNuit = tagsPresents(nuitLieux);
+  const etoilesPresentes = [...new Set(nuitLieux.map(l=>l.etoiles).filter(e=>e!==null&&e!==undefined))].sort((a,b)=>b-a);
+  const pillsEtoiles = etoilesPresentes.map(n => {
+    const label = n>0 ? '⭐'.repeat(n) : 'Non classé';
+    return `<button class="filtre-tag-btn" data-filtre="nuit-etoiles-${n}" onclick="toggleFiltreTag(this,'${rk}')">${label}</button>`;
+  }).join('');
+
+  if(!tagsJour.length && !tagsNuit.length && !etoilesPresentes.length) return '';
+
+  let out = '';
+  if(tagsJour.length){
+    out += `<div class="vote-filters" id="filtre-jour-${rk}">
+      <span style="font-size:10px;font-weight:700;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;">☀️ Filtrer jour :</span>
+      ${pillsTags(tagsJour,'jour')}
+    </div>`;
+  }
+  if(tagsNuit.length || etoilesPresentes.length){
+    out += `<div class="vote-filters" id="filtre-nuit-${rk}">
+      <span style="font-size:10px;font-weight:700;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;">🌙 Filtrer nuit :</span>
+      ${pillsTags(tagsNuit,'nuit')}${pillsEtoiles}
+    </div>`;
+  }
+  return out;
+}
+
+function toggleFiltreTag(btn, rk){
+  btn.classList.toggle('active');
+  appliquerFiltreTagsRegion(rk);
+}
+
+function appliquerFiltreTagsRegion(rk){
+  const filtresEl = document.getElementById('rnr-band-filtres');
+  if(!filtresEl) return;
+  const actifs = [...filtresEl.querySelectorAll('.filtre-tag-btn.active')].map(b=>b.dataset.filtre).filter(Boolean);
+  const jourTags   = actifs.filter(f=>f.startsWith('jour-tag-')).map(f=>f.replace('jour-tag-',''));
+  const nuitTags   = actifs.filter(f=>f.startsWith('nuit-tag-')).map(f=>f.replace('nuit-tag-',''));
+  const nuitEtoiles= actifs.filter(f=>f.startsWith('nuit-etoiles-')).map(f=>parseInt(f.replace('nuit-etoiles-',''),10));
+
+  const lieuxRegion = RNR_NAV_BYTAB[rk] || [];
+  lieuxRegion.forEach(l => {
+    const card = document.getElementById('dyncard-'+l.id);
+    if(!card) return;
+    const nuit = estNuitCarnet(l);
+    let visible = true;
+    if(!nuit && jourTags.length){
+      visible = jourTags.some(t => (l.tags||[]).includes(t));
+    }
+    if(nuit && (nuitTags.length || nuitEtoiles.length)){
+      const matchTag    = nuitTags.length    ? nuitTags.some(t => (l.tags||[]).includes(t)) : false;
+      const matchEtoile = nuitEtoiles.length ? nuitEtoiles.includes(l.etoiles)              : false;
+      visible = (nuitTags.length && nuitEtoiles.length) ? (matchTag || matchEtoile)
+              : nuitTags.length ? matchTag : matchEtoile;
+    }
+    card.style.display = visible ? '' : 'none';
+  });
+}
 function rnrNavStyleRegion(rk, survol){
   const aDesFiches=!!RNR_NAV_FICHES[rk];
   if(!aDesFiches) return {fillColor:'#8a8a8a', fillOpacity:0.10, color:'#1a1510', weight:1};
@@ -1680,17 +1775,23 @@ function construitMenuRegionsUnique(byTab){
         <div id="rnr-nav-map"></div>
         <div class="sh-compact rnr-nav-bandeau" id="rnr-nav-bandeau" style="visibility:hidden;">
           <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);"></div>
-          <div style="min-width:0;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
-            <h2 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;margin-bottom:8px;letter-spacing:-.5px;" id="rnr-band-titre"></h2>
-            <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;" id="rnr-band-info"></div>
+          <div class="rg-bandeau-top">
+            <div style="min-width:0;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:6px;">Région</div>
+              <h2 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:white;margin-bottom:8px;letter-spacing:-.5px;" id="rnr-band-titre"></h2>
+              <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;" id="rnr-band-info"></div>
+            </div>
+            <div class="rg-actions">
+              <button type="button" class="sh-pill active" id="rnr-band-btn-fiches" onclick="rnrNavVoir('fiches')">Fiches</button>
+              <button type="button" class="sh-pill" id="rnr-band-btn-recap" onclick="rnrNavVoir('recap')">Carte &amp; Récap</button>
+              <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
+              <a class="sh-pill" id="rnr-band-btn-horizon" href="horizon.html" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon">🧭 Horizon</a>
+            </div>
           </div>
-          <div class="rg-actions">
-            <button type="button" class="sh-pill active" id="rnr-band-btn-fiches" onclick="rnrNavVoir('fiches')">Fiches</button>
-            <button type="button" class="sh-pill" id="rnr-band-btn-recap" onclick="rnrNavVoir('recap')">Carte &amp; Récap</button>
-            <a class="sh-pill" href="admin.html" title="Ajouter une fiche dans cette région">+ Fiche</a>
-            <a class="sh-pill" id="rnr-band-btn-horizon" href="horizon.html" target="_blank" rel="noopener" title="Explorer cette région sur la carte d'Horizon">🧭 Horizon</a>
-          </div>
+          <!-- (16/07, retour Bruno) : le filtre tags/étoiles vit ICI, à côté du
+               nom de région et des compteurs — jamais caché derrière un clic.
+               Peuplé par rnrNavMajBandeau() à chaque changement de région. -->
+          <div class="rg-filtres-bandeau" id="rnr-band-filtres"></div>
         </div>
       </div>
     </div>`;
@@ -1728,6 +1829,11 @@ function rnrNavMajBandeau(rk){
   document.getElementById('rnr-band-info').innerHTML='Dans cette région :<br>'+
     '<b style="color:#fff;">'+nJour+' fiche'+(nJour>1?'s':'')+'</b> jour<br>'+
     '<b style="color:#fff;">'+nNuit+' fiche'+(nNuit>1?'s':'')+'</b> nuit';
+  // (16/07, retour Bruno) : le filtre vit ici, à côté du nom de région et des
+  // compteurs — reconstruit à chaque changement de région (les tags présents
+  // changent d'une région à l'autre).
+  const filtresEl=document.getElementById('rnr-band-filtres');
+  if(filtresEl) filtresEl.innerHTML=construitFiltreTagsRegion(rk, lieux);
   document.getElementById('rnr-band-btn-horizon').href='horizon.html?region='+rk;
   document.getElementById('rnr-band-btn-fiches').classList.add('active');
   document.getElementById('rnr-band-btn-recap').classList.remove('active');
