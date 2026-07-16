@@ -1531,6 +1531,7 @@ function makeDynCard(l, cardType){
         <a href="horizon.html?fiche=${l.id}" class="maps-btn">🧭 Horizon</a>
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="google-btn">🌐 Site</a>`:`<a href="https://www.google.com/search?q=${encodeURIComponent((l.nom||'')+' '+l.region)}" target="_blank" class="google-btn">🔍 Google</a>`}
         <button data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)" style="background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">✏️</button>
+        <button data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid, this)" title="Partager cette fiche" style="background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--gold-deep);font-size:10px;font-weight:700;padding:5px 8px;border-radius:6px;cursor:pointer;">🔗</button>
       </div>
     </div>
   </div>`;
@@ -1609,6 +1610,7 @@ function makeNuitCard(l){
         ${l.tel?`<a href="tel:${l.tel}" class="nuit-maps-btn">📞 Appeler</a>`:''}
         ${l.site_web?`<a href="${l.site_web}" target="_blank" class="nuit-maps-btn">🌐 Site</a>`:''}
         <button class="nuit-edit-btn" data-lid="${l.id}" onclick="openEditModal(this.dataset.lid)">✏️</button>
+        <button class="nuit-edit-btn" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid, this)" title="Partager cette fiche">🔗</button>
       </div>
     </div>
   </div>`;
@@ -1817,7 +1819,7 @@ function openGrandeFiche(id){
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
     noteG, noteF, dogBadge,
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
-    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-gold" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid)">📤 Partager cette fiche</button>`
+    extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-gold" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid, this)">🔗 Partager cette fiche</button>`
   });
   // Bandeau vote hors du scroll (09/07, même principe que Horizon) — posé à
   // part dans #gf-vote-footer, jamais mélangé au contenu de la fiche.
@@ -1831,11 +1833,14 @@ function closeGrandeFiche(){
 }
 
 // ── PARTAGE FICHE (B66) — lien public en lecture seule, 30 jours ──
-async function partagerFiche(id){
+// btn = le bouton effectivement cliqué (passé par onclick), quel que soit
+// l'endroit d'où on partage (petite fiche jour/nuit, ou grande fiche) — un
+// seul endroit qui sait générer le lien, jamais dupliqué par emplacement.
+async function partagerFiche(id, btn){
   const l = allLieux.find(x => x.id === id || x.id === String(id));
   const nom = l?.nom || 'ce lieu';
-  const btn = document.querySelector('.gf-btn-gold[onclick*="partagerFiche"]');
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ Génération…'; }
+  const texteOriginal = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳'; }
   try{
     const {data:{session}} = await sb.auth.getSession();
     if(!session){ showToast('Connexion requise pour partager','error'); return; }
@@ -1860,7 +1865,7 @@ async function partagerFiche(id){
   }catch(e){
     showToast('Erreur de partage : '+e.message,'error');
   }finally{
-    if(btn){ btn.disabled = false; btn.textContent = '📤 Partager cette fiche'; }
+    if(btn){ btn.disabled = false; btn.textContent = texteOriginal; }
   }
 }
 
