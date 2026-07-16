@@ -163,15 +163,14 @@
 .vote-filter-btn.active-save{background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);color:var(--st-save);}
 .vote-filter-btn.active-all{background:var(--chrome-bg);border-color:var(--chrome-bg);color:var(--gold);}
 .vote-filter-count{font-size:9px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:8px;}
-/* Filtre tags/étoiles par région (16/07) — même style que les filtres votes
-   ci-dessus, classe séparée exprès : setVoteFilter() réinitialise TOUS les
-   .vote-filter-btn de la page d'un coup, ce qui effacerait ces pastilles-ci
-   si elles partageaient la même classe. */
-.filtre-tag-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;
-  border:1.5px solid var(--surface-line);background:var(--paper);font-size:11px;font-weight:700;cursor:pointer;
-  font-family:'Inter',sans-serif;transition:all .2s;color:var(--ink-dim);}
-.filtre-tag-btn:hover{border-color:var(--gold);color:var(--gold-text);}
-.filtre-tag-btn.active{background:var(--gold-a20);border-color:var(--gold);color:var(--gold-text);}
+/* Filtre tags/étoiles par région (16/07, v2 menu déroulant) — retour Bruno :
+   des pastilles en ligne deviennent illisibles avec beaucoup de tags, et
+   ingérables au tactile. Un <select> natif reste UNE ligne quel que soit le
+   nombre d'options, et le tactile sait déjà s'en servir. */
+.rg-filtre-select{padding:7px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.25);color:#fff;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;max-width:220px;}
+.rg-filtre-select:hover{border-color:var(--gold);}
 
 /* HORAIRES */
 .card-horaires{font-size:10px;color:var(--ink-dim);margin-top:4px;line-height:1.5;}
@@ -278,7 +277,7 @@
 .rg-bandeau-top{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;}
 .rnr-nav-bandeau .rg-actions{position:static;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:none;
   flex-shrink:0;width:190px;}
-.rg-filtres-bandeau{display:flex;flex-direction:column;gap:8px;}
+.rg-filtres-bandeau{display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;}
 .rg-filtres-bandeau:empty{display:none;}
 @media(max-width:900px){
   .rnr-nav-topbar{flex-wrap:wrap;}
@@ -1662,6 +1661,12 @@ function estNuitCarnet(l){ return !!(l && (l.monde_nuit || RNR_TYPES_NUIT_CARNET
 // piscine/étoiles n'ont de sens que pour dormir, nature/historique/vue que
 // pour visiter). Calculées sur les tags RÉELLEMENT présents dans la région,
 // jamais une liste figée qui afficherait des pastilles mortes.
+// ── FILTRE TAGS/ÉTOILES PAR RÉGION (16/07, v2 menu déroulant) ────────────
+// Retour Bruno : des pastilles en ligne deviennent illisibles dès qu'il y a
+// beaucoup de tags, et ingérables au tactile. Un menu déroulant natif reste
+// UNE seule ligne quel que soit le nombre d'options, et le tactile sait déjà
+// s'en servir (le sélecteur du système). Calculé sur les tags RÉELLEMENT
+// présents dans la région, jamais une liste figée avec des options mortes.
 function construitFiltreTagsRegion(rk, lieux){
   const jourLieux = lieux.filter(l=>!estNuitCarnet(l));
   const nuitLieux = lieux.filter(l=>estNuitCarnet(l));
@@ -1673,48 +1678,36 @@ function construitFiltreTagsRegion(rk, lieux){
   };
   const libelleTag = (t) => (window.RNR_TAGS && RNR_TAGS.libelleTag(t)) || t;
 
-  const pillsTags = (tags, prefixe) => tags.map(t =>
-    `<button class="filtre-tag-btn" data-filtre="${prefixe}-tag-${t}" onclick="toggleFiltreTag(this,'${rk}')">${libelleTag(t)}</button>`
-  ).join('');
-
   const tagsJour = tagsPresents(jourLieux);
   const tagsNuit = tagsPresents(nuitLieux);
   const etoilesPresentes = [...new Set(nuitLieux.map(l=>l.etoiles).filter(e=>e!==null&&e!==undefined))].sort((a,b)=>b-a);
-  const pillsEtoiles = etoilesPresentes.map(n => {
-    const label = n>0 ? '⭐'.repeat(n) : 'Non classé';
-    return `<button class="filtre-tag-btn" data-filtre="nuit-etoiles-${n}" onclick="toggleFiltreTag(this,'${rk}')">${label}</button>`;
-  }).join('');
 
   if(!tagsJour.length && !tagsNuit.length && !etoilesPresentes.length) return '';
 
   let out = '';
   if(tagsJour.length){
-    out += `<div class="vote-filters" id="filtre-jour-${rk}">
-      <span style="font-size:10px;font-weight:700;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;">☀️ Filtrer jour :</span>
-      ${pillsTags(tagsJour,'jour')}
-    </div>`;
+    out += `<select class="rg-filtre-select" id="filtre-jour-${rk}" onchange="appliquerFiltreTagsRegion('${rk}')">
+      <option value="">☀️ Filtrer jour — tout voir</option>
+      ${tagsJour.map(t=>`<option value="${t}">${libelleTag(t)}</option>`).join('')}
+    </select>`;
   }
   if(tagsNuit.length || etoilesPresentes.length){
-    out += `<div class="vote-filters" id="filtre-nuit-${rk}">
-      <span style="font-size:10px;font-weight:700;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;">🌙 Filtrer nuit :</span>
-      ${pillsTags(tagsNuit,'nuit')}${pillsEtoiles}
-    </div>`;
+    out += `<select class="rg-filtre-select" id="filtre-nuit-${rk}" onchange="appliquerFiltreTagsRegion('${rk}')">
+      <option value="">🌙 Filtrer nuit — tout voir</option>
+      ${tagsNuit.length?`<optgroup label="Tags">${tagsNuit.map(t=>`<option value="tag:${t}">${libelleTag(t)}</option>`).join('')}</optgroup>`:''}
+      ${etoilesPresentes.length?`<optgroup label="Classement officiel">${etoilesPresentes.map(n=>`<option value="etoiles:${n}">${n>0?'⭐'.repeat(n):'Non classé'}</option>`).join('')}</optgroup>`:''}
+    </select>`;
   }
   return out;
 }
 
-function toggleFiltreTag(btn, rk){
-  btn.classList.toggle('active');
-  appliquerFiltreTagsRegion(rk);
-}
-
 function appliquerFiltreTagsRegion(rk){
-  const filtresEl = document.getElementById('rnr-band-filtres');
-  if(!filtresEl) return;
-  const actifs = [...filtresEl.querySelectorAll('.filtre-tag-btn.active')].map(b=>b.dataset.filtre).filter(Boolean);
-  const jourTags   = actifs.filter(f=>f.startsWith('jour-tag-')).map(f=>f.replace('jour-tag-',''));
-  const nuitTags   = actifs.filter(f=>f.startsWith('nuit-tag-')).map(f=>f.replace('nuit-tag-',''));
-  const nuitEtoiles= actifs.filter(f=>f.startsWith('nuit-etoiles-')).map(f=>parseInt(f.replace('nuit-etoiles-',''),10));
+  const selJour = document.getElementById('filtre-jour-'+rk);
+  const selNuit = document.getElementById('filtre-nuit-'+rk);
+  const valJour = selJour ? selJour.value : '';
+  const valNuitRaw = selNuit ? selNuit.value : '';
+  const nuitTag    = valNuitRaw.startsWith('tag:')    ? valNuitRaw.slice(4) : null;
+  const nuitEtoile = valNuitRaw.startsWith('etoiles:') ? parseInt(valNuitRaw.slice(8),10) : null;
 
   const lieuxRegion = RNR_NAV_BYTAB[rk] || [];
   lieuxRegion.forEach(l => {
@@ -1722,14 +1715,12 @@ function appliquerFiltreTagsRegion(rk){
     if(!card) return;
     const nuit = estNuitCarnet(l);
     let visible = true;
-    if(!nuit && jourTags.length){
-      visible = jourTags.some(t => (l.tags||[]).includes(t));
+    if(!nuit && valJour){
+      visible = (l.tags||[]).includes(valJour);
     }
-    if(nuit && (nuitTags.length || nuitEtoiles.length)){
-      const matchTag    = nuitTags.length    ? nuitTags.some(t => (l.tags||[]).includes(t)) : false;
-      const matchEtoile = nuitEtoiles.length ? nuitEtoiles.includes(l.etoiles)              : false;
-      visible = (nuitTags.length && nuitEtoiles.length) ? (matchTag || matchEtoile)
-              : nuitTags.length ? matchTag : matchEtoile;
+    if(nuit){
+      if(nuitTag)    visible = (l.tags||[]).includes(nuitTag);
+      else if(nuitEtoile!==null) visible = (l.etoiles===nuitEtoile);
     }
     card.style.display = visible ? '' : 'none';
   });
