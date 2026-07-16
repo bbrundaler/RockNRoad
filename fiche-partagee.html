@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="sombre">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -27,6 +27,15 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);
 .fp-state p{opacity:.7;font-size:14px;line-height:1.5;}
 .fp-cta{margin-top:28px;text-align:center;font-size:13px;opacity:.6;}
 .fp-cta a{color:var(--gold);text-decoration:none;font-weight:600;}
+/* Correctif (16/07) : la fiche vit toujours sur un fond "papier" clair, quel
+   que soit le thème du site — mais --ink/--ink-dim sont pensés pour du texte
+   sur fond SOMBRE (le corps de la page), pas sur la carte. En thème sombre,
+   --ink et --paper sont réglés sur la même teinte claire : texte invisible
+   (titre, description, mot de la famille). On fixe ici des couleurs sûres,
+   lisibles sur papier, indépendantes du thème actif — scopé à cette page
+   seule, ne change rien ailleurs sur le site. */
+#fp-card .gf-title{color:#1a1208!important;}
+#fp-card .gf-desc,#fp-card .gf-quote p,#fp-card .gf-conseil p{color:#6B5F4A!important;}
 </style>
 </head>
 <body>
