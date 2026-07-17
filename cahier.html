@@ -113,22 +113,28 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 
 /* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
    plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
-/* (17/07, 2e retour Bruno) : la page A4 entière est disponible mais le
-   contenu restait collé en haut — un seul polaroid perdu sur une page vide.
-   Le thème devient un flex plein-page : le bandeau reste fixe, le corps
-   (titre + collage photos/badges) se centre verticalement dans l'espace
-   restant, quel que soit le nombre de vraies photos (1, 2 ou 3). */
-.cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;}
+/* (17/07, 3e retour Bruno : « ça manque de wahou », recentrer ne suffisait
+   pas) — vraie refonte : texture de carnet (grille de points), pile de
+   photos asymétrique façon photos posées sur un bureau plutôt qu'une rangée
+   sagement alignée, doodles à la main, tampon décoratif. Toujours plein-page
+   et centré verticalement, mais la composition elle-même a du répondant. */
+.cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;
+  background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
 .cover-kraft .k-band{height:66px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
-.cover-kraft .k-body{padding:36px 40px 44px;flex:1;display:flex;flex-direction:column;}
+.cover-kraft .k-body{padding:36px 40px 44px;flex:1;display:flex;flex-direction:column;position:relative;}
 .cover-kraft .k-eyebrow{font-family:'Special Elite',monospace;font-size:11.5px;letter-spacing:.1em;color:#7C8B5D;text-transform:uppercase;}
 .cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0 0;transform:rotate(-1deg);}
-.cover-kraft .k-collage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;}
-.cover-kraft .k-photos{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;}
-.cover-kraft .k-poly{position:relative;background:#fff;padding:9px 9px 24px;box-shadow:0 10px 20px rgba(0,0,0,.22);width:160px;}
-.cover-kraft .k-poly-photo{width:100%;height:180px;background-size:cover;background-position:center;}
+.cover-kraft .k-tagline{font-family:'Caveat',cursive;font-size:19px;color:#7C8B5D;margin:6px 0 0;transform:rotate(-.6deg);}
+.cover-kraft .k-stamp{position:absolute;top:38px;right:44px;width:92px;height:92px;border-radius:50%;border:2.5px dashed #8B3A2E;
+  color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
+  font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;}
+.cover-kraft .k-doodle{position:absolute;opacity:.55;}
+.cover-kraft .k-collage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;}
+.cover-kraft .k-pile{position:relative;width:360px;height:250px;}
+.cover-kraft .k-poly{position:absolute;background:#fff;padding:9px 9px 24px;box-shadow:0 10px 20px rgba(0,0,0,.24);}
+.cover-kraft .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
 .cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:6px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);}
+.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);z-index:2;}
 .cover-kraft .k-poly-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
 .cover-kraft .k-poly-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
 .cover-kraft .k-badge-row{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;}
@@ -136,19 +142,31 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
   font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.28);line-height:1.15;font-size:12px;}
 
 /* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
-.cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;display:flex;flex-direction:column;min-height:297mm;}
-.cover-atlas::before{content:'';position:absolute;inset:14px;border:1px solid rgba(217,201,160,.25);pointer-events:none;}
-.cover-atlas::after{content:'';position:absolute;inset:20px;border:1px solid rgba(217,201,160,.12);pointer-events:none;}
-.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;justify-content:center;}
+/* (17/07, 3e retour) : grille de graticule en fond, amers d'angle façon
+   plan technique, boussole en filigrane derrière le titre, tracé étiré sur
+   presque toute la largeur (avec le nom de chaque halte), planche photo
+   posée dessous plutôt qu'écrasée à côté de la carte. */
+.cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;display:flex;flex-direction:column;min-height:297mm;
+  background-image:repeating-linear-gradient(rgba(217,201,160,.05) 0 1px, transparent 1px 34px),
+                    repeating-linear-gradient(90deg, rgba(217,201,160,.05) 0 1px, transparent 1px 34px);}
+.cover-atlas .a-corner{position:absolute;width:20px;height:20px;border-color:rgba(217,201,160,.5);pointer-events:none;}
+.cover-atlas .a-corner.tl{top:16px;left:16px;border-top:1.5px solid;border-left:1.5px solid;}
+.cover-atlas .a-corner.tr{top:16px;right:16px;border-top:1.5px solid;border-right:1.5px solid;}
+.cover-atlas .a-corner.bl{bottom:16px;left:16px;border-bottom:1.5px solid;border-left:1.5px solid;}
+.cover-atlas .a-corner.br{bottom:16px;right:16px;border-bottom:1.5px solid;border-right:1.5px solid;}
+.cover-atlas .a-watermark{position:absolute;top:50%;left:50%;width:420px;height:420px;transform:translate(-50%,-50%);opacity:.05;pointer-events:none;}
+.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;}
 .cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
-.cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 8px;text-transform:uppercase;}
-.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:28px;}
-.cover-atlas .a-photo-row{display:flex;gap:16px;margin-bottom:28px;}
-.cover-atlas .a-photo-insert{flex:0 0 42%;height:220px;border:1.5px solid rgba(217,201,160,.35);padding:7px;background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
-.cover-atlas .a-photo-insert .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
-.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:6px;text-transform:uppercase;flex-shrink:0;}
-.cover-atlas .a-mapbox{position:relative;flex:1;height:220px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin:0;}
-.cover-atlas .a-mapbox svg{width:100%;height:100%;}
+.cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 6px;text-transform:uppercase;}
+.cover-atlas .a-title-rule{width:100%;height:1px;background:linear-gradient(90deg,#B87333,transparent);margin-bottom:10px;}
+.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:30px;}
+.cover-atlas .a-route-strip{position:relative;height:90px;margin-bottom:26px;}
+.cover-atlas .a-route-strip svg{width:100%;height:100%;}
+.cover-atlas .a-route-lbl{position:absolute;top:100%;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:8px;
+  color:#8a97a3;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;margin-top:4px;text-align:center;}
+.cover-atlas .a-photo-plate{width:64%;margin:0 auto 26px;border:1.5px solid rgba(217,201,160,.35);padding:8px;background:rgba(217,201,160,.03);}
+.cover-atlas .a-photo-plate .ph{height:180px;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
+.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:7px;text-transform:uppercase;}
 .cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);border-bottom:1px solid rgba(217,201,160,.25);padding:16px 0;display:flex;justify-content:space-around;
   font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;margin-bottom:24px;}
 .cover-atlas .a-plate b{color:#D9C9A0;font-family:'Cinzel',serif;font-size:16px;display:block;margin-bottom:2px;}
@@ -205,13 +223,23 @@ body[data-theme="edition"] .gf-desc::first-letter{font-family:var(--cah-font-tit
 
 .empty-state{padding:60px;text-align:center;color:var(--cah-ink-dim);font-size:13px;}
 
-/* Page Équipe (08/07) */
+/* Page Équipe (08/07, refonte 17/07 — retour Bruno : « tout aussi triste »).
+   En-tête avec ligne de séparation + accroche, avatars agrandis et cadrés
+   selon le thème (médaillon or/édition, polaroid léger/kraft, médaille
+   laiton/atlas), cartes avec un peu de vie plutôt que des rectangles sages. */
 .team-page{padding:54px 46px;}
-.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;}
-.team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:12px;}
-.team-av{width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
-.team-nom{font-family:var(--cah-font-title);font-size:15px;font-weight:700;margin:0 0 3px;color:var(--cah-ink);}
+.team-header{border-bottom:1px solid var(--cah-paper-line);padding-bottom:14px;margin-bottom:6px;}
+.team-tagline{font-family:var(--cah-font-hand);font-size:14px;color:var(--cah-ink-dim);margin:2px 0 22px;font-style:italic;}
+body[data-theme="kraft"] .team-tagline{font-size:18px;font-style:normal;color:#7C8B5D;}
+.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:14px;}
+.team-av{width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
+body[data-theme="edition"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px var(--cah-accent);}
+body[data-theme="atlas"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px #B87333;filter:sepia(.25) contrast(1.05);}
+body[data-theme="kraft"] .team-card{transform:rotate(var(--rot,0deg));}
+body[data-theme="kraft"] .team-av{border-radius:4px;width:80px;height:80px;box-shadow:0 4px 10px rgba(0,0,0,.18);position:relative;}
+.team-nom{font-family:var(--cah-font-title);font-size:16px;font-weight:700;margin:0 0 3px;color:var(--cah-ink);}
 .team-depuis{font-size:10.5px;color:var(--cah-accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
 .team-passions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
 .team-chip{font-size:9.5px;background:var(--cah-accent-soft);border:1px solid var(--cah-accent-line);border-radius:10px;padding:2px 8px;color:var(--cah-ink-dim);}
@@ -653,31 +681,47 @@ function temaActif(){
 // c'est une illustration, pas un gabarit de données. Un seul point d'entrée
 // (cette fonction), trois branches, jamais trois générateurs séparés dans
 // trois coins du fichier.
-function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos){
+function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos, routeLabels){
   const kmTxt=totalKm>0?('≈'+totalKm):'—';
   const nuitsTxt=nuitsTotal()||'—';
   const partTxt=nbPart||'—';
   const animTxt=nbAnimaux?(nbAnimaux+' 🐕'):'—';
   photos=photos||[];
+  routeLabels=routeLabels||['Départ','En route','Arrivée'];
 
   if(tema==='kraft'){
-    // (17/07, 2e retour Bruno) : rotations douces, plus de positions figées
-    // pour 3 photos pile — le collage se centre tout seul dans l'espace
-    // disponible, qu'il y ait 1, 2 ou 3 vraies photos (ou aucune).
-    const rots=[-6,4,-3]; const tapes=['mint','mustard','mint'];
-    const polaHtml=photos.slice(0,3).map((p,i)=>
-      '<div class="k-poly" style="transform:rotate('+rots[i]+'deg);">'
-        +'<div class="k-poly-tape '+tapes[i]+'"></div>'
+    // (17/07, 3e retour Bruno) : une vraie pile de photos posées en biais
+    // (pas une rangée sage), des doodles à la main et un tampon décoratif —
+    // les positions s'adaptent au nombre réel de photos (1 à 3).
+    const PILES = {
+      1: [{cls:'hero', top:15, left:95, rot:-2, z:3, w:170, h:210, tape:'mint'}],
+      2: [{cls:'hero', top:15, left:60, rot:-3, z:2, w:170, h:210, tape:'mint'},
+          {cls:'accent', top:55, left:230, rot:10, z:1, w:130, h:165, tape:'mustard'}],
+      3: [{cls:'hero', top:10, left:105, rot:-2, z:3, w:170, h:210, tape:'mint'},
+          {cls:'accent', top:60, left:0, rot:-13, z:1, w:130, h:165, tape:'mustard'},
+          {cls:'accent', top:55, left:225, rot:11, z:2, w:130, h:165, tape:'mint'}]
+    };
+    const arrangement = PILES[Math.min(photos.length,3)] || [];
+    const pileHtml = photos.slice(0,3).map((p,i)=>{
+      const pos=arrangement[i];
+      return '<div class="k-poly" style="top:'+pos.top+'px;left:'+pos.left+'px;width:'+pos.w+'px;height:'+pos.h+'px;transform:rotate('+pos.rot+'deg);z-index:'+pos.z+';">'
+        +'<div class="k-poly-tape '+pos.tape+'"></div>'
         +'<div class="k-poly-photo" style="background-image:url(\''+p.url+'\');"></div>'
-        +'<div class="cap">'+esc(p.nom||'')+'</div></div>'
-    ).join('');
+        +(pos.cls==='hero'?('<div class="cap">'+esc(p.nom||'')+'</div>'):'')
+        +'</div>';
+    }).join('');
+    const tagline = nuitsTxt!=='—' ? (nuitsTxt+' nuits quelque part sur les routes de France') : 'Encore à écrire…';
     return '<div class="page cover cover-kraft">'
       +'<div class="k-band"></div>'
       +'<div class="k-body">'
+        +'<svg class="k-doodle" style="top:6px;left:280px;width:70px;" viewBox="0 0 70 34"><path d="M2 26 Q22 4 66 16" stroke="#7C8B5D" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M56 8 L66 16 L57 26" stroke="#7C8B5D" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
+        +'<svg class="k-doodle" style="bottom:30px;left:8px;width:34px;" viewBox="0 0 34 32"><path d="M17 4 L20 13 L29 13 L21.5 18.5 L24.5 28 L17 22 L9.5 28 L12.5 18.5 L5 13 L14 13 Z" fill="none" stroke="#E8A93B" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+        +(photos.length?('<div class="k-stamp">'+esc(dest).slice(0,16)+'<br>★ ★ ★<br>EN ROUTE !</div>'):'')
         +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
         +'<h1 class="k-title">'+esc(dest)+'</h1>'
+        +'<p class="k-tagline">'+tagline+'</p>'
         +'<div class="k-collage">'
-          +(polaHtml?('<div class="k-photos">'+polaHtml+'</div>'):'')
+          +(pileHtml?('<div class="k-pile">'+pileHtml+'</div>'):'')
           +'<div class="k-badge-row">'
             +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
               +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
@@ -689,31 +733,35 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
   }
 
   if(tema==='atlas'){
-    // (17/07, retour Bruno) : une photo devait s'intégrer sur la couverture
-    // aussi — traitée en « planche photographique » sépia, à côté du tracé
-    // plutôt qu'à sa place : la carte reste la vraie signature de ce thème.
-    // (2e retour) : tout le bloc se centre désormais dans la hauteur de la
-    // page, avec une ligne de mention en pied plutôt qu'un grand vide.
+    // (17/07, 3e retour Bruno) : grille de graticule, amers d'angle, boussole
+    // en filigrane derrière le titre, bande de tracé étirée sur presque
+    // toute la largeur avec le nom de chaque halte, planche photo posée
+    // dessous plutôt qu'écrasée à côté — la page respire sur toute sa hauteur.
     const photoAtlas = photos[0] || null;
-    const encart = photoAtlas
-      ? '<div class="a-photo-insert"><div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div>'
-        +'<p class="a-photo-cap">Planche nº1 — '+esc(photoAtlas.nom||'')+'</p></div>'
+    const planche = photoAtlas
+      ? '<div class="a-photo-plate"><div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div></div>'
+        +'<p class="a-photo-cap" style="margin-top:-18px;margin-bottom:26px;">Planche nº1 — '+esc(photoAtlas.nom||'')+'</p>'
       : '';
+    const pts=[{x:30,y:70},{x:250,y:20},{x:470,y:55}];
+    const routeSvg = '<svg viewBox="0 0 500 90" preserveAspectRatio="none">'
+      +'<path d="M'+pts[0].x+' '+pts[0].y+' Q '+pts[1].x+' '+(pts[1].y-40)+' '+pts[1].x+' '+pts[1].y+' T '+pts[2].x+' '+pts[2].y+'" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".85"/>'
+      +pts.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="5" fill="#8B3A2E"/>').join('')
+      +'</svg>';
+    const routeLbls = pts.map((p,i)=>'<span class="a-route-lbl" style="left:'+(p.x/500*100)+'%;">'+esc((routeLabels[i]||'').slice(0,18))+'</span>').join('');
     return '<div class="page cover-atlas">'
+      +'<div class="a-corner tl"></div><div class="a-corner tr"></div><div class="a-corner bl"></div><div class="a-corner br"></div>'
+      +'<svg class="a-watermark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#D9C9A0" stroke-width=".6"/>'
+        +'<path d="M50 6 L58 50 L50 94 L42 50 Z" fill="#D9C9A0"/><path d="M6 50 L50 42 L94 50 L50 58 Z" fill="#D9C9A0"/></svg>'
       +'<svg class="a-compass" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#5C7A6B" stroke-width="1.5"/>'
         +'<path d="M50 8 L58 50 L50 92 L42 50 Z" fill="#8B3A2E" opacity=".7"/><path d="M8 50 L50 42 L92 50 L50 58 Z" fill="#5C7A6B" opacity=".7"/>'
         +'<text x="50" y="20" font-family="Cinzel" font-size="9" fill="#D9C9A0" text-anchor="middle">N</text></svg>'
       +'<div class="a-corps">'
       +'<p class="a-eyebrow">Carnet d\'expédition</p>'
       +'<h1 class="a-title">'+esc(dest)+'</h1>'
+      +'<div class="a-title-rule"></div>'
       +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
-      +'<div class="a-photo-row">'
-        +encart
-        +'<div class="a-mapbox"><svg viewBox="0 0 480 260" preserveAspectRatio="none">'
-          +'<path d="M40 210 Q 140 60 250 130 T 440 60" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>'
-          +'<circle cx="40" cy="210" r="6" fill="#8B3A2E"/><circle cx="250" cy="130" r="6" fill="#8B3A2E"/><circle cx="440" cy="60" r="6" fill="#8B3A2E"/>'
-        +'</svg></div>'
-      +'</div>'
+      +'<div class="a-route-strip">'+routeSvg+routeLbls+'</div>'
+      +planche
       +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
       +'<p class="a-footnote">Relevé cartographique — RockNRoad</p>'
       +'</div></div>';
@@ -757,7 +805,14 @@ function render(){
   }
   const photoCouverture = photosCouverture[0] ? photosCouverture[0].url : null;
 
-  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture, photosCouverture);
+  // (17/07) Trois étiquettes réelles pour la bande de tracé Atlas — départ,
+  // une étape médiane, arrivée — repli générique si l'itinéraire est trop
+  // court ou vide.
+  const routeLabels = chaine.length
+    ? [chaine[0].nom, chaine[Math.floor((chaine.length-1)/2)].nom, chaine[chaine.length-1].nom]
+    : ['Départ','En route','Arrivée'];
+
+  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture, photosCouverture, routeLabels);
 
   // Page Équipe (08/07) — les profils sont désormais alimentés par la barre
   // d'avatars (chrome.js). Cadre rond partout : un mauvais cadrage de photo
@@ -765,11 +820,14 @@ function render(){
   if(MEMBRES.length){
     const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
     const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
+    const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
+    const rotsCartes=[-.8,.9,-.6,1,.7,-1];
     html+='<div class="page team-page">'
-      +'<p class="day-sub" style="margin-bottom:4px;">👥 Qui embarque</p>'
-      +'<span class="day-title" style="display:block;">L\'équipe</span>'
+      +'<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">👥 Qui embarque</p>'
+      +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
+      +'<p class="team-tagline">'+esc(tagline)+'</p>'
       +'<div class="team-grid">'
-      +MEMBRES.map(m=>{
+      +MEMBRES.map((m,i)=>{
         const nom=m.pseudo||m.prenom||'Voyageur';
         const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
         let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
@@ -779,7 +837,7 @@ function render(){
         else if(av && av.initiale){ avTxt=av.initiale; }
         const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
         const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
-        return '<div class="team-card">'
+        return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
           +'<div class="team-av" style="'+avStyle+'">'+esc(avTxt)+'</div>'
           +'<div style="flex:1;">'
           +'<p class="team-nom">'+esc(nom)+'</p>'
