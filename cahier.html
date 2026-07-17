@@ -113,38 +113,46 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 
 /* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
    plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
-.cover-kraft{padding:0;color:#2B1D0F;}
-.cover-kraft .k-band{height:66px;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
-.cover-kraft .k-body{padding:30px 40px 0;}
+/* (17/07, 2e retour Bruno) : la page A4 entière est disponible mais le
+   contenu restait collé en haut — un seul polaroid perdu sur une page vide.
+   Le thème devient un flex plein-page : le bandeau reste fixe, le corps
+   (titre + collage photos/badges) se centre verticalement dans l'espace
+   restant, quel que soit le nombre de vraies photos (1, 2 ou 3). */
+.cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;}
+.cover-kraft .k-band{height:66px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
+.cover-kraft .k-body{padding:36px 40px 44px;flex:1;display:flex;flex-direction:column;}
 .cover-kraft .k-eyebrow{font-family:'Special Elite',monospace;font-size:11.5px;letter-spacing:.1em;color:#7C8B5D;text-transform:uppercase;}
-.cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0;transform:rotate(-1deg);}
-.cover-kraft .k-stickers{position:relative;height:400px;margin-top:6px;}
-.cover-kraft .k-tape{position:absolute;width:76px;height:28px;box-shadow:0 2px 5px rgba(0,0,0,.2);opacity:.9;}
-.cover-kraft .k-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
-.cover-kraft .k-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
-.cover-kraft .k-poly{position:absolute;background:#fff;padding:9px 9px 26px;box-shadow:0 8px 16px rgba(0,0,0,.22);}
-.cover-kraft .k-poly .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:26px;}
-.cover-kraft .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
-.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:5px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cover-kraft .k-badge{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
-  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 5px 12px rgba(0,0,0,.28);line-height:1.15;}
+.cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0 0;transform:rotate(-1deg);}
+.cover-kraft .k-collage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;}
+.cover-kraft .k-photos{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;}
+.cover-kraft .k-poly{position:relative;background:#fff;padding:9px 9px 24px;box-shadow:0 10px 20px rgba(0,0,0,.22);width:160px;}
+.cover-kraft .k-poly-photo{width:100%;height:180px;background-size:cover;background-position:center;}
+.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:6px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);}
+.cover-kraft .k-poly-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
+.cover-kraft .k-poly-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
+.cover-kraft .k-badge-row{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;}
+.cover-kraft .k-badge{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.28);line-height:1.15;font-size:12px;}
 
 /* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
-.cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;}
+.cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;display:flex;flex-direction:column;min-height:297mm;}
 .cover-atlas::before{content:'';position:absolute;inset:14px;border:1px solid rgba(217,201,160,.25);pointer-events:none;}
 .cover-atlas::after{content:'';position:absolute;inset:20px;border:1px solid rgba(217,201,160,.12);pointer-events:none;}
+.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;justify-content:center;}
 .cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
-.cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:32px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 8px;text-transform:uppercase;}
-.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:22px;}
-.cover-atlas .a-photo-row{display:flex;gap:14px;margin-bottom:22px;}
-.cover-atlas .a-photo-insert{flex:0 0 40%;height:190px;border:1.5px solid rgba(217,201,160,.35);padding:6px;background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
+.cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 8px;text-transform:uppercase;}
+.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:28px;}
+.cover-atlas .a-photo-row{display:flex;gap:16px;margin-bottom:28px;}
+.cover-atlas .a-photo-insert{flex:0 0 42%;height:220px;border:1.5px solid rgba(217,201,160,.35);padding:7px;background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
 .cover-atlas .a-photo-insert .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
-.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:5px;text-transform:uppercase;flex-shrink:0;}
-.cover-atlas .a-mapbox{position:relative;flex:1;height:190px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin:0;}
+.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:6px;text-transform:uppercase;flex-shrink:0;}
+.cover-atlas .a-mapbox{position:relative;flex:1;height:220px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin:0;}
 .cover-atlas .a-mapbox svg{width:100%;height:100%;}
-.cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);padding-top:16px;display:flex;justify-content:space-between;
-  font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;}
-.cover-atlas .a-plate b{color:#D9C9A0;font-family:'Cinzel',serif;font-size:14px;display:block;}
+.cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);border-bottom:1px solid rgba(217,201,160,.25);padding:16px 0;display:flex;justify-content:space-around;
+  font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;margin-bottom:24px;}
+.cover-atlas .a-plate b{color:#D9C9A0;font-family:'Cinzel',serif;font-size:16px;display:block;margin-bottom:2px;}
+.cover-atlas .a-footnote{text-align:center;font-family:'Special Elite',monospace;font-size:9px;letter-spacing:.08em;color:#5a6570;text-transform:uppercase;}
 .cover-atlas .a-compass{position:absolute;top:44px;right:40px;width:64px;height:64px;opacity:.7;}
 
 .day-page{padding:36px 40px 36px 54px;display:flex;flex-direction:column;}
@@ -653,28 +661,29 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
   photos=photos||[];
 
   if(tema==='kraft'){
-    // (17/07, retour Bruno) : les polaroids manquaient sur la vraie page —
-    // jusqu'à 3 vraies photos de l'itinéraire, jamais de placeholder vide.
-    const posDefs=[{top:14,left:10,rot:-7},{top:50,left:180,rot:5},{top:16,left:352,rot:-3}];
-    const polaHtml=photos.slice(0,3).map((p,i)=>{
-      const pos=posDefs[i];
-      return '<div class="k-poly" style="width:150px;height:180px;top:'+pos.top+'px;left:'+pos.left+'px;transform:rotate('+pos.rot+'deg);">'
+    // (17/07, 2e retour Bruno) : rotations douces, plus de positions figées
+    // pour 3 photos pile — le collage se centre tout seul dans l'espace
+    // disponible, qu'il y ait 1, 2 ou 3 vraies photos (ou aucune).
+    const rots=[-6,4,-3]; const tapes=['mint','mustard','mint'];
+    const polaHtml=photos.slice(0,3).map((p,i)=>
+      '<div class="k-poly" style="transform:rotate('+rots[i]+'deg);">'
+        +'<div class="k-poly-tape '+tapes[i]+'"></div>'
         +'<div class="k-poly-photo" style="background-image:url(\''+p.url+'\');"></div>'
-        +'<div class="cap">'+esc(p.nom||'')+'</div></div>';
-    }).join('');
+        +'<div class="cap">'+esc(p.nom||'')+'</div></div>'
+    ).join('');
     return '<div class="page cover cover-kraft">'
       +'<div class="k-band"></div>'
       +'<div class="k-body">'
         +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
         +'<h1 class="k-title">'+esc(dest)+'</h1>'
-        +'<div class="k-stickers">'
-          +'<div class="k-tape mint" style="top:2px;left:40px;transform:rotate(-5deg);"></div>'
-          +'<div class="k-tape mustard" style="top:16px;left:210px;transform:rotate(4deg);"></div>'
-          +polaHtml
-          +'<div class="k-badge" style="width:104px;height:104px;background:#E8623D;bottom:14px;left:10px;transform:rotate(-8deg);font-size:12px;">'
-            +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
-          +'<div class="k-badge" style="width:70px;height:70px;background:#7C8B5D;bottom:34px;right:24px;transform:rotate(10deg);font-size:11px;">'
-            +esc(partTxt)+' PERS.</div>'
+        +'<div class="k-collage">'
+          +(polaHtml?('<div class="k-photos">'+polaHtml+'</div>'):'')
+          +'<div class="k-badge-row">'
+            +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
+              +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
+            +'<div class="k-badge" style="background:#7C8B5D;transform:rotate(7deg);">'
+              +esc(partTxt)+' PERSONNES</div>'
+          +'</div>'
         +'</div>'
       +'</div></div>';
   }
@@ -683,6 +692,8 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
     // (17/07, retour Bruno) : une photo devait s'intégrer sur la couverture
     // aussi — traitée en « planche photographique » sépia, à côté du tracé
     // plutôt qu'à sa place : la carte reste la vraie signature de ce thème.
+    // (2e retour) : tout le bloc se centre désormais dans la hauteur de la
+    // page, avec une ligne de mention en pied plutôt qu'un grand vide.
     const photoAtlas = photos[0] || null;
     const encart = photoAtlas
       ? '<div class="a-photo-insert"><div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div>'
@@ -692,6 +703,7 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
       +'<svg class="a-compass" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#5C7A6B" stroke-width="1.5"/>'
         +'<path d="M50 8 L58 50 L50 92 L42 50 Z" fill="#8B3A2E" opacity=".7"/><path d="M8 50 L50 42 L92 50 L50 58 Z" fill="#5C7A6B" opacity=".7"/>'
         +'<text x="50" y="20" font-family="Cinzel" font-size="9" fill="#D9C9A0" text-anchor="middle">N</text></svg>'
+      +'<div class="a-corps">'
       +'<p class="a-eyebrow">Carnet d\'expédition</p>'
       +'<h1 class="a-title">'+esc(dest)+'</h1>'
       +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
@@ -703,7 +715,8 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
         +'</svg></div>'
       +'</div>'
       +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
-      +'</div>';
+      +'<p class="a-footnote">Relevé cartographique — RockNRoad</p>'
+      +'</div></div>';
   }
 
   // 'edition' (défaut, dans la charte) — masthead validé sur la maquette
