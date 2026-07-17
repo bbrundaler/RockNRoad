@@ -113,12 +113,11 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 
 /* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
    plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
-/* (17/07, 4e retour Bruno : « ça reste fade », centrer une petite pile ne
-   suffisait toujours pas) — changement de logique : la grande photo REMPLIT
-   tout l'espace restant (flex:1, comme la bande photo de l'Édition), les
-   photos secondaires et les badges se posent DESSUS comme des stickers.
-   Il ne peut plus y avoir de vide : la photo prend toute la place dispo,
-   qu'elle qu'en soit la hauteur réelle de la page. */
+/* (17/07, 6e retour Bruno : le plein-cadre côte à côte rendait « affreux en
+   long ») — retour au format POLAROID classique (cadre blanc, proportions
+   portrait naturelles, jamais étiré). Groupe centré dans l'espace restant.
+   Tailles demandées : la principale réduite d'environ 30 %, la seconde
+   agrandie d'environ 20 % par rapport à la version précédente. */
 .cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;
   background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
 .cover-kraft .k-band{height:66px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
@@ -130,29 +129,25 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
   color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
   font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;z-index:3;}
 .cover-kraft .k-doodle{position:absolute;opacity:.55;z-index:1;}
-/* (17/07, 5e retour Bruno) : l'accent flottant en surimpression débordait
-   sur le texte et écrasait trop la photo principale — deux panneaux CÔTE À
-   CÔTE (63/37) à la place. Chacun remplit sa part, aucun ne chevauche plus
-   jamais l'en-tête, et le second polaroid a enfin une vraie présence. */
-.cover-kraft .k-photo-zone{flex:1;display:flex;gap:18px;margin:24px 4px 46px;position:relative;}
-.cover-kraft .k-hero-panel{position:relative;flex:1 1 100%;}
-.cover-kraft .k-photo-zone.a-deux .k-hero-panel{flex:0 0 63%;}
-.cover-kraft .k-accent-panel{position:relative;flex:1;margin-top:26px;}
-.cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 16px 32px rgba(0,0,0,.28);}
-.cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 16px 32px rgba(0,0,0,.2);
-  background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 20px,#EFE1BE 20px,#EFE1BE 40px);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:10px;color:#B99A5E;font-family:'Caveat',cursive;font-size:22px;text-align:center;}
-.cover-kraft .k-hero-cap{position:absolute;left:16px;bottom:0;transform:translateY(50%) rotate(-2deg);background:#fff;padding:7px 14px;
-  box-shadow:0 5px 12px rgba(0,0,0,.2);font-family:'Caveat',cursive;font-size:16px;color:#2B1D0F;z-index:3;max-width:80%;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cover-kraft .k-accent{position:absolute;inset:0;background:#fff;padding:8px;box-shadow:0 12px 24px rgba(0,0,0,.26);transform:rotate(2deg);}
-.cover-kraft .k-accent .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
-.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);z-index:2;}
+.cover-kraft .k-collage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;}
+.cover-kraft .k-photos-pair{display:flex;gap:22px;align-items:flex-end;justify-content:center;}
+.cover-kraft .k-poly{background:#fff;padding:9px 9px 22px;box-shadow:0 12px 26px rgba(0,0,0,.28);position:relative;}
+.cover-kraft .k-poly.hero{width:130px;transform:rotate(-3deg);}
+.cover-kraft .k-poly.hero .k-poly-photo{height:150px;}
+.cover-kraft .k-poly.accent{width:178px;transform:rotate(3deg);}
+.cover-kraft .k-poly.accent .k-poly-photo{height:210px;}
+.cover-kraft .k-poly.solo{width:175px;transform:rotate(-2deg);}
+.cover-kraft .k-poly.solo .k-poly-photo{height:220px;}
+.cover-kraft .k-poly-photo{width:100%;background-size:cover;background-position:center;}
+.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:14.5px;text-align:center;margin-top:6px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:50px;height:16px;box-shadow:0 2px 4px rgba(0,0,0,.18);z-index:2;}
 .cover-kraft .k-poly-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
 .cover-kraft .k-poly-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
-.cover-kraft .k-sticker-row{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);display:flex;gap:16px;z-index:3;}
-.cover-kraft .k-badge{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
-  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.3);line-height:1.15;font-size:11px;border:3px solid #fff;}
+.cover-kraft .k-poly-empty .k-poly-photo{display:flex;align-items:center;justify-content:center;text-align:center;
+  background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 18px,#EFE1BE 18px,#EFE1BE 36px);color:#B99A5E;font-family:'Caveat',cursive;font-size:15px;}
+.cover-kraft .k-badge-row{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+.cover-kraft .k-badge{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.3);line-height:1.15;font-size:11.5px;}
 
 /* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
 /* (17/07, 4e retour) : la carte et la planche photo grandissent elles-mêmes
@@ -709,18 +704,25 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
   routeLabels=routeLabels||['Départ','En route','Arrivée'];
 
   if(tema==='kraft'){
-    // (17/07, 5e retour Bruno) : deux panneaux CÔTE À CÔTE (63/37) plutôt
-    // qu'un accent en surimpression qui mangeait le texte — la photo
-    // principale cède de la place, le second polaroid en gagne vraiment.
+    // (17/07, 6e retour Bruno) : retour au polaroid classique — la
+    // principale réduite (~30 %), la seconde agrandie (~20 %), groupe
+    // centré dans l'espace restant, jamais étiré en rectangle sans fin.
     const hero = photos[0] || null;
     const accent = photos[1] || null;
-    const heroHtml = hero
-      ? '<div class="k-hero" style="background-image:url(\''+hero.url+'\');"></div>'
-        +(hero.nom?('<div class="k-hero-cap">'+esc(hero.nom)+'</div>'):'')
-      : '<div class="k-hero-empty">📍<br>Les photos arriveront<br>au fil du voyage</div>';
-    const accentHtml = accent
-      ? '<div class="k-accent-panel"><div class="k-accent"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+accent.url+'\');"></div></div></div>'
-      : '';
+    let photosHtml;
+    if(hero && accent){
+      photosHtml = '<div class="k-photos-pair">'
+        +'<div class="k-poly hero"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+hero.url+'\');"></div>'
+          +(hero.nom?('<div class="cap">'+esc(hero.nom)+'</div>'):'')+'</div>'
+        +'<div class="k-poly accent"><div class="k-poly-tape mustard"></div><div class="k-poly-photo" style="background-image:url(\''+accent.url+'\');"></div>'
+          +(accent.nom?('<div class="cap">'+esc(accent.nom)+'</div>'):'')+'</div>'
+      +'</div>';
+    } else if(hero){
+      photosHtml = '<div class="k-photos-pair"><div class="k-poly solo"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+hero.url+'\');"></div>'
+        +(hero.nom?('<div class="cap">'+esc(hero.nom)+'</div>'):'')+'</div></div>';
+    } else {
+      photosHtml = '<div class="k-photos-pair"><div class="k-poly solo k-poly-empty"><div class="k-poly-tape mint"></div><div class="k-poly-photo">📍<br>à venir</div></div></div>';
+    }
     const tagline = nuitsTxt!=='—' ? (nuitsTxt+' nuits quelque part sur les routes de France') : 'Encore à écrire…';
     return '<div class="page cover cover-kraft">'
       +'<div class="k-band"></div>'
@@ -730,10 +732,9 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
         +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
         +'<h1 class="k-title">'+esc(dest)+'</h1>'
         +'<p class="k-tagline">'+tagline+'</p>'
-        +'<div class="k-photo-zone'+(accent?' a-deux':'')+'">'
-          +'<div class="k-hero-panel">'+heroHtml+'</div>'
-          +accentHtml
-          +'<div class="k-sticker-row">'
+        +'<div class="k-collage">'
+          +photosHtml
+          +'<div class="k-badge-row">'
             +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
               +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
             +'<div class="k-badge" style="background:#7C8B5D;transform:rotate(7deg);">'
