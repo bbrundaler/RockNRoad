@@ -677,7 +677,10 @@ function pageFicheComplete(item, opts){
 // chaque séjour nichées dessous, colorées comme sur la carte (même palette,
 // RNR_MARQUEURS.couleurExcursion — un séjour a la même couleur ici et sur
 // Voyage/Hub/Horizon).
-function pageCheminComplet(chaine, dates, sejourIdx){
+// (17/07, retour Bruno) : ne renvoie plus le wrapper <div class="page">— le
+// contenu est fusionné avec la page Équipe par l'appelant (render()), pour
+// ne plus avoir deux pages à moitié vides côte à côte.
+function contenuCheminComplet(chaine, dates, sejourIdx){
   let rows='';
   chaine.forEach((item,i)=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
@@ -697,11 +700,9 @@ function pageCheminComplet(chaine, dates, sejourIdx){
       +'</div>'
     +'</div>';
   });
-  return '<div class="page day-page" style="padding:54px 46px;">'
-    +'<p class="day-sub" style="margin-bottom:4px;">🗺️ Vue d\'ensemble</p>'
-    +'<span class="day-title" style="display:block;margin-bottom:22px;">Le chemin complet</span>'
-    +'<div class="chemin-liste">'+rows+'</div>'
-    +'</div>';
+  return '<div class="team-header" style="margin-top:28px;"><p class="day-sub" style="margin-bottom:4px;">Vue d\'ensemble</p>'
+    +'<span class="day-title" style="display:block;">Le chemin complet</span></div>'
+    +'<div class="chemin-liste" style="margin-top:18px;">'+rows+'</div>';
 }
 
 function temaActif(){
@@ -838,53 +839,59 @@ function render(){
 
   let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture, photosCouverture, routeLabels);
 
-  // Page Équipe (08/07) — les profils sont désormais alimentés par la barre
-  // d'avatars (chrome.js). Cadre rond partout : un mauvais cadrage de photo
-  // n'y casse rien. Toujours affichée dès qu'il y a au moins un membre.
-  if(MEMBRES.length){
-    const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
-    const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
-    const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
-    const rotsCartes=[-.8,.9,-.6,1,.7,-1];
-    html+='<div class="page team-page">'
-      +'<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
-      +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
-      +'<p class="team-tagline">'+esc(tagline)+'</p>'
-      +'<div class="team-grid">'
-      +MEMBRES.map((m,i)=>{
-        const nom=m.pseudo||m.prenom||'Voyageur';
-        const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
-        const aUnePhoto = !!(av && av.photo);
-        let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
-        let avTxt=(nom.charAt(0)||'?').toUpperCase();
-        let avClasse='team-av';
-        if(aUnePhoto){ avStyle="background-image:url('"+av.photo.replace(/'/g,'')+"');"; avTxt=''; }
-        else{
-          // (17/07, retour Bruno) : insister pour que la photo soit ajoutée
-          // plutôt que d'afficher discrètement une initiale colorée — le
-          // Carnet est le bon endroit pour le rappeler, sans jargon technique.
-          avStyle=''; avTxt='Photo<br>à ajouter'; avClasse='team-av team-av-manquant';
-        }
-        const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
-        const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
-        const estLeader = LEADERS.has(m.id);
-        return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
-          +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
-          +'<div class="'+avClasse+'" style="'+avStyle+'">'+avTxt+'</div>'
-          +'<div style="flex:1;">'
-          +'<p class="team-nom">'+esc(nom)+'</p>'
-          +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
-          +(passionsLabels.length?'<div class="team-passions">'+passionsLabels.map(p=>'<span class="team-chip">'+esc(p)+'</span>').join('')+'</div>':'')
-          +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
-          +'</div></div>';
-      }).join('')
-      +'</div></div>';
-  }
-
-  // (10/07) « Le chemin complet » — juste après Couverture + Équipe, avant le
-  // détail page à page (retour Bruno : on veut voir le trajet entier d'abord).
-  if(chaine.length){
-    html += pageCheminComplet(chaine, dates, sejourIdx);
+  // (17/07, retour Bruno) : Équipe et Chemin complet fusionnées sur UNE
+  // seule page — deux pages à moitié vides côte à côte n'avaient pas de
+  // sens. Les avatars ouvrent la même modale de profil que partout ailleurs
+  // sur le site (chrome.js, barre d'avatars) : un seul moteur d'édition,
+  // jamais une variante propre au Cahier.
+  const aEquipe = MEMBRES.length>0, aChemin = chaine.length>0;
+  if(aEquipe || aChemin){
+    let interieur='';
+    if(aEquipe){
+      const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
+      const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
+      const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
+      const rotsCartes=[-.8,.9,-.6,1,.7,-1];
+      interieur += '<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
+        +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
+        +'<p class="team-tagline">'+esc(tagline)+'</p>'
+        +'<div class="team-grid">'
+        +MEMBRES.map((m,i)=>{
+          const nom=m.pseudo||m.prenom||'Voyageur';
+          const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
+          const aUnePhoto = !!(av && av.photo);
+          let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
+          let avTxt=(nom.charAt(0)||'?').toUpperCase();
+          let avClasse='team-av';
+          if(aUnePhoto){ avStyle="background-image:url('"+av.photo.replace(/'/g,'')+"');"; avTxt=''; }
+          else{
+            // (17/07, retour Bruno) : insister pour que la photo soit ajoutée
+            // plutôt que d'afficher discrètement une initiale colorée.
+            avStyle=''; avTxt='Photo<br>à ajouter'; avClasse='team-av team-av-manquant';
+          }
+          const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
+          const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
+          const estLeader = LEADERS.has(m.id);
+          // (17/07) Clic sur l'avatar → même modale profil que la barre du
+          // haut (rnrOuvrirProfil, exposée par chrome.js). Elle décide
+          // elle-même édition (soi) vs lecture (autre membre) — jamais
+          // reconstruit ici.
+          return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
+            +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
+            +'<div class="'+avClasse+'" style="cursor:pointer;'+avStyle+'" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier le profil">'+avTxt+'</div>'
+            +'<div style="flex:1;">'
+            +'<p class="team-nom">'+esc(nom)+'</p>'
+            +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
+            +(passionsLabels.length?'<div class="team-passions">'+passionsLabels.map(p=>'<span class="team-chip">'+esc(p)+'</span>').join('')+'</div>':'')
+            +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
+            +'</div></div>';
+        }).join('')
+        +'</div>';
+    }
+    if(aChemin){
+      interieur += contenuCheminComplet(chaine, dates, sejourIdx);
+    }
+    html += '<div class="page team-page">'+interieur+'</div>';
   }
 
   if(!voyage.length){

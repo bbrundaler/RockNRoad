@@ -162,6 +162,14 @@
   +'.rnrc-pf-chip{padding:5px 11px;border-radius:16px;border:1.5px solid var(--surface-line);background:var(--paper);'
   +'font-size:11.5px;cursor:pointer;color:var(--ink-dim);}'
   +'.rnrc-pf-chip.on{background:var(--gold-a20);border-color:var(--gold);color:var(--ink);font-weight:700;}'
+  +'.rnrc-pf-photo-row{display:flex;align-items:center;gap:12px;}'
+  +'.rnrc-pf-photo-preview{width:64px;height:64px;border-radius:50%;background-size:cover;background-position:center;'
+  +'background-color:var(--surface);border:1.5px dashed var(--surface-line);flex-shrink:0;}'
+  +'.rnrc-pf-photo-actions{display:flex;flex-direction:column;gap:6px;}'
+  +'.rnrc-pf-photo-actions button{padding:7px 12px;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer;}'
+  +'.rnrc-pf-photo-choisir{background:var(--ink,#211a10);color:var(--gold,#C8A84B);border:none;font-weight:700;}'
+  +'.rnrc-pf-photo-del{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}'
+  +'.rnrc-pf-photo-etat{font-size:11px;color:var(--ink-dim);}'
   +'.rnrc-pf-lecture{font-size:13px;line-height:1.6;color:var(--ink);}'
   +'.rnrc-pf-lecture .vide{color:var(--ink-dim);font-style:italic;}'
   +'.rnrc-pf-foot{padding:14px 22px;border-top:1px solid var(--surface-line);}'
@@ -476,9 +484,64 @@
         '</div></div>'+
         '<div><span class="rnrc-pf-lbl">Présentation <em style="font-weight:400;opacity:.7;">(optionnel, aucune limite — dis-en autant que tu veux)</em></span>'+
         '<textarea id="rnrc-pf-presentation" placeholder="Ce que tu veux partager avec le groupe…">'+ (m.presentation? m.presentation.replace(/</g,'&lt;'): '') +'</textarea></div>'+
-        '<div><span class="rnrc-pf-lbl">Photo de profil <em style="font-weight:400;opacity:.7;">(optionnel, une URL pour l\'instant)</em></span>'+
-        '<input id="rnrc-pf-photo" type="text" value="'+(m.photo_url||'').replace(/"/g,'&quot;')+'" placeholder="https://…"></div>';
+        '<div><span class="rnrc-pf-lbl">Photo de profil <em style="font-weight:400;opacity:.7;">(optionnel)</em></span>'+
+        '<div class="rnrc-pf-photo-row">'+
+          '<div class="rnrc-pf-photo-preview" id="rnrc-pf-photo-preview" style="'+(m.photo_url?("background-image:url('"+String(m.photo_url).replace(/'/g,"")+"');"):'')+'"></div>'+
+          '<div class="rnrc-pf-photo-actions">'+
+            '<button type="button" class="rnrc-pf-photo-choisir" onclick="document.getElementById(\'rnrc-pf-photo-file\').click()">Choisir une photo</button>'+
+            (m.photo_url?'<button type="button" class="rnrc-pf-photo-del" onclick="window.__rnrProfilPhotoSuppr()">Retirer la photo</button>':'')+
+            '<span class="rnrc-pf-photo-etat" id="rnrc-pf-photo-etat"></span>'+
+          '</div>'+
+          '<input id="rnrc-pf-photo-file" type="file" accept="image/*" style="display:none;" onchange="window.__rnrProfilPhotoChoisie(this)">'+
+          '<input type="hidden" id="rnrc-pf-photo" value="'+(m.photo_url||'').replace(/"/g,'&quot;')+'">'+
+        '</div></div>';
       window.__rnrProfilTogglePassion = function(el){ el.classList.toggle('on'); };
+      // (17/07, retour Bruno) : vraie sélection de fichier, plus un champ URL
+      // à coller. Redimensionnement + ré-encodage via <canvas> avant l'envoi
+      // — ça allège le poids ET supprime les métadonnées EXIF (dont une
+      // éventuelle géoloc cachée) au passage, même logique que la moulinette
+      // des photos de lieux. Bucket dédié : photos-membres (public, lecture
+      // seule côté client comme photos-lieux).
+      window.__rnrProfilPhotoChoisie = function(input){
+        var f = input.files && input.files[0]; if(!f) return;
+        if(!/^image\//.test(f.type)){ alert('Ce fichier n\'est pas une image.'); input.value=''; return; }
+        var etat=document.getElementById('rnrc-pf-photo-etat'); if(etat) etat.textContent='Préparation…';
+        var img = new Image();
+        var url = URL.createObjectURL(f);
+        img.onload = function(){
+          URL.revokeObjectURL(url);
+          var MAX=480;
+          var w=img.width, h=img.height;
+          if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
+          var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          cv.getContext('2d').drawImage(img,0,0,w,h);
+          cv.toBlob(async function(blob){
+            if(!blob){ if(etat) etat.textContent='Échec de la préparation.'; return; }
+            if(etat) etat.textContent='Envoi…';
+            try{
+              var chemin=(_monMembre&&_monMembre.id?_monMembre.id:'anon')+'/'+Date.now()+'.jpg';
+              var up = await _sbChrome.storage.from('photos-membres').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
+              if(up.error) throw up.error;
+              var pub = _sbChrome.storage.from('photos-membres').getPublicUrl(chemin);
+              var publicUrl = pub && pub.data && pub.data.publicUrl;
+              if(!publicUrl) throw new Error('URL publique introuvable');
+              document.getElementById('rnrc-pf-photo').value = publicUrl;
+              var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')";
+              if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
+            }catch(e){
+              console.warn('chrome.js: upload photo profil', e);
+              if(etat) etat.textContent='Échec de l\'envoi — réessaie.';
+            }
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = function(){ URL.revokeObjectURL(url); if(etat) etat.textContent='Image illisible.'; };
+        img.src = url;
+      };
+      window.__rnrProfilPhotoSuppr = function(){
+        document.getElementById('rnrc-pf-photo').value='';
+        var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage='';
+        var etat=document.getElementById('rnrc-pf-photo-etat'); if(etat) etat.textContent='Photo retirée — Enregistrer pour confirmer.';
+      };
       window.__rnrProfilSauver = async function(){
         var btn=foot.querySelector('button'); var txt=btn.textContent;
         btn.disabled=true; btn.textContent='⏳ Enregistrement…';
@@ -517,6 +580,10 @@
     document.getElementById('rnrc-profil-overlay').classList.add('open');
   }
   window.__rnrProfilFerme = function(){ var o=document.getElementById('rnrc-profil-overlay'); if(o) o.classList.remove('open'); };
+  // (17/07) Le Cahier (page Équipe) doit ouvrir EXACTEMENT cette modale —
+  // jamais une variante — pour éditer/ajouter sa photo. Un seul moteur,
+  // partagé par la barre d'avatars ET la page Équipe imprimable.
+  window.rnrOuvrirProfil = ouvrirProfil;
 
   /* ════════════════════════════════════════════════════════════════════
      IDENTITÉ CANONIQUE — une seule maison pour le nom affiché d'un membre.
