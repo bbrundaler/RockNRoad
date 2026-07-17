@@ -124,7 +124,8 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-kraft .k-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
 .cover-kraft .k-poly{position:absolute;background:#fff;padding:9px 9px 26px;box-shadow:0 8px 16px rgba(0,0,0,.22);}
 .cover-kraft .k-poly .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:26px;}
-.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:5px;color:#2B1D0F;}
+.cover-kraft .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
+.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:5px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cover-kraft .k-badge{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
   font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 5px 12px rgba(0,0,0,.28);line-height:1.15;}
 
@@ -134,8 +135,12 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-atlas::after{content:'';position:absolute;inset:20px;border:1px solid rgba(217,201,160,.12);pointer-events:none;}
 .cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
 .cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:32px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 8px;text-transform:uppercase;}
-.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:30px;}
-.cover-atlas .a-mapbox{position:relative;height:230px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin-bottom:22px;}
+.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:22px;}
+.cover-atlas .a-photo-row{display:flex;gap:14px;margin-bottom:22px;}
+.cover-atlas .a-photo-insert{flex:0 0 40%;height:190px;border:1.5px solid rgba(217,201,160,.35);padding:6px;background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
+.cover-atlas .a-photo-insert .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
+.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:5px;text-transform:uppercase;flex-shrink:0;}
+.cover-atlas .a-mapbox{position:relative;flex:1;height:190px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin:0;}
 .cover-atlas .a-mapbox svg{width:100%;height:100%;}
 .cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);padding-top:16px;display:flex;justify-content:space-between;
   font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;}
@@ -640,13 +645,23 @@ function temaActif(){
 // c'est une illustration, pas un gabarit de données. Un seul point d'entrée
 // (cette fonction), trois branches, jamais trois générateurs séparés dans
 // trois coins du fichier.
-function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl){
+function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos){
   const kmTxt=totalKm>0?('≈'+totalKm):'—';
   const nuitsTxt=nuitsTotal()||'—';
   const partTxt=nbPart||'—';
   const animTxt=nbAnimaux?(nbAnimaux+' 🐕'):'—';
+  photos=photos||[];
 
   if(tema==='kraft'){
+    // (17/07, retour Bruno) : les polaroids manquaient sur la vraie page —
+    // jusqu'à 3 vraies photos de l'itinéraire, jamais de placeholder vide.
+    const posDefs=[{top:14,left:10,rot:-7},{top:50,left:180,rot:5},{top:16,left:352,rot:-3}];
+    const polaHtml=photos.slice(0,3).map((p,i)=>{
+      const pos=posDefs[i];
+      return '<div class="k-poly" style="width:150px;height:180px;top:'+pos.top+'px;left:'+pos.left+'px;transform:rotate('+pos.rot+'deg);">'
+        +'<div class="k-poly-photo" style="background-image:url(\''+p.url+'\');"></div>'
+        +'<div class="cap">'+esc(p.nom||'')+'</div></div>';
+    }).join('');
     return '<div class="page cover cover-kraft">'
       +'<div class="k-band"></div>'
       +'<div class="k-body">'
@@ -655,6 +670,7 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl){
         +'<div class="k-stickers">'
           +'<div class="k-tape mint" style="top:2px;left:40px;transform:rotate(-5deg);"></div>'
           +'<div class="k-tape mustard" style="top:16px;left:210px;transform:rotate(4deg);"></div>'
+          +polaHtml
           +'<div class="k-badge" style="width:104px;height:104px;background:#E8623D;bottom:14px;left:10px;transform:rotate(-8deg);font-size:12px;">'
             +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
           +'<div class="k-badge" style="width:70px;height:70px;background:#7C8B5D;bottom:34px;right:24px;transform:rotate(10deg);font-size:11px;">'
@@ -664,6 +680,14 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl){
   }
 
   if(tema==='atlas'){
+    // (17/07, retour Bruno) : une photo devait s'intégrer sur la couverture
+    // aussi — traitée en « planche photographique » sépia, à côté du tracé
+    // plutôt qu'à sa place : la carte reste la vraie signature de ce thème.
+    const photoAtlas = photos[0] || null;
+    const encart = photoAtlas
+      ? '<div class="a-photo-insert"><div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div>'
+        +'<p class="a-photo-cap">Planche nº1 — '+esc(photoAtlas.nom||'')+'</p></div>'
+      : '';
     return '<div class="page cover-atlas">'
       +'<svg class="a-compass" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#5C7A6B" stroke-width="1.5"/>'
         +'<path d="M50 8 L58 50 L50 92 L42 50 Z" fill="#8B3A2E" opacity=".7"/><path d="M8 50 L50 42 L92 50 L50 58 Z" fill="#5C7A6B" opacity=".7"/>'
@@ -671,10 +695,13 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl){
       +'<p class="a-eyebrow">Carnet d\'expédition</p>'
       +'<h1 class="a-title">'+esc(dest)+'</h1>'
       +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
-      +'<div class="a-mapbox"><svg viewBox="0 0 480 260" preserveAspectRatio="none">'
-        +'<path d="M40 210 Q 140 60 250 130 T 440 60" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>'
-        +'<circle cx="40" cy="210" r="6" fill="#8B3A2E"/><circle cx="250" cy="130" r="6" fill="#8B3A2E"/><circle cx="440" cy="60" r="6" fill="#8B3A2E"/>'
-      +'</svg></div>'
+      +'<div class="a-photo-row">'
+        +encart
+        +'<div class="a-mapbox"><svg viewBox="0 0 480 260" preserveAspectRatio="none">'
+          +'<path d="M40 210 Q 140 60 250 130 T 440 60" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>'
+          +'<circle cx="40" cy="210" r="6" fill="#8B3A2E"/><circle cx="250" cy="130" r="6" fill="#8B3A2E"/><circle cx="440" cy="60" r="6" fill="#8B3A2E"/>'
+        +'</svg></div>'
+      +'</div>'
       +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
       +'</div>';
   }
@@ -706,13 +733,18 @@ function render(){
   if(DOMICILE&&chaine[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,chaine[0].lat,chaine[0].lng);
   for(let i=1;i<chaine.length;i++) totalKm+=calcDist(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
 
-  // (17/07) Une vraie photo pour la bande de couverture Édition plutôt qu'un
-  // dégradé systématique — même logique que photosDe() dans fiche-complete.js
-  // (photo_url, sinon la 1ère de photos_urls), sur la 1ère étape qui en a une.
-  let photoCouverture=null;
-  for(const it of chaine){ const p=it.photo_url||(it.photos_urls&&it.photos_urls[0]); if(p){ photoCouverture=p; break; } }
+  // (17/07) Jusqu'à 3 vraies photos de l'itinéraire pour habiller la
+  // couverture (polaroids du Carnet bricolé, planche de l'Atlas, bande de
+  // l'Édition) — même logique que photosDe() dans fiche-complete.js.
+  const photosCouverture=[];
+  for(const it of chaine){
+    const p=it.photo_url||(it.photos_urls&&it.photos_urls[0]);
+    if(p){ photosCouverture.push({url:p, nom:it.nom}); }
+    if(photosCouverture.length>=3) break;
+  }
+  const photoCouverture = photosCouverture[0] ? photosCouverture[0].url : null;
 
-  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture);
+  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture, photosCouverture);
 
   // Page Équipe (08/07) — les profils sont désormais alimentés par la barre
   // d'avatars (chrome.js). Cadre rond partout : un mauvais cadrage de photo
