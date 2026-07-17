@@ -235,23 +235,30 @@ body[data-theme="edition"] .gf-desc::first-letter{font-family:var(--cah-font-tit
 /* Page Équipe (08/07, refonte 17/07 — retour Bruno : « tout aussi triste »).
    En-tête avec ligne de séparation + accroche, avatars agrandis et cadrés
    selon le thème (médaillon or/édition, polaroid léger/kraft, médaille
-   laiton/atlas), cartes avec un peu de vie plutôt que des rectangles sages. */
-.team-page{padding:54px 46px;display:flex;flex-direction:column;min-height:297mm;}
+   laiton/atlas), cartes avec un peu de vie plutôt que des rectangles sages.
+   (17/07, retour Bruno) : le contenu reste ANCRÉ EN HAUT de la page (plus de
+   centrage vertical — « le texte au milieu c'est pas bien ») ; aucun emoji ;
+   badge « leader de ce voyage » (vraie donnée, voyage_leaders) ; relance
+   explicite quand la photo manque, sans mode d'emploi technique. */
+.team-page{padding:54px 46px;}
 body[data-theme="kraft"] .team-page{background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
 body[data-theme="atlas"] .team-page{background-image:repeating-linear-gradient(rgba(32,36,42,.05) 0 1px, transparent 1px 34px),
   repeating-linear-gradient(90deg, rgba(32,36,42,.05) 0 1px, transparent 1px 34px);}
-.team-grid-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;}
 .team-header{border-bottom:1px solid var(--cah-paper-line);padding-bottom:14px;margin-bottom:6px;}
-.team-tagline{font-family:var(--cah-font-hand);font-size:14px;color:var(--cah-ink-dim);margin:2px 0 22px;font-style:italic;}
+.team-tagline{font-family:var(--cah-font-hand);font-size:14px;color:var(--cah-ink-dim);margin:2px 0 26px;font-style:italic;}
 body[data-theme="kraft"] .team-tagline{font-size:18px;font-style:normal;color:#7C8B5D;}
 .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-.team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:14px;}
+.team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:14px;position:relative;}
+.team-leader-tag{position:absolute;top:-10px;right:14px;background:var(--cah-accent);color:#fff;font-size:9px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;box-shadow:0 3px 8px rgba(0,0,0,.2);}
 .team-av{width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
 body[data-theme="edition"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px var(--cah-accent);}
 body[data-theme="atlas"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px #B87333;filter:sepia(.25) contrast(1.05);}
 body[data-theme="kraft"] .team-card{transform:rotate(var(--rot,0deg));}
 body[data-theme="kraft"] .team-av{border-radius:4px;width:80px;height:80px;box-shadow:0 4px 10px rgba(0,0,0,.18);position:relative;}
+.team-av-manquant{background:transparent!important;border:2px dashed var(--cah-accent);color:var(--cah-accent)!important;
+  font-size:9px!important;font-weight:700;text-align:center;line-height:1.35;padding:6px;text-transform:uppercase;letter-spacing:.02em;}
 .team-nom{font-family:var(--cah-font-title);font-size:16px;font-weight:700;margin:0 0 3px;color:var(--cah-ink);}
 .team-depuis{font-size:10.5px;color:var(--cah-accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
 .team-passions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
@@ -492,6 +499,18 @@ async function chargerMembres(){
     const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
     MEMBRES=data||[];
   }catch(e){ console.warn('Cahier: membres', e); }
+}
+// (17/07, retour Bruno) : le rôle de leader existe déjà sur le site
+// (voyage_leaders, un par voyage — voir onboarding.html), jamais montré nulle
+// part sur le Cahier. Vraie info, gratuite, qui donne du contenu à la page
+// Équipe au lieu d'inventer quoi que ce soit.
+let LEADERS=new Set();
+async function chargerLeaders(){
+  if(!VOYAGE_ID){ LEADERS=new Set(); return; }
+  try{
+    const {data}=await sb.from('voyage_leaders').select('membre_id').eq('voyage_id',VOYAGE_ID);
+    LEADERS=new Set((data||[]).map(r=>r.membre_id));
+  }catch(e){ console.warn('Cahier: leaders', e); }
 }
 async function chargerItineraire(){
   if(!VOYAGE_ID){ voyage=[]; return; }
@@ -828,22 +847,30 @@ function render(){
     const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
     const rotsCartes=[-.8,.9,-.6,1,.7,-1];
     html+='<div class="page team-page">'
-      +'<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">👥 Qui embarque</p>'
+      +'<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
       +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
       +'<p class="team-tagline">'+esc(tagline)+'</p>'
-      +'<div class="team-grid-wrap"><div class="team-grid">'
+      +'<div class="team-grid">'
       +MEMBRES.map((m,i)=>{
         const nom=m.pseudo||m.prenom||'Voyageur';
         const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
+        const aUnePhoto = !!(av && av.photo);
         let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
         let avTxt=(nom.charAt(0)||'?').toUpperCase();
-        if(av && av.photo){ avStyle="background-image:url('"+av.photo.replace(/'/g,'')+"');"; avTxt=''; }
-        else if(av && av.emoji){ avStyle='background:var(--gold-a20);'; avTxt=av.emoji; }
-        else if(av && av.initiale){ avTxt=av.initiale; }
+        let avClasse='team-av';
+        if(aUnePhoto){ avStyle="background-image:url('"+av.photo.replace(/'/g,'')+"');"; avTxt=''; }
+        else{
+          // (17/07, retour Bruno) : insister pour que la photo soit ajoutée
+          // plutôt que d'afficher discrètement une initiale colorée — le
+          // Carnet est le bon endroit pour le rappeler, sans jargon technique.
+          avStyle=''; avTxt='Photo<br>à ajouter'; avClasse='team-av team-av-manquant';
+        }
         const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
         const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
+        const estLeader = LEADERS.has(m.id);
         return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
-          +'<div class="team-av" style="'+avStyle+'">'+esc(avTxt)+'</div>'
+          +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
+          +'<div class="'+avClasse+'" style="'+avStyle+'">'+avTxt+'</div>'
           +'<div style="flex:1;">'
           +'<p class="team-nom">'+esc(nom)+'</p>'
           +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
@@ -851,7 +878,7 @@ function render(){
           +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
           +'</div></div>';
       }).join('')
-      +'</div></div></div>';
+      +'</div></div>';
   }
 
   // (10/07) « Le chemin complet » — juste après Couverture + Équipe, avant le
@@ -988,7 +1015,7 @@ function render(){
     await resoutVoyageId(session.user.id);
     if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
     cahierChargeSelecteurChrome();   // nom du voyage + liste, visible dans la barre (chrome.js)
-    await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions(), chargerMembres()]);
+    await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions(), chargerMembres(), chargerLeaders()]);
     render();
   }catch(e){
     console.error('Cahier: erreur au chargement', e);
