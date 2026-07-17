@@ -20,6 +20,10 @@
 //                               // badgeNoteFamille ci-dessous pour rester lisibles
 //   extraActionsHtml,           // ex: bouton crayon (Carnet uniquement)
 //   closeButtonHtml,            // bouton fermer, propre à chaque page
+//   galerieGrande,              // (17/07) true = galerie en grand (photo
+//                               // principale + 4 grandes), pour l'impression
+//                               // du Cahier ; false/absent = bande de
+//                               // vignettes compacte (défaut, écran).
 // })
 // La galerie photo (couverture + vignettes) ouvre TOUJOURS le lightbox partagé
 // (lightbox.js) — plus besoin de le préciser à l'appel.
@@ -59,9 +63,19 @@
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.nom + (l.sous_region||l.region ? ', '+(l.sous_region||l.region) : ''))}`
       : (l.lat&&l.lng ? `https://www.google.com/maps?q=${l.lat},${l.lng}` : 'https://maps.google.com/');
 
-    const galerie = photos.length>1 ? `<div style="display:flex;gap:6px;padding:10px 22px 0;flex-wrap:wrap;">${
-      photos.slice(1,5).map((u,i)=>`<div style="width:54px;height:40px;background-image:url('${u}');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;" onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',${i+1})"></div>`).join('')
-    }</div>` : '';
+    // (17/07) Deux présentations de la galerie, TOUJOURS depuis ce seul
+    // générateur : la bande de vignettes compacte (défaut, cartes/fiches à
+    // l'écran) et la galerie « grande » (opts.galerieGrande — le Cahier
+    // imprimé a la place, des miniatures de 54×40 y étaient hors sujet).
+    const galerie = photos.length>1 ? (
+      opts.galerieGrande
+        ? `<div class="gf-galerie-grande">${
+            photos.slice(1,5).map((u,i)=>`<div class="gf-galerie-grande-ph" style="background-image:url('${u}');" onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',${i+1})"></div>`).join('')
+          }</div>`
+        : `<div style="display:flex;gap:6px;padding:10px 22px 0;flex-wrap:wrap;">${
+            photos.slice(1,5).map((u,i)=>`<div style="width:54px;height:40px;background-image:url('${u}');background-size:cover;background-position:center;border-radius:6px;cursor:pointer;" onclick="RNR_FICHE_COMPLETE._openLb('${photosAttr}',${i+1})"></div>`).join('')
+          }</div>`
+    ) : '';
 
     let pratique = '';
     if(l.horaires_text){

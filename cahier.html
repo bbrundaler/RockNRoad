@@ -98,20 +98,18 @@ body[data-theme="kraft"] .page{background-image:none;}
 .spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--cah-spirale);background:transparent;box-shadow:inset 0 0 0 3px var(--cah-paper);}
 body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition relié, pas à spirale */
 
-.cover{display:flex;flex-direction:column;color:#F5EFE0;}
-.cover-illu{position:absolute;inset:0;background:linear-gradient(180deg,#F5E6C8 0%,#EAD4A0 45%,#C9A65E 100%);}
-.cover-illu svg{position:absolute;bottom:0;left:0;width:100%;height:62%;}
-.cover-scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(15,13,9,0) 40%, rgba(15,13,9,.55) 75%, rgba(15,13,9,.95) 100%);}
-.cover-top{position:relative;padding:60px 50px 0;color:var(--ink);}
-.cover-eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-deep);font-weight:700;margin:0 0 10px;}
-.cover-title{font-family:var(--font-title);font-size:44px;line-height:1.08;margin:0;font-weight:700;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.3);}
-.cover-bottom{position:relative;margin-top:auto;padding:0 50px 40px;}
-.cover-line{width:60px;height:2px;background:var(--gold);margin:20px 0;}
-.cover-stats{display:flex;background:rgba(15,13,9,.55);border:1px solid rgba(245,239,224,.15);border-radius:12px;overflow:hidden;margin-top:18px;}
-.cover-stat{flex:1;padding:14px 6px;text-align:center;border-right:1px solid rgba(245,239,224,.12);}
-.cover-stat:last-child{border-right:none;}
-.cover-stat b{display:block;font-family:var(--font-title);font-size:16px;line-height:1.2;color:var(--gold-light);word-break:keep-all;}
-.cover-stat span{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(245,239,224,.65);}
+.cover-edition{display:flex;flex-direction:column;color:var(--cah-ink);}
+.cover-edition .e-mast{padding:44px 50px 0;text-align:center;}
+.cover-edition .e-rule{width:38px;height:1px;background:var(--cah-accent);margin:0 auto 14px;}
+.cover-edition .e-eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--cah-accent);font-weight:600;}
+.cover-edition .e-title{font-family:var(--cah-font-title);font-weight:700;font-size:42px;line-height:1.1;margin:20px 0 10px;color:var(--cah-ink);}
+.cover-edition .e-sub{font-family:var(--cah-font-title);font-style:italic;font-size:14px;color:var(--cah-ink-dim);margin:0 0 28px;}
+.cover-edition .e-photo-band{flex:1;background:linear-gradient(160deg,#D8CBA8,#8b7245 65%,#5c4a30);background-size:cover;background-position:center;margin:0 50px;border-radius:3px;min-height:220px;}
+.cover-edition .e-stats{display:flex;padding:24px 50px 40px;}
+.cover-edition .e-stat{flex:1;text-align:center;border-left:1px solid var(--cah-paper-line);padding:0 8px;}
+.cover-edition .e-stat:first-child{border-left:none;}
+.cover-edition .e-stat b{display:block;font-family:var(--cah-font-title);font-size:19px;color:var(--cah-ink);}
+.cover-edition .e-stat span{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--cah-ink-dim);}
 
 /* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
    plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
@@ -150,6 +148,19 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .day-title{font-family:var(--cah-font-title);font-size:26px;font-weight:700;color:var(--cah-ink);}
 .day-sub{font-size:11.5px;color:var(--cah-ink-dim);margin:0 0 16px;padding-left:2px;}
 body[data-theme="atlas"] .day-num-label,body[data-theme="atlas"] .day-title{text-transform:uppercase;letter-spacing:.02em;}
+
+/* ── Flourish masthead — thème Édition uniquement (17/07, retour Bruno : la
+   page réelle ne ressemblait pas à la maquette éditoriale approuvée). Un
+   grand chiffre en contour + une ligne de séparation sous l'entête, comme
+   sur la maquette ; les autres thèmes gardent leur propre signature. ── */
+.day-num-ghost{display:none;}
+body[data-theme="edition"] .day-num-ghost{display:inline-block;font-family:var(--cah-font-title);font-size:52px;font-weight:700;
+  line-height:.8;color:transparent;-webkit-text-stroke:1.2px var(--cah-accent);order:-1;}
+body[data-theme="edition"] .day-num-label{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  transform:none;color:var(--cah-accent);}
+body[data-theme="edition"] .day-head{align-items:center;gap:16px;border-bottom:1px solid var(--cah-paper-line);padding-bottom:16px;margin-bottom:14px;}
+body[data-theme="edition"] .gf-desc::first-letter{font-family:var(--cah-font-title);font-size:2.7em;float:left;line-height:.72;
+  padding:4px 6px 0 0;color:var(--cah-accent);}
 .day-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:24px;flex:1;min-height:0;}
 
 .visuel-block{position:relative;}
@@ -204,6 +215,11 @@ body[data-theme="atlas"] .day-num-label,body[data-theme="atlas"] .day-title{text
 .gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:10px 10px 0 0;}
 .gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
 .gf-cover-overlay{padding:14px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.7));}
+/* (17/07, retour Bruno) : les vignettes 54×40 n'ont pas leur place sur une
+   page imprimée qui a de la marge à revendre — galerie grande en 2×2,
+   nettement plus lisible qu'une bande de miniatures. */
+.gf-galerie-grande{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 22px 0;}
+.gf-galerie-grande-ph{height:130px;background-size:cover;background-position:center;border-radius:8px;cursor:pointer;border:1px solid var(--cah-paper-line);}
 .gf-type-badge{background:var(--cah-accent);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
 .gf-content{padding:16px 0 0;}
 .gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
@@ -566,13 +582,13 @@ function pageFicheComplete(item, opts){
   opts=opts||{};
   const noteG=RNR_FICHE_COMPLETE.badgeNoteGoogle(item.note);
   const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(item.note_famille);
-  const contenu=RNR_FICHE_COMPLETE.html(item, {noteG, noteF});
+  const contenu=RNR_FICHE_COMPLETE.html(item, {noteG, noteF, galerieGrande:true});
   const notePlaceholder=opts.notePlaceholder || (opts.nuit ? "Comment c'était, ce qu'on retient de cette étape…" : "Ce qu'on en a pensé, ce qu'on a fait…");
   const accentStyle=opts.accent ? ('border-top:6px solid '+opts.accent+';') : '';
   return '<div class="page day-page fiche-page" style="'+accentStyle+'">'
     +'<div class="spirale"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>'
     +'<div class="fiche-page-inner">'
-      +'<div class="day-head"><span class="day-num-label">'+esc(opts.label||'')+'</span></div>'
+      +'<div class="day-head">'+(opts.numero?('<span class="day-num-ghost">'+String(opts.numero).padStart(2,'0')+'</span>'):'')+'<span class="day-num-label">'+esc(opts.label||'')+'</span></div>'
       +(opts.sousLabel?('<p class="day-sub">'+opts.sousLabel+'</p>'):'')
       +'<div class="fiche-embed">'+contenu+'</div>'
       +'<p class="narrative-label" style="margin-top:10px;">'+(opts.nuit?'💬 Le mot sur cette nuit':'💬 Le mot du groupe')+'</p>'
@@ -624,7 +640,7 @@ function temaActif(){
 // c'est une illustration, pas un gabarit de données. Un seul point d'entrée
 // (cette fonction), trois branches, jamais trois générateurs séparés dans
 // trois coins du fichier.
-function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux){
+function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl){
   const kmTxt=totalKm>0?('≈'+totalKm):'—';
   const nuitsTxt=nuitsTotal()||'—';
   const partTxt=nbPart||'—';
@@ -663,36 +679,21 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux){
       +'</div>';
   }
 
-  // 'edition' (défaut, dans la charte) — inchangée depuis toujours.
+  // 'edition' (défaut, dans la charte) — masthead validé sur la maquette
+  // (17/07) : bande photo pleine largeur (vraie photo de la 1ère étape si
+  // disponible, sinon dégradé), plus l'ancienne scène illustrée du van.
+  const bandeStyle = photoUrl ? ('background-image:url(\''+photoUrl+'\');') : '';
   return ''
-    +'<div class="page cover">'
-    +'<div class="cover-illu">'
-      +'<svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">'
-        +'<path d="M0,260 Q80,200 160,230 T320,210 Q400,190 480,225 T600,200 L600,400 L0,400 Z" fill="#8b7a4f" opacity=".55"/>'
-        +'<path d="M0,300 Q100,250 220,280 T450,260 Q520,250 600,275 L600,400 L0,400 Z" fill="#6b5a38" opacity=".7"/>'
-        +'<path d="M0,340 Q150,310 300,335 T600,320 L600,400 L0,400 Z" fill="#3d3320"/>'
-        +'<circle cx="480" cy="80" r="34" fill="#F9E9BE" opacity=".9"/>'
-        +'<path d="M40,352 Q160,300 300,340 T560,330" fill="none" stroke="#F5EFE0" stroke-width="3" stroke-dasharray="1 10" stroke-linecap="round" opacity=".8"/>'
-        +'<g transform="translate(255,318)">'
-          +'<rect x="0" y="0" width="46" height="26" rx="4" fill="#C8A84B"/>'
-          +'<rect x="0" y="-14" width="26" height="16" rx="3" fill="#C8A84B"/>'
-          +'<rect x="2" y="-11" width="14" height="9" rx="1" fill="#3d3320"/>'
-          +'<circle cx="12" cy="27" r="6" fill="#211a10"/><circle cx="36" cy="27" r="6" fill="#211a10"/>'
-        +'</g>'
-        +'<g fill="#3d3320" opacity=".85">'
-          +'<path d="M70,345 L82,315 L94,345 Z"/><path d="M84,345 L94,320 L104,345 Z"/>'
-          +'<path d="M480,335 L492,308 L504,335 Z"/><path d="M494,335 L504,313 L514,335 Z"/>'
-        +'</g>'
-      +'</svg>'
-    +'</div>'
-    +'<div class="cover-scrim"></div>'
-    +'<div class="cover-top"><p class="cover-eyebrow">Carnet de voyage</p><h1 class="cover-title">'+esc(dest)+'</h1></div>'
-    +'<div class="cover-bottom"><div class="cover-line"></div><div class="cover-stats">'
-    +'<div class="cover-stat"><b>'+kmTxt+' km</b><span>Total</span></div>'
-    +'<div class="cover-stat"><b>'+nuitsTxt+'</b><span>Nuits</span></div>'
-    +'<div class="cover-stat"><b>'+esc(partTxt)+'</b><span>Voyageurs</span></div>'
-    +'<div class="cover-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
-    +'</div></div></div>';
+    +'<div class="page cover-edition">'
+    +'<div class="e-mast"><div class="e-rule"></div><p class="e-eyebrow">RockNRoad · Carnet de route</p>'
+      +'<h1 class="e-title">'+esc(dest)+'</h1><p class="e-sub">'+(nuitsTxt!=='—'?(nuitsTxt+' nuits, '+esc(partTxt)+' voyageurs, une route à raconter'):'Une route à raconter')+'</p></div>'
+    +'<div class="e-photo-band" style="'+bandeStyle+'"></div>'
+    +'<div class="e-stats">'
+    +'<div class="e-stat"><b>'+kmTxt+' km</b><span>Parcourus</span></div>'
+    +'<div class="e-stat"><b>'+nuitsTxt+'</b><span>Nuits</span></div>'
+    +'<div class="e-stat"><b>'+esc(partTxt)+'</b><span>Voyageurs</span></div>'
+    +'<div class="e-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
+    +'</div></div>';
 }
 
 function render(){
@@ -705,7 +706,13 @@ function render(){
   if(DOMICILE&&chaine[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,chaine[0].lat,chaine[0].lng);
   for(let i=1;i<chaine.length;i++) totalKm+=calcDist(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
 
-  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux);
+  // (17/07) Une vraie photo pour la bande de couverture Édition plutôt qu'un
+  // dégradé systématique — même logique que photosDe() dans fiche-complete.js
+  // (photo_url, sinon la 1ère de photos_urls), sur la 1ère étape qui en a une.
+  let photoCouverture=null;
+  for(const it of chaine){ const p=it.photo_url||(it.photos_urls&&it.photos_urls[0]); if(p){ photoCouverture=p; break; } }
+
+  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture);
 
   // Page Équipe (08/07) — les profils sont désormais alimentés par la barre
   // d'avatars (chrome.js). Cadre rond partout : un mauvais cadrage de photo
@@ -777,7 +784,7 @@ function render(){
       +'</div>';
 
     html += pageFicheComplete(item, {
-      label:'étape '+(i+1),
+      label:'étape '+(i+1), numero:(i+1),
       sousLabel:(dEtape?esc(formatDateCourt(dEtape))+' · ':'')+esc(region)+(nuit?' · 🌙 '+nbNuits+' nuit'+(nbNuits>1?'s':''):'')+(estSejour?' · base d\'excursions':''),
       nuit, accent:couleur, infosBox,
       footerRight:'Étape '+(i+1)+' / '+chaine.length
@@ -796,7 +803,7 @@ function render(){
         +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+e.uid+'">…</span></div>'
         +'</div>';
       html += pageFicheComplete(e, {
-        label:'jour '+jourExc,
+        label:'jour '+jourExc, numero:jourExc,
         sousLabel:(dExc?esc(formatDateCourt(dExc))+' · ':'')+esc(regionDe(e.lat,e.lng))+' · excursion depuis '+esc(item.nom),
         nuit:false, accent:couleur, infosBox:infosBoxExc,
         footerRight:'Séjour à '+esc(item.nom)+' · jour '+jourExc,
