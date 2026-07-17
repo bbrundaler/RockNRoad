@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad · Le Cahier · Le récit de ton voyage, prêt à imprimer</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&family=Permanent+Marker&family=Cinzel:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css?v=100725">
 <script src="chrome.js?v=100725"></script>
 <script src="tags.js"></script>
@@ -14,6 +14,34 @@
 <script src="fiche-complete.js?v=100725"></script>
 <style>
 *{box-sizing:border-box;}
+
+/* ── THÈMES DU CAHIER (B69, 17/07) ──────────────────────────────────────
+   Un seul moteur de rendu (render()/pageFicheComplete() inchangés) reskiné
+   par variables CSS selon data-theme sur <body>. Trois thèmes possibles :
+   'edition' (défaut, dans la charte RockNRoad — quasi identique à avant),
+   'kraft' (Carnet bricolé, rupture totale de palette/typo),
+   'atlas' (Atlas d'expédition, rupture totale de palette/typo).
+   Le choix est un attribut du VOYAGE (voyages.cahier_theme), pas un
+   réglage personnel : tout le groupe voit et imprime le même Cahier. ── */
+body{ --cah-paper:#FAF8F3; --cah-paper-line:#D8CFC0; --cah-paper-soft:rgba(255,255,255,.5);
+  --cah-ink:#1A1712; --cah-ink-dim:#6b6257;
+  --cah-accent:#8B6914; --cah-accent-soft:rgba(139,105,20,.10); --cah-accent-line:rgba(139,105,20,.25);
+  --cah-font-title:'Playfair Display',serif; --cah-font-hand:'Playfair Display',serif; --cah-font-body:'Inter',sans-serif;
+  --cah-spirale:#8a8272;
+}
+body[data-theme="kraft"]{ --cah-paper:#FFFFFF; --cah-paper-line:#E5DCC8; --cah-paper-soft:rgba(255,255,255,.7);
+  --cah-ink:#2B1D0F; --cah-ink-dim:#6b5a3f;
+  --cah-accent:#E8623D; --cah-accent-soft:rgba(232,98,61,.09); --cah-accent-line:rgba(124,139,93,.4);
+  --cah-font-title:'Permanent Marker',cursive; --cah-font-hand:'Caveat',cursive; --cah-font-body:'Inter',sans-serif;
+  --cah-spirale:#7C8B5D;
+}
+body[data-theme="atlas"]{ --cah-paper:#EDE4D0; --cah-paper-line:rgba(32,36,42,.16); --cah-paper-soft:rgba(255,255,255,.35);
+  --cah-ink:#20242A; --cah-ink-dim:#6E8F84;
+  --cah-accent:#B87333; --cah-accent-soft:rgba(184,115,51,.09); --cah-accent-line:rgba(184,115,51,.3);
+  --cah-font-title:'Cinzel',serif; --cah-font-hand:'Special Elite',monospace; --cah-font-body:'Inter',sans-serif;
+  --cah-spirale:#6E8F84;
+}
+
 body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 
 #auth-check{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9999;color:var(--ink);}
@@ -25,10 +53,19 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .toolbar p{margin:0;font-size:11px;color:var(--chrome-ink-dim);}
 .btn-print{background:var(--gold);color:var(--chrome-bg);border:none;padding:10px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font-body);}
 .btn-print:hover{background:var(--gold-light);}
+.theme-pick{display:flex;align-items:center;gap:8px;}
+.theme-pick label{font-size:11px;color:var(--chrome-ink-dim);white-space:nowrap;}
+.theme-pick select{font-family:var(--font-body);font-size:12.5px;font-weight:600;padding:7px 10px;border-radius:7px;
+  border:1px solid var(--gold-a35,rgba(200,168,75,.35));background:var(--chrome-bg);color:var(--gold-light);cursor:pointer;}
+@media print{ .theme-pick{display:none;} }
 
 #pages{padding:20px 0 60px;}
-.page{width:210mm;min-height:297mm;margin:16px auto;background:#FDF9EF;position:relative;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.4);page-break-after:always;
-  background-image:radial-gradient(ellipse at top left, rgba(200,168,75,.05), transparent 60%), repeating-linear-gradient(rgba(26,18,8,.015) 0 1px, transparent 1px 3px);}
+.page{width:210mm;min-height:297mm;margin:16px auto;background:var(--cah-paper);position:relative;overflow:hidden;box-shadow:0 10px 34px rgba(0,0,0,.4);page-break-after:always;
+  background-image:radial-gradient(ellipse at top left, var(--cah-accent-soft), transparent 60%), repeating-linear-gradient(rgba(26,18,8,.015) 0 1px, transparent 1px 3px);
+  color:var(--cah-ink);}
+/* Le Carnet bricolé est sur papier blanc franc (retour Bruno 17/07) : pas de
+   texture de lignes ni de halo doré, contrairement aux deux autres thèmes. */
+body[data-theme="kraft"] .page{background-image:none;}
 @media print{ #auth-check,.toolbar{display:none !important;} body{background:none;} .page{margin:0;box-shadow:none;} }
 
 /* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
@@ -58,7 +95,8 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 }
 
 .spirale{position:absolute;left:10px;top:30px;bottom:30px;width:14px;display:flex;flex-direction:column;justify-content:space-between;z-index:5;}
-.spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid #8a8272;background:transparent;box-shadow:inset 0 0 0 3px #FDF9EF;}
+.spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--cah-spirale);background:transparent;box-shadow:inset 0 0 0 3px var(--cah-paper);}
+body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition relié, pas à spirale */
 
 .cover{display:flex;flex-direction:column;color:#F5EFE0;}
 .cover-illu{position:absolute;inset:0;background:linear-gradient(180deg,#F5E6C8 0%,#EAD4A0 45%,#C9A65E 100%);}
@@ -75,11 +113,43 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .cover-stat b{display:block;font-family:var(--font-title);font-size:16px;line-height:1.2;color:var(--gold-light);word-break:keep-all;}
 .cover-stat span{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(245,239,224,.65);}
 
+/* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
+   plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
+.cover-kraft{padding:0;color:#2B1D0F;}
+.cover-kraft .k-band{height:66px;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
+.cover-kraft .k-body{padding:30px 40px 0;}
+.cover-kraft .k-eyebrow{font-family:'Special Elite',monospace;font-size:11.5px;letter-spacing:.1em;color:#7C8B5D;text-transform:uppercase;}
+.cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0;transform:rotate(-1deg);}
+.cover-kraft .k-stickers{position:relative;height:400px;margin-top:6px;}
+.cover-kraft .k-tape{position:absolute;width:76px;height:28px;box-shadow:0 2px 5px rgba(0,0,0,.2);opacity:.9;}
+.cover-kraft .k-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
+.cover-kraft .k-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
+.cover-kraft .k-poly{position:absolute;background:#fff;padding:9px 9px 26px;box-shadow:0 8px 16px rgba(0,0,0,.22);}
+.cover-kraft .k-poly .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:26px;}
+.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:5px;color:#2B1D0F;}
+.cover-kraft .k-badge{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 5px 12px rgba(0,0,0,.28);line-height:1.15;}
+
+/* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
+.cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;}
+.cover-atlas::before{content:'';position:absolute;inset:14px;border:1px solid rgba(217,201,160,.25);pointer-events:none;}
+.cover-atlas::after{content:'';position:absolute;inset:20px;border:1px solid rgba(217,201,160,.12);pointer-events:none;}
+.cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
+.cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:32px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 8px;text-transform:uppercase;}
+.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:30px;}
+.cover-atlas .a-mapbox{position:relative;height:230px;border:1px solid rgba(217,201,160,.3);background:rgba(217,201,160,.03);margin-bottom:22px;}
+.cover-atlas .a-mapbox svg{width:100%;height:100%;}
+.cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);padding-top:16px;display:flex;justify-content:space-between;
+  font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;}
+.cover-atlas .a-plate b{color:#D9C9A0;font-family:'Cinzel',serif;font-size:14px;display:block;}
+.cover-atlas .a-compass{position:absolute;top:44px;right:40px;width:64px;height:64px;opacity:.7;}
+
 .day-page{padding:36px 40px 36px 54px;display:flex;flex-direction:column;}
 .day-head{display:flex;align-items:baseline;gap:14px;margin-bottom:4px;}
-.day-num-label{font-family:'Caveat',cursive;font-size:28px;color:var(--gold-deep);transform:rotate(-3deg);display:inline-block;}
-.day-title{font-family:var(--font-title);font-size:26px;font-weight:700;}
-.day-sub{font-size:11.5px;color:var(--ink-dim);margin:0 0 16px;padding-left:2px;}
+.day-num-label{font-family:var(--cah-font-hand);font-size:28px;color:var(--cah-accent);transform:rotate(-3deg);display:inline-block;}
+.day-title{font-family:var(--cah-font-title);font-size:26px;font-weight:700;color:var(--cah-ink);}
+.day-sub{font-size:11.5px;color:var(--cah-ink-dim);margin:0 0 16px;padding-left:2px;}
+body[data-theme="atlas"] .day-num-label,body[data-theme="atlas"] .day-title{text-transform:uppercase;letter-spacing:.02em;}
 .day-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:24px;flex:1;min-height:0;}
 
 .visuel-block{position:relative;}
@@ -87,67 +157,71 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 .visuel-photo{width:100%;height:180px;border-radius:4px;background-size:cover;background-position:center;}
 .visuel-caption{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-dim);margin-top:6px;padding:0 4px;}
 
-.narrative-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);margin:0 0 4px;}
-.editable-text{width:100%;border:none;background:transparent;font-family:var(--font-body);font-size:13px;line-height:1.6;color:var(--ink);resize:vertical;min-height:80px;padding:0;border-bottom:1px dashed rgba(26,18,8,.15);}
-.editable-text:focus{outline:none;border-bottom-color:var(--gold);}
-.editable-text::placeholder{color:var(--ink-dim);font-style:italic;}
+.narrative-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cah-accent);margin:0 0 4px;}
+.editable-text{width:100%;border:none;background:transparent;font-family:var(--cah-font-body);font-size:13px;line-height:1.6;color:var(--cah-ink);resize:vertical;min-height:80px;padding:0;border-bottom:1px dashed rgba(26,18,8,.15);}
+.editable-text:focus{outline:none;border-bottom-color:var(--cah-accent);}
+.editable-text::placeholder{color:var(--cah-ink-dim);font-style:italic;}
 @media print{ .editable-text{border-bottom:none;} }
 
-.box{border:1.5px solid rgba(26,18,8,.09);border-radius:8px;padding:11px 13px;margin:14px 0;background:rgba(255,255,255,.35);}
-.box-t{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);margin:0 0 7px;}
+.box{border:1.5px solid var(--cah-paper-line);border-radius:8px;padding:11px 13px;margin:14px 0;background:var(--cah-paper-soft);}
+.box-t{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cah-accent);margin:0 0 7px;}
 .infos-row{display:flex;justify-content:space-between;font-size:12px;padding:2.5px 0;}
-.infos-row span:first-child{color:var(--ink-dim);}
+.infos-row span:first-child{color:var(--cah-ink-dim);}
 
-.day-footer{margin-top:auto;padding-top:12px;border-top:1px solid rgba(26,18,8,.09);display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-dim);}
+.day-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--cah-paper-line);display:flex;justify-content:space-between;font-size:10.5px;color:var(--cah-ink-dim);}
 
+/* La page de clôture reste volontairement identique dans les 3 thèmes — un
+   « signature moment » sombre + or partagé, comme le chrome du site. */
 .closing{background:linear-gradient(160deg,#161410,#0f0d09);color:#F5EFE0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px;}
-.closing h2{font-family:var(--font-title);font-size:38px;margin:0 0 10px;}
+.closing h2{font-family:'Playfair Display',serif;font-size:38px;margin:0 0 10px;}
 .closing p{color:rgba(245,239,224,.7);max-width:420px;margin:0 0 36px;font-size:13px;}
 .closing-stats{display:flex;gap:44px;}
-.closing-stats .stat b{display:block;font-family:var(--font-title);font-size:30px;color:var(--gold-light);}
+.closing-stats .stat b{display:block;font-family:'Playfair Display',serif;font-size:30px;color:#E8C86B;}
 .closing-stats .stat span{font-size:11px;color:rgba(245,239,224,.6);text-transform:uppercase;letter-spacing:.08em;}
 
-.empty-state{padding:60px;text-align:center;color:var(--ink-dim);font-size:13px;}
+.empty-state{padding:60px;text-align:center;color:var(--cah-ink-dim);font-size:13px;}
 
 /* Page Équipe (08/07) */
 .team-page{padding:54px 46px;}
 .team-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;}
-.team-card{border:1.5px solid rgba(26,18,8,.09);border-radius:10px;padding:16px;background:rgba(255,255,255,.4);display:flex;gap:12px;}
+.team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:12px;}
 .team-av{width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   font-size:22px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
-.team-nom{font-family:var(--font-title);font-size:15px;font-weight:700;margin:0 0 3px;}
-.team-depuis{font-size:10.5px;color:var(--gold-deep);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.team-nom{font-family:var(--cah-font-title);font-size:15px;font-weight:700;margin:0 0 3px;color:var(--cah-ink);}
+.team-depuis{font-size:10.5px;color:var(--cah-accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
 .team-passions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
-.team-chip{font-size:9.5px;background:var(--gold-a10,rgba(200,168,75,.1));border:1px solid rgba(200,168,75,.2);border-radius:10px;padding:2px 8px;color:var(--ink-dim);}
-.team-presentation{font-size:11.5px;line-height:1.5;color:var(--ink-dim);font-style:italic;}
+.team-chip{font-size:9.5px;background:var(--cah-accent-soft);border:1px solid var(--cah-accent-line);border-radius:10px;padding:2px 8px;color:var(--cah-ink-dim);}
+.team-presentation{font-size:11.5px;line-height:1.5;color:var(--cah-ink-dim);font-style:italic;}
 @media(max-width:700px){.team-grid{grid-template-columns:1fr;}}
 
 /* ── FICHE COMPLÈTE, reprise d'app.css (10/07) — le Cahier n'a jamais chargé
    app.css (toutes les autres pages en dépendent, lui a son propre habillage
    papier) : on ne recopie QUE les classes .gf-* utilisées par fiche-complete.js,
    pour que la même fiche riche (photo, description, conseil, pratique, tags)
-   s'imprime ici comme elle s'affiche partout ailleurs sur le site. */
+   s'imprime ici comme elle s'affiche partout ailleurs sur le site.
+   Retintées par thème (B69) : la vraie fiche doit porter la même signature
+   visuelle que le reste de la page, pas rester figée dans les tons d'origine. */
 .gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:10px 10px 0 0;}
 .gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
 .gf-cover-overlay{padding:14px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.7));}
-.gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
+.gf-type-badge{background:var(--cah-accent);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
 .gf-content{padding:16px 0 0;}
 .gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:var(--ink)!important;}
-.gf-sub{font-size:12px;color:var(--gold-deep);margin:0 0 14px;}
-.gf-desc{font-size:13.5px;line-height:1.6;color:var(--ink);margin:0 0 14px;}
-.gf-quote{background:rgba(255,255,255,.5);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
-.gf-quote-t{font-size:10px;color:var(--gold-deep);font-weight:700;margin-bottom:4px;}
-.gf-quote p{font-size:13px;line-height:1.6;color:var(--ink-dim);margin:0;font-style:italic;}
-.gf-conseil{background:var(--gold-a10,rgba(200,168,75,.1));border:1px solid var(--gold-a20,rgba(200,168,75,.2));padding:11px 14px;border-radius:8px;margin-bottom:16px;}
-.gf-conseil-t{font-size:11px;color:var(--gold-deep);font-weight:700;}
-.gf-conseil p{font-size:13px;color:var(--ink);margin:4px 0 0;line-height:1.5;}
+.gf-title{font-family:var(--cah-font-title)!important;font-size:24px;margin:0 0 4px;color:var(--cah-ink)!important;}
+.gf-sub{font-size:12px;color:var(--cah-accent);margin:0 0 14px;}
+.gf-desc{font-size:13.5px;line-height:1.6;color:var(--cah-ink);margin:0 0 14px;}
+.gf-quote{background:var(--cah-paper-soft);border-left:3px solid var(--cah-accent);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
+.gf-quote-t{font-size:10px;color:var(--cah-accent);font-weight:700;margin-bottom:4px;}
+.gf-quote p{font-size:13px;line-height:1.6;color:var(--cah-ink-dim);margin:0;font-style:italic;}
+.gf-conseil{background:var(--cah-accent-soft);border:1px solid var(--cah-accent-line);padding:11px 14px;border-radius:8px;margin-bottom:16px;}
+.gf-conseil-t{font-size:11px;color:var(--cah-accent);font-weight:700;}
+.gf-conseil p{font-size:13px;color:var(--cah-ink);margin:4px 0 0;line-height:1.5;}
 .gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
-.gf-cell{background:rgba(255,255,255,.5);padding:10px 12px;border-radius:8px;}
-.gf-cell-t{font-size:10px;color:var(--gold-deep);font-weight:700;margin-bottom:4px;}
-.gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
+.gf-cell{background:var(--cah-paper-soft);padding:10px 12px;border-radius:8px;}
+.gf-cell-t{font-size:10px;color:var(--cah-accent);font-weight:700;margin-bottom:4px;}
+.gf-cell-v{font-size:12px;color:var(--cah-ink);line-height:1.6;}
 .gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
-.gf-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;border-top:1px solid rgba(26,18,8,.09);padding-top:10px;}
+.gf-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;border-top:1px solid var(--cah-paper-line);padding-top:10px;}
 .gf-bottom-actions{display:flex;flex-wrap:wrap;gap:8px;}
 .gf-btn-dark{background:#161410;border:1px solid var(--gold-a35,rgba(200,168,75,.35));color:#E8C86B;font-size:11px;padding:6px 11px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
 @media print{.gf-bottom-row{display:none;}} /* liens cliquables inutiles sur papier */
@@ -165,16 +239,16 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
    colorées comme sur la carte (même palette, RNR_MARQUEURS.couleurExcursion). */
 .chemin-liste{position:relative;padding-left:8px;}
 .chemin-etape{display:flex;gap:14px;position:relative;padding-bottom:18px;}
-.chemin-etape:not(:last-child)::before{content:'';position:absolute;left:13px;top:28px;bottom:0;width:2px;background:rgba(26,18,8,.12);}
-.chemin-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;z-index:1;}
+.chemin-etape:not(:last-child)::before{content:'';position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--cah-paper-line);}
+.chemin-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--cah-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;z-index:1;}
 .chemin-corps{flex:1;padding-top:2px;}
-.chemin-nom{font-family:var(--font-title);font-size:15px;font-weight:700;color:var(--ink);}
-.chemin-meta{font-size:11px;color:var(--ink-dim);margin-top:1px;}
+.chemin-nom{font-family:var(--cah-font-title);font-size:15px;font-weight:700;color:var(--cah-ink);}
+.chemin-meta{font-size:11px;color:var(--cah-ink-dim);margin-top:1px;}
 .chemin-excursions{margin-top:8px;display:flex;flex-direction:column;gap:5px;}
-.chemin-exc{font-size:11.5px;color:var(--ink);border-left:3px solid;padding:3px 0 3px 10px;}
+.chemin-exc{font-size:11.5px;color:var(--cah-ink);border-left:3px solid;padding:3px 0 3px 10px;}
 </style>
 </head>
-<body>
+<body data-theme="edition">
 
 <div id="auth-check">
   <div style="font-size:32px;">📓</div>
@@ -197,6 +271,14 @@ setTimeout(function(){
   <div>
     <h1>📓 Le Cahier</h1>
     <p>Complète le mot de chaque étape, puis imprime — <span id="save-state">à jour</span></p>
+  </div>
+  <div class="theme-pick">
+    <label for="theme-select">Style</label>
+    <select id="theme-select" onchange="rnrChangerTheme(this.value)">
+      <option value="edition">Édition</option>
+      <option value="kraft">Carnet bricolé</option>
+      <option value="atlas">Atlas d'expédition</option>
+    </select>
   </div>
   <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
 </div>
@@ -231,7 +313,7 @@ sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIs
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
 let voyage=[];
-let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',memo_blocs:[],budget_estime:null};
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',memo_blocs:[],budget_estime:null,cahier_theme:'edition'};
 let RB_DECOUPAGE=null;
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
@@ -304,11 +386,35 @@ async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
     const {data}=await sb.from('voyages')
-      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,memo_blocs,budget_estime')
+      .select('nom,date_debut,date_fin_envisagee,nb_participants,nb_animaux,destination_libre,but_voyage,notes_groupe,memo_blocs,budget_estime,cahier_theme')
       .eq('id',VOYAGE_ID).single();
-    if(data) RB_INFO=data;
+    if(data){
+      RB_INFO=data;
+      appliquerTheme(data.cahier_theme||'edition', {silencieux:true});
+    }
   }catch(e){ console.warn('Cahier: infos voyage', e); }
 }
+
+// (17/07, B69) Le thème est un attribut du VOYAGE, pas un réglage personnel :
+// tout le groupe imprime le même Cahier. appliquerTheme() pose l'attribut
+// data-theme (le CSS fait tout le travail de reskin) et synchronise le
+// sélecteur ; silencieux=true au chargement initial (rien à sauvegarder,
+// on affiche juste ce qui est déjà en base).
+function appliquerTheme(theme, opts){
+  opts=opts||{};
+  const valide = ['edition','kraft','atlas'].includes(theme) ? theme : 'edition';
+  document.body.dataset.theme = valide;
+  const sel=document.getElementById('theme-select'); if(sel) sel.value=valide;
+  if(!opts.silencieux) render();
+}
+async function rnrChangerTheme(theme){
+  appliquerTheme(theme);
+  RB_INFO.cahier_theme=theme;
+  if(!VOYAGE_ID) return;
+  try{ await sb.from('voyages').update({cahier_theme:theme}).eq('id',VOYAGE_ID); }
+  catch(e){ console.warn('Cahier: sauvegarde du thème', e); }
+}
+window.rnrChangerTheme = rnrChangerTheme;
 let MEMBRES=[];
 async function chargerMembres(){
   if(!GROUPE_ID) return;
@@ -509,17 +615,56 @@ function pageCheminComplet(chaine, dates, sejourIdx){
     +'</div>';
 }
 
-function render(){
-  const host=document.getElementById('pages');
-  const dest=RB_INFO.destination_libre||regionAuto()||'Votre voyage';
-  const chaine=chaineDe();
-  const dates=datesCumulees();
-  const sejourIdx=calculeIndexSejours();
-  let totalKm=0;
-  if(DOMICILE&&chaine[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,chaine[0].lat,chaine[0].lng);
-  for(let i=1;i<chaine.length;i++) totalKm+=calcDist(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
+function temaActif(){
+  const v=document.body.dataset.theme;
+  return ['edition','kraft','atlas'].includes(v) ? v : 'edition';
+}
 
-  const html0=''
+// (17/07, B69) La couverture est le seul endroit vraiment bespoke par thème —
+// c'est une illustration, pas un gabarit de données. Un seul point d'entrée
+// (cette fonction), trois branches, jamais trois générateurs séparés dans
+// trois coins du fichier.
+function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux){
+  const kmTxt=totalKm>0?('≈'+totalKm):'—';
+  const nuitsTxt=nuitsTotal()||'—';
+  const partTxt=nbPart||'—';
+  const animTxt=nbAnimaux?(nbAnimaux+' 🐕'):'—';
+
+  if(tema==='kraft'){
+    return '<div class="page cover cover-kraft">'
+      +'<div class="k-band"></div>'
+      +'<div class="k-body">'
+        +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
+        +'<h1 class="k-title">'+esc(dest)+'</h1>'
+        +'<div class="k-stickers">'
+          +'<div class="k-tape mint" style="top:2px;left:40px;transform:rotate(-5deg);"></div>'
+          +'<div class="k-tape mustard" style="top:16px;left:210px;transform:rotate(4deg);"></div>'
+          +'<div class="k-badge" style="width:104px;height:104px;background:#E8623D;bottom:14px;left:10px;transform:rotate(-8deg);font-size:12px;">'
+            +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
+          +'<div class="k-badge" style="width:70px;height:70px;background:#7C8B5D;bottom:34px;right:24px;transform:rotate(10deg);font-size:11px;">'
+            +esc(partTxt)+' PERS.</div>'
+        +'</div>'
+      +'</div></div>';
+  }
+
+  if(tema==='atlas'){
+    return '<div class="page cover-atlas">'
+      +'<svg class="a-compass" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="#5C7A6B" stroke-width="1.5"/>'
+        +'<path d="M50 8 L58 50 L50 92 L42 50 Z" fill="#8B3A2E" opacity=".7"/><path d="M8 50 L50 42 L92 50 L50 58 Z" fill="#5C7A6B" opacity=".7"/>'
+        +'<text x="50" y="20" font-family="Cinzel" font-size="9" fill="#D9C9A0" text-anchor="middle">N</text></svg>'
+      +'<p class="a-eyebrow">Carnet d\'expédition</p>'
+      +'<h1 class="a-title">'+esc(dest)+'</h1>'
+      +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
+      +'<div class="a-mapbox"><svg viewBox="0 0 480 260" preserveAspectRatio="none">'
+        +'<path d="M40 210 Q 140 60 250 130 T 440 60" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".8"/>'
+        +'<circle cx="40" cy="210" r="6" fill="#8B3A2E"/><circle cx="250" cy="130" r="6" fill="#8B3A2E"/><circle cx="440" cy="60" r="6" fill="#8B3A2E"/>'
+      +'</svg></div>'
+      +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
+      +'</div>';
+  }
+
+  // 'edition' (défaut, dans la charte) — inchangée depuis toujours.
+  return ''
     +'<div class="page cover">'
     +'<div class="cover-illu">'
       +'<svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">'
@@ -543,12 +688,24 @@ function render(){
     +'<div class="cover-scrim"></div>'
     +'<div class="cover-top"><p class="cover-eyebrow">Carnet de voyage</p><h1 class="cover-title">'+esc(dest)+'</h1></div>'
     +'<div class="cover-bottom"><div class="cover-line"></div><div class="cover-stats">'
-    +'<div class="cover-stat"><b>'+(totalKm>0?('≈'+totalKm):'—')+' km</b><span>Total</span></div>'
-    +'<div class="cover-stat"><b>'+(nuitsTotal()||'—')+'</b><span>Nuits</span></div>'
-    +'<div class="cover-stat"><b>'+(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
-    +'<div class="cover-stat"><b>'+(RB_INFO.nb_animaux?(RB_INFO.nb_animaux+' 🐕'):'—')+'</b><span>Compagnons</span></div>'
+    +'<div class="cover-stat"><b>'+kmTxt+' km</b><span>Total</span></div>'
+    +'<div class="cover-stat"><b>'+nuitsTxt+'</b><span>Nuits</span></div>'
+    +'<div class="cover-stat"><b>'+esc(partTxt)+'</b><span>Voyageurs</span></div>'
+    +'<div class="cover-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
     +'</div></div></div>';
-  let html=html0;
+}
+
+function render(){
+  const host=document.getElementById('pages');
+  const dest=RB_INFO.destination_libre||regionAuto()||'Votre voyage';
+  const chaine=chaineDe();
+  const dates=datesCumulees();
+  const sejourIdx=calculeIndexSejours();
+  let totalKm=0;
+  if(DOMICILE&&chaine[0]) totalKm+=calcDist(DOMICILE.lat,DOMICILE.lng,chaine[0].lat,chaine[0].lng);
+  for(let i=1;i<chaine.length;i++) totalKm+=calcDist(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
+
+  let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux);
 
   // Page Équipe (08/07) — les profils sont désormais alimentés par la barre
   // d'avatars (chrome.js). Cadre rond partout : un mauvais cadrage de photo
@@ -592,7 +749,7 @@ function render(){
     html+='<div class="page day-page" style="align-items:center;justify-content:center;text-align:center;display:flex;flex-direction:column;">'
       +'<p style="font-size:40px;margin-bottom:12px;">🗺️</p>'
       +'<p class="day-title" style="margin-bottom:8px;">Les étapes arrivent bientôt</p>'
-      +'<p style="color:var(--ink-dim);font-size:13px;max-width:320px;">Ajoutez des lieux depuis Horizon pour que le voyage prenne forme ici, page après page.</p>'
+      +'<p style="color:var(--cah-ink-dim);font-size:13px;max-width:320px;">Ajoutez des lieux depuis Horizon pour que le voyage prenne forme ici, page après page.</p>'
       +'</div>';
   }
   // (10/07, retour Bruno) : on ne fait plus feuille par feuille (une page par
@@ -662,8 +819,8 @@ function render(){
     +memoAAfficher.map(cat=>
       '<div class="box"><p class="box-t">'+esc(cat.icone||'📌')+' '+esc(cat.titre||'')+'</p>'
       +( cat.items
-          ? cat.items.map(it=>'<div class="infos-row" style="align-items:flex-start;"><span style="min-width:110px;flex-shrink:0;">'+esc(it.t)+'</span><span style="text-align:left;color:var(--ink);">'+esc(it.d)+'</span></div>').join('')
-          : '<div style="font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);">'+esc(cat.texte||'')+'</div>'
+          ? cat.items.map(it=>'<div class="infos-row" style="align-items:flex-start;"><span style="min-width:110px;flex-shrink:0;">'+esc(it.t)+'</span><span style="text-align:left;color:var(--cah-ink);">'+esc(it.d)+'</span></div>').join('')
+          : '<div style="font-size:12.5px;line-height:1.6;white-space:pre-wrap;color:var(--cah-ink);">'+esc(cat.texte||'')+'</div>'
         )
       +'</div>'
     ).join('')
