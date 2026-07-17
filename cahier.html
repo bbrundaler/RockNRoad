@@ -113,39 +113,45 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 
 /* ── Couverture — thème Carnet bricolé (B69) : rupture totale de palette,
    plus aucun or/noir de la charte. Papier blanc, bande kraft, marqueur. ── */
-/* (17/07, 3e retour Bruno : « ça manque de wahou », recentrer ne suffisait
-   pas) — vraie refonte : texture de carnet (grille de points), pile de
-   photos asymétrique façon photos posées sur un bureau plutôt qu'une rangée
-   sagement alignée, doodles à la main, tampon décoratif. Toujours plein-page
-   et centré verticalement, mais la composition elle-même a du répondant. */
+/* (17/07, 4e retour Bruno : « ça reste fade », centrer une petite pile ne
+   suffisait toujours pas) — changement de logique : la grande photo REMPLIT
+   tout l'espace restant (flex:1, comme la bande photo de l'Édition), les
+   photos secondaires et les badges se posent DESSUS comme des stickers.
+   Il ne peut plus y avoir de vide : la photo prend toute la place dispo,
+   qu'elle qu'en soit la hauteur réelle de la page. */
 .cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;
   background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
 .cover-kraft .k-band{height:66px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
-.cover-kraft .k-body{padding:36px 40px 44px;flex:1;display:flex;flex-direction:column;position:relative;}
+.cover-kraft .k-body{padding:32px 40px 40px;flex:1;display:flex;flex-direction:column;position:relative;}
 .cover-kraft .k-eyebrow{font-family:'Special Elite',monospace;font-size:11.5px;letter-spacing:.1em;color:#7C8B5D;text-transform:uppercase;}
 .cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0 0;transform:rotate(-1deg);}
 .cover-kraft .k-tagline{font-family:'Caveat',cursive;font-size:19px;color:#7C8B5D;margin:6px 0 0;transform:rotate(-.6deg);}
-.cover-kraft .k-stamp{position:absolute;top:38px;right:44px;width:92px;height:92px;border-radius:50%;border:2.5px dashed #8B3A2E;
+.cover-kraft .k-stamp{position:absolute;top:34px;right:44px;width:88px;height:88px;border-radius:50%;border:2.5px dashed #8B3A2E;
   color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
-  font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;}
-.cover-kraft .k-doodle{position:absolute;opacity:.55;}
-.cover-kraft .k-collage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;}
-.cover-kraft .k-pile{position:relative;width:360px;height:250px;}
-.cover-kraft .k-poly{position:absolute;background:#fff;padding:9px 9px 24px;box-shadow:0 10px 20px rgba(0,0,0,.24);}
-.cover-kraft .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
-.cover-kraft .k-poly .cap{font-family:'Caveat',cursive;font-size:15px;text-align:center;margin-top:6px;color:#2B1D0F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);z-index:2;}
+  font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;z-index:3;}
+.cover-kraft .k-doodle{position:absolute;opacity:.55;z-index:1;}
+.cover-kraft .k-photo-zone{flex:1;position:relative;margin:26px 6px 46px;}
+.cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.3);}
+.cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.22);
+  background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 20px,#EFE1BE 20px,#EFE1BE 40px);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;color:#B99A5E;font-family:'Caveat',cursive;font-size:22px;text-align:center;}
+.cover-kraft .k-hero-cap{position:absolute;left:24px;bottom:0;transform:translateY(50%) rotate(-2deg);background:#fff;padding:7px 16px;
+  box-shadow:0 5px 12px rgba(0,0,0,.2);font-family:'Caveat',cursive;font-size:17px;color:#2B1D0F;z-index:3;max-width:70%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cover-kraft .k-accent{position:absolute;top:-26px;left:-20px;width:150px;height:130px;background:#fff;padding:8px 8px 8px;
+  box-shadow:0 12px 24px rgba(0,0,0,.3);transform:rotate(-8deg);z-index:2;}
+.cover-kraft .k-accent .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
+.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);}
 .cover-kraft .k-poly-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
 .cover-kraft .k-poly-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
-.cover-kraft .k-badge-row{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;}
-.cover-kraft .k-badge{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
-  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.28);line-height:1.15;font-size:12px;}
+.cover-kraft .k-sticker-row{position:absolute;bottom:-24px;right:18px;display:flex;gap:16px;z-index:3;}
+.cover-kraft .k-badge{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.3);line-height:1.15;font-size:11px;border:3px solid #fff;}
 
 /* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
-/* (17/07, 3e retour) : grille de graticule en fond, amers d'angle façon
-   plan technique, boussole en filigrane derrière le titre, tracé étiré sur
-   presque toute la largeur (avec le nom de chaque halte), planche photo
-   posée dessous plutôt qu'écrasée à côté de la carte. */
+/* (17/07, 4e retour) : la carte et la planche photo grandissent elles-mêmes
+   (flex, comme la photo Kraft) plutôt que de garder une hauteur fixe au
+   milieu d'une page qui, elle, ne l'est pas — fini le vide résiduel. */
 .cover-atlas{background:#141C26;color:#D9C9A0;position:relative;padding:44px 40px;display:flex;flex-direction:column;min-height:297mm;
   background-image:repeating-linear-gradient(rgba(217,201,160,.05) 0 1px, transparent 1px 34px),
                     repeating-linear-gradient(90deg, rgba(217,201,160,.05) 0 1px, transparent 1px 34px);}
@@ -154,21 +160,24 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-atlas .a-corner.tr{top:16px;right:16px;border-top:1.5px solid;border-right:1.5px solid;}
 .cover-atlas .a-corner.bl{bottom:16px;left:16px;border-bottom:1.5px solid;border-left:1.5px solid;}
 .cover-atlas .a-corner.br{bottom:16px;right:16px;border-bottom:1.5px solid;border-right:1.5px solid;}
-.cover-atlas .a-watermark{position:absolute;top:50%;left:50%;width:420px;height:420px;transform:translate(-50%,-50%);opacity:.05;pointer-events:none;}
-.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;}
+.cover-atlas .a-watermark{position:absolute;top:50%;left:50%;width:460px;height:460px;transform:translate(-50%,-50%);opacity:.045;pointer-events:none;}
+.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;position:relative;}
 .cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
 .cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 6px;text-transform:uppercase;}
 .cover-atlas .a-title-rule{width:100%;height:1px;background:linear-gradient(90deg,#B87333,transparent);margin-bottom:10px;}
-.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:30px;}
-.cover-atlas .a-route-strip{position:relative;height:90px;margin-bottom:26px;}
+.cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:22px;}
+.cover-atlas .a-route-strip{position:relative;flex:1;min-height:90px;margin-bottom:22px;}
 .cover-atlas .a-route-strip svg{width:100%;height:100%;}
 .cover-atlas .a-route-lbl{position:absolute;top:100%;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:8px;
   color:#8a97a3;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;margin-top:4px;text-align:center;}
-.cover-atlas .a-photo-plate{width:64%;margin:0 auto 26px;border:1.5px solid rgba(217,201,160,.35);padding:8px;background:rgba(217,201,160,.03);}
-.cover-atlas .a-photo-plate .ph{height:180px;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
-.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:7px;text-transform:uppercase;}
+.cover-atlas .a-photo-plate{flex:2;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
+  background:rgba(217,201,160,.03);display:flex;flex-direction:column;min-height:180px;}
+.cover-atlas .a-photo-plate .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
+.cover-atlas .a-photo-plate-empty{flex:1;background:repeating-linear-gradient(135deg,rgba(217,201,160,.05),rgba(217,201,160,.05) 20px,transparent 20px,transparent 40px);
+  display:flex;align-items:center;justify-content:center;font-family:'Special Elite',monospace;font-size:10px;color:#5a6570;letter-spacing:.06em;text-transform:uppercase;}
+.cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:7px;text-transform:uppercase;flex-shrink:0;}
 .cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);border-bottom:1px solid rgba(217,201,160,.25);padding:16px 0;display:flex;justify-content:space-around;
-  font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;margin-bottom:24px;}
+  font-family:'Special Elite',monospace;font-size:10px;color:#8a97a3;letter-spacing:.04em;margin-bottom:20px;flex-shrink:0;}
 .cover-atlas .a-plate b{color:#D9C9A0;font-family:'Cinzel',serif;font-size:16px;display:block;margin-bottom:2px;}
 .cover-atlas .a-footnote{text-align:center;font-family:'Special Elite',monospace;font-size:9px;letter-spacing:.08em;color:#5a6570;text-transform:uppercase;}
 .cover-atlas .a-compass{position:absolute;top:44px;right:40px;width:64px;height:64px;opacity:.7;}
@@ -227,7 +236,11 @@ body[data-theme="edition"] .gf-desc::first-letter{font-family:var(--cah-font-tit
    En-tête avec ligne de séparation + accroche, avatars agrandis et cadrés
    selon le thème (médaillon or/édition, polaroid léger/kraft, médaille
    laiton/atlas), cartes avec un peu de vie plutôt que des rectangles sages. */
-.team-page{padding:54px 46px;}
+.team-page{padding:54px 46px;display:flex;flex-direction:column;min-height:297mm;}
+body[data-theme="kraft"] .team-page{background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
+body[data-theme="atlas"] .team-page{background-image:repeating-linear-gradient(rgba(32,36,42,.05) 0 1px, transparent 1px 34px),
+  repeating-linear-gradient(90deg, rgba(32,36,42,.05) 0 1px, transparent 1px 34px);}
+.team-grid-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;}
 .team-header{border-bottom:1px solid var(--cah-paper-line);padding-bottom:14px;margin-bottom:6px;}
 .team-tagline{font-family:var(--cah-font-hand);font-size:14px;color:var(--cah-ink-dim);margin:2px 0 22px;font-style:italic;}
 body[data-theme="kraft"] .team-tagline{font-size:18px;font-style:normal;color:#7C8B5D;}
@@ -690,58 +703,50 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
   routeLabels=routeLabels||['Départ','En route','Arrivée'];
 
   if(tema==='kraft'){
-    // (17/07, 3e retour Bruno) : une vraie pile de photos posées en biais
-    // (pas une rangée sage), des doodles à la main et un tampon décoratif —
-    // les positions s'adaptent au nombre réel de photos (1 à 3).
-    const PILES = {
-      1: [{cls:'hero', top:15, left:95, rot:-2, z:3, w:170, h:210, tape:'mint'}],
-      2: [{cls:'hero', top:15, left:60, rot:-3, z:2, w:170, h:210, tape:'mint'},
-          {cls:'accent', top:55, left:230, rot:10, z:1, w:130, h:165, tape:'mustard'}],
-      3: [{cls:'hero', top:10, left:105, rot:-2, z:3, w:170, h:210, tape:'mint'},
-          {cls:'accent', top:60, left:0, rot:-13, z:1, w:130, h:165, tape:'mustard'},
-          {cls:'accent', top:55, left:225, rot:11, z:2, w:130, h:165, tape:'mint'}]
-    };
-    const arrangement = PILES[Math.min(photos.length,3)] || [];
-    const pileHtml = photos.slice(0,3).map((p,i)=>{
-      const pos=arrangement[i];
-      return '<div class="k-poly" style="top:'+pos.top+'px;left:'+pos.left+'px;width:'+pos.w+'px;height:'+pos.h+'px;transform:rotate('+pos.rot+'deg);z-index:'+pos.z+';">'
-        +'<div class="k-poly-tape '+pos.tape+'"></div>'
-        +'<div class="k-poly-photo" style="background-image:url(\''+p.url+'\');"></div>'
-        +(pos.cls==='hero'?('<div class="cap">'+esc(p.nom||'')+'</div>'):'')
-        +'</div>';
-    }).join('');
+    // (17/07, 4e retour Bruno) : la grande photo REMPLIT l'espace (comme la
+    // bande de l'Édition) — l'accent et les badges se posent dessus comme
+    // des stickers, jamais de vide résiduel quelle que soit la hauteur réelle
+    // de la page. Repli texturé si aucune photo n'existe encore.
+    const hero = photos[0] || null;
+    const accent = photos[1] || null;
+    const heroHtml = hero
+      ? '<div class="k-hero" style="background-image:url(\''+hero.url+'\');"></div>'
+        +(hero.nom?('<div class="k-hero-cap">'+esc(hero.nom)+'</div>'):'')
+      : '<div class="k-hero-empty">📍<br>Les photos arriveront<br>au fil du voyage</div>';
+    const accentHtml = accent
+      ? '<div class="k-accent"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+accent.url+'\');"></div></div>'
+      : '';
     const tagline = nuitsTxt!=='—' ? (nuitsTxt+' nuits quelque part sur les routes de France') : 'Encore à écrire…';
     return '<div class="page cover cover-kraft">'
       +'<div class="k-band"></div>'
       +'<div class="k-body">'
         +'<svg class="k-doodle" style="top:6px;left:280px;width:70px;" viewBox="0 0 70 34"><path d="M2 26 Q22 4 66 16" stroke="#7C8B5D" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M56 8 L66 16 L57 26" stroke="#7C8B5D" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'
-        +'<svg class="k-doodle" style="bottom:30px;left:8px;width:34px;" viewBox="0 0 34 32"><path d="M17 4 L20 13 L29 13 L21.5 18.5 L24.5 28 L17 22 L9.5 28 L12.5 18.5 L5 13 L14 13 Z" fill="none" stroke="#E8A93B" stroke-width="1.6" stroke-linejoin="round"/></svg>'
         +(photos.length?('<div class="k-stamp">'+esc(dest).slice(0,16)+'<br>★ ★ ★<br>EN ROUTE !</div>'):'')
         +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
         +'<h1 class="k-title">'+esc(dest)+'</h1>'
         +'<p class="k-tagline">'+tagline+'</p>'
-        +'<div class="k-collage">'
-          +(pileHtml?('<div class="k-pile">'+pileHtml+'</div>'):'')
-          +'<div class="k-badge-row">'
+        +'<div class="k-photo-zone">'
+          +heroHtml
+          +accentHtml
+          +'<div class="k-sticker-row">'
             +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
               +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
             +'<div class="k-badge" style="background:#7C8B5D;transform:rotate(7deg);">'
-              +esc(partTxt)+' PERSONNES</div>'
+              +esc(partTxt)+' PERS.</div>'
           +'</div>'
         +'</div>'
       +'</div></div>';
   }
 
   if(tema==='atlas'){
-    // (17/07, 3e retour Bruno) : grille de graticule, amers d'angle, boussole
-    // en filigrane derrière le titre, bande de tracé étirée sur presque
-    // toute la largeur avec le nom de chaque halte, planche photo posée
-    // dessous plutôt qu'écrasée à côté — la page respire sur toute sa hauteur.
+    // (17/07, 4e retour Bruno) : la planche photo et la bande de tracé
+    // grandissent elles-mêmes (flex, comme la photo Kraft) pour occuper tout
+    // l'espace restant — fini le vide entre le contenu et le bas de page.
     const photoAtlas = photos[0] || null;
-    const planche = photoAtlas
-      ? '<div class="a-photo-plate"><div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div></div>'
-        +'<p class="a-photo-cap" style="margin-top:-18px;margin-bottom:26px;">Planche nº1 — '+esc(photoAtlas.nom||'')+'</p>'
-      : '';
+    const plancheInner = photoAtlas
+      ? '<div class="ph" style="background-image:url(\''+photoAtlas.url+'\');"></div>'
+      : '<div class="a-photo-plate-empty">Photo à venir</div>';
+    const plancheCap = photoAtlas ? ('<p class="a-photo-cap">Planche nº1 — '+esc(photoAtlas.nom||'')+'</p>') : '';
     const pts=[{x:30,y:70},{x:250,y:20},{x:470,y:55}];
     const routeSvg = '<svg viewBox="0 0 500 90" preserveAspectRatio="none">'
       +'<path d="M'+pts[0].x+' '+pts[0].y+' Q '+pts[1].x+' '+(pts[1].y-40)+' '+pts[1].x+' '+pts[1].y+' T '+pts[2].x+' '+pts[2].y+'" fill="none" stroke="#8B3A2E" stroke-width="2" stroke-dasharray="7 6" opacity=".85"/>'
@@ -761,7 +766,7 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
       +'<div class="a-title-rule"></div>'
       +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
       +'<div class="a-route-strip">'+routeSvg+routeLbls+'</div>'
-      +planche
+      +'<div class="a-photo-plate">'+plancheInner+plancheCap+'</div>'
       +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
       +'<p class="a-footnote">Relevé cartographique — RockNRoad</p>'
       +'</div></div>';
@@ -826,7 +831,7 @@ function render(){
       +'<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">👥 Qui embarque</p>'
       +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
       +'<p class="team-tagline">'+esc(tagline)+'</p>'
-      +'<div class="team-grid">'
+      +'<div class="team-grid-wrap"><div class="team-grid">'
       +MEMBRES.map((m,i)=>{
         const nom=m.pseudo||m.prenom||'Voyageur';
         const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
@@ -846,7 +851,7 @@ function render(){
           +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
           +'</div></div>';
       }).join('')
-      +'</div></div>';
+      +'</div></div></div>';
   }
 
   // (10/07) « Le chemin complet » — juste après Couverture + Équipe, avant le
