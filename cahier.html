@@ -130,21 +130,27 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
   color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
   font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;z-index:3;}
 .cover-kraft .k-doodle{position:absolute;opacity:.55;z-index:1;}
-.cover-kraft .k-photo-zone{flex:1;position:relative;margin:26px 6px 46px;}
-.cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.3);}
-.cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.22);
+/* (17/07, 5e retour Bruno) : l'accent flottant en surimpression débordait
+   sur le texte et écrasait trop la photo principale — deux panneaux CÔTE À
+   CÔTE (63/37) à la place. Chacun remplit sa part, aucun ne chevauche plus
+   jamais l'en-tête, et le second polaroid a enfin une vraie présence. */
+.cover-kraft .k-photo-zone{flex:1;display:flex;gap:18px;margin:24px 4px 46px;position:relative;}
+.cover-kraft .k-hero-panel{position:relative;flex:1 1 100%;}
+.cover-kraft .k-photo-zone.a-deux .k-hero-panel{flex:0 0 63%;}
+.cover-kraft .k-accent-panel{position:relative;flex:1;margin-top:26px;}
+.cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 16px 32px rgba(0,0,0,.28);}
+.cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 16px 32px rgba(0,0,0,.2);
   background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 20px,#EFE1BE 20px,#EFE1BE 40px);display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:10px;color:#B99A5E;font-family:'Caveat',cursive;font-size:22px;text-align:center;}
-.cover-kraft .k-hero-cap{position:absolute;left:24px;bottom:0;transform:translateY(50%) rotate(-2deg);background:#fff;padding:7px 16px;
-  box-shadow:0 5px 12px rgba(0,0,0,.2);font-family:'Caveat',cursive;font-size:17px;color:#2B1D0F;z-index:3;max-width:70%;
+.cover-kraft .k-hero-cap{position:absolute;left:16px;bottom:0;transform:translateY(50%) rotate(-2deg);background:#fff;padding:7px 14px;
+  box-shadow:0 5px 12px rgba(0,0,0,.2);font-family:'Caveat',cursive;font-size:16px;color:#2B1D0F;z-index:3;max-width:80%;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cover-kraft .k-accent{position:absolute;top:-26px;left:-20px;width:150px;height:130px;background:#fff;padding:8px 8px 8px;
-  box-shadow:0 12px 24px rgba(0,0,0,.3);transform:rotate(-8deg);z-index:2;}
+.cover-kraft .k-accent{position:absolute;inset:0;background:#fff;padding:8px;box-shadow:0 12px 24px rgba(0,0,0,.26);transform:rotate(2deg);}
 .cover-kraft .k-accent .k-poly-photo{width:100%;height:100%;background-size:cover;background-position:center;}
-.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);}
+.cover-kraft .k-poly-tape{position:absolute;top:-10px;left:50%;transform:translateX(-50%) rotate(-4deg);width:54px;height:18px;box-shadow:0 2px 4px rgba(0,0,0,.18);z-index:2;}
 .cover-kraft .k-poly-tape.mint{background:repeating-linear-gradient(90deg,#8FB39A,#8FB39A 6px,#7CA087 6px,#7CA087 12px);}
 .cover-kraft .k-poly-tape.mustard{background:repeating-linear-gradient(90deg,#E8A93B,#E8A93B 6px,#D89A2C 6px,#D89A2C 12px);}
-.cover-kraft .k-sticker-row{position:absolute;bottom:-24px;right:18px;display:flex;gap:16px;z-index:3;}
+.cover-kraft .k-sticker-row{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);display:flex;gap:16px;z-index:3;}
 .cover-kraft .k-badge{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
   font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.3);line-height:1.15;font-size:11px;border:3px solid #fff;}
 
@@ -703,10 +709,9 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
   routeLabels=routeLabels||['Départ','En route','Arrivée'];
 
   if(tema==='kraft'){
-    // (17/07, 4e retour Bruno) : la grande photo REMPLIT l'espace (comme la
-    // bande de l'Édition) — l'accent et les badges se posent dessus comme
-    // des stickers, jamais de vide résiduel quelle que soit la hauteur réelle
-    // de la page. Repli texturé si aucune photo n'existe encore.
+    // (17/07, 5e retour Bruno) : deux panneaux CÔTE À CÔTE (63/37) plutôt
+    // qu'un accent en surimpression qui mangeait le texte — la photo
+    // principale cède de la place, le second polaroid en gagne vraiment.
     const hero = photos[0] || null;
     const accent = photos[1] || null;
     const heroHtml = hero
@@ -714,7 +719,7 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
         +(hero.nom?('<div class="k-hero-cap">'+esc(hero.nom)+'</div>'):'')
       : '<div class="k-hero-empty">📍<br>Les photos arriveront<br>au fil du voyage</div>';
     const accentHtml = accent
-      ? '<div class="k-accent"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+accent.url+'\');"></div></div>'
+      ? '<div class="k-accent-panel"><div class="k-accent"><div class="k-poly-tape mint"></div><div class="k-poly-photo" style="background-image:url(\''+accent.url+'\');"></div></div></div>'
       : '';
     const tagline = nuitsTxt!=='—' ? (nuitsTxt+' nuits quelque part sur les routes de France') : 'Encore à écrire…';
     return '<div class="page cover cover-kraft">'
@@ -725,8 +730,8 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
         +'<p class="k-eyebrow">carnet de bord — famille en vadrouille</p>'
         +'<h1 class="k-title">'+esc(dest)+'</h1>'
         +'<p class="k-tagline">'+tagline+'</p>'
-        +'<div class="k-photo-zone">'
-          +heroHtml
+        +'<div class="k-photo-zone'+(accent?' a-deux':'')+'">'
+          +'<div class="k-hero-panel">'+heroHtml+'</div>'
           +accentHtml
           +'<div class="k-sticker-row">'
             +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
