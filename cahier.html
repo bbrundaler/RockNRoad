@@ -125,14 +125,22 @@ body[data-theme="kraft"] .page{background-image:none;}
         très allégé (petits points bien espacés) plutôt qu'en gris compact
         ou en encre pleine page. Remplace le filigrane boussole (cassé à
         l'impression — un rond plein au lieu d'un simple contour, retiré) :
-        ce quadrillage léger porte maintenant l'ambiance à lui seul. */
+        ce quadrillage léger porte maintenant l'ambiance à lui seul.
+     (17/07, 3e retour) : le dégradé CSS radial-gradient rend de façon
+     imprévisible à l'impression (plus dense, plus flou que sur écran) — et
+     posé sur le beige chaud du thème, un gris dessus se voit brun, pas gris.
+     Un vrai pointillé SVG (un point net dans une tuile carrée, répétée) est
+     fiable quel que soit le moteur d'impression ; et la page bascule sur un
+     gris neutre plutôt que le beige, pour que l'ambiance lise vraiment
+     "gris", comme voulu — jamais blanche, jamais pleine d'encre. */
   .page{background-image:none !important;}
   body[data-theme="atlas"] .page{
-    background-image:radial-gradient(rgba(32,36,42,.12) 1px, transparent 1.3px) !important;
-    background-size:22px 22px !important; background-position:6px 6px !important;
+    background-color:#E7E7E4 !important;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='3' cy='3' r='1' fill='%23555' fill-opacity='0.4'/%3E%3C/svg%3E") !important;
+    background-size:24px 24px !important; background-position:0 0 !important;
   }
   .cover-atlas .a-watermark{display:none !important;}
-  .cover-atlas{background:var(--cah-paper) !important;border:2px solid var(--cah-ink);color:var(--cah-ink) !important;}
+  .cover-atlas{background:#E7E7E4 !important;border:2px solid var(--cah-ink);color:var(--cah-ink) !important;}
   .cover-atlas::before,.cover-atlas::after{border-color:rgba(32,36,42,.3) !important;}
   .cover-atlas .a-corner{border-color:rgba(32,36,42,.5) !important;}
   .cover-atlas .a-eyebrow{color:var(--cah-ink-dim) !important;}
