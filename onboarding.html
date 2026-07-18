@@ -156,6 +156,9 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   background:var(--gold-a20);font-size:12px;}
 .mbr-lead-panel .vrow{display:flex;align-items:center;gap:7px;padding:3px 0;}
 .mbr-lead-panel label{cursor:pointer;color:var(--ink);}
+.mbr-invite{padding:11px;border:1.5px dashed var(--gold);border-radius:var(--r);background:var(--gold-a20);margin-bottom:10px;}
+.mbr-invite .mail-btn{width:auto;padding:7px 14px;white-space:nowrap;}
+.mbr-invite input[type="email"]{font-family:inherit;color:var(--ink);background:var(--surface);}
 </style>
 </head>
 <body>
@@ -544,6 +547,7 @@ async function loadProfile(){
   if(myGroupeId){
     const {data:g}=await sb.from('groupes').select('*').eq('id',myGroupeId).maybeSingle();
     groupe=g;
+    GM_membresLimit = (g && g.membres_limit) || 6;
     if(g?.nom && window.rnrChrome) rnrChrome.setGroupe(g.nom);
   }
   if(membre?.is_superadmin && window.rnrChrome) rnrChrome.setSuperAdmin(true);
@@ -559,6 +563,7 @@ let GM_voyages=[];        // voyages du groupe
 let GM_leaders={};        // voyage_id -> Set(membre_id)
 let GM_peutNommer=false;  // l'utilisateur courant peut-il nommer/retirer ?
 let GM_monMembreId=null;  // mon id membre
+let GM_membresLimit=6;    // (18/07, B74) quota du groupe, organisateur inclus
 
 async function chargerMembres(){
   const box=document.getElementById('membres-liste');
@@ -622,8 +627,29 @@ function leaderDeQuoi(membreId){
 function rendreMembres(){
   const box=document.getElementById('membres-liste');
   if(!box) return;
-  if(!GM_membres.length){ box.textContent='Aucun membre.'; return; }
-  box.innerHTML = GM_membres.map(m=>{
+  // (18/07, B74) L'organisateur (role='admin' du GROUPE, pas un leader de
+  // voyage) voit son quota et peut inviter lui-même, dans la limite fixée
+  // par la Console (groupes.membres_limit). Un seul moteur d'invitation,
+  // serveur (invite_group_member), jamais un insert direct côté client.
+  let inviteHtml='';
+  if(myRole==='admin'){
+    const restant = Math.max(0, GM_membresLimit - GM_membres.length);
+    inviteHtml = '<div class="mbr-invite">'
+      +'<p style="font-size:11.5px;color:var(--ink-dim);margin:0 0 8px;">'
+        +GM_membres.length+' / '+GM_membresLimit+' membres — '
+        +(restant>0 ? restant+' place'+(restant>1?'s':'')+' restante'+(restant>1?'s':'') : 'quota atteint')
+      +'</p>'
+      +(restant>0
+        ? '<div style="display:flex;gap:6px;">'
+          +'<input type="email" id="invite-email" placeholder="email@exemple.fr" style="flex:1;padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:8px;font-size:12.5px;">'
+          +'<button type="button" class="mail-btn" onclick="inviterMembre()">+ Inviter</button>'
+          +'</div>'
+        : '<p style="font-size:11.5px;color:var(--ink-dim);">Quota atteint — contacte-nous pour l\'agrandir.</p>')
+      +'<p id="invite-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>'
+      +'</div>';
+  }
+  if(!GM_membres.length){ box.innerHTML=inviteHtml+'<p>Aucun membre.</p>'; return; }
+  box.innerHTML = inviteHtml + GM_membres.map(m=>{
     const nom = (window.rnrNomMembre? window.rnrNomMembre(m,'') : (m.pseudo||m.prenom||'Voyageur'));
     const av  = (window.rnrAvatarMembre? window.rnrAvatarMembre(m,'') : {initiale:(nom[0]||'?')});
     const avHtml = av.emoji
@@ -694,6 +720,41 @@ function ecrireMailGroupe(){
     .map(c=>c.getAttribute('data-email')).filter(Boolean);
   if(!cochees.length){ alert('Cochez au moins un membre ayant une adresse.'); return; }
   window.location.href='mailto:'+encodeURIComponent(cochees.join(','));
+}
+
+// (18/07, B74) Invitation self-service par l'organisateur — un seul chemin,
+// entièrement côté serveur (invite_group_member) : rôle + quota vérifiés là-
+// bas, jamais devinés ici. Même flux d'email que les invitations super-admin
+// (Console) : l'invité clique, choisit son mot de passe, atterrit sur
+// l'onboarding et renseigne SON PROPRE profil — jamais pré-rempli par
+// l'organisateur (protège la personne invitée, cf. réflexion juridique).
+const EDGE_FN = SURL + '/functions/v1/dynamic-action';
+async function inviterMembre(){
+  const input=document.getElementById('invite-email');
+  const etat=document.getElementById('invite-etat');
+  const email=(input?.value||'').trim();
+  if(!email){ if(etat) etat.textContent='Entre une adresse email.'; return; }
+  if(etat) etat.textContent='Envoi de l\'invitation…';
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    const token=session?.access_token;
+    const res=await fetch(EDGE_FN,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({action:'invite_group_member', email})
+    });
+    const json=await res.json();
+    if(!res.ok || json.error){
+      if(etat) etat.textContent='⚠️ '+(json.reason||json.error||'Échec de l\'invitation.');
+      return;
+    }
+    if(input) input.value='';
+    if(etat) etat.textContent='✅ Invitation envoyée à '+email+' !';
+    chargerMembres(); // rafraîchit le compte, même si le nouveau membre n'apparaîtra qu'après acceptation
+  }catch(e){
+    console.warn('inviterMembre',e);
+    if(etat) etat.textContent='⚠️ Échec de l\'envoi — réessaie.';
+  }
 }
 
 function escMbr(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }

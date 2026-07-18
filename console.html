@@ -535,6 +535,19 @@ async function loadAdminData() {
                 `).join('')}
               </div>
             </div>
+            <div class="ag-controls">
+              <label class="ag-label">Quota membres <span style="font-weight:400;opacity:.7;">(organisateur inclus, B74)</span></label>
+              <div class="ag-btn-row">
+                ${[6, 10, 15, 999].map(v => `
+                  <button class="ag-limit-btn ${(g.membres_limit||6)===v?'active':''}"
+                    onclick="setMembresLimit('${g.id}', ${v}, this)">
+                    ${v === 999 ? '∞ Max' : v}
+                  </button>
+                `).join('')}
+                <button class="ag-limit-btn custom" onclick="setCustomMembresLimit('${g.id}')">✏️ Autre</button>
+              </div>
+              <p style="font-size:11px;color:var(--ink-dim);margin:6px 0 0;">${membres.length} membre(s) actuellement dans ce groupe.</p>
+            </div>
 
             <div class="ag-section-title">Statut du groupe</div>
             <div class="ag-controls">
@@ -648,6 +661,29 @@ async function setCategorie(groupeId, categorie, btn) {
     if (btn) btn.classList.add('active');
     showToast('✅ Catégorie : ' + categorie, 'success');
   } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+
+// (18/07, B74) Quota membres du groupe — l'organisateur peut désormais inviter
+// lui-même depuis onboarding.html (Edge Function invite_group_member), dans
+// cette limite. Barème de départ (18/07) : standard 6 / amis 10 / fidèle 15 /
+// admin illimité — reste ensuite un réglage indépendant par groupe, comme
+// import_limit (la catégorie donne le point de départ, pas une contrainte).
+async function setMembresLimit(groupeId, limit, btn) {
+  try {
+    const { error } = await sb.from('groupes').update({ membres_limit: limit }).eq('id', groupeId);
+    if (error) throw error;
+    const row = document.getElementById('ag-' + groupeId);
+    if (row) row.querySelectorAll('.ag-controls')[3].querySelectorAll('.ag-limit-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    showToast('✅ Quota membres : ' + (limit === 999 ? '∞ Max' : limit), 'success');
+  } catch(e) { showToast('Erreur : ' + e.message, 'error'); }
+}
+async function setCustomMembresLimit(groupeId) {
+  const val = prompt('Entrez le quota personnalisé (nombre de membres, organisateur inclus) :');
+  if (!val || isNaN(parseInt(val))) return;
+  const limit = Math.max(1, parseInt(val));
+  await setMembresLimit(groupeId, limit, null);
+  loadAdminData();
 }
 
 async function toggleGroupeActif(groupeId, actif) {
