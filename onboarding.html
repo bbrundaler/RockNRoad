@@ -158,7 +158,10 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .mbr-lead-panel label{cursor:pointer;color:var(--ink);}
 .mbr-invite{padding:11px;border:1.5px dashed var(--gold);border-radius:var(--r);background:var(--gold-a20);margin-bottom:10px;}
 .mbr-invite .mail-btn{width:auto;padding:7px 14px;white-space:nowrap;}
-.mbr-invite input[type="email"]{font-family:inherit;color:var(--ink);background:var(--surface);}
+.mbr-invite input[type="email"],.mbr-invite input[type="text"]{font-family:inherit;color:var(--ink);background:var(--surface);}
+.mbr-invit-titre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px;}
+.mbr-row-attente{border-style:dashed;opacity:.85;}
+.mbr-av-attente{background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:15px;}
 </style>
 </head>
 <body>
@@ -494,8 +497,16 @@ function ajouterPhotoGalerie(input){
       const {data:already}=await sb.from('membres').select('id').eq('user_id',currentUser.id).maybeSingle();
       if(!already){
         await sb.from('membres').insert({user_id:currentUser.id,groupe_id:meta.groupe_id,role:meta.role||'membre'});
+        // (18/07, B75) La personne vient de devenir membre : elle peut donc
+        // supprimer la ligne "en attente" qui la concernait (RLS is_member_of,
+        // vraie maintenant). Ne s'applique qu'aux invitations envoyées par
+        // invite_group_member (invite_id présent) — les invitations
+        // super-admin (Console) n'en ont pas, rien à nettoyer pour elles.
+        if(meta.invite_id){
+          try{ await sb.from('invitations_groupe').delete().eq('id',meta.invite_id); }catch(e){ console.warn('nettoyage invitation',e); }
+        }
       }
-      await sb.auth.updateUser({data:{groupe_id:null,role:null}});
+      await sb.auth.updateUser({data:{groupe_id:null,role:null,invite_id:null}});
     }catch(e){ console.warn('Rattachement invité :',e); }
   }
 
@@ -564,17 +575,20 @@ let GM_leaders={};        // voyage_id -> Set(membre_id)
 let GM_peutNommer=false;  // l'utilisateur courant peut-il nommer/retirer ?
 let GM_monMembreId=null;  // mon id membre
 let GM_membresLimit=6;    // (18/07, B74) quota du groupe, organisateur inclus
+let GM_invitations=[];    // (18/07, B75) invitations envoyées, pas encore acceptées
 
 async function chargerMembres(){
   const box=document.getElementById('membres-liste');
   if(!box) return;
   try{
-    const [{data:ms},{data:vs}] = await Promise.all([
+    const [{data:ms},{data:vs},{data:invs}] = await Promise.all([
       sb.from('membres').select('id,user_id,pseudo,prenom,avatar,email').eq('groupe_id',myGroupeId),
-      sb.from('voyages').select('id,nom,est_principal,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true})
+      sb.from('voyages').select('id,nom,est_principal,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true}),
+      sb.from('invitations_groupe').select('id,email,nom,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true})
     ]);
     GM_membres = ms||[];
     GM_voyages = vs||[];
+    GM_invitations = invs||[];
     const moi = GM_membres.find(m=>m.user_id===currentUser.id);
     GM_monMembreId = moi ? moi.id : null;
 
@@ -640,8 +654,9 @@ function rendreMembres(){
         +(restant>0 ? restant+' place'+(restant>1?'s':'')+' restante'+(restant>1?'s':'') : 'quota atteint')
       +'</p>'
       +(restant>0
-        ? '<div style="display:flex;gap:6px;">'
-          +'<input type="email" id="invite-email" placeholder="email@exemple.fr" style="flex:1;padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:8px;font-size:12.5px;">'
+        ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+          +'<input type="text" id="invite-nom" placeholder="Nom (optionnel — pour t\'y retrouver)" style="flex:1;min-width:140px;padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:8px;font-size:12.5px;">'
+          +'<input type="email" id="invite-email" placeholder="email@exemple.fr" style="flex:1;min-width:140px;padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:8px;font-size:12.5px;">'
           +'<button type="button" class="mail-btn" onclick="inviterMembre()">+ Inviter</button>'
           +'</div>'
         : '<p style="font-size:11.5px;color:var(--ink-dim);">Quota atteint — contacte-nous pour l\'agrandir.</p>')
@@ -649,7 +664,7 @@ function rendreMembres(){
       +'</div>';
   }
   if(!GM_membres.length){ box.innerHTML=inviteHtml+'<p>Aucun membre.</p>'; return; }
-  box.innerHTML = inviteHtml + GM_membres.map(m=>{
+  const membresHtml = GM_membres.map(m=>{
     const nom = (window.rnrNomMembre? window.rnrNomMembre(m,'') : (m.pseudo||m.prenom||'Voyageur'));
     const av  = (window.rnrAvatarMembre? window.rnrAvatarMembre(m,'') : {initiale:(nom[0]||'?')});
     const avHtml = av.emoji
@@ -672,9 +687,38 @@ function rendreMembres(){
       + '<div class="mbr-actions">'+leadBtn+'</div>'
       + '</div>';
   }).join('');
+  // (18/07, B75, retour Bruno) : les invitations envoyées mais pas encore
+  // acceptées se posent SOUS les membres déjà validés — visuellement
+  // distinctes (⏳, cadre en pointillés), pour ne jamais oublier à qui on a
+  // écrit. Seul l'organisateur peut annuler une invitation par erreur.
+  const invitationsHtml = GM_invitations.length ? ('<p class="mbr-invit-titre">En attente de validation</p>'
+    + GM_invitations.map(inv=>{
+      const label = inv.nom ? inv.nom : inv.email;
+      return '<div class="mbr-row mbr-row-attente">'
+        + '<div class="mbr-av mbr-av-attente">⏳</div>'
+        + '<div class="mbr-info"><div class="mbr-nom">'+escMbr(label)
+        + (inv.nom?' <span class="moi">('+escMbr(inv.email)+')</span>':'')+'</div></div>'
+        + (myRole==='admin' ? '<div class="mbr-actions"><button type="button" class="mbr-lead-btn" onclick="annulerInvitation(\''+inv.id+'\')">✕ Annuler</button></div>' : '')
+        + '</div>';
+    }).join('')) : '';
+  box.innerHTML = inviteHtml + membresHtml + invitationsHtml;
   /* Barre mail visible si au moins un email dispo */
   const barre=document.getElementById('mail-barre');
   if(barre) barre.style.display = GM_membres.some(m=>m.email) ? 'block' : 'none';
+}
+
+// (18/07, B75) Annulation d'une invitation encore en attente — réservée à
+// l'organisateur dans l'UI (rendreMembres ne montre le bouton qu'à lui),
+// mais la RLS l'ouvre à n'importe quel membre du groupe : pas de risque
+// supplémentaire (annuler une invitation n'accorde aucun droit à personne).
+async function annulerInvitation(id){
+  if(!confirm('Annuler cette invitation ?')) return;
+  try{
+    const {error}=await sb.from('invitations_groupe').delete().eq('id',id);
+    if(error) throw error;
+    GM_invitations = GM_invitations.filter(i=>i.id!==id);
+    rendreMembres();
+  }catch(e){ console.warn('annulerInvitation',e); alert('Échec de l\'annulation.'); }
 }
 
 /* Panneau leader : liste des voyages avec cases à cocher pour CE membre. */
@@ -730,9 +774,11 @@ function ecrireMailGroupe(){
 // l'organisateur (protège la personne invitée, cf. réflexion juridique).
 const EDGE_FN = SURL + '/functions/v1/dynamic-action';
 async function inviterMembre(){
+  const inputNom=document.getElementById('invite-nom');
   const input=document.getElementById('invite-email');
   const etat=document.getElementById('invite-etat');
   const email=(input?.value||'').trim();
+  const nom=(inputNom?.value||'').trim();
   if(!email){ if(etat) etat.textContent='Entre une adresse email.'; return; }
   if(etat) etat.textContent='Envoi de l\'invitation…';
   try{
@@ -741,7 +787,7 @@ async function inviterMembre(){
     const res=await fetch(EDGE_FN,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({action:'invite_group_member', email})
+      body:JSON.stringify({action:'invite_group_member', email, nom})
     });
     const json=await res.json();
     if(!res.ok || json.error){
@@ -749,8 +795,9 @@ async function inviterMembre(){
       return;
     }
     if(input) input.value='';
-    if(etat) etat.textContent='✅ Invitation envoyée à '+email+' !';
-    chargerMembres(); // rafraîchit le compte, même si le nouveau membre n'apparaîtra qu'après acceptation
+    if(inputNom) inputNom.value='';
+    if(etat) etat.textContent='✅ Invitation envoyée'+(nom?' à '+nom:' à '+email)+' !';
+    chargerMembres(); // rafraîchit le compte ET la liste "en attente"
   }catch(e){
     console.warn('inviterMembre',e);
     if(etat) etat.textContent='⚠️ Échec de l\'envoi — réessaie.';
