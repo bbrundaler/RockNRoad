@@ -600,7 +600,7 @@ async function chargerMembres(){
   if(!box) return;
   try{
     const [{data:ms},{data:vs},{data:invs}] = await Promise.all([
-      sb.from('membres').select('id,user_id,pseudo,prenom,avatar,email').eq('groupe_id',myGroupeId),
+      sb.from('membres').select('id,user_id,pseudo,prenom,avatar,photo_url,email').eq('groupe_id',myGroupeId),
       sb.from('voyages').select('id,nom,est_principal,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true}),
       sb.from('invitations_groupe').select('id,email,nom,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true})
     ]);
@@ -685,7 +685,14 @@ function rendreMembres(){
   const membresHtml = GM_membres.map(m=>{
     const nom = (window.rnrNomMembre? window.rnrNomMembre(m,'') : (m.pseudo||m.prenom||'Voyageur'));
     const av  = (window.rnrAvatarMembre? window.rnrAvatarMembre(m,'') : {initiale:(nom[0]||'?')});
-    const avHtml = av.emoji
+    // (18/07, retour Bruno : « une modif de photo doit changer TOUTES les
+    // photos de profil, pas une à un endroit et un emoji à un autre ») —
+    // ce rendu ne regardait que av.emoji, jamais av.photo, alors que
+    // rnrAvatarMembre() (chrome.js) renvoie déjà la priorité correcte
+    // (photo > emoji > initiale) : il suffisait de l'écouter jusqu'au bout.
+    const avHtml = av.photo
+      ? '<div class="mbr-av" style="background-image:url(\''+av.photo.replace(/'/g,'')+'\');background-size:cover;background-position:center;"></div>'
+      : av.emoji
       ? '<div class="mbr-av" style="background:var(--gold-a20)">'+escMbr(av.emoji)+'</div>'
       : '<div class="mbr-av" style="background:var(--gold)">'+escMbr((av.initiale||nom[0]||'?'))+'</div>';
     const estMoi = (m.user_id===currentUser.id);
