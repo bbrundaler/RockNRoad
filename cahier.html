@@ -78,11 +78,19 @@ body[data-theme="kraft"] .page{background-image:none;}
      10mm est intégrée à la mise en page plutôt que laissée au hasard du
      réglage d'échelle du navigateur. */
   @page{ size:210mm 297mm; margin:10mm; }
-  .page{margin:0;box-shadow:none;width:190mm !important;height:277mm !important;min-height:277mm !important;max-height:277mm !important;overflow:hidden !important;
-    page-break-inside:avoid !important;break-inside:avoid !important;}
+  .page{margin:0;box-shadow:none;width:190mm !important;min-height:277mm !important;}
+  /* (17/07, 6e retour Bruno — après recherche) : overflow:hidden et
+     page-break-inside:avoid sont documentés comme perturbant la pagination
+     d'impression plutôt que de la stabiliser (le navigateur peut créer une
+     page fantôme même quand le contenu tient). Retirés. Les éléments
+     purement décoratifs en position absolue (coins, tampons, autocollants,
+     ruban adhésif, doodles) sont eux aussi une source connue de mauvais
+     calcul de pagination — masqués à l'impression, ne reste que le contenu
+     utile, en empilement simple, exactement comme les pages qui marchent
+     déjà. */
   .cover-kraft,.cover-atlas{min-height:277mm !important;}
-  /* Élément décoratif en fin de couverture Atlas, sans grand intérêt. */
-  .a-footnote{display:none !important;}
+  .a-footnote,.a-corner,.a-watermark,.a-compass,.k-stamp,.k-doodle,.k-poly-tape,.k-badge,
+  .cover-kraft::before,.cover-kraft::after,.cover-atlas::before,.cover-atlas::after{display:none !important;}
 
   /* (17/07, 5e retour Bruno) : l'aplat gris uni rendait "fade" — retour au
      pointillé, mais cette fois en vrai bleu-gris (la couleur de l'écran),
