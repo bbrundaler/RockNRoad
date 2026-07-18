@@ -393,7 +393,15 @@
         }),
         signal: ctrl ? ctrl.signal : undefined
       })
-        .then(function (r) { return r.ok ? r.json() : Promise.reject('http ' + r.status); })
+        .then(function (r) {
+          if (r.ok) return r.json();
+          // (18/07, B76) Avant : on rejetait juste "http 502", aucun détail —
+          // impossible de savoir SI c'était le quota ORS, une clé absente, un
+          // point hors réseau routier, etc. On lit le corps pour de vrai.
+          return r.text().then(function (txt) {
+            return Promise.reject('http ' + r.status + (txt ? ' — ' + txt.slice(0, 200) : ''));
+          });
+        })
         .then(function (geo) {
           clearTimeout(to);
           var feat = geo && geo.features && geo.features[0];
@@ -431,7 +439,8 @@
           _routeCache[cle] = res;
           return { ok: true, trace: res.trace, distance_km: res.distance_km, duree_h: res.duree_h };
         })
-        .catch(function () {
+        .catch(function (e) {
+          console.warn('RNR_MARQUEURS.traceRoute : tronçon non routable, repli ligne droite estimée.', seg, e);
           var km = _haversineKm(seg[0], seg[1]);
           return { ok: false, trace: seg, distance_km: km, duree_h: km / _VITESSE_FALLBACK_KMH };
         });
@@ -476,6 +485,7 @@
 
     // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
     if (!cfg || !cfg.surl || !cfg.skey) {
+      console.warn('RNR_MARQUEURS.traceRoute : repli ligne droite — cfg incomplet (surl/skey manquant).', cfg);
       _ligneDroite(layer, latlngs, leger, couleur);
       return Promise.resolve({ ok: false });
     }
@@ -488,7 +498,13 @@
         _dessineTrace(layer, res.trace, leger, couleur);
         return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h };
       })
-      .catch(function () {
+      .catch(function (e) {
+        // (18/07, B76) Journalisation systématique AVANT de retomber sur le
+        // repli fin — jusqu'ici cette erreur disparaissait silencieusement,
+        // rendant tout diagnostic impossible sans deviner. Toujours visible
+        // en console, même si le repli lui-même reste automatique/silencieux
+        // pour l'utilisateur (comportement voulu, cf. commentaire plus haut).
+        console.warn('RNR_MARQUEURS.traceRoute : appel groupé ORS échoué, repli tronçon par tronçon.', e);
         // (2) Repli fin, tronçon par tronçon (09/07) — AVANT la ligne droite
         // globale : un point isolé impossible à router ne doit plus emporter
         // tout le trajet avec lui. Le tracé n'est toujours JAMAIS absent.
