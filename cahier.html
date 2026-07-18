@@ -88,8 +88,17 @@ body[data-theme="kraft"] .page{background-image:none;}
         « déformé »). height fixe + overflow:hidden, uniquement à
         l'impression (l'écran garde le confort du défilement). */
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
-  @page{ size:210mm 297mm; margin:0; }
-  .page{margin:0;box-shadow:none;height:297mm !important;min-height:297mm !important;max-height:297mm !important;overflow:hidden !important;}
+  /* (17/07, retour Bruno) : à 100% pile, la première page perdait son
+     illustration — la plupart des imprimantes (et certains exports PDF) ne
+     peuvent pas imprimer jusqu'au bord exact de la feuille, il existe
+     toujours une petite marge minimale incompressible, quoi que dise le
+     CSS. Bidouiller l'échelle à 98% « marchait » mais de façon asymétrique
+     (une barre blanche en haut et à droite, pas en bas ni à gauche). Une
+     vraie marge de sécurité de 4mm intégrée à la mise en page — via @page
+     ET une taille de .page réduite d'autant — donne le même résultat,
+     mais proprement et de façon symétrique, à 100% sans bidouillage. */
+  @page{ size:210mm 297mm; margin:4mm; }
+  .page{margin:0;box-shadow:none;width:202mm !important;height:289mm !important;min-height:289mm !important;max-height:289mm !important;overflow:hidden !important;}
 }
 
 /* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
