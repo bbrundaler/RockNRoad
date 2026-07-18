@@ -68,6 +68,12 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 body[data-theme="kraft"] .page{background-image:none;}
 @media print{
   #auth-check,.toolbar{display:none !important;}
+  /* (17/07, retour Bruno) : chrome.js injecte sa propre barre de navigation
+     (.rnrc-nav) en haut de CHAQUE page du site, cahier.html compris — elle
+     n'était pas exclue de l'impression. Présente sur la première feuille,
+     elle décalait tout ce qui suivait (d'où les pages du Cahier réduites
+     aux 2/3 en dessous). Le Cahier imprimé ne doit montrer que #pages. */
+  .rnrc-nav{display:none !important;}
   body{background:none;}
   /* (17/07, retour Bruno : impression déformée et sans les bonnes couleurs)
      Deux causes distinctes, corrigées ensemble :
