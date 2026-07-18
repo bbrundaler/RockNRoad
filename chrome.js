@@ -401,9 +401,29 @@
     return (Date.now() - new Date(m.derniere_activite).getTime()) < 5*60*1000;
   }
 
+  // (17/07, retour Bruno) : sur certaines pages (le Cahier), le SDK
+  // Supabase est chargé APRÈS chrome.js, en asynchrone (rnrChargerScript) —
+  // l'ancien "if(typeof supabase==='undefined') return" abandonnait alors
+  // pour de bon, sans jamais réessayer : la barre d'avatars ET la modale de
+  // profil restaient mortes en permanence sur ces pages-là, quoi qu'il
+  // arrive ensuite. On attend maintenant que le SDK apparaisse (jusqu'à
+  // ~4s), plutôt que de conclure trop vite qu'il n'arrivera jamais.
+  function attendreSupabaseSDK(delaiMaxMs){
+    return new Promise(function(resolve){
+      var essais = 0, maxEssais = Math.ceil(delaiMaxMs/150);
+      (function tick(){
+        if(typeof supabase !== 'undefined' && supabase.createClient){ resolve(true); return; }
+        essais++;
+        if(essais >= maxEssais){ resolve(false); return; }
+        setTimeout(tick, 150);
+      })();
+    });
+  }
+
   async function initAvatarsEtProfil(){
     try{
-      if(typeof supabase === 'undefined') return;   // CDN pas chargé (cf. B39) — pas de barre plutôt qu'une erreur
+      var pret = await attendreSupabaseSDK(4000);
+      if(!pret) return;   // CDN vraiment pas chargé (cf. B39) — pas de barre plutôt qu'une erreur
       var _c = supabase.createClient; if(!_c) return;
       _sbChrome = _c("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
       var sess = await _sbChrome.auth.getSession();

@@ -570,7 +570,8 @@ function rnrPhotoCahierChoisie(input){
         render();
       }catch(e){
         console.warn('Cahier: photo_cahier', e);
-        if(etat) etat.textContent='échec de l\'envoi — réessaie';
+        if(etat) etat.textContent='échec de l\'envoi';
+        alert('La photo n\'a pas pu être enregistrée : '+(e&&e.message?e.message:String(e)));
       }
     }, 'image/jpeg', 0.85);
   };
