@@ -228,9 +228,9 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-atlas .a-route-lbl{position:absolute;top:100%;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:8px;
   color:#8a97a3;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;margin-top:4px;text-align:center;}
 .cover-atlas .a-photo-plate{height:230px;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
-  background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
-.cover-atlas .a-photo-plate .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
-.cover-atlas .a-photo-plate-empty{flex:1;background:repeating-linear-gradient(135deg,rgba(217,201,160,.05),rgba(217,201,160,.05) 20px,transparent 20px,transparent 40px);
+  background:rgba(217,201,160,.03);box-sizing:border-box;}
+.cover-atlas .a-photo-plate .ph{width:100%;height:100%;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
+.cover-atlas .a-photo-plate-empty{width:100%;height:100%;background:repeating-linear-gradient(135deg,rgba(217,201,160,.05),rgba(217,201,160,.05) 20px,transparent 20px,transparent 40px);
   display:flex;align-items:center;justify-content:center;font-family:'Special Elite',monospace;font-size:10px;color:#5a6570;letter-spacing:.06em;text-transform:uppercase;}
 .cover-atlas .a-photo-cap{font-family:'Special Elite',monospace;font-size:8.5px;letter-spacing:.04em;color:#8a97a3;text-align:center;margin-top:7px;text-transform:uppercase;flex-shrink:0;}
 .cover-atlas .a-plate{border-top:1px solid rgba(217,201,160,.25);border-bottom:1px solid rgba(217,201,160,.25);padding:16px 0;display:flex;justify-content:space-around;
