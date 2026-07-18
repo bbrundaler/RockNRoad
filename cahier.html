@@ -162,7 +162,7 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-edition .e-eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--cah-accent);font-weight:600;}
 .cover-edition .e-title{font-family:var(--cah-font-title);font-weight:700;font-size:42px;line-height:1.1;margin:20px 0 10px;color:var(--cah-ink);}
 .cover-edition .e-sub{font-family:var(--cah-font-title);font-style:italic;font-size:14px;color:var(--cah-ink-dim);margin:0 0 28px;}
-.cover-edition .e-photo-band{height:360px;background:linear-gradient(160deg,#D8CBA8,#8b7245 65%,#5c4a30);background-size:cover;background-position:center;margin:0 50px;border-radius:3px;}
+.cover-edition .e-photo-band{height:430px;background:linear-gradient(160deg,#D8CBA8,#8b7245 65%,#5c4a30);background-size:cover;background-position:center;margin:0 50px;border-radius:3px;}
 .cover-edition .e-stats{display:flex;padding:24px 50px 40px;}
 .cover-edition .e-stat{flex:1;text-align:center;border-left:1px solid var(--cah-paper-line);padding:0 8px;}
 .cover-edition .e-stat:first-child{border-left:none;}
@@ -188,7 +188,7 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
   color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
   font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;z-index:3;}
 .cover-kraft .k-doodle{position:absolute;opacity:.55;z-index:1;}
-.cover-kraft .k-photo-zone{height:400px;position:relative;margin:38px 8px 46px;}
+.cover-kraft .k-photo-zone{height:430px;position:relative;margin:34px 8px 22px;}
 .cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.3);}
 .cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.22);
   background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 20px,#EFE1BE 20px,#EFE1BE 40px);display:flex;flex-direction:column;
@@ -205,6 +205,16 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-kraft .k-sticker-row{position:absolute;bottom:-24px;right:18px;display:flex;gap:16px;z-index:3;}
 .cover-kraft .k-badge{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;
   font-family:'Permanent Marker',cursive;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.3);line-height:1.15;font-size:11px;border:3px solid #fff;}
+/* (18/07, retour Bruno) : Kraft était le seul thème sans la bande d'infos
+   sous la photo (km/nuits/voyageurs/compagnons) — même contenu qu'Édition
+   (.e-stats), habillage carnet bricolé (papier blanc légèrement penché,
+   police manuscrite). */
+.cover-kraft .k-stats{display:flex;margin:0 8px;background:#fff;transform:rotate(-.4deg);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);border:1px solid rgba(43,29,15,.12);}
+.cover-kraft .k-stat{flex:1;text-align:center;padding:14px 6px;border-left:1px dashed rgba(43,29,15,.22);}
+.cover-kraft .k-stat:first-child{border-left:none;}
+.cover-kraft .k-stat b{display:block;font-family:'Permanent Marker',cursive;font-size:17px;color:#2B1D0F;}
+.cover-kraft .k-stat span{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:#7C8B5D;font-family:'Special Elite',monospace;}
 
 /* ── Couverture — thème Atlas d'expédition (B69) : bleu nuit / laiton / vert-de-gris. ── */
 /* (17/07, 4e retour) : la carte et la planche photo grandissent elles-mêmes
@@ -228,7 +238,7 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-atlas .a-route-strip svg{width:100%;height:100%;}
 .cover-atlas .a-route-lbl{position:absolute;top:100%;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:8px;
   color:#8a97a3;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;margin-top:4px;text-align:center;}
-.cover-atlas .a-photo-plate{height:230px;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
+.cover-atlas .a-photo-plate{height:430px;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
   background:rgba(217,201,160,.03);box-sizing:border-box;}
 .cover-atlas .a-photo-plate .ph{width:100%;height:100%;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
 .cover-atlas .a-photo-plate-empty{width:100%;height:100%;background:repeating-linear-gradient(135deg,rgba(217,201,160,.05),rgba(217,201,160,.05) 20px,transparent 20px,transparent 40px);
@@ -1021,12 +1031,12 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
         +'<div class="k-photo-zone">'
           +heroHtml
           +accentHtml
-          +'<div class="k-sticker-row">'
-            +'<div class="k-badge" style="background:#E8623D;transform:rotate(-6deg);">'
-              +(nuitsTxt!=='—'?(nuitsTxt+' NUITS'):'EN ROUTE')+'<br>★ ★ ★<br>'+kmTxt+' KM</div>'
-            +'<div class="k-badge" style="background:#7C8B5D;transform:rotate(7deg);">'
-              +esc(partTxt)+' PERS.</div>'
-          +'</div>'
+        +'</div>'
+        +'<div class="k-stats">'
+          +'<div class="k-stat"><b>'+kmTxt+' km</b><span>Parcourus</span></div>'
+          +'<div class="k-stat"><b>'+nuitsTxt+'</b><span>Nuits</span></div>'
+          +'<div class="k-stat"><b>'+esc(partTxt)+'</b><span>Voyageurs</span></div>'
+          +'<div class="k-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
         +'</div>'
       +'</div></div>';
   }
@@ -1060,7 +1070,7 @@ function pageCouverture(tema, dest, totalKm, nbPart, nbAnimaux, photoUrl, photos
       +'<p class="a-coords">'+kmTxt+' KM AU COMPTEUR — '+nuitsTxt+' NUITS SUR LA ROUTE</p>'
       +'<div class="a-route-strip">'+routeSvg+routeLbls+'</div>'
       +'<div class="a-photo-plate">'+plancheInner+plancheCap+'</div>'
-      +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div></div>'
+      +'<div class="a-plate"><div><b>'+kmTxt+'</b>parcourus</div><div><b>'+nuitsTxt+'</b>itinérance</div><div><b>'+esc(partTxt)+'</b>voyageurs</div><div><b>'+esc(animTxt)+'</b>compagnons</div></div>'
       +'<p class="a-footnote">Relevé cartographique — RockNRoad</p>'
       +'</div></div>';
   }
