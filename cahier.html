@@ -97,13 +97,46 @@ body[data-theme="kraft"] .page{background-image:none;}
      vraie marge de sécurité de 4mm intégrée à la mise en page — via @page
      ET une taille de .page réduite d'autant — donne le même résultat,
      mais proprement et de façon symétrique, à 100% sans bidouillage. */
-  @page{ size:210mm 297mm; margin:4mm; }
-  .page{margin:0;box-shadow:none;width:202mm !important;height:289mm !important;min-height:289mm !important;max-height:289mm !important;overflow:hidden !important;}
+  @page{ size:210mm 297mm; margin:10mm; }
+  .page{margin:0;box-shadow:none;width:190mm !important;height:277mm !important;min-height:277mm !important;max-height:277mm !important;overflow:hidden !important;
+    page-break-inside:avoid !important;break-inside:avoid !important;}
   /* .cover-kraft et .cover-atlas fixent chacune leur propre min-height:297mm
      (indépendante de .page) pour tenir leur mise en page plein-page à
      l'écran — sans ce correctif, elles ignoraient la marge de sécurité
      ci-dessus et débordaient sur une deuxième feuille à l'impression. */
-  .cover-kraft,.cover-atlas{min-height:289mm !important;}
+  .cover-kraft,.cover-atlas{min-height:277mm !important;}
+
+  /* (17/07, retour Bruno : pages « imbibées » d'encre) — deux excès distincts :
+     1. Les motifs décoratifs (grille de points du Carnet bricolé, quadrillage
+        graticule de l'Atlas, léger halo/lignes de fond des autres thèmes)
+        sont beaux à l'écran mais n'apportent rien sur papier : juste de
+        l'encre. Ils disparaissent entièrement à l'impression, quel que soit
+        le thème — le papier redevient franchement uni.
+     2. La couverture Atlas est en encre pleine page (bleu nuit #141C26) —
+        superbe à l'écran, beaucoup trop lourd sur papier. Elle reprend à
+        l'impression le même fond clair que ses propres pages intérieures
+        (déjà éprouvées, déjà légères à l'impression), avec juste un cadre
+        sombre en bordure pour garder l'esprit « carnet d'expédition » sans
+        noyer la page d'encre. Les écritures claires (pensées pour un fond
+        sombre) basculent sur les couleurs sombres déjà utilisées ailleurs
+        dans ce même thème, pour rester lisibles sur fond clair. */
+  .page{background-image:none !important;}
+  .cover-atlas{background:var(--cah-paper) !important;border:2px solid var(--cah-ink);color:var(--cah-ink) !important;}
+  .cover-atlas::before,.cover-atlas::after{border-color:rgba(32,36,42,.3) !important;}
+  .cover-atlas .a-corner{border-color:rgba(32,36,42,.5) !important;}
+  .cover-atlas .a-watermark{opacity:.06 !important;}
+  .cover-atlas .a-watermark path,.cover-atlas .a-watermark circle{fill:var(--cah-ink) !important;stroke:var(--cah-ink) !important;}
+  .cover-atlas .a-eyebrow{color:var(--cah-ink-dim) !important;}
+  .cover-atlas .a-title{color:var(--cah-ink) !important;}
+  .cover-atlas .a-title-rule{background:linear-gradient(90deg,var(--cah-accent),transparent) !important;}
+  .cover-atlas .a-coords{color:var(--cah-accent) !important;}
+  .cover-atlas .a-route-lbl{color:var(--cah-ink-dim) !important;}
+  .cover-atlas .a-photo-plate{border-color:rgba(32,36,42,.35) !important;background:rgba(32,36,42,.03) !important;}
+  .cover-atlas .a-photo-cap{color:var(--cah-ink-dim) !important;}
+  .cover-atlas .a-plate{border-color:rgba(32,36,42,.25) !important;color:var(--cah-ink-dim) !important;}
+  .cover-atlas .a-plate b{color:var(--cah-ink) !important;}
+  .cover-atlas .a-footnote{color:var(--cah-ink-dim) !important;}
+  .cover-atlas .a-compass circle{stroke:var(--cah-ink-dim) !important;}
 }
 
 /* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
