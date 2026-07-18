@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css?v=100725">
 <link rel="stylesheet" href="app.css?v=100725">
-<script src="chrome.js?v=180726"></script>
+<script src="chrome.js?v=180728"></script>
 <script src="discussion.js"></script>
 <script src="carto.js"></script>
 <script src="carto-cascade.js"></script>
@@ -3354,14 +3354,21 @@ async function chargerBlocGroupe(groupeId){
   const avEl=document.getElementById('hz-crew-avts');
   const msgEl=document.getElementById('hz-crew-msgs');
   try{
-    // Membres du groupe : avatar emoji si présent, sinon initiale colorée
+    // Membres du groupe : photo si choisie, sinon emoji, sinon initiale —
+    // même priorité que partout ailleurs (chrome.js, Cahier), via
+    // window.rnrAvatarMembre (18/07, retour Bruno : « les photos ne se
+    // mettent pas à jour » — le select omettait photo_url).
     const {data:membres}=await sb.from('membres')
-      .select('id,user_id,pseudo,prenom,avatar').eq('groupe_id',groupeId).limit(20);
+      .select('id,user_id,pseudo,prenom,avatar,photo_url').eq('groupe_id',groupeId).limit(20);
     if(membres){ HZ_MEMBRES=membres; }
     if(avEl && membres){
       const max=5;
       let html=membres.slice(0,max).map(m=>{
         const nom=m.pseudo||m.prenom||'?';
+        const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
+        if(av&&av.photo){
+          return '<div class="av2" style="background-image:url(\''+av.photo.replace(/'/g,'')+'\');background-size:cover;background-position:center;"></div>';
+        }
         if(m.avatar){
           return '<div class="av2" style="background:var(--gold-a20);font-size:16px">'+m.avatar+'</div>';
         }

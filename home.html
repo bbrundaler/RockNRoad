@@ -12,7 +12,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="tags.js"></script>
 <script src="carto-marqueurs.js?v=180726"></script>
-<script src="chrome.js?v=180726"></script>
+<script src="chrome.js?v=180728"></script>
 <script src="discussion.js"></script>
 <style>
 /* HUB reconstruit grammaire v2 (Charte Design v1) — remplace le prototype d'ambiance.
@@ -464,27 +464,48 @@ async function creerPremierVoyage(){
 }
 
 // Rangée d'avatars du groupe (header) — présence : un point s'allume sur les membres
-// actifs depuis TA dernière visite (referenceISO), jamais sur toi-même. Couleur/initiale
-// via RNRDiscussion.memberAvatar (même moteur que la discussion, un seul endroit).
-function hubRenderAvatars(membres, monUserId, referenceISO){
+// actifs depuis TA dernière visite (referenceISO), jamais sur toi-même. Couleur/initiale/
+// photo via RNRDiscussion.memberAvatar (même moteur que la discussion, un seul endroit).
+// (18/07, retour Bruno) : les animaux du groupe suivent les membres — « ils font partie
+// des familles » — via RNR_ANIMAUX.lister (chrome.js), même moteur que le Cahier.
+async function hubRenderAvatars(membres, monUserId, referenceISO, groupeId, sb){
   const box=document.getElementById('hub-avatars');
   if(!box) return;
-  if(!membres.length){ box.innerHTML=''; return; }
   const refTime = referenceISO ? new Date(referenceISO).getTime() : 0;
   const MAX=5;
   const visibles=membres.slice(0,MAX);
   const surplus=membres.length-visibles.length;
-  box.innerHTML = visibles.map(m=>{
+  let html = visibles.map((m,i)=>{
     const nom = m.prenom || m.pseudo || 'Voyageur';
     const av = (window.RNRDiscussion && RNRDiscussion.memberAvatar)
       ? RNRDiscussion.memberAvatar({membres:membres}, m.user_id, nom)
       : {initiale:(nom.charAt(0)||'?').toUpperCase(), bg:'#888'};
     const actif = m.user_id!==monUserId && !!m.derniere_activite && new Date(m.derniere_activite).getTime()>refTime;
-    const styleBg = av.emoji ? '' : ('background:'+(av.bg||'#888')+';');
-    const contenu = av.emoji ? av.emoji : (av.initiale||'?');
+    const styleBg = av.photo ? ("background-image:url('"+av.photo.replace(/'/g,'')+"');background-size:cover;background-position:center;")
+      : (av.emoji ? '' : ('background:'+(av.bg||'#888')+';'));
+    const contenu = av.photo ? '' : (av.emoji ? av.emoji : (av.initiale||'?'));
     const titre = actif ? nom+' — actif·ve depuis votre dernière visite' : nom;
-    return '<div class="hub-av-row"><div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div><span class="hub-av-nom">'+nom.replace(/</g,'')+'</span></div>';
+    // (18/07, retour Bruno) : cliquer sur la tête d'un membre doit ouvrir
+    // son profil (et permettre de lui écrire) — même modale partout sur le
+    // site, jamais une variante propre au Hub.
+    return '<div class="hub-av-row" style="cursor:pointer;" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil(window.__HUB_MEMBRES['+i+'])"><div class="hub-av" style="'+styleBg+'" title="'+titre.replace(/"/g,'')+'">'+contenu+(actif?'<span class="pt"></span>':'')+'</div><span class="hub-av-nom">'+nom.replace(/</g,'')+'</span></div>';
   }).join('') + (surplus>0 ? '<div class="hub-av-row"><div class="hub-av hub-av-plus">+'+surplus+'</div><span class="hub-av-nom">'+surplus+' autre'+(surplus>1?'s':'')+'</span></div>' : '');
+  window.__HUB_MEMBRES = visibles; // (18/07) référence pour les onclick ci-dessus, sans tout réinjecter en JSON inline
+  box.innerHTML = html;
+  if(window.RNR_ANIMAUX && groupeId && sb){
+    try{
+      const animaux = await RNR_ANIMAUX.lister(groupeId, sb);
+      if(animaux.length){
+        window.__HUB_ANIMAUX = animaux;
+        box.innerHTML += animaux.map((a,i)=>{
+          const nom=a.nom||'Compagnon';
+          const styleBg = a.photo_url ? ("background-image:url('"+String(a.photo_url).replace(/'/g,'')+"');background-size:cover;background-position:center;") : 'background:var(--gold-a20);';
+          const contenu = a.photo_url ? '' : (nom.charAt(0)||'?').toUpperCase();
+          return '<div class="hub-av-row" style="cursor:pointer;" onclick="window.rnrOuvrirProfilAnimal&&window.rnrOuvrirProfilAnimal(window.__HUB_ANIMAUX['+i+'])"><div class="hub-av" style="'+styleBg+'" title="'+nom.replace(/"/g,'')+'">'+contenu+'</div><span class="hub-av-nom">'+nom.replace(/</g,'')+'</span></div>';
+        }).join('');
+      }
+    }catch(e){ console.warn('Hub: animaux', e); }
+  }
 }
 
 async function loadHubData(userId, email){
@@ -521,7 +542,7 @@ async function loadHubData(userId, email){
     let membres=[];
     try{
       const r=await sb.from('membres')
-        .select('id,user_id,pseudo,prenom,avatar,derniere_activite').eq('groupe_id',groupeId).limit(40);
+        .select('*').eq('groupe_id',groupeId).limit(40);
       membres=r.data||[];
     }catch(e){ console.warn('Hub: membres',e); }
 
@@ -539,7 +560,7 @@ async function loadHubData(userId, email){
     }catch(e){}
     sb.from('membres').update({derniere_activite:new Date().toISOString()}).eq('user_id',userId).eq('groupe_id',groupeId).then(()=>{},()=>{});
 
-    hubRenderAvatars(membres, userId, reference);
+    hubRenderAvatars(membres, userId, reference, groupeId, sb);
 
     /* ── Fil « Partager au groupe » : MÊME composant unifié que Cockpit/Horizon (Master 4.18).
        Identité via la règle canonique rnrNomMembre (chrome.js) → nom cohérent partout,

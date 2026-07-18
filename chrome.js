@@ -123,18 +123,20 @@
   +'.bsl-btn{bottom:84px !important;}'   /* la Boussole remonte au-dessus de la tabbar */
   +'}'
   /* ── Barre d'avatars + présence (08/07) — un coin en haut à droite,
-     partout, posé par ce seul fichier. ── */
+     partout, posé par ce seul fichier. (18/07, retour Bruno : « le rond des
+     photos est trop petit ») — agrandi 32px→42px, quitte à élargir un peu
+     la barre ; le chevauchement (-8px→-11px) et la police suivent. ── */
   +'.rnrc-avs{display:flex;align-items:center;margin-right:4px;}'
-  +'.rnrc-av{position:relative;width:32px;height:32px;border-radius:50%;margin-left:-8px;'
+  +'.rnrc-av{position:relative;width:42px;height:42px;border-radius:50%;margin-left:-11px;'
   +'border:2px solid var(--chrome-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;'
-  +'font-size:14px;font-weight:800;color:#fff;overflow:hidden;background-size:cover;background-position:center;'
+  +'font-size:17px;font-weight:800;color:#fff;overflow:hidden;background-size:cover;background-position:center;'
   +'transition:transform .15s;}'
   +'.rnrc-av:hover{transform:translateY(-2px);z-index:5;}'
   +'.rnrc-av:first-child{margin-left:0;}'
-  +'.rnrc-av-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;'
+  +'.rnrc-av-dot{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;'
   +'background:#5cb85c;border:2px solid var(--chrome-bg);display:none;}'
   +'.rnrc-av-dot.on{display:block;}'
-  +'.rnrc-av-plus{background:var(--gold-a10);color:var(--gold-light);border:2px solid var(--chrome-bg);font-size:11px;}'
+  +'.rnrc-av-plus{background:var(--gold-a10);color:var(--gold-light);border:2px solid var(--chrome-bg);font-size:13px;}'
   +'.rnrc-av-tip{position:absolute;top:calc(100% + 8px);right:0;background:var(--chrome-bg);color:var(--chrome-ink);'
   +'border:1px solid var(--gold-a35);border-radius:8px;padding:5px 10px;font-size:11.5px;white-space:nowrap;'
   +'box-shadow:0 6px 18px rgba(0,0,0,.3);display:none;z-index:1500;font-family:var(--font-body);}'
@@ -172,6 +174,9 @@
   +'.rnrc-pf-photo-etat{font-size:11px;color:var(--ink-dim);}'
   +'.rnrc-pf-lecture{font-size:13px;line-height:1.6;color:var(--ink);}'
   +'.rnrc-pf-lecture .vide{color:var(--ink-dim);font-style:italic;}'
+  +'.rnrc-pf-mail-btn{width:100%;padding:10px;margin-top:14px;background:var(--gold-a20);color:var(--gold-deep,#8a6d1f);'
+  +'border:1.5px solid var(--gold-a35);border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;}'
+  +'.rnrc-pf-mail-btn:hover{background:var(--gold);color:#1a1208;}'
   +'.rnrc-pf-foot{padding:14px 22px;border-top:1px solid var(--surface-line);}'
   +'.rnrc-pf-foot button{width:100%;padding:10px;background:var(--ink,#211a10);color:var(--gold,#C8A84B);'
   +'border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;}'
@@ -452,6 +457,11 @@
       _monMembre = mres.data; _monGroupeId = mres.data.groupe_id;
       var lres = await _sbChrome.from('membres').select('*').eq('groupe_id', _monGroupeId);
       _tousMembres = (lres && lres.data) || [];
+      // (18/07, retour Bruno : « si nous avons des animaux, il faudrait les
+      // mettre partout, ils font partie des familles ») — même liste
+      // (_chargerAnimaux, déjà utilisée par la section "Nos animaux" de la
+      // modale profil) réutilisée ici pour la barre du haut, un seul endroit.
+      await _chargerAnimaux();
       rendreAvatars();
       battementCoeur();
       setInterval(battementCoeur, 60000);
@@ -483,6 +493,19 @@
       plus.title=(_tousMembres.length-4)+' autre(s) membre(s)';
       wrap.appendChild(plus);
     }
+    // (18/07) Les animaux du groupe suivent les membres, toujours visibles
+    // (pas de troncature à 4 comme les membres — un groupe a rarement plus
+    // de 2-3 compagnons, pas besoin d'un "+N" ici).
+    (_animaux||[]).forEach(function(a){
+      var b = document.createElement('div'); b.className='rnrc-av';
+      b.style.background = a.photo_url ? '' : 'var(--gold-a20)';
+      if(a.photo_url) b.style.backgroundImage = "url('"+String(a.photo_url).replace(/'/g,'')+"')";
+      var nom = a.nom || 'Compagnon';
+      b.innerHTML = (a.photo_url?'':(nom.charAt(0)||'?').toUpperCase())
+        + '<span class="rnrc-av-tip">'+nom+'</span>';
+      b.addEventListener('click', function(){ ouvrirProfilAnimal(a); });
+      wrap.appendChild(b);
+    });
     // posé juste avant le bouton thème, dans l'ordre naturel de lecture droite→gauche
     var theme = right.querySelector('.rnrc-theme');
     if(theme) right.insertBefore(wrap, theme); else right.appendChild(wrap);
@@ -649,11 +672,32 @@
         (depuisLabel&&depuisLabel!=='—' ? '<p><b>Voyageur(se) depuis</b> '+depuisLabel+'</p>' : '')+
         (passionsLabels.length ? '<p><b>Passions</b> '+passionsLabels.join(' · ')+'</p>' : '')+
         '<p>'+(m.presentation ? m.presentation.replace(/</g,'&lt;') : '<span class="vide">Pas encore de présentation.</span>')+'</p>'+
-      '</div>';
+      '</div>'+
+      // (18/07, retour Bruno) : pouvoir écrire directement à la personne
+      // depuis son profil, pas seulement la lire — mailto, rien n'est
+      // envoyé par le site (même principe que "Écrire aux membres cochés").
+      (m.email ? '<button type="button" class="rnrc-pf-mail-btn" onclick="window.location.href=\'mailto:'+String(m.email).replace(/'/g,'')+'\'">✉️ Écrire à '+window.rnrNomMembre(m,m.email)+'</button>' : '');
     }
     document.getElementById('rnrc-profil-overlay').classList.add('open');
   }
   window.__rnrProfilFerme = function(){ var o=document.getElementById('rnrc-profil-overlay'); if(o) o.classList.remove('open'); };
+  // (18/07, retour Bruno) : les animaux "font partie des familles" — ils
+  // ont donc leur propre petite fiche, cliquable comme un membre, mais
+  // strictement lecture seule (pas d'email, pas d'édition : l'édition vit
+  // dans RNR_ANIMAUX, "Nos animaux", section du profil de chacun).
+  function ouvrirProfilAnimal(a){
+    ensureProfilDom();
+    var avEl=document.getElementById('rnrc-pf-av');
+    if(a.photo_url){ avEl.style.background="url('"+String(a.photo_url).replace(/'/g,'')+"') center/cover"; avEl.textContent=''; }
+    else { avEl.style.background='var(--gold-a20)'; avEl.textContent=(a.nom||'?').charAt(0).toUpperCase(); }
+    document.getElementById('rnrc-pf-nom').textContent = a.nom || 'Compagnon de route';
+    document.getElementById('rnrc-pf-sub').textContent = 'Compagnon de route de la famille';
+    document.getElementById('rnrc-pf-foot').style.display='none';
+    document.getElementById('rnrc-pf-corps').innerHTML = '<div class="rnrc-pf-lecture">'+
+      (a.infos ? a.infos.replace(/</g,'&lt;') : '<span class="vide">Pas encore d\'infos.</span>')+
+    '</div>';
+    document.getElementById('rnrc-profil-overlay').classList.add('open');
+  }
   // (17/07) Le Cahier (page Équipe) doit ouvrir EXACTEMENT cette modale —
   // jamais une variante — pour éditer/ajouter sa photo. Un seul moteur,
   // partagé par la barre d'avatars ET la page Équipe imprimable.
@@ -664,6 +708,10 @@
     try{ if(_rnrInitProfilPromise) await _rnrInitProfilPromise; }catch(e){}
     ouvrirProfil(m);
   };
+  // (18/07) Même principe que rnrOuvrirProfil, pour un animal — utilisé par
+  // la barre d'avatars ET la rangée d'avatars du Hub (home.html) : un seul
+  // point d'entrée public, jamais une variante par page.
+  window.rnrOuvrirProfilAnimal = function(a){ ouvrirProfilAnimal(a); };
 
   /* ════════════════════════════════════════════════════════════════════
      IDENTITÉ CANONIQUE — une seule maison pour le nom affiché d'un membre.

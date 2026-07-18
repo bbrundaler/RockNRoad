@@ -111,6 +111,11 @@
   }
   function memberAvatar(cfg, auteurId, nom){
     var m = (cfg.membres||[]).find(function(x){ return x.id===auteurId || x.user_id===auteurId; });
+    // (18/07, retour Bruno : « les photos ne se mettent pas à jour ») —
+    // cette fonction ne regardait que l'emoji, jamais photo_url, alors que
+    // c'est la même priorité partout ailleurs sur le site (chrome.js,
+    // Cahier) : photo choisie > emoji > initiale.
+    if(m && m.photo_url) return {photo:m.photo_url};
     if(m && m.avatar) return {emoji:m.avatar};
     return {initiale:initiale(nom), bg:couleurAvatar(nom||'?')};
   }
@@ -158,6 +163,7 @@
       var av=memberAvatar(cfg, m.auteur_id, nom);
       var avHtml;
       if(continuite){ avHtml='<div class="rnrd-av vide"></div>'; }
+      else if(av.photo){ avHtml='<div class="rnrd-av" style="background-image:url(\''+av.photo.replace(/'/g,'')+'\');background-size:cover;background-position:center;"></div>'; }
       else if(av.emoji){ avHtml='<div class="rnrd-av" style="background:var(--gold-a20)">'+esc(av.emoji)+'</div>'; }
       else { avHtml='<div class="rnrd-av" style="background:'+av.bg+'">'+esc(av.initiale)+'</div>'; }
 
