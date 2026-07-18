@@ -68,81 +68,31 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 body[data-theme="kraft"] .page{background-image:none;}
 @media print{
   #auth-check,.toolbar{display:none !important;}
-  /* (17/07, retour Bruno) : chrome.js injecte sa propre barre de navigation
-     (.rnrc-nav) en haut de CHAQUE page du site, cahier.html compris — elle
-     n'était pas exclue de l'impression. Présente sur la première feuille,
-     elle décalait tout ce qui suivait (d'où les pages du Cahier réduites
-     aux 2/3 en dessous). Le Cahier imprimé ne doit montrer que #pages. */
+  /* chrome.js injecte sa propre barre de navigation (.rnrc-nav) en haut de
+     CHAQUE page du site, cahier.html compris — à exclure de l'impression. */
   .rnrc-nav{display:none !important;}
   body{background:none;}
-  /* (17/07, retour Bruno : impression déformée et sans les bonnes couleurs)
-     Deux causes distinctes, corrigées ensemble :
-     1. Les navigateurs n'impriment PAS les couleurs/images de fond par
-        défaut (économie d'encre) — tout ce qui fait la personnalité des
-        3 thèmes (bandeaux, badges, photos en fond, dégradés) disparaissait
-        à l'impression. print-color-adjust:exact force leur impression.
-     2. .page utilisait min-height (un plancher, pas un plafond) : une page
-        dont le contenu dépassait 297mm continuait de grandir plutôt que
-        d'être coupée — elle débordait alors sur une partie de la feuille
-        suivante, décalant toute la pagination derrière elle (l'effet
-        « déformé »). height fixe + overflow:hidden, uniquement à
-        l'impression (l'écran garde le confort du défilement). */
   *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
-  /* (17/07, retour Bruno) : à 100% pile, la première page perdait son
-     illustration — la plupart des imprimantes (et certains exports PDF) ne
-     peuvent pas imprimer jusqu'au bord exact de la feuille, il existe
-     toujours une petite marge minimale incompressible, quoi que dise le
-     CSS. Bidouiller l'échelle à 98% « marchait » mais de façon asymétrique
-     (une barre blanche en haut et à droite, pas en bas ni à gauche). Une
-     vraie marge de sécurité de 4mm intégrée à la mise en page — via @page
-     ET une taille de .page réduite d'autant — donne le même résultat,
-     mais proprement et de façon symétrique, à 100% sans bidouillage. */
+  /* La plupart des imprimantes (et certains exports PDF) ne peuvent pas
+     imprimer jusqu'au bord exact de la feuille — une marge de sécurité de
+     10mm est intégrée à la mise en page plutôt que laissée au hasard du
+     réglage d'échelle du navigateur. */
   @page{ size:210mm 297mm; margin:10mm; }
   .page{margin:0;box-shadow:none;width:190mm !important;height:277mm !important;min-height:277mm !important;max-height:277mm !important;overflow:hidden !important;
     page-break-inside:avoid !important;break-inside:avoid !important;}
-  /* .cover-kraft et .cover-atlas fixent chacune leur propre min-height:297mm
-     (indépendante de .page) pour tenir leur mise en page plein-page à
-     l'écran — sans ce correctif, elles ignoraient la marge de sécurité
-     ci-dessus et débordaient sur une deuxième feuille à l'impression. */
   .cover-kraft,.cover-atlas{min-height:277mm !important;}
-
-  /* (17/07, 4e retour Bruno) : Édition avait le même défaut que les deux
-     autres — sa "bande photo" est aussi une zone flex:1 "qui remplit
-     l'espace restant" (.e-photo-band). Elle tenait tant que la page faisait
-     297mm ; en la réduisant pour donner de la marge de sécurité aux deux
-     autres thèmes, elle a fini par déborder aussi. Même traitement partout :
-     hauteur fixe et prudente, jamais un calcul laissé au moteur d'impression. */
-  .cover-kraft .k-photo-zone{flex:none !important;height:150mm !important;margin:14mm 4mm !important;}
-  .cover-atlas .a-route-strip{flex:none !important;height:24mm !important;margin-bottom:8mm !important;}
-  .cover-atlas .a-photo-plate{flex:none !important;height:60mm !important;margin-bottom:8mm !important;}
-  .cover-edition .e-photo-band{flex:none !important;height:140mm !important;min-height:0 !important;}
-  /* Élément décoratif en fin de couverture Atlas — n'apporte rien et c'est
-     justement lui qui débordait seul sur la feuille suivante. */
+  /* Élément décoratif en fin de couverture Atlas, sans grand intérêt. */
   .a-footnote{display:none !important;}
 
-  /* (17/07, 2e retour Bruno) : deux demandes précises, pas la même pour
-     chaque thème —
-     1. Carnet bricolé (et tout ce qui n'est pas Atlas) : totalement blanc à
-        l'impression, aucun point — sur un thème "papier blanc", des points
-        n'apportent rien, juste de l'encre et du poids.
-     2. Atlas : PAS blanc — l'esprit "gris" doit rester perceptible, mais en
-        très allégé (petits points bien espacés) plutôt qu'en gris compact
-        ou en encre pleine page. Remplace le filigrane boussole (cassé à
-        l'impression — un rond plein au lieu d'un simple contour, retiré) :
-        ce quadrillage léger porte maintenant l'ambiance à lui seul.
-     (17/07, 3e retour) : le dégradé CSS radial-gradient rend de façon
-     imprévisible à l'impression (plus dense, plus flou que sur écran) — et
-     posé sur le beige chaud du thème, un gris dessus se voit brun, pas gris.
-     Un vrai pointillé SVG (un point net dans une tuile carrée, répétée) est
-     fiable quel que soit le moteur d'impression ; et la page bascule sur un
-     gris neutre plutôt que le beige, pour que l'ambiance lise vraiment
-     "gris", comme voulu — jamais blanche, jamais pleine d'encre. */
+  /* (17/07) Fonds — même logique que ce qui marche déjà sur les autres
+     pages du Cahier : un aplat uni, jamais de motif (points, quadrillage),
+     qui alourdit l'impression sans rien apporter sur papier. Carnet
+     bricolé (et par défaut tous les thèmes) redevient blanc ; Atlas garde
+     un aplat gris clair pour préserver son identité sans noyer la page
+     d'encre — la couverture plein cadre bleu nuit de l'écran n'a pas de
+     sens en impression, elle bascule sur ce même gris. */
   .page{background-image:none !important;}
-  body[data-theme="atlas"] .page{
-    background-color:#E7E7E4 !important;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='3' cy='3' r='1' fill='%23555' fill-opacity='0.4'/%3E%3C/svg%3E") !important;
-    background-size:24px 24px !important; background-position:0 0 !important;
-  }
+  body[data-theme="atlas"] .page{background-color:#E7E7E4 !important;}
   .cover-atlas .a-watermark{display:none !important;}
   .cover-atlas{background:#E7E7E4 !important;border:2px solid var(--cah-ink);color:var(--cah-ink) !important;}
   .cover-atlas::before,.cover-atlas::after{border-color:rgba(32,36,42,.3) !important;}
@@ -156,7 +106,6 @@ body[data-theme="kraft"] .page{background-image:none;}
   .cover-atlas .a-photo-cap{color:var(--cah-ink-dim) !important;}
   .cover-atlas .a-plate{border-color:rgba(32,36,42,.25) !important;color:var(--cah-ink-dim) !important;}
   .cover-atlas .a-plate b{color:var(--cah-ink) !important;}
-  .cover-atlas .a-footnote{color:var(--cah-ink-dim) !important;}
   .cover-atlas .a-compass circle{stroke:var(--cah-ink-dim) !important;}
 }
 
@@ -196,13 +145,13 @@ body[data-theme="kraft"] .page{background-image:none;}
 .spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--cah-spirale);background:transparent;box-shadow:inset 0 0 0 3px var(--cah-paper);}
 body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition relié, pas à spirale */
 
-.cover-edition{display:flex;flex-direction:column;color:var(--cah-ink);}
+.cover-edition{display:flex;flex-direction:column;justify-content:center;color:var(--cah-ink);}
 .cover-edition .e-mast{padding:44px 50px 0;text-align:center;}
 .cover-edition .e-rule{width:38px;height:1px;background:var(--cah-accent);margin:0 auto 14px;}
 .cover-edition .e-eyebrow{font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--cah-accent);font-weight:600;}
 .cover-edition .e-title{font-family:var(--cah-font-title);font-weight:700;font-size:42px;line-height:1.1;margin:20px 0 10px;color:var(--cah-ink);}
 .cover-edition .e-sub{font-family:var(--cah-font-title);font-style:italic;font-size:14px;color:var(--cah-ink-dim);margin:0 0 28px;}
-.cover-edition .e-photo-band{flex:1;background:linear-gradient(160deg,#D8CBA8,#8b7245 65%,#5c4a30);background-size:cover;background-position:center;margin:0 50px;border-radius:3px;min-height:220px;}
+.cover-edition .e-photo-band{height:360px;background:linear-gradient(160deg,#D8CBA8,#8b7245 65%,#5c4a30);background-size:cover;background-position:center;margin:0 50px;border-radius:3px;}
 .cover-edition .e-stats{display:flex;padding:24px 50px 40px;}
 .cover-edition .e-stat{flex:1;text-align:center;border-left:1px solid var(--cah-paper-line);padding:0 8px;}
 .cover-edition .e-stat:first-child{border-left:none;}
@@ -220,7 +169,7 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-kraft{padding:0;color:#2B1D0F;display:flex;flex-direction:column;min-height:297mm;
   background-image:radial-gradient(rgba(43,29,15,.09) 1px, transparent 1.4px);background-size:16px 16px;background-position:6px 6px;}
 .cover-kraft .k-band{height:66px;flex-shrink:0;background:repeating-linear-gradient(45deg,#E8623D,#E8623D 14px,#D9542F 14px,#D9542F 28px);}
-.cover-kraft .k-body{padding:32px 40px 40px;flex:1;display:flex;flex-direction:column;position:relative;}
+.cover-kraft .k-body{padding:32px 40px 40px;flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;}
 .cover-kraft .k-eyebrow{font-family:'Special Elite',monospace;font-size:11.5px;letter-spacing:.1em;color:#7C8B5D;text-transform:uppercase;}
 .cover-kraft .k-title{font-family:'Permanent Marker',cursive;font-size:38px;line-height:1.18;color:#2B1D0F;margin:14px 0 0;transform:rotate(-1deg);}
 .cover-kraft .k-tagline{font-family:'Caveat',cursive;font-size:19px;color:#7C8B5D;margin:6px 0 0;transform:rotate(-.6deg);}
@@ -228,7 +177,7 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
   color:#8B3A2E;display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Special Elite',monospace;
   font-size:9.5px;letter-spacing:.05em;line-height:1.5;transform:rotate(9deg);opacity:.8;z-index:3;}
 .cover-kraft .k-doodle{position:absolute;opacity:.55;z-index:1;}
-.cover-kraft .k-photo-zone{flex:1;position:relative;margin:38px 8px 46px;}
+.cover-kraft .k-photo-zone{height:400px;position:relative;margin:38px 8px 46px;}
 .cover-kraft .k-hero{position:absolute;inset:0;background-size:cover;background-position:center;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.3);}
 .cover-kraft .k-hero-empty{position:absolute;inset:0;border:10px solid #fff;box-shadow:0 18px 36px rgba(0,0,0,.22);
   background:repeating-linear-gradient(135deg,#F6EFDC,#F6EFDC 20px,#EFE1BE 20px,#EFE1BE 40px);display:flex;flex-direction:column;
@@ -259,17 +208,17 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .cover-atlas .a-corner.bl{bottom:16px;left:16px;border-bottom:1.5px solid;border-left:1.5px solid;}
 .cover-atlas .a-corner.br{bottom:16px;right:16px;border-bottom:1.5px solid;border-right:1.5px solid;}
 .cover-atlas .a-watermark{position:absolute;top:50%;left:50%;width:460px;height:460px;transform:translate(-50%,-50%);opacity:.045;pointer-events:none;}
-.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;position:relative;}
+.cover-atlas .a-corps{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;}
 .cover-atlas .a-eyebrow{font-family:'Special Elite',monospace;font-size:10.5px;letter-spacing:.16em;color:#6E8F84;text-transform:uppercase;}
 .cover-atlas .a-title{font-family:'Cinzel',serif;font-weight:700;font-size:34px;letter-spacing:.02em;line-height:1.3;color:#D9C9A0;margin:18px 0 6px;text-transform:uppercase;}
 .cover-atlas .a-title-rule{width:100%;height:1px;background:linear-gradient(90deg,#B87333,transparent);margin-bottom:10px;}
 .cover-atlas .a-coords{font-family:'Special Elite',monospace;font-size:10.5px;color:#B87333;letter-spacing:.05em;margin-bottom:22px;}
-.cover-atlas .a-route-strip{position:relative;flex:1;min-height:90px;margin-bottom:22px;}
+.cover-atlas .a-route-strip{position:relative;height:90px;margin-bottom:22px;}
 .cover-atlas .a-route-strip svg{width:100%;height:100%;}
 .cover-atlas .a-route-lbl{position:absolute;top:100%;transform:translateX(-50%);font-family:'Special Elite',monospace;font-size:8px;
   color:#8a97a3;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;margin-top:4px;text-align:center;}
-.cover-atlas .a-photo-plate{flex:2;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
-  background:rgba(217,201,160,.03);display:flex;flex-direction:column;min-height:180px;}
+.cover-atlas .a-photo-plate{height:230px;width:100%;margin:0 0 22px;border:1.5px solid rgba(217,201,160,.35);padding:9px;
+  background:rgba(217,201,160,.03);display:flex;flex-direction:column;}
 .cover-atlas .a-photo-plate .ph{flex:1;background-size:cover;background-position:center;filter:sepia(.5) contrast(1.05) brightness(.95);}
 .cover-atlas .a-photo-plate-empty{flex:1;background:repeating-linear-gradient(135deg,rgba(217,201,160,.05),rgba(217,201,160,.05) 20px,transparent 20px,transparent 40px);
   display:flex;align-items:center;justify-content:center;font-family:'Special Elite',monospace;font-size:10px;color:#5a6570;letter-spacing:.06em;text-transform:uppercase;}
