@@ -134,20 +134,24 @@ input::placeholder{color:#b8ad96;}
   <div class="logo">
     <span class="logo-icon">🔑</span>
     <div class="logo-badge">🐾 Family Road Trip App</div>
-    <h1 style="font-size:30px;letter-spacing:-1px;">Nouveau mot de passe</h1>
-    <p style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Choisissez votre nouveau code d'accès</p>
+    <h1 id="titrePage" style="font-size:30px;letter-spacing:-1px;">Nouveau mot de passe</h1>
+    <p id="sousTitrePage" style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Choisissez votre nouveau code d'accès</p>
   </div>
 
   <div class="divider"></div>
 
+  <div id="emailZone" style="display:none;text-align:center;margin:-10px 0 20px;font-size:12.5px;color:#6B5F4A;">
+    Ton identifiant de connexion : <strong id="emailAffiche" style="color:#1a1208;"></strong>
+  </div>
+
   <div id="formZone">
     <div class="form-group">
-      <label>Nouveau mot de passe</label>
-      <input type="password" id="pwd1" placeholder="••••••••" autocomplete="new-password"/>
+      <label>Mot de passe</label>
+      <input type="password" id="pwd1" placeholder="Au moins 8 caractères" autocomplete="new-password"/>
     </div>
     <div class="form-group">
       <label>Confirmer le mot de passe</label>
-      <input type="password" id="pwd2" placeholder="••••••••" autocomplete="new-password"/>
+      <input type="password" id="pwd2" placeholder="Retape le même mot de passe" autocomplete="new-password"/>
     </div>
 
     <p class="regle" id="regle">8 caractères minimum, dont au moins une lettre et un chiffre.</p>
@@ -190,8 +194,23 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 // de récupération classique (membre existant → ensuite home).
 const estInvitation = window.location.hash.includes('type=invite');
 let sessionPrete = false;
+// (18/07, B77, retour de test grandeur nature de Bruno) : pour un premier
+// accès, "Nouveau mot de passe" laisse croire qu'on remplace un mot de passe
+// déjà existant — perturbant pour quelqu'un qui n'en a jamais eu. On affiche
+// aussi l'email dès que la session (issue du lien d'invitation) est prête,
+// pour répondre à "c'est quoi mon login du coup ?" avant même la question.
+if (estInvitation) {
+  document.getElementById('titrePage').textContent = 'Bienvenue !';
+  document.getElementById('sousTitrePage').textContent = 'Choisis ton mot de passe pour accéder au groupe';
+}
 sb.auth.onAuthStateChange((event, session) => {
-  if (session) sessionPrete = true;
+  if (session) {
+    sessionPrete = true;
+    if (session.user && session.user.email) {
+      document.getElementById('emailAffiche').textContent = session.user.email;
+      document.getElementById('emailZone').style.display = 'block';
+    }
+  }
 });
 
 // Validation : 8 caractères, au moins une lettre et un chiffre

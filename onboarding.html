@@ -200,11 +200,11 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           <div class="form-grid">
             <div class="fg">
               <label for="m-prenom">Prénom *</label>
-              <input type="text" id="m-prenom" placeholder="Bruno" maxlength="40">
+              <input type="text" id="m-prenom" placeholder="Ton prénom" maxlength="40">
             </div>
             <div class="fg">
               <label for="m-nom">Nom *</label>
-              <input type="text" id="m-nom" placeholder="Brundaler" maxlength="40">
+              <input type="text" id="m-nom" placeholder="Ton nom" maxlength="40">
             </div>
             <div class="fg full">
               <label for="m-pseudo">Pseudo * <span class="lbl-soft">(votre nom dans le groupe)</span></label>
@@ -263,16 +263,16 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
             <div class="form-grid">
               <div class="fg full">
                 <label for="g-nom">Nom du groupe *</label>
-                <input type="text" id="g-nom" placeholder="Famille Brundaler, Les Aventuriers…" maxlength="60">
+                <input type="text" id="g-nom" placeholder="Les Aventuriers, Famille Martin…" maxlength="60">
               </div>
               <div class="fg full">
                 <label for="g-adresse">Adresse de départ * <span class="lbl-soft">(ville ou adresse)</span></label>
-                <input type="text" id="g-adresse" placeholder="Avenheim, France" oninput="scheduleGeocode()">
+                <input type="text" id="g-adresse" placeholder="Ta ville de départ" oninput="scheduleGeocode()">
                 <div class="geo-status" id="geo-status"></div>
               </div>
               <div class="fg full">
                 <label for="g-description">Description <span class="lbl-soft">(optionnel)</span></label>
-                <textarea id="g-description" placeholder="Notre famille de voyageurs alsaciens…"></textarea>
+                <textarea id="g-description" placeholder="Une phrase sur votre groupe de voyageurs…"></textarea>
               </div>
             </div>
           </div>
