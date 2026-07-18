@@ -36,7 +36,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .fil-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .fil-top h1{margin:0;font-size:17px;}
-.fil-top-right{display:flex;align-items:center;gap:10px;}
+/* (18/07, retour Bruno) : les deux boutons se posent maintenant l'un sur
+   l'autre — plus de place regagnée à droite pour les avatars en colonnes. */
+.fil-top-right{display:flex;flex-direction:column;align-items:stretch;gap:6px;}
 /* (10/07, retour Bruno) : « Réglages [Nom du groupe] » est maintenant le SEUL
    chemin vers les réglages du groupe (le doublon de la barre a été retiré) —
    il ne doit plus jamais se chercher. Nom du groupe en toutes lettres (pas
@@ -128,10 +130,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   display:flex;align-items:center;justify-content:center;font-size:13px;}
 .hub-demo-lbl{font-size:12px;font-weight:600;color:var(--ink-dim);text-align:center;}
 
-/* ── Avatars du groupe — colonne pleine hauteur à l'extrême droite du bandeau,
-   avec surnom, présence discrète (05/07 soir, 2e passe) ── */
-.hub-avatars{display:flex;flex-direction:column;justify-content:space-evenly;gap:6px;
-  padding-left:20px;border-left:1px solid var(--surface-line);flex-shrink:0;}
+/* ── Avatars du groupe — à l'extrême droite du bandeau, avec surnom, présence
+   discrète (05/07 soir, 2e passe). (18/07, retour Bruno) : plus une colonne
+   unique qui s'allonge sans fin — une grille de 3 lignes maximum, qui ouvre
+   une nouvelle colonne dès qu'il faut une 4e personne (grid-auto-flow:column
+   remplit colonne par colonne, pas ligne par ligne). ── */
+.hub-avatars{display:grid;grid-template-rows:repeat(3,auto);grid-auto-flow:column;gap:8px 20px;
+  padding-left:20px;border-left:1px solid var(--surface-line);flex-shrink:0;align-content:center;}
 .hub-av-row{display:flex;align-items:center;gap:9px;}
 .hub-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:16px;font-weight:600;color:#fff;position:relative;flex-shrink:0;}
@@ -141,8 +146,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hub-av-plus{background:var(--ink-dim);color:var(--surface);font-size:14px;}
 @media(max-width:700px){
   .fil{flex-direction:column;}
-  .hub-avatars{flex-direction:row;flex-wrap:wrap;border-left:none;border-top:1px solid var(--surface-line);
-    padding-left:0;padding-top:12px;justify-content:flex-start;}
+  .hub-avatars{grid-template-rows:none;grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    border-left:none;border-top:1px solid var(--surface-line);
+    padding-left:0;padding-top:12px;}
 }
 
 /* ── Le Hub respire en grand : pleine largeur, comme Horizon/Carnet/Voyage
