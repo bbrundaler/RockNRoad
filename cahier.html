@@ -98,7 +98,13 @@ body[data-theme="kraft"] .page{background-image:none;}
    LARGE que son conteneur (les navigateurs ramènent les marges auto à 0 →
    la page collait à un bord). left:50% + translateX(-50%) centre sur la
    position réelle, quelle que soit la largeur de la boîte avant mise à l'échelle. ── */
-@media (max-width:850px){
+/* (17/07, retour Bruno : pages plus petites que la feuille à l'impression)
+   Cette règle n'était pas limitée à l'écran — "max-width" seul s'applique à
+   TOUT média, y compris l'impression, dès que la largeur de la page A4
+   (210mm ≈ 794px) passait sous son seuil de 850px. Elle réduisait alors
+   chaque page imprimée exactement comme sur un petit écran. "screen and"
+   la cantonne à l'écran, jamais à l'impression. ── */
+@media screen and (max-width:850px){
   body{overflow-x:hidden;}
   #pages{overflow-x:hidden;}
   .page{
@@ -285,7 +291,7 @@ body[data-theme="kraft"] .team-av-nudge{border-radius:4px;}
 .team-passions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
 .team-chip{font-size:9.5px;background:var(--cah-accent-soft);border:1px solid var(--cah-accent-line);border-radius:10px;padding:2px 8px;color:var(--cah-ink-dim);}
 .team-presentation{font-size:11.5px;line-height:1.5;color:var(--cah-ink-dim);font-style:italic;}
-@media(max-width:700px){.team-grid{grid-template-columns:1fr;}}
+@media screen and (max-width:700px){.team-grid{grid-template-columns:1fr;}}
 
 /* ── FICHE COMPLÈTE, reprise d'app.css (10/07) — le Cahier n'a jamais chargé
    app.css (toutes les autres pages en dépendent, lui a son propre habillage
