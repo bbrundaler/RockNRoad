@@ -260,11 +260,11 @@ body[data-theme="atlas"] .day-num-label,body[data-theme="atlas"] .day-title{text
    marque volontaire, jamais confondue avec "jour N" (excursion) qui reste à
    gauche. Reprend la typographie propre à chaque thème comme .day-num-label
    (même logique de surcharge ci-dessous), juste repositionnée. */
-.day-tag-etape{position:absolute;top:22px;right:22px;font-family:var(--cah-font-hand);font-size:15px;
-  color:var(--cah-accent);background:var(--cah-paper);padding:5px 16px;border:2.5px solid var(--cah-accent);
+.day-tag-etape{position:absolute;top:22px;right:22px;font-family:var(--cah-font-hand);font-size:22px;font-weight:700;
+  color:var(--cah-accent);background:var(--cah-paper);padding:6px 18px;border:2.5px solid var(--cah-accent);
   border-radius:999px;transform:rotate(2deg);z-index:6;box-shadow:0 3px 8px rgba(0,0,0,.18);}
-body[data-theme="atlas"] .day-tag-etape{text-transform:uppercase;letter-spacing:.06em;border-radius:2px;transform:none;font-size:11px;}
-body[data-theme="edition"] .day-tag-etape{font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.2em;
+body[data-theme="atlas"] .day-tag-etape{text-transform:uppercase;letter-spacing:.06em;border-radius:2px;transform:none;font-size:15px;}
+body[data-theme="edition"] .day-tag-etape{font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.15em;
   text-transform:uppercase;color:var(--cah-accent);background:none;border:none;border-bottom:2.5px solid var(--cah-accent);
   border-radius:0;padding:2px 0 5px;transform:none;box-shadow:none;}
 
@@ -1257,7 +1257,14 @@ function render(){
         +'<div class="infos-row"><span>☀️ Météo</span><span id="meteo-'+e.uid+'">…</span></div>'
         +'</div>';
       html += pageFicheComplete(e, {
-        label:'jour '+jourExc, numero:jourExc,
+        // (18/07, retour Bruno) : numero = celui de l'ÉTAPE parente (i+1),
+        // JAMAIS le jour de l'excursion (jourExc) — avant, une excursion
+        // "jour 2" affichait le même grand chiffre "02" qu'une étape 2 plus
+        // loin dans le voyage, sans lien entre les deux : confusion assurée.
+        // Le grand chiffre ne change plus qu'au passage à la VRAIE étape
+        // suivante ; "jour N" (le label, à gauche) continue lui de compter
+        // les jours du séjour comme avant.
+        label:'jour '+jourExc, numero:(i+1),
         sousLabel:(dExc?esc(formatDateCourt(dExc))+' · ':'')+esc(regionDe(e.lat,e.lng))+' · excursion depuis '+esc(item.nom),
         nuit:false, accent:couleur, infosBox:infosBoxExc,
         footerRight:'Séjour à '+esc(item.nom)+' · jour '+jourExc,
