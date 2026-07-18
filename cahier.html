@@ -106,26 +106,35 @@ body[data-theme="kraft"] .page{background-image:none;}
      ci-dessus et débordaient sur une deuxième feuille à l'impression. */
   .cover-kraft,.cover-atlas{min-height:277mm !important;}
 
-  /* (17/07, retour Bruno : pages « imbibées » d'encre) — deux excès distincts :
-     1. Les motifs décoratifs (grille de points du Carnet bricolé, quadrillage
-        graticule de l'Atlas, léger halo/lignes de fond des autres thèmes)
-        sont beaux à l'écran mais n'apportent rien sur papier : juste de
-        l'encre. Ils disparaissent entièrement à l'impression, quel que soit
-        le thème — le papier redevient franchement uni.
-     2. La couverture Atlas est en encre pleine page (bleu nuit #141C26) —
-        superbe à l'écran, beaucoup trop lourd sur papier. Elle reprend à
-        l'impression le même fond clair que ses propres pages intérieures
-        (déjà éprouvées, déjà légères à l'impression), avec juste un cadre
-        sombre en bordure pour garder l'esprit « carnet d'expédition » sans
-        noyer la page d'encre. Les écritures claires (pensées pour un fond
-        sombre) basculent sur les couleurs sombres déjà utilisées ailleurs
-        dans ce même thème, pour rester lisibles sur fond clair. */
+  /* (17/07, 2e retour Bruno) : Édition n'a jamais débordé ; Carnet bricolé et
+     Atlas si, tous les deux — le point commun entre eux : des zones "flex:1"
+     censées "remplir l'espace restant" (la grande photo, la bande de tracé,
+     la planche photo). Ce calcul se fait mal en pagination d'impression.
+     On leur donne une hauteur FIXE et prudente à l'impression — jamais
+     "à calculer", toujours "déjà décidée" — qui rentre à coup sûr. */
+  .cover-kraft .k-photo-zone{flex:none !important;height:150mm !important;margin:14mm 4mm !important;}
+  .cover-atlas .a-route-strip{flex:none !important;height:24mm !important;margin-bottom:8mm !important;}
+  .cover-atlas .a-photo-plate{flex:none !important;height:70mm !important;margin-bottom:8mm !important;}
+
+  /* (17/07, 2e retour Bruno) : deux demandes précises, pas la même pour
+     chaque thème —
+     1. Carnet bricolé (et tout ce qui n'est pas Atlas) : totalement blanc à
+        l'impression, aucun point — sur un thème "papier blanc", des points
+        n'apportent rien, juste de l'encre et du poids.
+     2. Atlas : PAS blanc — l'esprit "gris" doit rester perceptible, mais en
+        très allégé (petits points bien espacés) plutôt qu'en gris compact
+        ou en encre pleine page. Remplace le filigrane boussole (cassé à
+        l'impression — un rond plein au lieu d'un simple contour, retiré) :
+        ce quadrillage léger porte maintenant l'ambiance à lui seul. */
   .page{background-image:none !important;}
+  body[data-theme="atlas"] .page{
+    background-image:radial-gradient(rgba(32,36,42,.12) 1px, transparent 1.3px) !important;
+    background-size:22px 22px !important; background-position:6px 6px !important;
+  }
+  .cover-atlas .a-watermark{display:none !important;}
   .cover-atlas{background:var(--cah-paper) !important;border:2px solid var(--cah-ink);color:var(--cah-ink) !important;}
   .cover-atlas::before,.cover-atlas::after{border-color:rgba(32,36,42,.3) !important;}
   .cover-atlas .a-corner{border-color:rgba(32,36,42,.5) !important;}
-  .cover-atlas .a-watermark{opacity:.06 !important;}
-  .cover-atlas .a-watermark path,.cover-atlas .a-watermark circle{fill:var(--cah-ink) !important;stroke:var(--cah-ink) !important;}
   .cover-atlas .a-eyebrow{color:var(--cah-ink-dim) !important;}
   .cover-atlas .a-title{color:var(--cah-ink) !important;}
   .cover-atlas .a-title-rule{background:linear-gradient(90deg,var(--cah-accent),transparent) !important;}
