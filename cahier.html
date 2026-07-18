@@ -251,14 +251,17 @@ body[data-theme="kraft"] .team-tagline{font-size:18px;font-style:normal;color:#7
 .team-card{border:1.5px solid var(--cah-paper-line);border-radius:10px;padding:16px;background:var(--cah-paper-soft);display:flex;gap:14px;position:relative;}
 .team-leader-tag{position:absolute;top:-10px;right:14px;background:var(--cah-accent);color:#fff;font-size:9px;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;box-shadow:0 3px 8px rgba(0,0,0,.2);}
-.team-av{width:84px;height:84px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+.team-av-wrap{position:relative;flex-shrink:0;}
+.team-av{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:800;color:#fff;background-size:cover;background-position:center;}
 body[data-theme="edition"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px var(--cah-accent);}
 body[data-theme="atlas"] .team-av{box-shadow:0 0 0 3px var(--cah-paper),0 0 0 4px #B87333;filter:sepia(.25) contrast(1.05);}
 body[data-theme="kraft"] .team-card{transform:rotate(var(--rot,0deg));}
-body[data-theme="kraft"] .team-av{border-radius:4px;width:80px;height:80px;box-shadow:0 4px 10px rgba(0,0,0,.18);position:relative;}
-.team-av-manquant{background:transparent!important;border:2px dashed var(--cah-accent);color:var(--cah-accent)!important;
-  font-size:9px!important;font-weight:700;text-align:center;line-height:1.35;padding:6px;text-transform:uppercase;letter-spacing:.02em;}
+body[data-theme="kraft"] .team-av{border-radius:4px;width:80px;height:80px;box-shadow:0 4px 10px rgba(0,0,0,.18);}
+.team-av-nudge{position:absolute;inset:0;border-radius:50%;background:rgba(20,15,5,.5);color:#fff;font-size:8px;font-weight:700;
+  text-align:center;display:flex;align-items:center;justify-content:center;line-height:1.25;text-transform:uppercase;letter-spacing:.02em;
+  pointer-events:none;}
+body[data-theme="kraft"] .team-av-nudge{border-radius:4px;}
 .team-nom{font-family:var(--cah-font-title);font-size:16px;font-weight:700;margin:0 0 3px;color:var(--cah-ink);}
 .team-depuis{font-size:10.5px;color:var(--cah-accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
 .team-passions{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
@@ -924,18 +927,27 @@ function render(){
         +MEMBRES.map((m,i)=>{
           const nom=m.pseudo||m.prenom||'Voyageur';
           const estMoi = m.id===MON_MEMBRE_ID;
-          // (17/07, B70) Priorité d'affichage : photo_url (avatar personnel,
-          // valable partout sur le site) > photo_cahier (posée par un leader,
-          // visible UNIQUEMENT ici) > initiale/relance.
+          // (17/07, B71, retour Bruno) Priorité d'affichage :
+          //  1. photo_url (avatar personnel, choisi par la personne, valable
+          //     partout sur le site) → affichée sans filigrane.
+          //  2. photo_cahier (posée par un leader, en attendant que la
+          //     personne l'adopte ou non depuis son propre profil) → idem,
+          //     affichée sans filigrane, elle est bien réelle.
+          //  3. sinon : le VRAI emoji du profil (jamais un cadre vide), avec
+          //     "Photo à ajouter" en filigrane par-dessus pour inciter à
+          //     personnaliser son profil sur le site — jamais reconstruit
+          //     ici, c'est rnrAvatarMembre() (chrome.js) qui sait déjà faire
+          //     ce choix partout ailleurs sur le site.
           const photoAffichee = m.photo_url || m.photo_cahier || null;
-          let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
-          let avTxt=(nom.charAt(0)||'?').toUpperCase();
-          let avClasse='team-av';
-          if(photoAffichee){ avStyle="background-image:url('"+photoAffichee.replace(/'/g,'')+"');"; avTxt=''; }
-          else{
-            // (17/07, retour Bruno) : insister pour que la photo soit ajoutée
-            // plutôt que d'afficher discrètement une initiale colorée.
-            avStyle=''; avTxt='Photo<br>à ajouter'; avClasse='team-av team-av-manquant';
+          const av = window.rnrAvatarMembre ? window.rnrAvatarMembre(m,'') : null;
+          let avStyle, avTxt, showNudge=false;
+          if(photoAffichee){
+            avStyle="background-image:url('"+photoAffichee.replace(/'/g,'')+"');"; avTxt='';
+          } else if(av && av.emoji){
+            avStyle='background:var(--gold-a20);'; avTxt=av.emoji; showNudge=true;
+          } else {
+            avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
+            avTxt=(av&&av.initiale)||(nom.charAt(0)||'?').toUpperCase(); showNudge=true;
           }
           const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
           const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
@@ -956,7 +968,8 @@ function render(){
           }
           return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
             +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
-            +'<div class="'+avClasse+'" style="'+avStyle+avClic+'>'+avTxt+'</div>'
+            +'<div class="team-av-wrap"><div class="team-av" style="'+avStyle+avClic+'>'+avTxt+'</div>'
+            +(showNudge?'<div class="team-av-nudge">Photo<br>à ajouter</div>':'')+'</div>'
             +'<div style="flex:1;">'
             +'<p class="team-nom">'+esc(nom)+'</p>'
             +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')

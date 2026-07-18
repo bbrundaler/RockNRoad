@@ -480,6 +480,11 @@
     if(estSoi){
       foot.style.display='block';
       var passions = m.passions||[];
+      // (17/07, B71) : la galerie de photos (membres.photos_disponibles,
+      // plafond 10) est le même réservoir que celui affiché dans le Cahier
+      // — une photo choisie ici y réapparaît, une photo posée par un leader
+      // depuis le Cahier réapparaît ici comme option (jamais imposée).
+      var galerieActuelle = Array.isArray(m.photos_disponibles) ? m.photos_disponibles.slice() : [];
       corps.innerHTML =
         '<div><span class="rnrc-pf-lbl">Voyageur(se) depuis</span><select id="rnrc-pf-depuis">'+
           VOYAGEUR_DEPUIS_CHOIX.map(function(o){ return '<option value="'+o.v+'"'+(o.v===(m.voyageur_depuis||'')?' selected':'')+'>'+o.label+'</option>'; }).join('')+
@@ -533,6 +538,7 @@
               if(!publicUrl) throw new Error('URL publique introuvable');
               document.getElementById('rnrc-pf-photo').value = publicUrl;
               var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')";
+              if(galerieActuelle.indexOf(publicUrl)<0 && galerieActuelle.length<10) galerieActuelle.push(publicUrl);
               if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
             }catch(e){
               console.warn('chrome.js: upload photo profil', e);
@@ -557,6 +563,7 @@
           passions: chosen.length?chosen:null,
           presentation: (document.getElementById('rnrc-pf-presentation').value||'').trim() || null,
           photo_url: (document.getElementById('rnrc-pf-photo').value||'').trim() || null,
+          photos_disponibles: galerieActuelle,
         };
         try{
           var r = await _sbChrome.from('membres').update(payload).eq('id', _monMembre.id);

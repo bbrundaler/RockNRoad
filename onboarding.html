@@ -58,6 +58,19 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .moi-avatar-big{width:66px;height:66px;border-radius:50%;background:var(--gold-a10);
   border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;line-height:1;
   background-size:cover;background-position:center;}
+.moi-avatar-wrap{position:relative;flex-shrink:0;}
+.moi-avatar-nudge{position:absolute;inset:0;border-radius:50%;background:rgba(20,15,5,.5);color:#fff;font-size:8.5px;font-weight:700;
+  text-align:center;display:flex;align-items:center;justify-content:center;line-height:1.25;text-transform:uppercase;letter-spacing:.03em;
+  pointer-events:none;}
+.galerie-photos{display:flex;flex-wrap:wrap;gap:8px;}
+.gal-vignette{position:relative;width:56px;height:56px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid var(--surface-line);flex-shrink:0;}
+.gal-vignette img{width:100%;height:100%;object-fit:cover;display:block;}
+.gal-vignette.active{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
+.gal-suppr{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;
+  font-size:10px;line-height:16px;text-align:center;cursor:pointer;}
+.gal-ajout{width:56px;height:56px;border-radius:10px;border:2px dashed var(--surface-line);display:flex;align-items:center;justify-content:center;
+  font-size:22px;color:var(--ink-dim);cursor:pointer;flex-shrink:0;}
+.gal-ajout:hover{border-color:var(--gold-a35);color:var(--gold-text);}
 .moi-head-txt{flex:1;}
 .moi-head-txt .hint{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
 .emoji-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 8px;}
@@ -169,7 +182,10 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
         <div class="cfg-card">
           <div class="cfg-card-title"><span>🙋</span> Moi</div>
           <div class="moi-head">
-            <div class="moi-avatar-big" id="moi-avatar">🦊</div>
+            <div class="moi-avatar-wrap">
+              <div class="moi-avatar-big" id="moi-avatar">🦊</div>
+              <div class="moi-avatar-nudge" id="moi-avatar-nudge">Photo<br>à ajouter</div>
+            </div>
             <div class="moi-head-txt">
               <div class="hint">Renseignez votre identité — prénom, nom, pseudo, naissance et avatar.
                 Votre pseudo et votre avatar apparaissent partout où vous participez (fiches, votes, discussions).</div>
@@ -208,18 +224,9 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           <div class="emoji-label">Mon avatar</div>
           <div class="emoji-grid" id="emoji-grid"></div>
 
-          <div class="emoji-label">Ou une vraie photo <span class="lbl-soft">(remplace l'avatar ci-dessus, modifiable à tout moment)</span></div>
-          <div class="avatar-zone">
-            <div class="avatar-preview" id="moi-photo-preview">📷</div>
-            <div style="flex:1;">
-              <label style="cursor:pointer;">
-                <div class="avatar-upload">📷 Choisir une photo (JPG, PNG)</div>
-                <input type="file" accept="image/*" style="display:none;" onchange="previewMoiPhoto(this)">
-              </label>
-              <p id="moi-photo-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>
-              <button type="button" class="moi-photo-lien hidden" id="moi-photo-retirer" onclick="retirerMoiPhoto()">Retirer la photo, revenir à l'avatar</button>
-            </div>
-          </div>
+          <div class="emoji-label">Mes photos <span class="lbl-soft">(jusqu'à 10 — clique sur l'une d'elles pour en faire ton avatar ; ce sont ces mêmes photos qui apparaissent dans le Cahier)</span></div>
+          <div class="galerie-photos" id="galerie-photos"></div>
+          <p id="galerie-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>
 
           <label class="chk-row" style="margin-top:16px;align-items:flex-start;">
             <input type="checkbox" id="m-consent" style="margin-top:2px;">
@@ -356,9 +363,10 @@ const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
 let currentUser=null, membreId=null, myGroupeId=null, myRole=null, mode=null;
-let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊', selectedPhotoUrl=null;
+let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊', selectedPhotoUrl=null, galeriePhotos=[];
 
 const EMOJIS=['🦊','🐻','🦁','🐰','🦉','🐺','🐶','🐱','🦝','🐼','🐨','🐯','🚐','⛺','🏔️','🌍','🧭','⭐'];
+const GALERIE_MAX=10;
 
 function renderEmojis(){
   document.getElementById('emoji-grid').innerHTML=EMOJIS.map(e=>
@@ -367,34 +375,56 @@ function renderEmojis(){
 }
 function pickEmoji(e){
   selectedEmoji=e;
-  // Choisir un avatar emoji annule la photo réelle en cours d'affichage —
-  // un seul avatar visible à la fois, jamais les deux superposés.
+  // Choisir un avatar emoji annule la photo active en cours d'affichage —
+  // un seul avatar visible à la fois. Les photos de la galerie restent
+  // disponibles, seule la sélection change.
   selectedPhotoUrl=null;
   const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage=''; gros.textContent=e;
-  majApercuPhoto();
   document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.toggle('on',b.dataset.e===e));
+  renderGalerie();
 }
-// (17/07, retour Bruno) : la seule option jusqu'ici était un avatar emoji
-// prédéfini — aucune entrée pour une vraie photo. Même logique que la
-// modale de profil (chrome.js) : redimensionnement + ré-encodage via
-// <canvas> (allège le poids et supprime les métadonnées EXIF au passage),
-// envoi vers le bucket photos-membres, résultat dans membres.photo_url —
-// jamais une variante propre à cette page.
-function majApercuPhoto(){
-  const prev=document.getElementById('moi-photo-preview'); if(!prev) return;
-  const retirer=document.getElementById('moi-photo-retirer');
-  if(selectedPhotoUrl){
-    prev.style.backgroundImage="url('"+selectedPhotoUrl.replace(/'/g,'')+"')"; prev.style.backgroundSize='cover'; prev.style.backgroundPosition='center'; prev.textContent='';
-    if(retirer) retirer.classList.remove('hidden');
-  } else {
-    prev.style.backgroundImage=''; prev.textContent='📷';
-    if(retirer) retirer.classList.add('hidden');
+// (17/07, retour Bruno) : plus une seule photo mais une vraie galerie
+// (jusqu'à 10) — ce sont ces mêmes photos qui réapparaissent dans le
+// Cahier (membres.photos_disponibles), avec un minimum de gestes : on
+// choisit une photo de la galerie et elle devient l'avatar partout sur le
+// site. Même redimensionnement/anonymisation EXIF que partout ailleurs
+// (chrome.js, Cahier) — un seul principe, jamais une variante ici.
+function renderGalerie(){
+  const box=document.getElementById('galerie-photos'); if(!box) return;
+  let html=galeriePhotos.map((u,i)=>
+    '<div class="gal-vignette'+(u===selectedPhotoUrl?' active':'')+'" onclick="choisirGaleriePhoto('+i+')">'
+    +'<img src="'+u.replace(/"/g,'&quot;')+'" alt="">'
+    +'<span class="gal-suppr" onclick="event.stopPropagation();retirerGaleriePhoto('+i+')">✕</span>'
+    +'</div>'
+  ).join('');
+  if(galeriePhotos.length<GALERIE_MAX){
+    html+='<label class="gal-ajout" title="Ajouter une photo">+'
+      +'<input type="file" accept="image/*" style="display:none;" onchange="ajouterPhotoGalerie(this)"></label>';
   }
+  box.innerHTML=html;
+  const nudge=document.getElementById('moi-avatar-nudge'); if(nudge) nudge.style.display=selectedPhotoUrl?'none':'flex';
+  const etat=document.getElementById('galerie-etat');
+  if(etat) etat.textContent = galeriePhotos.length>=GALERIE_MAX ? 'Galerie pleine (10/10) — retire une photo pour en ajouter une autre.' : '';
 }
-function previewMoiPhoto(input){
+function choisirGaleriePhoto(i){
+  selectedPhotoUrl=galeriePhotos[i]; if(!selectedPhotoUrl) return;
+  const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage="url('"+selectedPhotoUrl.replace(/'/g,'')+"')"; gros.textContent='';
+  document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.remove('on'));
+  renderGalerie();
+}
+function retirerGaleriePhoto(i){
+  const u=galeriePhotos[i]; galeriePhotos.splice(i,1);
+  if(selectedPhotoUrl===u){
+    selectedPhotoUrl=null;
+    const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage=''; gros.textContent=selectedEmoji;
+  }
+  renderGalerie();
+}
+function ajouterPhotoGalerie(input){
   const f=input.files&&input.files[0]; if(!f) return;
+  if(galeriePhotos.length>=GALERIE_MAX){ showError('Maximum '+GALERIE_MAX+' photos dans la galerie.'); input.value=''; return; }
   if(!/^image\//.test(f.type)){ showError('Ce fichier n\'est pas une image.'); input.value=''; return; }
-  const etat=document.getElementById('moi-photo-etat'); if(etat) etat.textContent='Préparation…';
+  const etat=document.getElementById('galerie-etat'); if(etat) etat.textContent='Préparation…';
   const img=new Image(); const url=URL.createObjectURL(f);
   img.onload=()=>{
     URL.revokeObjectURL(url);
@@ -412,10 +442,8 @@ function previewMoiPhoto(input){
         const pub=sb.storage.from('photos-membres').getPublicUrl(chemin);
         const publicUrl=pub&&pub.data&&pub.data.publicUrl;
         if(!publicUrl) throw new Error('URL publique introuvable');
-        selectedPhotoUrl=publicUrl;
-        const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')"; gros.textContent='';
-        document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.remove('on'));
-        majApercuPhoto();
+        galeriePhotos.push(publicUrl);
+        choisirGaleriePhoto(galeriePhotos.length-1); // une photo qu'on vient d'ajouter, on la porte tout de suite
         if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
       }catch(e){
         console.warn('onboarding: upload photo', e);
@@ -425,12 +453,6 @@ function previewMoiPhoto(input){
   };
   img.onerror=()=>{ URL.revokeObjectURL(url); if(etat) etat.textContent='Image illisible.'; };
   img.src=url;
-}
-function retirerMoiPhoto(){
-  selectedPhotoUrl=null;
-  const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage=''; gros.textContent=selectedEmoji;
-  majApercuPhoto();
-  const etat=document.getElementById('moi-photo-etat'); if(etat) etat.textContent='Photo retirée — Enregistrer pour confirmer.';
 }
 
 (async()=>{
@@ -472,7 +494,7 @@ function retirerMoiPhoto(){
 
 async function loadProfile(){
   const {data:membre,error:me}=await sb.from('membres')
-    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, photo_url, nom, prenom, naissance_mois_annee, consent_marketing')
+    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, photo_url, photos_disponibles, nom, prenom, naissance_mois_annee, consent_marketing')
     .eq('user_id',currentUser.id).maybeSingle();
   if(me) console.warn('lecture membres:',me);
 
@@ -491,12 +513,15 @@ async function loadProfile(){
       }
     }
     if(membre.avatar) pickEmoji(membre.avatar);
+    galeriePhotos = Array.isArray(membre.photos_disponibles) ? membre.photos_disponibles.slice(0, GALERIE_MAX) : [];
     if(membre.photo_url){
       selectedPhotoUrl=membre.photo_url;
       const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage="url('"+membre.photo_url.replace(/'/g,'')+"')"; gros.textContent='';
       document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.remove('on'));
-      majApercuPhoto();
     }
+    renderGalerie();
+  } else {
+    renderGalerie(); // toujours peindre au moins la tuile "+" et le filigrane
   }
 
   if(!myGroupeId){ mode='create'; }
@@ -808,7 +833,7 @@ async function saveProfil(){
     // ── IDENTITÉ (toujours) → membres. UPDATE scopé user_id : le verrou autorise
     //    l'identité (pseudo/nom/prénom/naissance/consent), rejette les droits.
     const identite={
-      pseudo, prenom, nom, avatar:selectedEmoji, photo_url:selectedPhotoUrl,
+      pseudo, prenom, nom, avatar:selectedEmoji, photo_url:selectedPhotoUrl, photos_disponibles:galeriePhotos,
       email: (currentUser && currentUser.email) ? currentUser.email : null,
       naissance_mois_annee: mois+'/'+annee,
       consent_marketing: document.getElementById('m-consent').checked,
