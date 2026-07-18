@@ -361,6 +361,7 @@ setTimeout(function(){
 </div>
 
 <div id="pages"><div class="empty-state">Chargement du Roadbook…</div></div>
+<input type="file" id="pc-file" accept="image/*" style="display:none;" onchange="rnrPhotoCahierChoisie(this)">
 
 <script>
 // Chargement résilient de Supabase (07/07, retour Bruno) : le CDN jsdelivr a
@@ -388,18 +389,20 @@ if(typeof window.supabase==='undefined'||typeof window.supabase.createClient!=='
 const {createClient}=window.supabase;
 sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
 
-let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null;
+let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null, MON_MEMBRE_ID=null;
 let voyage=[];
 let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,nb_participants:null,nb_animaux:null,destination_libre:'',but_voyage:'',notes_groupe:'',memo_blocs:[],budget_estime:null,cahier_theme:'edition'};
 let RB_DECOUPAGE=null;
+const EDGE_FN="https://cazqllstxhuecoqpktwm.supabase.co/functions/v1/dynamic-action";
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 
 async function resoutVoyageId(userId){
   let sess=null;
   try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
-  const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
+  const {data:mem}=await sb.from('membres').select('id,groupe_id').eq('user_id',userId).limit(1).single();
   if(mem){
+    MON_MEMBRE_ID=mem.id;
     GROUPE_ID=mem.groupe_id;
     const {data:g}=await sb.from('groupes').select('lat_depart,lng_depart,ville,adresse_depart').eq('id',mem.groupe_id).single();
     if(g && g.lat_depart!=null && g.lng_depart!=null) DOMICILE={lat:Number(g.lat_depart), lng:Number(g.lng_depart), nom:(g.ville||g.adresse_depart||'la maison')};
@@ -496,7 +499,7 @@ let MEMBRES=[];
 async function chargerMembres(){
   if(!GROUPE_ID) return;
   try{
-    const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
+    const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,photo_cahier,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
     MEMBRES=data||[];
   }catch(e){ console.warn('Cahier: membres', e); }
 }
@@ -512,6 +515,67 @@ async function chargerLeaders(){
     LEADERS=new Set((data||[]).map(r=>r.membre_id));
   }catch(e){ console.warn('Cahier: leaders', e); }
 }
+// (17/07, B70) : un leader du voyage peut poser une photo pour un autre
+// membre du groupe qui n'a pas encore d'avatar personnel — mais UNIQUEMENT
+// dans le Cahier (photo_cahier), jamais l'avatar utilisé partout ailleurs
+// sur le site (photo_url, qui reste sous le contrôle exclusif de chacun,
+// via son propre profil). Même redimensionnement/anonymisation EXIF que
+// partout ailleurs (chrome.js, onboarding.html) — un seul principe, jamais
+// une variante propre au Cahier. L'écriture passe par l'Edge Function
+// set_photo_cahier : la RLS mbr_update interdit à un membre de modifier la
+// ligne d'un autre, à raison — c'est elle qui vérifie le rôle de leader.
+function rnrPhotoCahierDemande(membreId){
+  const input=document.getElementById('pc-file'); if(!input) return;
+  input.dataset.membreId=membreId;
+  input.click();
+}
+function rnrPhotoCahierChoisie(input){
+  const f=input.files&&input.files[0]; const membreId=input.dataset.membreId;
+  if(!f||!membreId) return;
+  if(!/^image\//.test(f.type)){ alert('Ce fichier n\'est pas une image.'); input.value=''; return; }
+  const etat=document.getElementById('save-state'); if(etat) etat.textContent='préparation de la photo…';
+  const img=new Image(); const url=URL.createObjectURL(f);
+  img.onload=()=>{
+    URL.revokeObjectURL(url);
+    const MAX=480; let w=img.width,h=img.height;
+    if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    cv.toBlob(async(blob)=>{
+      if(!blob){ if(etat) etat.textContent='échec de la préparation'; return; }
+      if(etat) etat.textContent='envoi de la photo…';
+      try{
+        const chemin='cahier/'+membreId+'/'+Date.now()+'.jpg';
+        const up=await sb.storage.from('photos-membres').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
+        if(up.error) throw up.error;
+        const pub=sb.storage.from('photos-membres').getPublicUrl(chemin);
+        const publicUrl=pub&&pub.data&&pub.data.publicUrl;
+        if(!publicUrl) throw new Error('URL publique introuvable');
+
+        const {data:{session}}=await sb.auth.getSession();
+        if(!session) throw new Error('session expirée');
+        const r=await fetch(EDGE_FN,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+          body:JSON.stringify({action:'set_photo_cahier', voyage_id:VOYAGE_ID, membre_id:membreId, photo_url:publicUrl})
+        });
+        const j=await r.json();
+        if(!r.ok||!j.ok) throw new Error(j.reason||j.error||'échec');
+
+        const m=MEMBRES.find(x=>x.id===membreId); if(m) m.photo_cahier=publicUrl;
+        if(etat) etat.textContent='à jour';
+        render();
+      }catch(e){
+        console.warn('Cahier: photo_cahier', e);
+        if(etat) etat.textContent='échec de l\'envoi — réessaie';
+      }
+    }, 'image/jpeg', 0.85);
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); if(etat) etat.textContent='image illisible'; };
+  img.src=url;
+  input.value='';
+}
+window.rnrPhotoCahierChoisie = rnrPhotoCahierChoisie;
 async function chargerItineraire(){
   if(!VOYAGE_ID){ voyage=[]; return; }
   try{
@@ -852,18 +916,22 @@ function render(){
       const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
       const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
       const rotsCartes=[-.8,.9,-.6,1,.7,-1];
+      const estMoiLeader = LEADERS.has(MON_MEMBRE_ID);
       interieur += '<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
         +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
         +'<p class="team-tagline">'+esc(tagline)+'</p>'
         +'<div class="team-grid">'
         +MEMBRES.map((m,i)=>{
           const nom=m.pseudo||m.prenom||'Voyageur';
-          const av=window.rnrAvatarMembre?window.rnrAvatarMembre(m,''):null;
-          const aUnePhoto = !!(av && av.photo);
+          const estMoi = m.id===MON_MEMBRE_ID;
+          // (17/07, B70) Priorité d'affichage : photo_url (avatar personnel,
+          // valable partout sur le site) > photo_cahier (posée par un leader,
+          // visible UNIQUEMENT ici) > initiale/relance.
+          const photoAffichee = m.photo_url || m.photo_cahier || null;
           let avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
           let avTxt=(nom.charAt(0)||'?').toUpperCase();
           let avClasse='team-av';
-          if(aUnePhoto){ avStyle="background-image:url('"+av.photo.replace(/'/g,'')+"');"; avTxt=''; }
+          if(photoAffichee){ avStyle="background-image:url('"+photoAffichee.replace(/'/g,'')+"');"; avTxt=''; }
           else{
             // (17/07, retour Bruno) : insister pour que la photo soit ajoutée
             // plutôt que d'afficher discrètement une initiale colorée.
@@ -872,13 +940,23 @@ function render(){
           const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
           const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
           const estLeader = LEADERS.has(m.id);
-          // (17/07) Clic sur l'avatar → même modale profil que la barre du
-          // haut (rnrOuvrirProfil, exposée par chrome.js). Elle décide
-          // elle-même édition (soi) vs lecture (autre membre) — jamais
-          // reconstruit ici.
+          // (17/07, B70) Trois comportements de clic sur l'avatar, jamais
+          // reconstruits ici pour la partie édition — un seul moteur partagé :
+          //  1. soi-même → modale profil complète (chrome.js, site entier)
+          //  2. un autre membre, et JE suis leader de ce voyage → upload
+          //     direct d'une photo « Cahier uniquement » (set_photo_cahier)
+          //  3. sinon → carte statique, rien à cliquer
+          let avClic='';
+          if(estMoi){
+            avClic=' cursor:pointer;" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier ton profil"';
+          } else if(estMoiLeader){
+            avClic=' cursor:pointer;" onclick="rnrPhotoCahierDemande(\''+m.id+'\')" title="'+(photoAffichee?'Changer la photo (visible uniquement dans le Cahier)':'Ajouter une photo (visible uniquement dans le Cahier)')+'"';
+          } else {
+            avClic='"';
+          }
           return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
             +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
-            +'<div class="'+avClasse+'" style="cursor:pointer;'+avStyle+'" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier le profil">'+avTxt+'</div>'
+            +'<div class="'+avClasse+'" style="'+avStyle+avClic+'>'+avTxt+'</div>'
             +'<div style="flex:1;">'
             +'<p class="team-nom">'+esc(nom)+'</p>'
             +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')

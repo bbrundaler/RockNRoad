@@ -56,7 +56,8 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 
 .moi-head{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
 .moi-avatar-big{width:66px;height:66px;border-radius:50%;background:var(--gold-a10);
-  border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;line-height:1;}
+  border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;line-height:1;
+  background-size:cover;background-position:center;}
 .moi-head-txt{flex:1;}
 .moi-head-txt .hint{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
 .emoji-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 8px;}
@@ -65,6 +66,8 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   background:var(--surface);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .emoji-pick:hover{border-color:var(--gold-a35);transform:translateY(-1px);}
 .emoji-pick.on{border-color:var(--gold);background:var(--gold-a10);box-shadow:0 0 0 3px var(--gold-a10);}
+.moi-photo-lien{font-size:11.5px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:6px;font-family:inherit;}
+.moi-photo-lien:hover{color:var(--gold-text);}
 
 .posture-banner{font-size:12.5px;line-height:1.55;padding:13px 16px;border-radius:var(--r);
   background:var(--gold-a10);border:1px solid var(--gold-a20);color:var(--ink);}
@@ -205,6 +208,19 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           <div class="emoji-label">Mon avatar</div>
           <div class="emoji-grid" id="emoji-grid"></div>
 
+          <div class="emoji-label">Ou une vraie photo <span class="lbl-soft">(remplace l'avatar ci-dessus, modifiable à tout moment)</span></div>
+          <div class="avatar-zone">
+            <div class="avatar-preview" id="moi-photo-preview">📷</div>
+            <div style="flex:1;">
+              <label style="cursor:pointer;">
+                <div class="avatar-upload">📷 Choisir une photo (JPG, PNG)</div>
+                <input type="file" accept="image/*" style="display:none;" onchange="previewMoiPhoto(this)">
+              </label>
+              <p id="moi-photo-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>
+              <button type="button" class="moi-photo-lien hidden" id="moi-photo-retirer" onclick="retirerMoiPhoto()">Retirer la photo, revenir à l'avatar</button>
+            </div>
+          </div>
+
           <label class="chk-row" style="margin-top:16px;align-items:flex-start;">
             <input type="checkbox" id="m-consent" style="margin-top:2px;">
             <span style="font-size:12px;color:var(--ink-dim);line-height:1.5;">
@@ -340,7 +356,7 @@ const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
 let currentUser=null, membreId=null, myGroupeId=null, myRole=null, mode=null;
-let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊';
+let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊', selectedPhotoUrl=null;
 
 const EMOJIS=['🦊','🐻','🦁','🐰','🦉','🐺','🐶','🐱','🦝','🐼','🐨','🐯','🚐','⛺','🏔️','🌍','🧭','⭐'];
 
@@ -351,8 +367,70 @@ function renderEmojis(){
 }
 function pickEmoji(e){
   selectedEmoji=e;
-  document.getElementById('moi-avatar').textContent=e;
+  // Choisir un avatar emoji annule la photo réelle en cours d'affichage —
+  // un seul avatar visible à la fois, jamais les deux superposés.
+  selectedPhotoUrl=null;
+  const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage=''; gros.textContent=e;
+  majApercuPhoto();
   document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.toggle('on',b.dataset.e===e));
+}
+// (17/07, retour Bruno) : la seule option jusqu'ici était un avatar emoji
+// prédéfini — aucune entrée pour une vraie photo. Même logique que la
+// modale de profil (chrome.js) : redimensionnement + ré-encodage via
+// <canvas> (allège le poids et supprime les métadonnées EXIF au passage),
+// envoi vers le bucket photos-membres, résultat dans membres.photo_url —
+// jamais une variante propre à cette page.
+function majApercuPhoto(){
+  const prev=document.getElementById('moi-photo-preview'); if(!prev) return;
+  const retirer=document.getElementById('moi-photo-retirer');
+  if(selectedPhotoUrl){
+    prev.style.backgroundImage="url('"+selectedPhotoUrl.replace(/'/g,'')+"')"; prev.style.backgroundSize='cover'; prev.style.backgroundPosition='center'; prev.textContent='';
+    if(retirer) retirer.classList.remove('hidden');
+  } else {
+    prev.style.backgroundImage=''; prev.textContent='📷';
+    if(retirer) retirer.classList.add('hidden');
+  }
+}
+function previewMoiPhoto(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  if(!/^image\//.test(f.type)){ showError('Ce fichier n\'est pas une image.'); input.value=''; return; }
+  const etat=document.getElementById('moi-photo-etat'); if(etat) etat.textContent='Préparation…';
+  const img=new Image(); const url=URL.createObjectURL(f);
+  img.onload=()=>{
+    URL.revokeObjectURL(url);
+    const MAX=480; let w=img.width,h=img.height;
+    if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    cv.toBlob(async(blob)=>{
+      if(!blob){ if(etat) etat.textContent='Échec de la préparation.'; return; }
+      if(etat) etat.textContent='Envoi…';
+      try{
+        const chemin=(currentUser&&currentUser.id?currentUser.id:'anon')+'/'+Date.now()+'.jpg';
+        const up=await sb.storage.from('photos-membres').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
+        if(up.error) throw up.error;
+        const pub=sb.storage.from('photos-membres').getPublicUrl(chemin);
+        const publicUrl=pub&&pub.data&&pub.data.publicUrl;
+        if(!publicUrl) throw new Error('URL publique introuvable');
+        selectedPhotoUrl=publicUrl;
+        const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')"; gros.textContent='';
+        document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.remove('on'));
+        majApercuPhoto();
+        if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
+      }catch(e){
+        console.warn('onboarding: upload photo', e);
+        if(etat) etat.textContent='Échec de l\'envoi — réessaie.';
+      }
+    }, 'image/jpeg', 0.85);
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); if(etat) etat.textContent='Image illisible.'; };
+  img.src=url;
+}
+function retirerMoiPhoto(){
+  selectedPhotoUrl=null;
+  const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage=''; gros.textContent=selectedEmoji;
+  majApercuPhoto();
+  const etat=document.getElementById('moi-photo-etat'); if(etat) etat.textContent='Photo retirée — Enregistrer pour confirmer.';
 }
 
 (async()=>{
@@ -394,7 +472,7 @@ function pickEmoji(e){
 
 async function loadProfile(){
   const {data:membre,error:me}=await sb.from('membres')
-    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, nom, prenom, naissance_mois_annee, consent_marketing')
+    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, photo_url, nom, prenom, naissance_mois_annee, consent_marketing')
     .eq('user_id',currentUser.id).maybeSingle();
   if(me) console.warn('lecture membres:',me);
 
@@ -413,6 +491,12 @@ async function loadProfile(){
       }
     }
     if(membre.avatar) pickEmoji(membre.avatar);
+    if(membre.photo_url){
+      selectedPhotoUrl=membre.photo_url;
+      const gros=document.getElementById('moi-avatar'); gros.style.backgroundImage="url('"+membre.photo_url.replace(/'/g,'')+"')"; gros.textContent='';
+      document.querySelectorAll('.emoji-pick').forEach(b=>b.classList.remove('on'));
+      majApercuPhoto();
+    }
   }
 
   if(!myGroupeId){ mode='create'; }
@@ -724,7 +808,7 @@ async function saveProfil(){
     // ── IDENTITÉ (toujours) → membres. UPDATE scopé user_id : le verrou autorise
     //    l'identité (pseudo/nom/prénom/naissance/consent), rejette les droits.
     const identite={
-      pseudo, prenom, nom, avatar:selectedEmoji,
+      pseudo, prenom, nom, avatar:selectedEmoji, photo_url:selectedPhotoUrl,
       email: (currentUser && currentUser.email) ? currentUser.email : null,
       naissance_mois_annee: mois+'/'+annee,
       consent_marketing: document.getElementById('m-consent').checked,

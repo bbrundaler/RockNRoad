@@ -348,10 +348,10 @@
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ inject(); initAvatarsEtProfil(); });
+    document.addEventListener('DOMContentLoaded', function(){ inject(); _rnrInitProfilPromise = initAvatarsEtProfil(); });
   } else {
     inject();
-    initAvatarsEtProfil();
+    _rnrInitProfilPromise = initAvatarsEtProfil();
   }
 
   /* ════════════════════════════════════════════════════════════════════
@@ -378,6 +378,12 @@
   // (Le Cahier, plus tard une page équipe dédiée) les lit ici, jamais une copie.
   window.RNR_PROFIL_CHOIX = { passions: PASSIONS_CHOIX, voyageurDepuis: VOYAGEUR_DEPUIS_CHOIX };
   var _sbChrome=null, _monUserId=null, _monGroupeId=null, _monMembre=null, _tousMembres=[];
+  // (17/07, correctif retour Bruno) : initAvatarsEtProfil() était lancée en
+  // « fire and forget » — un clic sur son propre avatar arrivant AVANT la fin
+  // de cette résolution async voyait _monMembre encore à null, et tombait à
+  // tort dans la branche lecture seule. On garde la promesse pour pouvoir
+  // l'attendre avant de décider soi-même/autre (cf. window.rnrOuvrirProfil).
+  var _rnrInitProfilPromise = null;
 
   function coord(nom){
     var palette=['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'];
@@ -583,7 +589,13 @@
   // (17/07) Le Cahier (page Équipe) doit ouvrir EXACTEMENT cette modale —
   // jamais une variante — pour éditer/ajouter sa photo. Un seul moteur,
   // partagé par la barre d'avatars ET la page Équipe imprimable.
-  window.rnrOuvrirProfil = ouvrirProfil;
+  // Attend l'initialisation (session + _monMembre) avant de trancher
+  // soi-même/autre — sinon un clic trop rapide après le chargement de la
+  // page tombait à tort en lecture seule, même sur sa propre carte.
+  window.rnrOuvrirProfil = async function(m){
+    try{ if(_rnrInitProfilPromise) await _rnrInitProfilPromise; }catch(e){}
+    ouvrirProfil(m);
+  };
 
   /* ════════════════════════════════════════════════════════════════════
      IDENTITÉ CANONIQUE — une seule maison pour le nom affiché d'un membre.
