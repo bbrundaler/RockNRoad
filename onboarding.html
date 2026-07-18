@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
-<script src="chrome.js"></script>
+<script src="chrome.js?v=180726"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -338,6 +338,14 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
             Les voyageurs rejoignent le groupe <strong>par invitation</strong>.
           </p>
         </div>
+        <div class="cfg-card">
+          <div class="cfg-card-title"><span>🐾</span> Nos animaux</div>
+          <div id="animaux-groupe-hote">Chargement…</div>
+          <p class="info-note" style="margin-top:12px;">
+            Le carnet de compagnons du groupe entier — tout membre peut en ajouter, en modifier
+            ou en retirer. Ils apparaissent aussi dans le Cahier, page Équipe.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -490,6 +498,10 @@ function ajouterPhotoGalerie(input){
 
   await loadProfile();
   document.getElementById('auth-check').style.display='none';
+  // (18/07) Un seul moteur d'édition des animaux, partagé avec la modale
+  // profil de chrome.js — jamais reconstruit ici. RNR_ANIMAUX.monter()
+  // attend lui-même la session avant de charger/afficher.
+  if(window.RNR_ANIMAUX) window.RNR_ANIMAUX.monter('animaux-groupe-hote');
 })();
 
 async function loadProfile(){

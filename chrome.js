@@ -174,7 +174,24 @@
   +'.rnrc-pf-lecture .vide{color:var(--ink-dim);font-style:italic;}'
   +'.rnrc-pf-foot{padding:14px 22px;border-top:1px solid var(--surface-line);}'
   +'.rnrc-pf-foot button{width:100%;padding:10px;background:var(--ink,#211a10);color:var(--gold,#C8A84B);'
-  +'border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;}';
+  +'border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;}'
+  /* ── Animaux du groupe (18/07) — même moteur monté dans la modale profil
+     ET dans onboarding.html, jamais reconstruit deux fois. ── */
+  +'.rnrc-anx-vide{font-size:12px;color:var(--ink-dim);font-style:italic;margin:0 0 8px;}'
+  +'.rnrc-anx-card{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface-line);}'
+  +'.rnrc-anx-card:last-child{border-bottom:none;}'
+  +'.rnrc-anx-av{width:44px;height:44px;border-radius:50%;background-size:cover;background-position:center;'
+  +'flex-shrink:0;cursor:pointer;border:1.5px dashed var(--surface-line);}'
+  +'.rnrc-anx-nom{width:100%;padding:5px 8px;border:1.5px solid var(--surface-line);border-radius:7px;'
+  +'font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink);background:var(--paper);'
+  +'box-sizing:border-box;margin-bottom:4px;}'
+  +'.rnrc-anx-infos{width:100%;padding:5px 8px;border:1.5px solid var(--surface-line);border-radius:7px;'
+  +'font-family:inherit;font-size:11.5px;color:var(--ink-dim);background:var(--paper);box-sizing:border-box;}'
+  +'.rnrc-anx-suppr{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:14px;padding:4px 6px;flex-shrink:0;}'
+  +'.rnrc-anx-suppr:hover{color:#b3392c;}'
+  +'.rnrc-anx-ajouter{margin-top:8px;padding:8px 12px;border-radius:8px;border:1.5px dashed var(--surface-line);'
+  +'background:none;color:var(--ink-dim);font-size:12px;cursor:pointer;font-family:inherit;width:100%;}'
+  +'.rnrc-anx-ajouter:hover{border-color:var(--gold);color:var(--ink);}';
 
   /* ── 3 · Construction ── */
   function pageActive(href){
@@ -471,6 +488,38 @@
     if(theme) right.insertBefore(wrap, theme); else right.appendChild(wrap);
   }
 
+  /* (18/07) Moteur UNIQUE de préparation+envoi d'une photo : redimensionne
+     via <canvas> (allège le poids, supprime l'EXIF au passage), envoie dans
+     le bucket donné, renvoie l'URL publique au callback (ou null en échec).
+     Auparavant dupliqué en ligne dans le seul cas "photo de membre" — mainten-
+     ant la SEULE version, réutilisée aussi par les photos d'animaux. */
+  function _rnrPreparerEtEnvoyerPhoto(file, bucket, cheminPrefix, callback){
+    if(!/^image\//.test(file.type)){ alert('Ce fichier n\'est pas une image.'); callback(null); return; }
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var MAX=480;
+      var w=img.width, h=img.height;
+      if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
+      var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cv.toBlob(async function(blob){
+        if(!blob){ callback(null); return; }
+        try{
+          var chemin=cheminPrefix+'/'+Date.now()+'.jpg';
+          var up = await _sbChrome.storage.from(bucket).upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
+          if(up.error) throw up.error;
+          var pub = _sbChrome.storage.from(bucket).getPublicUrl(chemin);
+          var publicUrl = pub && pub.data && pub.data.publicUrl;
+          callback(publicUrl || null);
+        }catch(e){ console.warn('chrome.js: upload photo', e); callback(null); }
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); callback(null); };
+    img.src = url;
+  }
+
   /* ── Modale profil (soi-même : éditable · autre membre : lecture) ── */
   function ensureProfilDom(){
     if(document.getElementById('rnrc-profil-overlay')) return;
@@ -525,8 +574,11 @@
           '</div>'+
           '<input id="rnrc-pf-photo-file" type="file" accept="image/*" style="display:none;" onchange="window.__rnrProfilPhotoChoisie(this)">'+
           '<input type="hidden" id="rnrc-pf-photo" value="'+(m.photo_url||'').replace(/"/g,'&quot;')+'">'+
-        '</div></div>';
+        '</div></div>'+
+        '<div><span class="rnrc-pf-lbl">Nos animaux <em style="font-weight:400;opacity:.7;">(tout le groupe peut les ajouter/modifier)</em></span>'+
+        '<div id="rnrc-anx-liste-hote"></div></div>';
       window.__rnrProfilTogglePassion = function(el){ el.classList.toggle('on'); };
+      if(window.RNR_ANIMAUX) window.RNR_ANIMAUX.monter('rnrc-anx-liste-hote');
       // (17/07, retour Bruno) : vraie sélection de fichier, plus un champ URL
       // à coller. Redimensionnement + ré-encodage via <canvas> avant l'envoi
       // — ça allège le poids ET supprime les métadonnées EXIF (dont une
@@ -535,39 +587,15 @@
       // seule côté client comme photos-lieux).
       window.__rnrProfilPhotoChoisie = function(input){
         var f = input.files && input.files[0]; if(!f) return;
-        if(!/^image\//.test(f.type)){ alert('Ce fichier n\'est pas une image.'); input.value=''; return; }
         var etat=document.getElementById('rnrc-pf-photo-etat'); if(etat) etat.textContent='Préparation…';
-        var img = new Image();
-        var url = URL.createObjectURL(f);
-        img.onload = function(){
-          URL.revokeObjectURL(url);
-          var MAX=480;
-          var w=img.width, h=img.height;
-          if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
-          var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-          cv.getContext('2d').drawImage(img,0,0,w,h);
-          cv.toBlob(async function(blob){
-            if(!blob){ if(etat) etat.textContent='Échec de la préparation.'; return; }
-            if(etat) etat.textContent='Envoi…';
-            try{
-              var chemin=(_monMembre&&_monMembre.id?_monMembre.id:'anon')+'/'+Date.now()+'.jpg';
-              var up = await _sbChrome.storage.from('photos-membres').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
-              if(up.error) throw up.error;
-              var pub = _sbChrome.storage.from('photos-membres').getPublicUrl(chemin);
-              var publicUrl = pub && pub.data && pub.data.publicUrl;
-              if(!publicUrl) throw new Error('URL publique introuvable');
-              document.getElementById('rnrc-pf-photo').value = publicUrl;
-              var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')";
-              if(galerieActuelle.indexOf(publicUrl)<0 && galerieActuelle.length<10) galerieActuelle.push(publicUrl);
-              if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
-            }catch(e){
-              console.warn('chrome.js: upload photo profil', e);
-              if(etat) etat.textContent='Échec de l\'envoi — réessaie.';
-            }
-          }, 'image/jpeg', 0.85);
-        };
-        img.onerror = function(){ URL.revokeObjectURL(url); if(etat) etat.textContent='Image illisible.'; };
-        img.src = url;
+        var cheminPrefix=(_monMembre&&_monMembre.id?_monMembre.id:'anon');
+        _rnrPreparerEtEnvoyerPhoto(f, 'photos-membres', cheminPrefix, function(publicUrl){
+          if(!publicUrl){ if(etat) etat.textContent='Échec de l\'envoi — réessaie.'; return; }
+          document.getElementById('rnrc-pf-photo').value = publicUrl;
+          var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')";
+          if(galerieActuelle.indexOf(publicUrl)<0 && galerieActuelle.length<10) galerieActuelle.push(publicUrl);
+          if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
+        });
       };
       window.__rnrProfilPhotoSuppr = function(){
         document.getElementById('rnrc-pf-photo').value='';
@@ -658,5 +686,113 @@
     if(av) return { emoji: av };
     var nom = window.rnrNomMembre(membre, email);
     return { initiale: (nom.charAt(0)||'?').toUpperCase() };
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+     ANIMAUX DU GROUPE (18/07) — nos amis à quatre pattes, sur le même
+     principe qu'une fiche membre : nom, photo, infos libres. Table
+     `animaux` (groupe_id, RLS ouverte à tout membre du groupe — pas de
+     notion de leader ici, un animal appartient au groupe entier, pas à
+     une personne). UN SEUL MOTEUR (ce bloc), monté à deux endroits : la
+     section "Nos animaux" de la modale profil ci-dessus, ET
+     onboarding.html — jamais reconstruit une seconde fois. Le Cahier
+     (page Équipe) lit directement la table pour ses cartes imprimables,
+     en lecture seule (l'édition reste ici, un seul moteur d'édition).
+     ──────────────────────────────────────────────────────────────────── */
+  var _animaux = [];
+  async function _chargerAnimaux(){
+    if(!_sbChrome || !_monGroupeId) return [];
+    try{
+      var r = await _sbChrome.from('animaux').select('*').eq('groupe_id', _monGroupeId).order('created_at',{ascending:true});
+      _animaux = (r && r.data) || [];
+    }catch(e){ console.warn('chrome.js: chargement animaux', e); }
+    return _animaux;
+  }
+  function _animalAvatarStyle(a){
+    return a.photo_url ? ("background-image:url('"+String(a.photo_url).replace(/'/g,'')+"');") : 'background:var(--gold-a20);';
+  }
+  function _animauxListeHtml(){
+    if(!_animaux.length) return '<p class="rnrc-anx-vide">Pas encore de compagnon à quatre pattes enregistré.</p>';
+    return _animaux.map(function(a){
+      return '<div class="rnrc-anx-card" data-id="'+a.id+'">'+
+        '<div class="rnrc-anx-av" style="'+_animalAvatarStyle(a)+'" title="Changer la photo" onclick="document.getElementById(\'rnrc-anx-file-'+a.id+'\').click()"></div>'+
+        '<input id="rnrc-anx-file-'+a.id+'" type="file" accept="image/*" style="display:none;" onchange="window.__rnrAnimalPhotoChoisie(this,\''+a.id+'\')">'+
+        '<div style="flex:1;min-width:0;">'+
+          '<input class="rnrc-anx-nom" value="'+String(a.nom||'').replace(/"/g,'&quot;')+'" placeholder="Nom" onchange="window.__rnrAnimalChamp(\''+a.id+'\',\'nom\',this.value)">'+
+          '<input class="rnrc-anx-infos" value="'+String(a.infos||'').replace(/"/g,'&quot;')+'" placeholder="Race, âge, une phrase…" onchange="window.__rnrAnimalChamp(\''+a.id+'\',\'infos\',this.value)">'+
+        '</div>'+
+        '<button type="button" class="rnrc-anx-suppr" title="Retirer" onclick="window.__rnrAnimalSupprimer(\''+a.id+'\')">✕</button>'+
+      '</div>';
+    }).join('');
+  }
+  function _animauxSectionHtml(){
+    return '<div id="rnrc-anx-liste">'+_animauxListeHtml()+'</div>'+
+      '<button type="button" class="rnrc-anx-ajouter" onclick="window.__rnrAnimalAjouter()">+ Ajouter un animal</button>';
+  }
+  function _animauxRerendre(){
+    document.querySelectorAll('.rnrc-anx-hote').forEach(function(h){ h.innerHTML=_animauxSectionHtml(); });
+  }
+  window.__rnrAnimalAjouter = async function(){
+    if(!_sbChrome || !_monGroupeId) return;
+    try{
+      var r = await _sbChrome.from('animaux').insert({groupe_id:_monGroupeId, nom:'Nouveau compagnon'}).select().single();
+      if(r.error) throw r.error;
+      _animaux.push(r.data);
+      _animauxRerendre();
+    }catch(e){ console.warn('chrome.js: ajout animal', e); }
+  };
+  window.__rnrAnimalChamp = async function(id, champ, valeur){
+    var payload={}; payload[champ]=(valeur||'').trim()||null;
+    try{
+      var r=await _sbChrome.from('animaux').update(payload).eq('id', id);
+      if(r.error) throw r.error;
+      var a=_animaux.find(function(x){return x.id===id;}); if(a) a[champ]=payload[champ];
+    }catch(e){ console.warn('chrome.js: maj animal', e); }
+  };
+  window.__rnrAnimalSupprimer = async function(id){
+    if(!confirm('Retirer cet animal du carnet du groupe ?')) return;
+    try{
+      var r=await _sbChrome.from('animaux').delete().eq('id', id);
+      if(r.error) throw r.error;
+      _animaux=_animaux.filter(function(x){return x.id!==id;});
+      _animauxRerendre();
+    }catch(e){ console.warn('chrome.js: suppression animal', e); }
+  };
+  window.__rnrAnimalPhotoChoisie = function(input, id){
+    var f=input.files && input.files[0]; if(!f) return;
+    _rnrPreparerEtEnvoyerPhoto(f, 'photos-membres', 'animaux/'+id, async function(publicUrl){
+      if(!publicUrl) return;
+      try{
+        var r=await _sbChrome.from('animaux').update({photo_url:publicUrl}).eq('id', id);
+        if(r.error) throw r.error;
+        var a=_animaux.find(function(x){return x.id===id;}); if(a) a.photo_url=publicUrl;
+        _animauxRerendre();
+      }catch(e){ console.warn('chrome.js: photo animal', e); }
+    });
+  };
+  /* Point d'entrée public : monte la section "Nos animaux" dans le
+     conteneur donné. Attend l'initialisation de session (_sbChrome/
+     _monGroupeId) comme rnrOuvrirProfil — même garde-fou, même raison
+     (B70 : un clic trop rapide après le chargement de la page ne doit
+     jamais tomber sur un état vide faute d'avoir attendu la session). */
+  window.RNR_ANIMAUX = {
+    monter: async function(containerId){
+      try{ if(_rnrInitProfilPromise) await _rnrInitProfilPromise; }catch(e){}
+      var host=document.getElementById(containerId);
+      if(!host || !_monGroupeId) return;
+      host.classList.add('rnrc-anx-hote');
+      host.innerHTML='<p class="rnrc-anx-vide">Chargement…</p>';
+      await _chargerAnimaux();
+      host.innerHTML=_animauxSectionHtml();
+    },
+    // (18/07) lecture seule pour le Cahier — jamais une seconde requête
+    // dupliquée ailleurs : cahier.html appelle ceci puis lit le tableau.
+    lister: async function(groupeId, sb){
+      if(!sb || !groupeId) return [];
+      try{
+        var r = await sb.from('animaux').select('*').eq('groupe_id', groupeId).order('created_at',{ascending:true});
+        return (r && r.data) || [];
+      }catch(e){ console.warn('RNR_ANIMAUX.lister', e); return []; }
+    }
   };
 })();

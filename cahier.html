@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&family=Permanent+Marker&family=Cinzel:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css?v=100725">
-<script src="chrome.js?v=170725"></script>
+<script src="chrome.js?v=180726"></script>
 <script src="tags.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js?v=100725"></script>
@@ -372,9 +372,10 @@ body[data-theme="kraft"] .team-av-nudge{border-radius:4px;}
 .fiche-page-inner{padding:34px 40px 30px 54px;}
 .fiche-embed{margin-bottom:4px;}
 
-/* ── Page « Le chemin complet » (10/07) : vue d'ensemble avant le détail
-   page à page — chaque étape principale, avec ses excursions nichées et
-   colorées comme sur la carte (même palette, RNR_MARQUEURS.couleurExcursion). */
+/* ── Page « Notre RoadTrip » (10/07, renommé 18/07 depuis « Le chemin
+   complet ») : vue d'ensemble avant le détail page à page — chaque étape
+   principale, avec ses excursions nichées et colorées comme sur la carte
+   (même palette, RNR_MARQUEURS.couleurExcursion). */
 .chemin-liste{position:relative;padding-left:8px;}
 .chemin-etape{display:flex;gap:14px;position:relative;padding-bottom:18px;}
 .chemin-etape:not(:last-child)::before{content:'';position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--cah-paper-line);}
@@ -563,6 +564,17 @@ async function chargerMembres(){
     const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,photo_cahier,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
     MEMBRES=data||[];
   }catch(e){ console.warn('Cahier: membres', e); }
+}
+// (18/07) Animaux du groupe — même principe qu'une fiche membre (nom, photo,
+// infos), lus ici en simple lecture pour la page Équipe. L'édition (ajout/
+// suppression/photo) vit UNIQUEMENT dans le moteur partagé RNR_ANIMAUX
+// (chrome.js), jamais reconstruite ici — voir RNR_ANIMAUX.lister().
+let ANIMAUX=[];
+async function chargerAnimaux(){
+  if(!GROUPE_ID) return;
+  try{
+    ANIMAUX = window.RNR_ANIMAUX ? await window.RNR_ANIMAUX.lister(GROUPE_ID, sb) : [];
+  }catch(e){ console.warn('Cahier: animaux', e); }
 }
 // (17/07, retour Bruno) : le rôle de leader existe déjà sur le site
 // (voyage_leaders, un par voyage — voir onboarding.html), jamais montré nulle
@@ -799,17 +811,27 @@ function pageFicheComplete(item, opts){
   +'</div>';
 }
 
-// (10/07) « Le chemin complet » — vue d'ensemble juste après Couverture +
-// Équipe : toute la chaîne principale d'un coup d'œil, avec les excursions de
+// (10/07) « Notre RoadTrip » (renommé 18/07, ex « Le chemin complet ») —
+// vue d'ensemble juste après Couverture + Équipe : toute la chaîne
+// principale d'un coup d'œil, avec les excursions de
 // chaque séjour nichées dessous, colorées comme sur la carte (même palette,
 // RNR_MARQUEURS.couleurExcursion — un séjour a la même couleur ici et sur
 // Voyage/Hub/Horizon).
 // (17/07, retour Bruno) : ne renvoie plus le wrapper <div class="page">— le
 // contenu est fusionné avec la page Équipe par l'appelant (render()), pour
 // ne plus avoir deux pages à moitié vides côte à côte.
-function contenuCheminComplet(chaine, dates, sejourIdx){
-  let rows='';
-  chaine.forEach((item,i)=>{
+// (18/07) Éclaté en 3 briques (en-tête / étapes EN TABLEAU / assemblage) au
+// lieu d'une seule chaîne : la pagination par mesure réelle (cf. render())
+// a besoin de pouvoir répartir les étapes une par une sur plusieurs pages
+// sans jamais couper Notre RoadTrip au milieu d'une page qui déborde déjà.
+// Chaque étape (avec ses excursions nichées) reste un bloc ATOMIQUE, jamais
+// coupée en deux — c'est la garantie demandée par Bruno.
+function cheminEnTeteHtml(){
+  return '<div class="team-header" style="margin-top:28px;"><p class="day-sub" style="margin-bottom:4px;">Vue d\'ensemble</p>'
+    +'<span class="day-title" style="display:block;">Notre RoadTrip</span></div>';
+}
+function cheminEtapesHtml(chaine, dates, sejourIdx){
+  return chaine.map((item,i)=>{
     const nuit=(window.RNR_MARQUEURS)?RNR_MARQUEURS.estNuit(item):false;
     const nbNuits=(item.nb_nuits&&item.nb_nuits>0)?item.nb_nuits:1;
     const dEtape=dates[i];
@@ -818,7 +840,7 @@ function contenuCheminComplet(chaine, dates, sejourIdx){
       const couleur=RNR_MARQUEURS.couleurExcursion(sejourIdx.has(item.uid)?sejourIdx.get(item.uid):0);
       return '<div class="chemin-exc" style="border-left-color:'+couleur+';"><b style="color:'+couleur+';">Jour '+(e.jour||1)+'</b> · '+esc(e.nom)+'</div>';
     }).join('')+'</div>') : '';
-    rows += '<div class="chemin-etape">'
+    return '<div class="chemin-etape">'
       +'<div class="chemin-num">'+(i+1)+'</div>'
       +'<div class="chemin-corps">'
         +'<div class="chemin-nom">'+esc(item.nom)+(nuit?' 🌙':'')+'</div>'
@@ -827,9 +849,133 @@ function contenuCheminComplet(chaine, dates, sejourIdx){
       +'</div>'
     +'</div>';
   });
-  return '<div class="team-header" style="margin-top:28px;"><p class="day-sub" style="margin-bottom:4px;">Vue d\'ensemble</p>'
-    +'<span class="day-title" style="display:block;">Le chemin complet</span></div>'
-    +'<div class="chemin-liste" style="margin-top:18px;">'+rows+'</div>';
+}
+// Assemblage complet (cas simple, non paginé) — conservé pour compat/lisibilité.
+function contenuCheminComplet(chaine, dates, sejourIdx){
+  return cheminEnTeteHtml()+'<div class="chemin-liste" style="margin-top:18px;">'+cheminEtapesHtml(chaine,dates,sejourIdx).join('')+'</div>';
+}
+
+// (18/07) Carte « L'équipe » d'un membre — extraite de render() pour être
+// réutilisable telle quelle par la pagination (cf. plus bas). Comportement
+// inchangé, aucune régression visuelle : même logique, juste déplacée.
+function carteMembreHtml(m, i, choixPassions, choixDepuis, rotsCartes, estMoiLeader){
+  const nom=m.pseudo||m.prenom||'Voyageur';
+  const estMoi = m.id===MON_MEMBRE_ID;
+  // (17/07, B71, retour Bruno) Priorité d'affichage :
+  //  1. photo_url (avatar personnel, choisi par la personne, valable
+  //     partout sur le site) → affichée sans filigrane.
+  //  2. photo_cahier (posée par un leader, en attendant que la
+  //     personne l'adopte ou non depuis son propre profil) → idem,
+  //     affichée sans filigrane, elle est bien réelle.
+  //  3. sinon : le VRAI emoji du profil (jamais un cadre vide), avec
+  //     "Photo à ajouter" en filigrane par-dessus pour inciter à
+  //     personnaliser son profil sur le site — jamais reconstruit
+  //     ici, c'est rnrAvatarMembre() (chrome.js) qui sait déjà faire
+  //     ce choix partout ailleurs sur le site.
+  const photoAffichee = m.photo_url || m.photo_cahier || null;
+  const av = window.rnrAvatarMembre ? window.rnrAvatarMembre(m,'') : null;
+  let avStyle, avTxt, showNudge=false;
+  if(photoAffichee){
+    avStyle="background-image:url('"+photoAffichee.replace(/'/g,'')+"');"; avTxt='';
+  } else if(av && av.emoji){
+    avStyle='background:var(--gold-a20);'; avTxt=av.emoji; showNudge=true;
+  } else {
+    avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
+    avTxt=(av&&av.initiale)||(nom.charAt(0)||'?').toUpperCase(); showNudge=true;
+  }
+  const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
+  const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
+  const estLeader = LEADERS.has(m.id);
+  // (17/07, B70) Trois comportements de clic sur l'avatar, jamais
+  // reconstruits ici pour la partie édition — un seul moteur partagé :
+  //  1. soi-même → modale profil complète (chrome.js, site entier)
+  //  2. un autre membre, et JE suis leader de ce voyage → upload
+  //     direct d'une photo « Cahier uniquement » (set_photo_cahier)
+  //  3. sinon → carte statique, rien à cliquer
+  let avClic='';
+  if(estMoi){
+    avClic=' cursor:pointer;" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier ton profil"';
+  } else if(estMoiLeader){
+    avClic=' cursor:pointer;" onclick="rnrPhotoCahierDemande(\''+m.id+'\')" title="'+(photoAffichee?'Changer la photo (visible uniquement dans le Cahier)':'Ajouter une photo (visible uniquement dans le Cahier)')+'"';
+  } else {
+    avClic='"';
+  }
+  return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
+    +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
+    +'<div class="team-av-wrap"><div class="team-av" style="'+avStyle+avClic+'>'+avTxt+'</div>'
+    +(showNudge?'<div class="team-av-nudge">Photo<br>à ajouter</div>':'')+'</div>'
+    +'<div style="flex:1;">'
+    +'<p class="team-nom">'+esc(nom)+'</p>'
+    +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
+    +(passionsLabels.length?'<div class="team-passions">'+passionsLabels.map(p=>'<span class="team-chip">'+esc(p)+'</span>').join('')+'</div>':'')
+    +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
+    +'</div></div>';
+}
+// (18/07) Carte « L'équipe » d'un animal du groupe — même gabarit que la
+// carte membre (un seul type de carte, jamais deux composants séparés),
+// simplifiée : pas de clic (l'édition vit dans RNR_ANIMAUX, chrome.js/
+// onboarding.html — le Cahier est en lecture seule ici), pas de passions/
+// "voyageur depuis", juste nom + infos libres.
+function carteAnimalHtml(a, i, rotsCartes){
+  const nom=a.nom||'Compagnon';
+  const avStyle = a.photo_url ? ("background-image:url('"+String(a.photo_url).replace(/'/g,'')+"');") : 'background:var(--gold-a20);';
+  const avTxt = a.photo_url ? '' : (nom.charAt(0)||'?').toUpperCase();
+  return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
+    +'<span class="team-leader-tag" style="background:var(--gold-a20);color:var(--ink,#211a10);">Compagnon de route</span>'
+    +'<div class="team-av-wrap"><div class="team-av" style="'+avStyle+'">'+avTxt+'</div></div>'
+    +'<div style="flex:1;">'
+    +'<p class="team-nom">'+esc(nom)+'</p>'
+    +(a.infos?'<p class="team-presentation">'+esc(a.infos)+'</p>':'')
+    +'</div></div>';
+}
+
+// (18/07, B73) Sécurisation de la pagination Équipe + Notre RoadTrip.
+// Avant : une seule page à hauteur fixe, `overflow:hidden` — tout ce qui
+// dépasse était invisible, silencieusement. Avec les animaux qui peuvent
+// faire grandir l'équipe, ce risque devenait réel. LE RÉEL FAIT FOI : on
+// ne calcule pas un ratio px/mm à la main, on demande au navigateur la
+// hauteur RÉELLE qu'occuperait le contenu, via un clone hors-écran aux
+// dimensions d'impression (190mm de large — cf. règle @media print).
+function _mesurerHauteurPx(cssHeight){
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;visibility:hidden;left:-9999px;top:0;height:'+cssHeight+';width:1px;';
+  document.body.appendChild(probe);
+  const px=probe.getBoundingClientRect().height;
+  probe.remove();
+  return px;
+}
+function _mesurerHauteurContenuPage(innerHtml){
+  const clone=document.createElement('div');
+  clone.className='page team-page';
+  clone.style.cssText='position:absolute;left:-9999px;top:0;width:190mm;height:auto;min-height:0;max-height:none;overflow:visible;box-shadow:none;margin:0;';
+  clone.innerHTML=innerHtml;
+  document.body.appendChild(clone);
+  const h=clone.scrollHeight;
+  clone.remove();
+  return h;
+}
+// Répartit des blocs HTML ATOMIQUES (jamais coupés en deux — une carte,
+// une étape avec ses excursions) sur autant de pages que nécessaire, en
+// répétant le même en-tête. Un bloc unique qui dépasserait le budget à lui
+// seul est laissé tel quel plutôt que perdu (n'arrive jamais en pratique :
+// une carte ou une étape ne remplit pas une page entière).
+function _paginerBlocs(blocsHtml, budgetPx, headerHtml, wrapOuvre, wrapFerme){
+  if(!blocsHtml.length) return [];
+  const pages=[];
+  let courant=[];
+  const contenuAvec=(liste)=> headerHtml+wrapOuvre+liste.join('')+wrapFerme;
+  blocsHtml.forEach(bloc=>{
+    const essai=courant.concat([bloc]);
+    const h=_mesurerHauteurContenuPage(contenuAvec(essai));
+    if(h<=budgetPx || courant.length===0){
+      courant=essai;
+    } else {
+      pages.push(contenuAvec(courant));
+      courant=[bloc];
+    }
+  });
+  if(courant.length) pages.push(contenuAvec(courant));
+  return pages;
 }
 
 function temaActif(){
@@ -966,83 +1112,60 @@ function render(){
 
   let html=pageCouverture(temaActif(), dest, totalKm, RB_INFO.nb_participants, RB_INFO.nb_animaux, photoCouverture, photosCouverture, routeLabels);
 
-  // (17/07, retour Bruno) : Équipe et Chemin complet fusionnées sur UNE
-  // seule page — deux pages à moitié vides côte à côte n'avaient pas de
-  // sens. Les avatars ouvrent la même modale de profil que partout ailleurs
-  // sur le site (chrome.js, barre d'avatars) : un seul moteur d'édition,
-  // jamais une variante propre au Cahier.
-  const aEquipe = MEMBRES.length>0, aChemin = chaine.length>0;
+  // (17/07, retour Bruno) : Équipe et Notre RoadTrip fusionnées sur UNE
+  // seule page tant que ça tient — deux pages à moitié vides côte à côte
+  // n'avaient pas de sens. (18/07, B73) Mais jamais au prix d'un contenu
+  // coupé : si la fusion déborde (équipe agrandie par les animaux, par
+  // exemple), on sépare et on pagine par mesure réelle — voir
+  // _mesurerHauteurContenuPage / _paginerBlocs ci-dessus. Les avatars
+  // ouvrent la même modale de profil que partout ailleurs sur le site
+  // (chrome.js, barre d'avatars) : un seul moteur d'édition, jamais une
+  // variante propre au Cahier.
+  const aEquipe = MEMBRES.length>0 || ANIMAUX.length>0, aChemin = chaine.length>0;
   if(aEquipe || aChemin){
-    let interieur='';
-    if(aEquipe){
-      const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
-      const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
-      const tagline = MEMBRES.length>1 ? (MEMBRES.length+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
-      const rotsCartes=[-.8,.9,-.6,1,.7,-1];
-      const estMoiLeader = LEADERS.has(MON_MEMBRE_ID);
-      interieur += '<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
-        +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
-        +'<p class="team-tagline">'+esc(tagline)+'</p>'
-        +'<div class="team-grid">'
-        +MEMBRES.map((m,i)=>{
-          const nom=m.pseudo||m.prenom||'Voyageur';
-          const estMoi = m.id===MON_MEMBRE_ID;
-          // (17/07, B71, retour Bruno) Priorité d'affichage :
-          //  1. photo_url (avatar personnel, choisi par la personne, valable
-          //     partout sur le site) → affichée sans filigrane.
-          //  2. photo_cahier (posée par un leader, en attendant que la
-          //     personne l'adopte ou non depuis son propre profil) → idem,
-          //     affichée sans filigrane, elle est bien réelle.
-          //  3. sinon : le VRAI emoji du profil (jamais un cadre vide), avec
-          //     "Photo à ajouter" en filigrane par-dessus pour inciter à
-          //     personnaliser son profil sur le site — jamais reconstruit
-          //     ici, c'est rnrAvatarMembre() (chrome.js) qui sait déjà faire
-          //     ce choix partout ailleurs sur le site.
-          const photoAffichee = m.photo_url || m.photo_cahier || null;
-          const av = window.rnrAvatarMembre ? window.rnrAvatarMembre(m,'') : null;
-          let avStyle, avTxt, showNudge=false;
-          if(photoAffichee){
-            avStyle="background-image:url('"+photoAffichee.replace(/'/g,'')+"');"; avTxt='';
-          } else if(av && av.emoji){
-            avStyle='background:var(--gold-a20);'; avTxt=av.emoji; showNudge=true;
-          } else {
-            avStyle='background:'+ (function(){ let h=0; for(let i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))>>>0; return ['#D85A30','#2159A8','#2C5016','#8b6914','#6B3288','#1B2A6B'][h%6]; })()+';';
-            avTxt=(av&&av.initiale)||(nom.charAt(0)||'?').toUpperCase(); showNudge=true;
-          }
-          const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
-          const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
-          const estLeader = LEADERS.has(m.id);
-          // (17/07, B70) Trois comportements de clic sur l'avatar, jamais
-          // reconstruits ici pour la partie édition — un seul moteur partagé :
-          //  1. soi-même → modale profil complète (chrome.js, site entier)
-          //  2. un autre membre, et JE suis leader de ce voyage → upload
-          //     direct d'une photo « Cahier uniquement » (set_photo_cahier)
-          //  3. sinon → carte statique, rien à cliquer
-          let avClic='';
-          if(estMoi){
-            avClic=' cursor:pointer;" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier ton profil"';
-          } else if(estMoiLeader){
-            avClic=' cursor:pointer;" onclick="rnrPhotoCahierDemande(\''+m.id+'\')" title="'+(photoAffichee?'Changer la photo (visible uniquement dans le Cahier)':'Ajouter une photo (visible uniquement dans le Cahier)')+'"';
-          } else {
-            avClic='"';
-          }
-          return '<div class="team-card" style="--rot:'+rotsCartes[i%rotsCartes.length]+'deg;">'
-            +(estLeader?'<span class="team-leader-tag">Leader de ce voyage</span>':'')
-            +'<div class="team-av-wrap"><div class="team-av" style="'+avStyle+avClic+'>'+avTxt+'</div>'
-            +(showNudge?'<div class="team-av-nudge">Photo<br>à ajouter</div>':'')+'</div>'
-            +'<div style="flex:1;">'
-            +'<p class="team-nom">'+esc(nom)+'</p>'
-            +(depuisLabel&&depuisLabel!=='—'?'<div class="team-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
-            +(passionsLabels.length?'<div class="team-passions">'+passionsLabels.map(p=>'<span class="team-chip">'+esc(p)+'</span>').join('')+'</div>':'')
-            +(m.presentation?'<p class="team-presentation">« '+esc(m.presentation)+' »</p>':'')
-            +'</div></div>';
-        }).join('')
-        +'</div>';
+    const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
+    const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
+    const totalEquipe = MEMBRES.length + ANIMAUX.length;
+    const tagline = totalEquipe>1 ? (totalEquipe+' voyageurs, une seule route') : 'Un voyageur, une route rien qu\'à lui';
+    const rotsCartes=[-.8,.9,-.6,1,.7,-1];
+    const estMoiLeader = LEADERS.has(MON_MEMBRE_ID);
+
+    const cartesEquipe = MEMBRES.map((m,i)=>carteMembreHtml(m,i,choixPassions,choixDepuis,rotsCartes,estMoiLeader))
+      .concat(ANIMAUX.map((a,i)=>carteAnimalHtml(a,i,rotsCartes)));
+
+    const teamHeaderHtml = aEquipe ? ('<div class="team-header"><p class="day-sub" style="margin-bottom:4px;">Qui embarque</p>'
+      +'<span class="day-title" style="display:block;">L\'équipe</span></div>'
+      +'<p class="team-tagline">'+esc(tagline)+'</p>') : '';
+    const cheminHeaderHtml = aChemin ? cheminEnTeteHtml() : '';
+    const cheminBlocs = aChemin ? cheminEtapesHtml(chaine, dates, sejourIdx) : [];
+
+    const fusionComplete = teamHeaderHtml
+      + (aEquipe?('<div class="team-grid">'+cartesEquipe.join('')+'</div>'):'')
+      + cheminHeaderHtml
+      + (aChemin?('<div class="chemin-liste" style="margin-top:18px;">'+cheminBlocs.join('')+'</div>'):'');
+
+    const budget = _mesurerHauteurPx('277mm');
+    const hFusion = _mesurerHauteurContenuPage(fusionComplete);
+
+    let pagesEquipeChemin;
+    if(hFusion<=budget){
+      pagesEquipeChemin=[fusionComplete];
+    } else {
+      let pagesEquipe=[];
+      if(aEquipe){
+        const equipeSeule = teamHeaderHtml+'<div class="team-grid">'+cartesEquipe.join('')+'</div>';
+        pagesEquipe = (_mesurerHauteurContenuPage(equipeSeule)<=budget)
+          ? [equipeSeule]
+          : _paginerBlocs(cartesEquipe, budget, teamHeaderHtml, '<div class="team-grid">', '</div>');
+      }
+      // Notre RoadTrip démarre TOUJOURS une page neuve dans ce cas — jamais
+      // coupée entre deux pages, la garantie demandée.
+      const pagesChemin = aChemin
+        ? _paginerBlocs(cheminBlocs, budget, cheminHeaderHtml, '<div class="chemin-liste" style="margin-top:18px;">', '</div>')
+        : [];
+      pagesEquipeChemin = pagesEquipe.concat(pagesChemin);
     }
-    if(aChemin){
-      interieur += contenuCheminComplet(chaine, dates, sejourIdx);
-    }
-    html += '<div class="page team-page">'+interieur+'</div>';
+    html += pagesEquipeChemin.map(c=>'<div class="page team-page">'+c+'</div>').join('');
   }
 
   if(!voyage.length){
@@ -1173,7 +1296,7 @@ function render(){
     await resoutVoyageId(session.user.id);
     if(!VOYAGE_ID){ document.getElementById('pages').innerHTML="<div class=\"empty-state\">Aucun voyage actif — retournez à l'Accueil pour en choisir un.</div>"; return; }
     cahierChargeSelecteurChrome();   // nom du voyage + liste, visible dans la barre (chrome.js)
-    await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions(), chargerMembres(), chargerLeaders()]);
+    await Promise.all([chargerInfosVoyage(), chargerItineraire(), chargerRegions(), chargerMembres(), chargerAnimaux(), chargerLeaders()]);
     render();
   }catch(e){
     console.error('Cahier: erreur au chargement', e);
