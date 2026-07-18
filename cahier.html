@@ -99,6 +99,11 @@ body[data-theme="kraft"] .page{background-image:none;}
      mais proprement et de façon symétrique, à 100% sans bidouillage. */
   @page{ size:210mm 297mm; margin:4mm; }
   .page{margin:0;box-shadow:none;width:202mm !important;height:289mm !important;min-height:289mm !important;max-height:289mm !important;overflow:hidden !important;}
+  /* .cover-kraft et .cover-atlas fixent chacune leur propre min-height:297mm
+     (indépendante de .page) pour tenir leur mise en page plein-page à
+     l'écran — sans ce correctif, elles ignoraient la marge de sécurité
+     ci-dessus et débordaient sur une deuxième feuille à l'impression. */
+  .cover-kraft,.cover-atlas{min-height:289mm !important;}
 }
 
 /* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
