@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&family=Permanent+Marker&family=Cinzel:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css?v=100725">
-<script src="chrome.js?v=100725"></script>
+<script src="chrome.js?v=170725"></script>
 <script src="tags.js"></script>
 <script src="carto.js"></script>
 <script src="carto-marqueurs.js?v=100725"></script>
@@ -579,6 +579,7 @@ function rnrPhotoCahierChoisie(input){
   input.value='';
 }
 window.rnrPhotoCahierChoisie = rnrPhotoCahierChoisie;
+window.rnrPhotoCahierDemande = rnrPhotoCahierDemande;
 async function chargerItineraire(){
   if(!VOYAGE_ID){ voyage=[]; return; }
   try{
