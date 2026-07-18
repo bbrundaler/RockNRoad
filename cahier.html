@@ -256,6 +256,17 @@ body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition reli
 .day-title{font-family:var(--cah-font-title);font-size:26px;font-weight:700;color:var(--cah-ink);}
 .day-sub{font-size:11.5px;color:var(--cah-ink-dim);margin:0 0 16px;padding-left:2px;}
 body[data-theme="atlas"] .day-num-label,body[data-theme="atlas"] .day-title{text-transform:uppercase;letter-spacing:.02em;}
+/* (18/07, retour Bruno) : étiquette "étape N" posée en coin à droite — grosse
+   marque volontaire, jamais confondue avec "jour N" (excursion) qui reste à
+   gauche. Reprend la typographie propre à chaque thème comme .day-num-label
+   (même logique de surcharge ci-dessous), juste repositionnée. */
+.day-tag-etape{position:absolute;top:22px;right:22px;font-family:var(--cah-font-hand);font-size:15px;
+  color:var(--cah-accent);background:var(--cah-paper);padding:5px 16px;border:2.5px solid var(--cah-accent);
+  border-radius:999px;transform:rotate(2deg);z-index:6;box-shadow:0 3px 8px rgba(0,0,0,.18);}
+body[data-theme="atlas"] .day-tag-etape{text-transform:uppercase;letter-spacing:.06em;border-radius:2px;transform:none;font-size:11px;}
+body[data-theme="edition"] .day-tag-etape{font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--cah-accent);background:none;border:none;border-bottom:2.5px solid var(--cah-accent);
+  border-radius:0;padding:2px 0 5px;transform:none;box-shadow:none;}
 
 /* ── Flourish masthead — thème Édition uniquement (17/07, retour Bruno : la
    page réelle ne ressemblait pas à la maquette éditoriale approuvée). Un
@@ -806,11 +817,28 @@ function pageFicheComplete(item, opts){
   const noteF=RNR_FICHE_COMPLETE.badgeNoteFamille(item.note_famille);
   const contenu=RNR_FICHE_COMPLETE.html(item, {noteG, noteF, galerieGrande:true});
   const notePlaceholder=opts.notePlaceholder || (opts.nuit ? "Comment c'était, ce qu'on retient de cette étape…" : "Ce qu'on en a pensé, ce qu'on a fait…");
-  const accentStyle=opts.accent ? ('border-top:6px solid '+opts.accent+';') : '';
-  return '<div class="page day-page fiche-page" style="'+accentStyle+'">'
+  // (18/07, retour Bruno — Option A choisie, position à droite façon C) :
+  // une ÉTAPE (fiche du fil principal) reçoit un cadre complet (jamais
+  // seulement l'excursion qui, elle, garde son simple filet du haut) ET son
+  // étiquette passe à droite en coin — jusqu'ici "étape N" et "jour N"
+  // (excursion) se posaient au même endroit à gauche, se confondant au
+  // premier coup d'œil. Couleur : celle du séjour si posée (opts.accent),
+  // sinon l'accent par défaut du thème — jamais une couleur en dur ici.
+  const isEtape = !!opts.etape;
+  const couleurCadre = opts.accent || 'var(--cah-accent)';
+  const cadreStyle = isEtape
+    ? ('border:5px solid '+couleurCadre+';box-sizing:border-box;')
+    : (opts.accent ? ('border-top:6px solid '+opts.accent+';') : '');
+  const labelGauche = isEtape ? '' : '<span class="day-num-label">'+esc(opts.label||'')+'</span>';
+  // L'étiquette à droite reprend la typographie propre à chaque thème
+  // (.day-tag-etape, surchargée par thème comme .day-num-label l'était déjà)
+  // — jamais un style unique qui casserait la charte d'un des trois modes.
+  const tagDroite = isEtape ? '<span class="day-tag-etape">'+esc(opts.label||'')+'</span>' : '';
+  return '<div class="page day-page fiche-page'+(isEtape?' etape-page':'')+'" style="'+cadreStyle+'">'
     +'<div class="spirale"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="ring"></div></div>'
+    +tagDroite
     +'<div class="fiche-page-inner">'
-      +'<div class="day-head">'+(opts.numero?('<span class="day-num-ghost">'+String(opts.numero).padStart(2,'0')+'</span>'):'')+'<span class="day-num-label">'+esc(opts.label||'')+'</span></div>'
+      +'<div class="day-head">'+(opts.numero?('<span class="day-num-ghost">'+String(opts.numero).padStart(2,'0')+'</span>'):'')+labelGauche+'</div>'
       +(opts.sousLabel?('<p class="day-sub">'+opts.sousLabel+'</p>'):'')
       +'<div class="fiche-embed">'+contenu+'</div>'
       +'<p class="narrative-label" style="margin-top:10px;">'+(opts.nuit?'💬 Le mot sur cette nuit':'💬 Le mot du groupe')+'</p>'
@@ -1212,7 +1240,7 @@ function render(){
     html += pageFicheComplete(item, {
       label:'étape '+(i+1), numero:(i+1),
       sousLabel:(dEtape?esc(formatDateCourt(dEtape))+' · ':'')+esc(region)+(nuit?' · 🌙 '+nbNuits+' nuit'+(nbNuits>1?'s':''):'')+(estSejour?' · base d\'excursions':''),
-      nuit, accent:couleur, infosBox,
+      nuit, accent:couleur, infosBox, etape:true,
       footerRight:'Étape '+(i+1)+' / '+chaine.length
     });
     if(nuit) meteoPoints.push({uid:item.uid, lat:item.lat, lng:item.lng, dEtape});
