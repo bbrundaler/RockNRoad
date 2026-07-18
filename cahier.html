@@ -66,7 +66,25 @@ body{margin:0;font-family:var(--font-body);color:var(--ink);background:#7d746a;}
 /* Le Carnet bricolé est sur papier blanc franc (retour Bruno 17/07) : pas de
    texture de lignes ni de halo doré, contrairement aux deux autres thèmes. */
 body[data-theme="kraft"] .page{background-image:none;}
-@media print{ #auth-check,.toolbar{display:none !important;} body{background:none;} .page{margin:0;box-shadow:none;} }
+@media print{
+  #auth-check,.toolbar{display:none !important;}
+  body{background:none;}
+  /* (17/07, retour Bruno : impression déformée et sans les bonnes couleurs)
+     Deux causes distinctes, corrigées ensemble :
+     1. Les navigateurs n'impriment PAS les couleurs/images de fond par
+        défaut (économie d'encre) — tout ce qui fait la personnalité des
+        3 thèmes (bandeaux, badges, photos en fond, dégradés) disparaissait
+        à l'impression. print-color-adjust:exact force leur impression.
+     2. .page utilisait min-height (un plancher, pas un plafond) : une page
+        dont le contenu dépassait 297mm continuait de grandir plutôt que
+        d'être coupée — elle débordait alors sur une partie de la feuille
+        suivante, décalant toute la pagination derrière elle (l'effet
+        « déformé »). height fixe + overflow:hidden, uniquement à
+        l'impression (l'écran garde le confort du défilement). */
+  *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+  @page{ size:210mm 297mm; margin:0; }
+  .page{margin:0;box-shadow:none;height:297mm !important;min-height:297mm !important;max-height:297mm !important;overflow:hidden !important;}
+}
 
 /* ── MOBILE (10/07, retour Bruno) : la page A4 (210mm) n'avait AUCUNE règle
    mobile — elle s'affichait à sa largeur réelle quel que soit l'écran. Deux
