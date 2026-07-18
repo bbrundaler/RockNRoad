@@ -589,11 +589,24 @@
         var f = input.files && input.files[0]; if(!f) return;
         var etat=document.getElementById('rnrc-pf-photo-etat'); if(etat) etat.textContent='Préparation…';
         var cheminPrefix=(_monMembre&&_monMembre.id?_monMembre.id:'anon');
-        _rnrPreparerEtEnvoyerPhoto(f, 'photos-membres', cheminPrefix, function(publicUrl){
+        _rnrPreparerEtEnvoyerPhoto(f, 'photos-membres', cheminPrefix, async function(publicUrl){
           if(!publicUrl){ if(etat) etat.textContent='Échec de l\'envoi — réessaie.'; return; }
           document.getElementById('rnrc-pf-photo').value = publicUrl;
           var prev=document.getElementById('rnrc-pf-photo-preview'); if(prev) prev.style.backgroundImage="url('"+publicUrl.replace(/'/g,'')+"')";
           if(galerieActuelle.indexOf(publicUrl)<0 && galerieActuelle.length<10) galerieActuelle.push(publicUrl);
+          // (18/07, B78, retour de test de Bruno) : AVANT, cette photo restait
+          // en local jusqu'au bouton "Enregistrer", qui écrasait ensuite
+          // photos_disponibles avec ce snapshot — effaçant une photo posée
+          // entre-temps par un leader (set_photo_cahier, Cahier). Persistance
+          // immédiate, fusionnée avec l'état réel en base (relu juste avant
+          // d'écrire), jamais un simple remplacement.
+          try{
+            var fraiche = await _sbChrome.from('membres').select('photos_disponibles').eq('id', _monMembre.id).maybeSingle();
+            var dbActuelle = Array.isArray(fraiche && fraiche.data && fraiche.data.photos_disponibles) ? fraiche.data.photos_disponibles : [];
+            var fusionnee = dbActuelle.indexOf(publicUrl)>=0 ? dbActuelle : dbActuelle.concat([publicUrl]).slice(0,10);
+            await _sbChrome.from('membres').update({photos_disponibles:fusionnee}).eq('id', _monMembre.id);
+            galerieActuelle = fusionnee;
+          }catch(e){ console.warn('chrome.js: persistance immédiate galerie', e); }
           if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
         });
       };

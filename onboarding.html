@@ -458,6 +458,24 @@ function ajouterPhotoGalerie(input){
         if(!publicUrl) throw new Error('URL publique introuvable');
         galeriePhotos.push(publicUrl);
         choisirGaleriePhoto(galeriePhotos.length-1); // une photo qu'on vient d'ajouter, on la porte tout de suite
+        // (18/07, B78, retour de test de Bruno) : AVANT, cette photo n'existait
+        // qu'en local jusqu'au bouton "Enregistrer" du profil, qui écrasait
+        // ensuite photos_disponibles avec ce snapshot local — effaçant sans
+        // le vouloir une photo posée entre-temps par un leader (set_photo_cahier,
+        // Cahier). Ici : persistance immédiate, fusionnée avec l'état réel en
+        // base (relu juste avant d'écrire), jamais un simple remplacement.
+        // Seulement si le membre existe déjà (sinon rien à fusionner — la
+        // création initiale du compte inclut encore la galerie dans son propre
+        // insert, plus bas).
+        if(membreId){
+          try{
+            const {data:fraiche}=await sb.from('membres').select('photos_disponibles').eq('id',membreId).maybeSingle();
+            const dbActuelle=Array.isArray(fraiche&&fraiche.photos_disponibles)?fraiche.photos_disponibles:[];
+            const fusionnee=dbActuelle.includes(publicUrl)?dbActuelle:[...dbActuelle,publicUrl].slice(0,GALERIE_MAX);
+            await sb.from('membres').update({photos_disponibles:fusionnee}).eq('id',membreId);
+            galeriePhotos=fusionnee;
+          }catch(e){ console.warn('onboarding: persistance immédiate galerie', e); }
+        }
         if(etat) etat.textContent='Photo prête — Enregistrer pour confirmer.';
       }catch(e){
         console.warn('onboarding: upload photo', e);
