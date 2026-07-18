@@ -106,15 +106,19 @@ body[data-theme="kraft"] .page{background-image:none;}
      ci-dessus et débordaient sur une deuxième feuille à l'impression. */
   .cover-kraft,.cover-atlas{min-height:277mm !important;}
 
-  /* (17/07, 2e retour Bruno) : Édition n'a jamais débordé ; Carnet bricolé et
-     Atlas si, tous les deux — le point commun entre eux : des zones "flex:1"
-     censées "remplir l'espace restant" (la grande photo, la bande de tracé,
-     la planche photo). Ce calcul se fait mal en pagination d'impression.
-     On leur donne une hauteur FIXE et prudente à l'impression — jamais
-     "à calculer", toujours "déjà décidée" — qui rentre à coup sûr. */
+  /* (17/07, 4e retour Bruno) : Édition avait le même défaut que les deux
+     autres — sa "bande photo" est aussi une zone flex:1 "qui remplit
+     l'espace restant" (.e-photo-band). Elle tenait tant que la page faisait
+     297mm ; en la réduisant pour donner de la marge de sécurité aux deux
+     autres thèmes, elle a fini par déborder aussi. Même traitement partout :
+     hauteur fixe et prudente, jamais un calcul laissé au moteur d'impression. */
   .cover-kraft .k-photo-zone{flex:none !important;height:150mm !important;margin:14mm 4mm !important;}
   .cover-atlas .a-route-strip{flex:none !important;height:24mm !important;margin-bottom:8mm !important;}
-  .cover-atlas .a-photo-plate{flex:none !important;height:70mm !important;margin-bottom:8mm !important;}
+  .cover-atlas .a-photo-plate{flex:none !important;height:60mm !important;margin-bottom:8mm !important;}
+  .cover-edition .e-photo-band{flex:none !important;height:140mm !important;min-height:0 !important;}
+  /* Élément décoratif en fin de couverture Atlas — n'apporte rien et c'est
+     justement lui qui débordait seul sur la feuille suivante. */
+  .a-footnote{display:none !important;}
 
   /* (17/07, 2e retour Bruno) : deux demandes précises, pas la même pour
      chaque thème —
