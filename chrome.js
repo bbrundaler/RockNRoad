@@ -9,7 +9,8 @@
      de charte en dur.
    - POSE data-theme sur <html> : c'est l'interrupteur qui « convertit »
      la page (active [data-theme] body de app.css v2). Thème mémorisé
-     en localStorage ('rnr-theme'), défaut : 'clair' (carnet ouvert).
+     en localStorage ('rnr-theme'), défaut : 'sombre' (la veillée) depuis le
+     19/07 — un choix déjà enregistré par le membre n'est jamais changé.
    - Quitter : appelle la fonction globale logout() de la page si elle
      existe (déconnexion Supabase), sinon repli vers index.html.
    - Nom du groupe : 'Mon groupe' par défaut ; la page peut le préciser
@@ -47,10 +48,17 @@
   ];
   var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', cahier:'📓', souvenir:'📸'};
 
-  /* ── 1 · THÈME : posé IMMÉDIATEMENT (avant le rendu) ── */
-  var theme = 'clair';
-  try { theme = localStorage.getItem('rnr-theme') || 'clair'; } catch(e){}
-  if(theme !== 'clair' && theme !== 'sombre') theme = 'clair';
+  /* ── 1 · THÈME : posé IMMÉDIATEMENT (avant le rendu) ──
+     (19/07) Défaut basculé clair→sombre — décision Bruno du 03/06 (« sombre+or
+     = défaut et âme de la marque »), appliquée seulement après validation du
+     correctif --paper-ink (tokens.css, même soir) qui rendait le sombre
+     illisible par endroits. Ne touche QUE le repli : un membre qui a déjà un
+     choix explicite en localStorage (qu'il ait choisi clair ou sombre) n'est
+     jamais changé — seul un nouveau visiteur, sans préférence enregistrée,
+     atterrit désormais en sombre. */
+  var theme = 'sombre';
+  try { theme = localStorage.getItem('rnr-theme') || 'sombre'; } catch(e){}
+  if(theme !== 'clair' && theme !== 'sombre') theme = 'sombre';
   document.documentElement.setAttribute('data-theme', theme);
 
   /* ── 2 · CSS du chrome ── */

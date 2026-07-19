@@ -11,6 +11,11 @@
    --paper, --ink…). Chaque thème remappe les rôles :
    · défaut  = thème CLAIR « carnet ouvert » (valeurs dans :root)
    · [data-theme="sombre"] = « la veillée » (posé sur <html> par chrome.js)
+   (19/07) Nuance : « défaut » ci-dessus décrit la cascade CSS (:root = valeurs
+   non qualifiées) — inchangé. Le défaut PRODUIT vécu par un nouveau visiteur
+   est sombre depuis le 19/07 (chrome.js pose data-theme="sombre" en l'absence
+   de préférence enregistrée). Les deux ne sont plus alignés, volontairement :
+   ne pas "corriger" l'un pour matcher l'autre sans relire chrome.js d'abord.
    Le CHROME (navbar, boussole) reste sombre + or dans les deux thèmes.
    Vocabulaire : « clair / sombre » — JAMAIS « jour/nuit » (déjà pris
    par sites-à-visiter / où-dormir dans le carnet).
