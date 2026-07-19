@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="rnr-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad · Aventures · Carnet 2025</title>
@@ -414,7 +415,7 @@ body.rnr-filtre-nuit .rg-bloc-jour{display:none!important;}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const {createClient}=supabase;
-const sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+const sb=createClient(RNR_SURL,RNR_SKEY);
 const EDGE_FN="https://cazqllstxhuecoqpktwm.supabase.co/functions/v1/dynamic-action";
 
 // ── Perf monitor ────────────────────────────────────────────────────────────

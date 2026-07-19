@@ -26,6 +26,8 @@
 
    INCLUSION : <script src="chrome.js"></script> dans le <head>, SANS defer
    (le thème doit se poser avant le premier rendu pour éviter le flash).
+   DÉPEND de rnr-config.js (M4, 19/07) : doit être chargé AVANT ce fichier
+   (window.RNR_SURL / window.RNR_SKEY, sinon _sbChrome échoue silencieusement).
    ════════════════════════════════════════════════════════════════════════ */
 (function(){
   if(window.__rnrChrome) return;          /* anti-double-injection */
@@ -474,7 +476,7 @@
       var pret = await attendreSupabaseSDK(4000);
       if(!pret) return;   // CDN vraiment pas chargé (cf. B39) — pas de barre plutôt qu'une erreur
       var _c = supabase.createClient; if(!_c) return;
-      _sbChrome = _c("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+      _sbChrome = _c(window.RNR_SURL, window.RNR_SKEY);
       var sess = await _sbChrome.auth.getSession();
       var session = sess && sess.data && sess.data.session;
       if(!session) return;   // page de connexion, ou pas encore authentifié

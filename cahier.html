@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="rnr-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad · Le Cahier · Le récit de ton voyage, prêt à imprimer</title>
@@ -484,7 +485,7 @@ let sb=null;
 function demarrerCahier(){
 if(typeof window.supabase==='undefined'||typeof window.supabase.createClient!=='function'){ rnrEchecFinalSupabase(); return; }
 const {createClient}=window.supabase;
-sb=createClient("https://cazqllstxhuecoqpktwm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs");
+sb=createClient(RNR_SURL,RNR_SKEY);
 
 let VOYAGE_ID=null, GROUPE_ID=null, DOMICILE=null, MON_MEMBRE_ID=null;
 let voyage=[];

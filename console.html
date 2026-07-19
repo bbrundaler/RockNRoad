@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="rnr-config.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad · Console super-admin</title>
@@ -301,8 +302,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SURL='https://cazqllstxhuecoqpktwm.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs';
+const SURL=RNR_SURL;
+const SKEY=RNR_SKEY;
 const {createClient}=supabase;
 const EDGE_FN=SURL+'/functions/v1/dynamic-action';
 const sb=createClient(SURL,SKEY);
