@@ -62,8 +62,19 @@
   --surface-line: rgba(26,18,8,.09);
   --paper:        #FFFDF8;              /* cartes contenu (fiches…)    */
   --paper-line:   rgba(26,18,8,.07);
-  --ink:          #1a1208;              /* texte principal             */
+  --ink:          #1a1208;              /* texte principal (sur --bg/--surface) */
   --ink-dim:      #6B5F4A;              /* texte atténué               */
+  /* --paper-ink (19/07, correctif bug --ink/--paper thème sombre) : texte
+     posé SPÉCIFIQUEMENT sur --paper. Le papier reste crème dans les deux
+     thèmes (cf. commentaire du bloc [data-theme="sombre"] plus bas) — son
+     texte doit donc rester sombre dans les deux thèmes lui aussi. --ink,
+     qui bascule pour rester lisible sur --bg/--surface, ne peut pas remplir
+     ce second rôle : en sombre il valait la même couleur que --paper
+     (texte crème sur papier crème, invisible). Règle d'usage : dès qu'un
+     bloc combine background:var(--paper) et un texte, le texte prend
+     --paper-ink, jamais --ink. */
+  --paper-ink:      #1a1208;
+  --paper-ink-dim:  #6B5F4A;
   --gold-text:    #8b6914;              /* or lisible selon le fond    */
   --shadow:       0 2px 10px rgba(26,18,8,.08);
   --shadow-hover: 0 8px 26px rgba(26,18,8,.14);
@@ -111,6 +122,10 @@
   --paper-line:   transparent;
   --ink:          #F5EFE0;
   --ink-dim:      rgba(245,239,224,.78);  /* remonté de .62 → .78 (13/06) : labels secondaires plus lisibles en sombre */
+  /* --paper-ink / --paper-ink-dim : PAS redéfinis ici, volontairement (19/07).
+     Le papier reste crème en sombre (--paper ci-dessus) donc son texte doit
+     rester sombre — il hérite de la valeur de :root. Ne JAMAIS les aligner
+     sur --ink/--ink-dim : c'est exactement le bug qu'on vient de corriger. */
   --gold-text:    #E8C86B;
   --shadow:       0 2px 12px rgba(0,0,0,.30);
   --shadow-hover: 0 8px 28px rgba(0,0,0,.45);

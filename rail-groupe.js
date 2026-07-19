@@ -46,7 +46,7 @@
 .rnrg-note-bulle{background:var(--bg,#F2EFE8);border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.4;white-space:pre-wrap;}
 .rnrg-note-empty{color:var(--ink-dim);font-size:13px;text-align:center;padding:30px 10px;}
 .rnrg-note-form{padding:12px 16px;border-top:1px solid var(--surface-line);display:flex;gap:8px;flex-shrink:0;}
-.rnrg-note-input{flex:1;border:1.5px solid var(--surface-line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;resize:none;min-height:38px;background:var(--paper);color:var(--ink);}
+.rnrg-note-input{flex:1;border:1.5px solid var(--surface-line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;resize:none;min-height:38px;background:var(--paper);color:var(--paper-ink);}
 .rnrg-note-send{background:var(--ink,#211a10);color:var(--gold,#C8A84B);border:none;border-radius:8px;padding:0 16px;font-weight:700;cursor:pointer;}
 
 /* Mémo de voyage : mêmes blocs que "Bon à savoir" du Cahier, éditables */
