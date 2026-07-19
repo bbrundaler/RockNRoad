@@ -316,6 +316,46 @@
     }).join(';');
   }
 
+  /* CACHE PERSISTANT (19/07, suite B76 — retour Bruno) : le cache mémoire
+     ci-dessus se vide à chaque rechargement de page, obligeant à rappeler
+     ORS pour un itinéraire qui n'a pourtant pas changé — cause directe des
+     rafales de 429 observées. Table traces_ors_cache (RLS ouverte, cf.
+     migration) : lue AVANT tout appel ORS, écrite APRÈS un calcul réussi.
+     Utilise le REST direct de Supabase (pas besoin du client JS complet,
+     cfg ne porte que surl/skey comme pour l'appel à dynamic-action).
+     Silencieux en cas d'échec (réseau, table absente…) : ne bloque jamais
+     le tracé, le cache mémoire et l'appel ORS restent le filet de sécurité. */
+  function _lireCachePersistant(cle, cfg) {
+    if (!cfg || !cfg.surl || !cfg.skey) return Promise.resolve(null);
+    var url = cfg.surl + '/rest/v1/traces_ors_cache?cle=eq.' + encodeURIComponent(cle) + '&select=trace,distance_km,duree_h';
+    return fetch(url, { headers: { apikey: cfg.skey, Authorization: 'Bearer ' + cfg.skey } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (rows) {
+        if (rows && rows.length && rows[0] && rows[0].trace) {
+          return { trace: rows[0].trace, distance_km: rows[0].distance_km, duree_h: rows[0].duree_h };
+        }
+        return null;
+      })
+      .catch(function () { return null; });
+  }
+  function _ecrireCachePersistant(cle, res, cfg) {
+    if (!cfg || !cfg.surl || !cfg.skey) return;
+    fetch(cfg.surl + '/rest/v1/traces_ors_cache', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': cfg.skey,
+        'Authorization': 'Bearer ' + cfg.skey,
+        // upsert : si la clé existe déjà (posée par un autre membre entre
+        // temps), on met à jour plutôt que d'échouer sur le conflit de clé.
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        cle: cle, trace: res.trace, distance_km: res.distance_km, duree_h: res.duree_h, maj_le: new Date().toISOString()
+      })
+    }).catch(function (e) { console.warn('RNR_MARQUEURS : écriture cache persistant échouée (non bloquant).', e); });
+  }
+
   /* Distance à vol d'oiseau (km, formule de Haversine). Sert de repli quand un
      tronçon ne peut pas être routé (cf. _routeParTroncons) : mieux qu'un chiffre
      manquant, et cohérent avec l'estimation « à vol d'oiseau » déjà affichée
@@ -368,7 +408,10 @@
      La requête HTTP elle-même passe par _fileOrs() (ci-dessus) — jamais plus de
      _FILE_ORS_MAX en vol en même temps, quel que soit le nombre d'appelants. */
   function _appelORS(latlngs, cfg, profile) {
-    return _fileOrs(function () {
+    var cle = _cleRoute(latlngs, profile);
+    return _lireCachePersistant(cle, cfg).then(function (hit) {
+      if (hit) return hit; // trouvé en base : ZÉRO appel ORS, ne passe même pas par la file.
+      return _fileOrs(function () {
       // ORS attend [lng,lat] ; Leaflet nous donne [lat,lng] → on inverse.
       var pts = latlngs.map(function (p) { return [p[1], p[0]]; });
       var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -415,6 +458,10 @@
           return { trace: trace, distance_km: dist, duree_h: duree };
         })
         .catch(function (e) { clearTimeout(to); return Promise.reject(e); });
+      }).then(function (res) {
+        _ecrireCachePersistant(cle, res, cfg); // fire-and-forget, non bloquant
+        return res;
+      });
     });
   }
 
