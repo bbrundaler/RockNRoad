@@ -1700,9 +1700,14 @@ function renderMap(){
   pts.forEach((v,i)=>{
     const nuit = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.estNuit(v) : false;
     // Pastille numérotée VIA LE MOTEUR (rond numéroté, couleur = jour/nuit). D-MK.
-    const icon = (window.RNR_MARQUEURS)
-      ? RNR_MARQUEURS.icone(v, {epingle:true}, {numero:i+1, taille:32})
-      : L.divIcon({html:`<div style="background:var(--ink);color:var(--gold);border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2.5px solid var(--gold);">${i+1}</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
+    // (19/07, m8) : le repli L.divIcon codé en dur ici a été retiré — RNR_MARQUEURS
+    // est un script requis de cette page (aucun autre appel du fichier ne se
+    // protège contre son absence, cf. icone(f,{epingle:true}...) plus bas), donc
+    // ce repli ne s'exécutait jamais en pratique. Il dupliquait le rendu du
+    // moteur central ET portait le même bug de contraste --ink/--paper corrigé
+    // ce soir ailleurs sur le site — un seul endroit décide de l'apparence
+    // d'une pastille, jamais une copie locale.
+    const icon = RNR_MARQUEURS.icone(v, {epingle:true}, {numero:i+1, taille:32});
     const photoNum = v.photo_url
       ? '<div style="height:110px;background:var(--gold-a20) center/cover no-repeat url(\''+escVr(v.photo_url)+'\');border-radius:8px 8px 0 0;margin:-1px -1px 8px;"></div>'
       : '';
