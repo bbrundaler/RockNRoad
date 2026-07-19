@@ -4806,6 +4806,14 @@ function rendSwipeCarte(){
   // sans rien ralentir.
   const estNuitF=(window.RNR_MARQUEURS && RNR_MARQUEURS.estNuit) ? RNR_MARQUEURS.estNuit(f) : false;
   const jnBadge='<span class="hz-swipe-jn '+(estNuitF?'nuit':'jour')+'">'+(estNuitF?'🌙 Nuit':'☀️ Jour')+'</span>';
+  // (19/07) Info dog-friendly manquante sur le swipe — repérée par Bruno après
+  // le contrôle du reste du site. Moteur canonique (fiche-complete.js), coin
+  // haut-droit de la photo : la classe .dog-photo-badge est déjà en
+  // position:absolute top/right par défaut dans app.css, symétrique au
+  // jour/nuit qui occupe le coin haut-gauche — aucun risque de superposition.
+  const dogEtat=RNR_FICHE_COMPLETE.dogEtatDe(f);
+  const dogLabelSw=RNR_FICHE_COMPLETE.DOG_LABELS[dogEtat];
+  const dogBadgeSw=dogLabelSw?'<span class="dog-photo-badge '+dogEtat+'">'+dogLabelSw+'</span>':'';
   // Complète la carte avec ce que le Carnet sait déjà de la fiche — de la place
   // sous le titre, retour Bruno du 01/07 : commentaire famille en priorité,
   // sinon la description, puis adresse/site si renseignés.
@@ -4816,7 +4824,7 @@ function rendSwipeCarte(){
   if(f.site_web) infosBits.push('🔗 <a href="'+escapeHtmlHz(f.site_web)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+escapeHtmlHz(f.site_web.replace(/^https?:\/\//,'').replace(/\/$/,''))+'</a>');
   const infos=infosBits.length?'<div class="infos">'+infosBits.join('')+'</div>':'';
   card.innerHTML=
-    '<div class="ph" style="background-image:'+ph+'">'+jnBadge+'<span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
+    '<div class="ph" style="background-image:'+ph+'">'+jnBadge+dogBadgeSw+'<span class="region-badge">📍 '+escapeHtmlHz(e.region||'')+'</span><span class="type">'+escapeHtmlHz(typeLine)+'</span></div>'+
     '<div class="body">'+(noteF?'<div class="notes">'+noteF+'</div>':'')+
     '<div class="nom">'+escapeHtmlHz(f.nom||'—')+'</div>'+tags+desc+infos+hzSparkBadge(f.id)+'</div>';
   deck.appendChild(card);
