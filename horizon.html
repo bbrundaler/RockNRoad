@@ -516,7 +516,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-deck{position:relative;width:100%;min-height:300px;}
 .hz-swipe-card,.hz-swipe-transition{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .28s ease,opacity .28s ease;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
-.hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;align-self:flex-start;}
+.hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
 .hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
 .hz-swipe-jn{position:absolute;top:10px;left:10px;font-size:11px;font-weight:700;color:#fff;
   padding:4px 10px;border-radius:12px;}
@@ -564,8 +564,10 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-act.love .hz-act-lbl{color:var(--love-text,#d8456e);}
 /* E4 (03/07) : fiche déjà aimée — le bouton le montre au lieu de faire l'innocent */
 .hz-swipe-act.love.deja-aimee .hz-act-ic{background:rgba(216,69,110,.14);border-color:#d8456e;}
-/* .hz-swipe-progres/-barre/-txt retirées (19/07) — le compteur qui les
-   utilisait a été éliminé, il chevauchait le tag jour/nuit sur la photo. */
+/* barre de progression (remplace les onglets) */
+.hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
+.hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
+.hz-swipe-progres-txt{font-size:11px;color:var(--ink-dim);margin-left:8px;}
 .hz-coin-coins{display:flex;align-items:center;}
 .hz-swipe-aimees{min-width:0;}
 .hz-swipe-aimees-tt{font-size:13px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
@@ -3465,9 +3467,16 @@ const HZ_TAGS_THEME = {
 };
 
 // Label lisible d'une région à partir du <title> du path SVG.
+// (19/07, retour Bruno) : ce <title> est le MÊME élément que marqueRegionsRetenues()
+// réécrit pour y ajouter « · N fiches déjà prises » (info-bulle native au survol
+// de la carte) — sans le split ci-dessous, ce compteur remontait partout où
+// labelRegionSvg() est appelé, dont le badge région du swipe (superposé au tag
+// jour/nuit, signalé par Bruno). Le nom propre est toujours la partie avant le
+// premier « · » — exactement ce que marqueRegionsRetenues() lui-même isole
+// avant de réécrire le texte, donc toujours sûr.
 function labelRegionSvg(slug){
   const p=document.querySelector('.region[data-r="'+slug+'"] title');
-  return p ? p.textContent : cap(slug.replace(/-/g,' '));
+  return p ? p.textContent.split(' · ')[0] : cap(slug.replace(/-/g,' '));
 }
 
 // B18 · bandeau de tête — dépliement d'une porte d'inspiration (progressive
@@ -5360,14 +5369,15 @@ function brancheSwipeActions(){
 
 // barre de progression (combien parcouru sur le total de fiches)
 function majSwipeProgres(){
-  // (19/07, retour Bruno) : le texte « X / Y fiches parcourues » + sa mini
-  // barre, injectés dans #hz-coin-coins juste au-dessus du deck, chevauchaient
-  // le tag jour/nuit posé sur la photo. Bruno : cette info n'apporte pas
-  // grand-chose ici — éliminée plutôt que repositionnée, la barre fine du
-  // popup (#hz-explo-progres, ci-dessous) suffit comme repère de progression.
   const fiches=HZ_SWIPE_SEQ.filter(e=>e.kind==='fiche').length;
   const vues=HZ_SWIPE_SEQ.slice(0,HZ_SWIPE_I).filter(e=>e.kind==='fiche').length;
   const pct=fiches?Math.round(100*Math.min(vues,fiches)/fiches):0;
+  // barre dans la bande (si swipe en bas)
+  const el=document.getElementById('hz-coin-coins');
+  if(el){
+    el.innerHTML='<div class="hz-swipe-progres"><div class="hz-swipe-progres-barre" style="width:'+pct+'%"></div></div>'+
+      '<span class="hz-swipe-progres-txt">'+Math.min(vues,fiches)+' / '+fiches+' fiches parcourues</span>';
+  }
   // barre dans le popup
   const pop=document.getElementById('hz-explo-progres');
   if(pop) pop.style.width=pct+'%';
@@ -5536,7 +5546,7 @@ function appliqueModeBande(){
   if(sw) sw.style.display=enSwipe?'grid':'none';
   if(li) li.style.display=enSwipe?'none':'block';
   if(btn) btn.textContent=enSwipe?'▦ Voir en liste':'🃏 Revenir au swipe';
-  if(coins) coins.style.visibility='hidden';
+  if(coins) coins.style.visibility=enSwipe?'visible':'hidden';
 }
 
 // Le clic-lieu est arbitré directement dans brancheSurvolCarte (handler unique
