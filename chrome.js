@@ -86,6 +86,7 @@
   +'.rnrc-vy-sep{height:1px;background:var(--gold-a20);margin:5px 0;}'
   +'.rnrc-vy-new{color:var(--gold-light);font-weight:600;}'
   +'.rnrc-vy-modifier{text-decoration:none;}'
+  +'.rnrc-vy-supprimer{color:var(--terracotta);}'
   +'@media(max-width:700px){.rnrc-voyage{font-size:14px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}'
   +'.rnrc-console{width:30px;height:30px;border-radius:50%;cursor:pointer;display:none;'
   +'background:var(--gold-a10);border:1px solid var(--gold-a35);font-size:14px;'
@@ -354,6 +355,24 @@
           if(typeof onChange==='function') onChange('__new__');
         });
         vyMenu.appendChild(nw);
+
+        // (19/07) Supprimer ce voyage — manquait : on pouvait en créer mais
+        // jamais en détruire. Placé tout en bas, séparé, seule action
+        // destructive du menu. Autogéré ici (confirm + suppression + retour
+        // en lieu sûr) plutôt que via onChange : évite de dupliquer la même
+        // logique dans les 5 pages qui appellent setVoyage (home/horizon/
+        // carnet/cahier/voyage), chrome.js a déjà son propre client Supabase
+        // (_sbChrome) comme pour RNR_ANIMAUX.
+        var sep3 = document.createElement('div'); sep3.className='rnrc-vy-sep'; vyMenu.appendChild(sep3);
+        var actifItem = (liste||[]).find(function(v){ return v.nom===actifNom; });
+        var del = document.createElement('button');
+        del.className = 'rnrc-vy-item rnrc-vy-supprimer';
+        del.textContent = '🗑️ Supprimer ce voyage';
+        del.addEventListener('click', function(e){
+          e.stopPropagation(); vyMenu.classList.remove('open');
+          if(window.RNR_VOYAGES) window.RNR_VOYAGES.supprimer(actifItem ? actifItem.id : null, actifNom);
+        });
+        vyMenu.appendChild(del);
       }
     };
 
@@ -854,6 +873,67 @@
         var r = await sb.from('animaux').select('*').eq('groupe_id', groupeId).order('created_at',{ascending:true});
         return (r && r.data) || [];
       }catch(e){ console.warn('RNR_ANIMAUX.lister', e); return []; }
+    }
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+     RNR_VOYAGES — suppression d'un voyage (19/07). On pouvait en créer
+     depuis le Hub et le sélecteur du chrome, jamais en détruire — trou
+     signalé par Bruno. Un seul point d'entrée (le sélecteur multi-voyages
+     du chrome, setVoyage ci-dessus), quelle que soit la page d'où on part :
+     home/horizon/carnet/cahier/voyage n'ont RIEN à changer, ce moteur vit
+     ici avec son propre client (_sbChrome), même principe que RNR_ANIMAUX.
+
+     Toutes les tables filles (voyage_leaders, propositions, voyage_fiches,
+     voyage_itineraire, voyage_notes) sont en ON DELETE CASCADE en base —
+     vérifié en base avant d'écrire ce code (le réel fait foi) : un simple
+     DELETE sur voyages suffit, pas de nettoyage manuel à dupliquer ici.
+
+     Permission : la RLS ('voyages_all', is_member_of(groupe_id)) autorise
+     déjà n'importe quel membre du groupe à créer/modifier un voyage — la
+     suppression suit la même logique collective, pas réservée à
+     l'organisateur. Si Bruno préfère la réserver au leader du voyage ou à
+     l'organisateur du groupe, c'est un ajout de vérification ici, pas une
+     réécriture. */
+  window.RNR_VOYAGES = {
+    supprimer: async function(voyageId, voyageNom){
+      try{ if(_rnrInitProfilPromise) await _rnrInitProfilPromise; }catch(e){}
+      if(!voyageId || !_sbChrome || !_monGroupeId) return;
+      var ok = confirm(
+        'Supprimer définitivement « '+(voyageNom||'ce voyage')+' » ?\n\n'+
+        'Toutes ses étapes, votes et notes disparaîtront pour tout le groupe. '+
+        'Cette action est irréversible.'
+      );
+      if(!ok) return;
+      try{
+        var del = await _sbChrome.from('voyages').delete().eq('id', voyageId);
+        if(del.error) throw del.error;
+
+        try{ sessionStorage.removeItem('rnr_voyage_id'); sessionStorage.removeItem('rnr_voyage_nom'); }catch(e){}
+
+        var reste = await _sbChrome.from('voyages').select('id,est_principal,created_at')
+          .eq('groupe_id', _monGroupeId).order('created_at',{ascending:true});
+        var liste = (reste && reste.data) || [];
+
+        if(!liste.length){
+          // Plus aucun voyage dans le groupe : même porte que la toute
+          // première connexion (verifierPremierVoyage, home.html).
+          window.location.href = 'home.html?nouveau=1';
+          return;
+        }
+        // Le voyage supprimé était peut-être le principal (⭐) : on en
+        // promeut un autre pour que le repli habituel (est_principal ||
+        // liste[0], déjà présent sur chaque page) garde un choix explicite
+        // plutôt qu'implicite, et que l'étoile reste cohérente pour
+        // onboarding.html qui l'affiche.
+        if(!liste.some(function(v){ return v.est_principal; })){
+          try{ await _sbChrome.from('voyages').update({est_principal:true}).eq('id', liste[0].id); }catch(e){}
+        }
+        window.location.reload();
+      }catch(e){
+        console.warn('chrome.js: suppression voyage', e);
+        alert('Suppression impossible, réessayez.');
+      }
     }
   };
 })();
