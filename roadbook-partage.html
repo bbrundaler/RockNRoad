@@ -114,6 +114,17 @@ function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
     const nomParUid = {};
     etapes.forEach(e => { if(e.lieu) nomParUid[e.uid] = e.lieu.nom; });
 
+    // Ordre de lecture (19/07, retour Bruno — incompréhensible tel quel) :
+    // même principe que chaineDe() dans cahier.html. Le parcours PRINCIPAL
+    // (les étapes qui ne sont rattachées à aucun séjour) d'abord, dans
+    // l'ordre ; SES excursions nichées juste dessous, triées par jour_offset
+    // — jamais mélangées au fil par leur "ordre" brut, qui n'a pas de sens
+    // de lecture une fois les excursions et séjours entremêlés.
+    const principales = etapes.filter(e => e.lieu && !e.rattache_a_nuit_uid)
+      .sort((a,b) => (a.ordre||0)-(b.ordre||0));
+    const excursionsDe = uid => etapes.filter(e => e.lieu && e.rattache_a_nuit_uid === uid)
+      .sort((a,b) => (a.jour_offset||1)-(b.jour_offset||1));
+
     let metaHtml = '';
     if(v.date_debut) metaHtml += '<span>📅 '+rpEsc(v.date_debut)+(v.date_fin_envisagee?' → '+rpEsc(v.date_fin_envisagee):'')+'</span>';
     if(v.nb_participants) metaHtml += '<span>👥 '+v.nb_participants+' participant'+(v.nb_participants>1?'s':'')+'</span>';
@@ -121,21 +132,24 @@ function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
     if(v.depart_nom) metaHtml += '<span>🚏 Départ : '+rpEsc(v.depart_nom)+'</span>';
 
     let etapesHtml = '';
-    etapes.forEach(e => {
-      if(!e.lieu) return;
-      const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(e.lieu.note, e.lieu.user_ratings_total);
-      const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(e.lieu.note_famille);
-      const estExcursion = !!e.rattache_a_nuit_uid;
-      let badge = '';
-      if(!estExcursion && e.nb_nuits > 1){
-        badge = '<div class="rp-etape-badge">🏕️ Séjour · '+e.nb_nuits+' nuits</div>';
-      } else if(estExcursion){
-        const nomParent = nomParUid[e.rattache_a_nuit_uid] || 'le séjour';
-        badge = '<div class="rp-etape-badge">↳ Excursion'+(e.jour_offset?' · Jour '+e.jour_offset:'')+' depuis '+rpEsc(nomParent)+'</div>';
-      }
-      const ficheHtml = RNR_FICHE_COMPLETE.html(e.lieu, { noteG, noteF });
-      etapesHtml += '<div class="rp-etape-bloc'+(estExcursion?' rp-excursion':'')+'">'+badge+
-        '<div class="rp-fiche-wrap">'+ficheHtml+'</div></div>';
+    let numeroAffiche = 0;
+    principales.forEach(p => {
+      numeroAffiche++;
+      const noteGP = RNR_FICHE_COMPLETE.badgeNoteGoogle(p.lieu.note, p.lieu.user_ratings_total);
+      const noteFP = RNR_FICHE_COMPLETE.badgeNoteFamille(p.lieu.note_famille);
+      let badgeP = '';
+      if(p.nb_nuits > 1) badgeP = '<div class="rp-etape-badge">'+numeroAffiche+'. 🏕️ Séjour · '+p.nb_nuits+' nuits</div>';
+      else badgeP = '<div class="rp-etape-badge">'+numeroAffiche+'. 📍 Étape</div>';
+      const ficheHtmlP = RNR_FICHE_COMPLETE.html(p.lieu, { noteG: noteGP, noteF: noteFP });
+      etapesHtml += '<div class="rp-etape-bloc">'+badgeP+'<div class="rp-fiche-wrap">'+ficheHtmlP+'</div></div>';
+
+      excursionsDe(p.uid).forEach(e => {
+        const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(e.lieu.note, e.lieu.user_ratings_total);
+        const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(e.lieu.note_famille);
+        const badge = '<div class="rp-etape-badge">↳ Excursion'+(e.jour_offset?' · Jour '+e.jour_offset:'')+' depuis '+rpEsc(p.lieu.nom)+'</div>';
+        const ficheHtml = RNR_FICHE_COMPLETE.html(e.lieu, { noteG, noteF });
+        etapesHtml += '<div class="rp-etape-bloc rp-excursion">'+badge+'<div class="rp-fiche-wrap">'+ficheHtml+'</div></div>';
+      });
     });
 
     let contribHtml = '';
@@ -152,7 +166,9 @@ function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
         contribHtml+
       '</div>'+
       '<div id="rp-map"></div>'+
-      '<div class="rp-etapes"><h2>🗺️ Itinéraire ('+etapes.filter(e=>e.lieu).length+' étape'+(etapes.length>1?'s':'')+')</h2>'+
+      '<div class="rp-etapes"><h2>🗺️ Itinéraire ('+principales.length+' étape'+(principales.length>1?'s':'')+
+        (etapes.length>principales.length ? ' · '+(etapes.length-principales.length)+' excursion'+((etapes.length-principales.length)>1?'s':'') : '')+
+        ')</h2>'+
         (etapesHtml || '<p style="color:#8a7a5f;font-size:13px;">Aucune étape dans ce Roadbook pour l\'instant.</p>') +
       '</div>';
 
@@ -168,7 +184,7 @@ function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
     // circuler largement une fois le lien envoyé).
     const pts = [];
     if(v.depart_lat && v.depart_lng) pts.push([v.depart_lat, v.depart_lng]);
-    etapes.forEach(e => { if(e.lieu && e.lieu.lat && e.lieu.lng) pts.push([e.lieu.lat, e.lieu.lng]); });
+    principales.forEach(p => { if(p.lieu.lat && p.lieu.lng) pts.push([p.lieu.lat, p.lieu.lng]); });
     if(v.retour_lat && v.retour_lng) pts.push([v.retour_lat, v.retour_lng]);
 
     if(pts.length){
