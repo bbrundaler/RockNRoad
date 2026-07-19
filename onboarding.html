@@ -17,7 +17,7 @@ body{font-family:var(--font-body);background:var(--bg);min-height:100vh;color:va
 #auth-check{position:fixed;inset:0;z-index:9999;background:var(--chrome-bg);
   display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gold);}
 #auth-check h2{font-family:var(--font-title);font-size:24px;margin:14px 0 4px;}
-#auth-check p{font-size:11px;opacity:.55;letter-spacing:2px;}
+#auth-check p{font-size:12px;opacity:.55;letter-spacing:2px;}
 .spinner{width:26px;height:26px;border:3px solid var(--gold-a20);border-top-color:var(--gold);
   border-radius:50%;animation:spin .8s linear infinite;margin-top:16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -30,7 +30,7 @@ body{font-family:var(--font-body);background:var(--bg);min-height:100vh;color:va
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .fg{display:flex;flex-direction:column;gap:6px;}
 .fg.full{grid-column:1/-1;}
-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);}
+label{display:block;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);}
 .lbl-soft{font-weight:400;color:var(--ink-dim);text-transform:none;letter-spacing:0;}
 input[type=text],textarea{
   width:100%;padding:12px 14px;border:2px solid var(--surface-line);border-radius:var(--r);
@@ -44,14 +44,14 @@ select{width:100%;padding:12px 14px;border:2px solid var(--surface-line);border-
   outline:none;cursor:pointer;transition:border-color .2s,box-shadow .2s;}
 select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 
-.geo-status{font-size:11px;margin-top:2px;min-height:16px;}
+.geo-status{font-size:12px;margin-top:2px;min-height:16px;}
 .geo-status.ok{color:var(--green);}
 .geo-status.err{color:var(--gold-deep);}
 .geo-status.loading{color:var(--ink-dim);}
 
 .voyage-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px;}
 .vtype{padding:7px 13px;border:2px solid var(--surface-line);border-radius:var(--r-pill);
-  font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink);background:var(--surface);user-select:none;}
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--ink);background:var(--surface);user-select:none;}
 .vtype.on{border-color:var(--gold);background:var(--gold-a10);color:var(--gold-text);}
 
 .moi-head{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
@@ -59,7 +59,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   border:2px solid var(--gold-a35);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;line-height:1;
   background-size:cover;background-position:center;}
 .moi-avatar-wrap{position:relative;flex-shrink:0;}
-.moi-avatar-nudge{position:absolute;inset:0;border-radius:50%;background:rgba(20,15,5,.5);color:#fff;font-size:8.5px;font-weight:700;
+.moi-avatar-nudge{position:absolute;inset:0;border-radius:50%;background:rgba(20,15,5,.5);color:#fff;font-size:12px;font-weight:700;
   text-align:center;display:flex;align-items:center;justify-content:center;line-height:1.25;text-transform:uppercase;letter-spacing:.03em;
   pointer-events:none;}
 .galerie-photos{display:flex;flex-wrap:wrap;gap:8px;}
@@ -67,19 +67,19 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .gal-vignette img{width:100%;height:100%;object-fit:cover;display:block;}
 .gal-vignette.active{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .gal-suppr{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;
-  font-size:10px;line-height:16px;text-align:center;cursor:pointer;}
+  font-size:12px;line-height:16px;text-align:center;cursor:pointer;}
 .gal-ajout{width:56px;height:56px;border-radius:10px;border:2px dashed var(--surface-line);display:flex;align-items:center;justify-content:center;
   font-size:22px;color:var(--ink-dim);cursor:pointer;flex-shrink:0;}
 .gal-ajout:hover{border-color:var(--gold-a35);color:var(--gold-text);}
 .moi-head-txt{flex:1;}
-.moi-head-txt .hint{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
-.emoji-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 8px;}
+.moi-head-txt .hint{font-size:12px;color:var(--ink-dim);line-height:1.5;}
+.emoji-label{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);margin:14px 0 8px;}
 .emoji-grid{display:flex;flex-wrap:wrap;gap:8px;}
 .emoji-pick{width:42px;height:42px;border-radius:var(--r);border:2px solid var(--surface-line);
   background:var(--surface);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .emoji-pick:hover{border-color:var(--gold-a35);transform:translateY(-1px);}
 .emoji-pick.on{border-color:var(--gold);background:var(--gold-a10);box-shadow:0 0 0 3px var(--gold-a10);}
-.moi-photo-lien{font-size:11.5px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:6px;font-family:inherit;}
+.moi-photo-lien{font-size:12px;color:var(--ink-dim);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:6px;font-family:inherit;}
 .moi-photo-lien:hover{color:var(--gold-text);}
 
 .posture-banner{font-size:12.5px;line-height:1.55;padding:13px 16px;border-radius:var(--r);
@@ -95,7 +95,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   border:2px solid var(--gold-a20);display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden;flex-shrink:0;}
 .group-readonly .badge img{width:100%;height:100%;object-fit:cover;}
 .group-readonly .g-name{font-family:var(--font-title);font-size:19px;color:var(--ink);}
-.group-readonly .g-meta{font-size:11.5px;color:var(--ink-dim);margin-top:2px;}
+.group-readonly .g-meta{font-size:12px;color:var(--ink-dim);margin-top:2px;}
 
 .avatar-zone{display:flex;align-items:center;gap:16px;}
 .avatar-preview{width:64px;height:64px;border-radius:var(--r);background:var(--gold-a10);
@@ -133,11 +133,11 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
   font-size:15px;font-weight:700;color:#1a1208;}
 .mbr-info{flex:1;min-width:0;}
 .mbr-nom{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mbr-nom .moi{font-size:11px;color:var(--ink-dim);font-weight:500;margin-left:5px;}
-.mbr-crown{font-size:11px;color:var(--gold-text);font-weight:700;margin-top:1px;}
+.mbr-nom .moi{font-size:12px;color:var(--ink-dim);font-weight:500;margin-left:5px;}
+.mbr-crown{font-size:12px;color:var(--gold-text);font-weight:700;margin-top:1px;}
 .mbr-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--gold);cursor:pointer;}
 .mbr-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
-.mbr-lead-btn{font-size:11px;padding:4px 9px;border-radius:999px;cursor:pointer;
+.mbr-lead-btn{font-size:12px;padding:4px 9px;border-radius:999px;cursor:pointer;
   border:1px solid var(--surface-line);background:var(--surface);color:var(--ink-dim);white-space:nowrap;}
 .mbr-lead-btn:hover{border-color:var(--gold);color:var(--gold-text);}
 .mail-barre{margin-top:12px;}
@@ -145,8 +145,8 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .vg-row{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid var(--surface-line);
   border-radius:var(--r);background:var(--surface);}
 .vg-nom{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.vg-principal{font-size:11px;}
-.vg-modifier{font-size:11px;padding:4px 9px;border-radius:999px;cursor:pointer;flex-shrink:0;
+.vg-principal{font-size:12px;}
+.vg-modifier{font-size:12px;padding:4px 9px;border-radius:999px;cursor:pointer;flex-shrink:0;
   border:1px solid var(--surface-line);background:var(--surface);color:var(--ink-dim);white-space:nowrap;}
 .vg-modifier:hover{border-color:var(--gold);color:var(--gold-text);}
 .mail-btn{width:100%;padding:9px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:600;
@@ -159,7 +159,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .mbr-invite{padding:11px;border:1.5px dashed var(--gold);border-radius:var(--r);background:var(--gold-a20);margin-bottom:10px;}
 .mbr-invite .mail-btn{width:auto;padding:7px 14px;white-space:nowrap;}
 .mbr-invite input[type="email"],.mbr-invite input[type="text"]{font-family:inherit;color:var(--ink);background:var(--surface);}
-.mbr-invit-titre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px;}
+.mbr-invit-titre{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px;}
 .mbr-row-attente{border-style:dashed;opacity:.85;}
 .mbr-av-attente{background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:15px;}
 </style>
@@ -232,7 +232,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 
           <div class="emoji-label">Mes photos <span class="lbl-soft">(jusqu'à 10 — clique sur l'une d'elles pour en faire ton avatar ; ce sont ces mêmes photos qui apparaissent dans le Cahier)</span></div>
           <div class="galerie-photos" id="galerie-photos"></div>
-          <p id="galerie-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>
+          <p id="galerie-etat" style="font-size:12px;color:var(--ink-dim);margin-top:6px;"></p>
 
           <label class="chk-row" style="margin-top:16px;align-items:flex-start;">
             <input type="checkbox" id="m-consent" style="margin-top:2px;">
@@ -249,7 +249,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
             <input type="checkbox" id="g-partage">
             Rendre le carnet accessible publiquement (lecture seule)
           </label>
-          <p style="font-size:11px;color:var(--ink-dim);margin-top:8px;">
+          <p style="font-size:12px;color:var(--ink-dim);margin-top:8px;">
             Si activé, un lien partageable permet de visualiser les fiches sans compte.
           </p>
         </div>
@@ -292,7 +292,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
           </div>
 
           <div class="cfg-card">
-            <div class="cfg-card-title"><span>🖼️</span> Photo du groupe <span class="lbl-soft" style="font-size:11px;">(optionnel)</span></div>
+            <div class="cfg-card-title"><span>🖼️</span> Photo du groupe <span class="lbl-soft" style="font-size:12px;">(optionnel)</span></div>
             <div class="avatar-zone">
               <div class="avatar-preview" id="avatar-preview">🐾</div>
               <div style="flex:1;">
@@ -300,7 +300,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
                   <div class="avatar-upload">📷 Choisir une image (JPG, PNG, max 2 Mo)</div>
                   <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
                 </label>
-                <p style="font-size:11px;color:var(--ink-dim);margin-top:6px;">
+                <p style="font-size:12px;color:var(--ink-dim);margin-top:6px;">
                   Un paysage, un van, un logo — pas un portrait d'enfant.</p>
               </div>
             </div>
@@ -361,7 +361,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
         style="width:100%;justify-content:center;padding:14px;">
         💾 Enregistrer
       </button>
-      <p style="text-align:center;margin-top:16px;font-size:11px;color:var(--ink-dim);">
+      <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--ink-dim);">
         <a href="home.html" style="color:var(--gold-text);text-decoration:none;">← Retour à l'Accueil</a>
       </p>
     </div>
@@ -667,7 +667,7 @@ function rendreMembres(){
   if(myRole==='admin'){
     const restant = Math.max(0, GM_membresLimit - GM_membres.length);
     inviteHtml = '<div class="mbr-invite">'
-      +'<p style="font-size:11.5px;color:var(--ink-dim);margin:0 0 8px;">'
+      +'<p style="font-size:12px;color:var(--ink-dim);margin:0 0 8px;">'
         +GM_membres.length+' / '+GM_membresLimit+' membres — '
         +(restant>0 ? restant+' place'+(restant>1?'s':'')+' restante'+(restant>1?'s':'') : 'quota atteint')
       +'</p>'
@@ -677,8 +677,8 @@ function rendreMembres(){
           +'<input type="email" id="invite-email" placeholder="email@exemple.fr" style="flex:1;min-width:140px;padding:7px 10px;border:1.5px solid var(--surface-line);border-radius:8px;font-size:12.5px;">'
           +'<button type="button" class="mail-btn" onclick="inviterMembre()">+ Inviter</button>'
           +'</div>'
-        : '<p style="font-size:11.5px;color:var(--ink-dim);">Quota atteint — contacte-nous pour l\'agrandir.</p>')
-      +'<p id="invite-etat" style="font-size:11px;color:var(--ink-dim);margin-top:6px;"></p>'
+        : '<p style="font-size:12px;color:var(--ink-dim);">Quota atteint — contacte-nous pour l\'agrandir.</p>')
+      +'<p id="invite-etat" style="font-size:12px;color:var(--ink-dim);margin-top:6px;"></p>'
       +'</div>';
   }
   if(!GM_membres.length){ box.innerHTML=inviteHtml+'<p>Aucun membre.</p>'; return; }

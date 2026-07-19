@@ -65,9 +65,9 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 }
 .fil-step.done::before,.fil-step.now::before{background:var(--gold);}
 .fil-step:first-child::before{display:none;}
-.fil-step .lbl{font-size:11.5px;font-weight:600;color:var(--ink-dim);}
+.fil-step .lbl{font-size:12px;font-weight:600;color:var(--ink-dim);}
 .fil-step.now .lbl{color:var(--gold-text);}
-.fil-step .sub{font-size:9.5px;color:var(--ink-dim);opacity:.7;}
+.fil-step .sub{font-size:12px;color:var(--ink-dim);opacity:.7;}
 .fil-step:hover .lbl{color:var(--ink);}
 
 /* ── Modal création du premier voyage ── */
@@ -80,7 +80,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .vy-emoji{font-size:38px;margin-bottom:4px;}
 .vy-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 6px;}
 .vy-sous{font-size:13.5px;color:var(--ink-dim);line-height:1.5;margin:0 0 18px;}
-.vy-lbl{display:block;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+.vy-lbl{display:block;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;
   color:var(--gold-text);font-weight:600;margin:0 0 5px;}
 .vy-input{width:100%;font-family:var(--font-body);font-size:14.5px;padding:11px 13px;
   border:1.5px solid var(--surface-line);border-radius:var(--r);background:var(--bg);color:var(--ink);
@@ -110,7 +110,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .vy-plus:hover{text-decoration:underline;}
 .vy-depart-bloc{display:none;text-align:left;margin-bottom:6px;}
 .vy-depart-bloc.ouvert{display:block;}
-.vy-geo-status{display:block;font-size:10.5px;margin:-9px 0 12px;min-height:13px;}
+.vy-geo-status{display:block;font-size:12px;margin:-9px 0 12px;min-height:13px;}
 .vy-geo-status.loading{color:var(--ink-dim);}
 .vy-geo-status.ok{color:#7fae7f;}
 .vy-geo-status.err{color:#d98;}
@@ -118,7 +118,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 @media(max-width:700px){
   .fil{padding:18px 12px 14px;}
   .fil-step .sub{display:none;}
-  .fil-step .lbl{font-size:11px;}
+  .fil-step .lbl{font-size:12px;}
 }
 /* ── Vignettes de démo (Comment ça marche) — emplacements en attente des vraies
    petites vidéos ; poser le format et le rendre pour validation (05/07 soir). ── */
@@ -177,13 +177,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .hdb-cell-clic{display:block;text-decoration:none;color:inherit;cursor:pointer;border-radius:6px;transition:background .15s;}
 .hdb-cell-clic:hover,.hdb-cell-clic:focus-visible{background:var(--gold-a10);}
 .hdb-val{font-family:var(--font-title);font-size:21px;font-weight:800;color:var(--gold-text);line-height:1;}
-.hdb-val .u{font-size:11px;font-weight:700;}
-.hdb-label{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
+.hdb-val .u{font-size:12px;font-weight:700;}
+.hdb-label{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-dim);margin-top:3px;}
 .hub-itin-aide{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-bottom:8px;}
 /* (10/07) Légende des séjours à excursions — une pastille par séjour, cliquable
    pour couper/remontrer SON pétale sans toucher aux autres ni au trajet principal. */
 #hub-excursions-legende{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
-.hub-excursion-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1.5px solid;border-radius:var(--r-pill);padding:4px 9px 4px 6px;font-size:11px;font-weight:600;color:var(--ink);cursor:pointer;transition:opacity .15s;}
+.hub-excursion-chip{display:flex;align-items:center;gap:5px;background:var(--surface);border:1.5px solid;border-radius:var(--r-pill);padding:4px 9px 4px 6px;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;transition:opacity .15s;}
 .hub-excursion-chip-off{opacity:.45;}
 .hub-excursion-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .hub-itin-liste{list-style:none;display:flex;flex-direction:column;gap:6px;margin:0;padding:0;}
@@ -705,7 +705,7 @@ async function initHubCarte(fiches, groupeId, userId){
     mk.bindPopup('<div style="font-family:Inter,sans-serif;min-width:180px;max-width:220px;">'+
       photo+
       '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHubHtml(f.nom||'—')+'</div>'+
-      '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
+      '<div style="font-size:12px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(f.region||'')+(f.type?' · '+escapeHubHtml(f.type):'')+'</div>'+
       '<a href="horizon.html?region='+encodeURIComponent(f.region||'')+'" style="display:block;font-size:12px;font-weight:600;color:var(--gold-text);padding:2px 2px 0;">Voir sur Horizon →</a>'+
       '</div>', {maxWidth:240, autoPan:false, closeButton:false});
     // SURVOL (desktop) / TAP (tactile, via bindPopup) : la fiche s'affiche en INFO seule —
@@ -728,7 +728,7 @@ async function initHubCarte(fiches, groupeId, userId){
     if(HUB_MAISON_MK){ HUB_MAP.removeLayer(HUB_MAISON_MK); HUB_MAISON_MK=null; }
     HUB_MAISON_MK=L.marker([HUB_DOMICILE.lat,HUB_DOMICILE.lng],
       {icon:RNR_MARQUEURS.iconeMaison({taille:32}), zIndexOffset:1000}).addTo(HUB_MAP)
-      .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHubHtml(HUB_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div></div>',
+      .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHubHtml(HUB_DOMICILE.nom||'La maison')+'</div><div style="font-size:12px;color:var(--ink-dim);padding:0 2px;">Départ et retour du voyage</div></div>',
       {maxWidth:220, autoPan:false, closeButton:false});
     if(!HUB_TACTILE){
       HUB_MAISON_MK.on('mouseover', ()=>HUB_MAISON_MK.openPopup());
@@ -936,7 +936,7 @@ function hubTraceVoyage(){
         .bindPopup('<div style="font-family:Inter,sans-serif;min-width:170px;max-width:220px;">'+
           photoBase+
           '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">🏕️ '+escapeHubHtml(night.nom||'—')+'</div>'+
-          '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(night.region||'')+' · base du séjour</div>'+
+          '<div style="font-size:12px;color:var(--ink-dim);padding:0 2px 4px;">'+escapeHubHtml(night.region||'')+' · base du séjour</div>'+
           '<a href="horizon.html?region='+encodeURIComponent(night.region||'')+'" style="display:block;font-size:12px;font-weight:600;color:var(--gold-text);padding:2px 2px 0;">Voir sur Horizon →</a>'+
           '</div>', {maxWidth:240, autoPan:false, closeButton:false});
       mkBase.on('mouseover', ()=>{ if(!HUB_TACTILE) mkBase.openPopup(); });
@@ -949,13 +949,13 @@ function hubTraceVoyage(){
         RNR_MARQUEURS.traceRoute(HUB_MAP, couche, latlngsExc, {surl:SURL, skey:SKEY}, {leger:true, couleur:couleurSejour}).catch(()=>{});
         duJour.forEach(x=>{
           const iconExc=L.divIcon({
-            html:`<div style="background:${couleurSejour};color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:8px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${x.row.jour_offset||1}</div>`,
+            html:`<div style="background:${couleurSejour};color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);">J${x.row.jour_offset||1}</div>`,
             className:'', iconSize:[20,20], iconAnchor:[10,10]
           });
           const mkExc = L.marker([x.f.lat,x.f.lng],{icon:iconExc}).addTo(couche).bindPopup(
             '<div style="font-family:Inter,sans-serif;min-width:150px;max-width:200px;">'+
             '<div style="font-weight:700;font-size:13px;margin-bottom:3px;padding:0 2px;">🥾 '+escapeHubHtml(x.f.nom||'—')+'</div>'+
-            '<div style="font-size:11px;color:var(--ink-dim);padding:0 2px;">Jour '+(x.row.jour_offset||1)+' · excursion depuis '+escapeHubHtml(night.nom||'')+'</div>'+
+            '<div style="font-size:12px;color:var(--ink-dim);padding:0 2px;">Jour '+(x.row.jour_offset||1)+' · excursion depuis '+escapeHubHtml(night.nom||'')+'</div>'+
             '</div>', {maxWidth:220, autoPan:false, closeButton:false});
           mkExc.on('mouseover', ()=>{ if(!HUB_TACTILE) mkExc.openPopup(); });
           mkExc.on('mouseout',  ()=>{ if(!HUB_TACTILE) mkExc.closePopup(); });

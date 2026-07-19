@@ -151,7 +151,7 @@ body {
   border: 1px solid rgba(200,168,75,.2);
   padding: 5px 12px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
@@ -187,7 +187,7 @@ body {
   box-shadow: var(--shadow);
 }
 .cfg-card-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -202,7 +202,7 @@ body {
 /* ── Inputs communs ──────────────────────────────────────────────── */
 label {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -311,7 +311,7 @@ body.page-out {
 
 /* ── Titre de section : petites capitales or + filet ─────────────── */
 .rr-section {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 2.5px;
   text-transform: uppercase;
@@ -425,7 +425,7 @@ a.rr-paper:hover, .rr-paper.rr-hover:hover {
    Horizon) restent propres à chaque page — seul le CONTENU est commun. */
 .gf-cover{height:200px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;border-radius:16px 16px 0 0;}
 .gf-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
-.gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
+.gf-photo-count{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px;}
 .gf-cover-overlay{padding:14px;width:100%;background:linear-gradient(transparent,rgba(0,0,0,.7));}
 /* (17/07) Galerie « grande » — opts.galerieGrande sur RNR_FICHE_COMPLETE.html,
    utilisée par le Cahier imprimé : la bande de vignettes 54×40 n'a pas de sens
@@ -433,21 +433,21 @@ a.rr-paper:hover, .rr-paper.rr-hover:hover {
    fois plus grandes que la miniature, en grille 2×2. */
 .gf-galerie-grande{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 22px 0;}
 .gf-galerie-grande-ph{height:110px;background-size:cover;background-position:center;border-radius:8px;cursor:pointer;}
-.gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;}
+.gf-type-badge{background:rgba(200,168,75,.9);color:#0f0d09;font-size:12px;font-weight:700;padding:3px 9px;border-radius:6px;}
 .gf-content{padding:16px 22px 22px;}
 .gf-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .gf-title{font-family:var(--font-title,'Playfair Display',serif);font-size:24px;margin:0 0 4px;color:var(--paper-ink)!important;}
 .gf-sub{font-size:12px;color:var(--gold-text);margin:0 0 16px;}
 .gf-desc{font-size:14px;line-height:1.6;color:var(--paper-ink-dim);margin:0 0 14px;}
 .gf-quote{background:var(--surface);border-left:3px solid var(--gold);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:14px;}
-.gf-quote-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
+.gf-quote-t{font-size:12px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
 .gf-quote p{font-size:13px;line-height:1.6;color:var(--ink-dim);margin:0;font-style:italic;}
 .gf-conseil{background:var(--gold-a10);border:1px solid var(--gold-a20);padding:11px 14px;border-radius:8px;margin-bottom:16px;}
-.gf-conseil-t{font-size:11px;color:var(--gold-text);font-weight:700;}
+.gf-conseil-t{font-size:12px;color:var(--gold-text);font-weight:700;}
 .gf-conseil p{font-size:13px;color:var(--paper-ink-dim);margin:4px 0 0;line-height:1.5;}
 .gf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
 .gf-cell{background:var(--surface);padding:10px 12px;border-radius:8px;}
-.gf-cell-t{font-size:10px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
+.gf-cell-t{font-size:12px;color:var(--gold-text);font-weight:700;margin-bottom:4px;}
 .gf-cell-v{font-size:12px;color:var(--ink);line-height:1.6;}
 .gf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
 .gf-bottom-row{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;border-top:1px solid var(--gold-a20);padding-top:10px;}
@@ -455,20 +455,20 @@ a.rr-paper:hover, .rr-paper.rr-hover:hover {
 .gf-btn-dark{background:var(--chrome-bg);border:1px solid var(--gold-a35);color:var(--gold-light);font-size:12px;padding:8px 12px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
 .gf-btn-gold{background:var(--gold);border:1px solid var(--gold);color:var(--chrome-bg);font-size:12px;font-weight:700;padding:8px 12px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
 .gf-btn-gold:hover{filter:brightness(1.08);}
-.rnr-retenue-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--mk-epingle,#2c5016);}
-.rnr-ecartee-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--ink-dim,#666);}
+.rnr-retenue-banner{display:inline-block;font-size:12px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--mk-epingle,#2c5016);}
+.rnr-ecartee-banner{display:inline-block;font-size:12px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--ink-dim,#666);}
 
 /* ── DOG-FRIENDLY (19/07) — déplacé ici depuis carnet.html : le badge doit
    vivre partout où fiche-complete.js rend une fiche (Carnet, Horizon, fiche
    partagée), pas dans le <style> local d'une seule page. Deux formes : en
    overlay sur une photo de liste (position absolute par défaut) et « posée »
    dans la rangée de badges de la grande fiche (position:static, inline). */
-.dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
+.dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
 .dog-photo-badge.yes,.dog-photo-badge.oui{background:rgba(44,80,22,.82);color:#b8f0b0;}
 .dog-photo-badge.no,.dog-photo-badge.non{background:rgba(180,40,0,.82);color:#ffd0c0;}
 .dog-photo-badge.na,.dog-photo-badge.inconnu{background:rgba(60,50,20,.75);color:#f5d98a;}
 .dog-photo-badge.conditions{background:rgba(186,117,23,.82);color:#ffe0a8;}
-.dog-info-box{font-size:10px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
+.dog-info-box{font-size:12px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
 .dog-info-box.no,.dog-info-box.non{color:var(--st-bad-ink);background:var(--st-bad-bg);border-left-color:var(--st-bad-ink);}
 .dog-info-box.na,.dog-info-box.inconnu{color:var(--st-na-ink);background:var(--st-na-bg);border-left-color:var(--st-na-ink);}
 .dog-info-box.conditions{color:var(--st-warn-ink);background:var(--st-warn-bg);border-left-color:var(--st-warn-line);}

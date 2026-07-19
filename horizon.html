@@ -79,27 +79,27 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   display:inline-flex;align-items:center;gap:5px;}
 .hz-envie:hover{border-color:var(--gold);}
 .hz-envie.actif{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
-.hz-envie .ce{opacity:.55;font-size:11px;}            /* compteur d'écartées */
+.hz-envie .ce{opacity:.55;font-size:12px;}            /* compteur d'écartées */
 .hz-envie.actif .ce{opacity:.8;}
 .hz-envie-add{font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;
   padding:5px 11px;border-radius:var(--r-pill,999px);border:1px dashed var(--gold-a35);
   background:transparent;color:var(--ink-dim);transition:color .15s,border-color .15s;}
 .hz-envie-add:hover{color:var(--gold-text);border-color:var(--gold);}
-.hz-envies-lead{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin-right:2px;}
+.hz-envies-lead{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin-right:2px;}
 .hz-tri-btn{font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;
   padding:6px 13px;border-radius:var(--r-pill,999px);border:1px solid var(--gold-a35);
   background:var(--gold-a10);color:var(--gold-text);transition:background .15s,color .15s;}
 .hz-tri-btn:hover{background:var(--gold);color:var(--chrome-bg);}
 .hz-tri-btn.actif{background:var(--gold);color:var(--chrome-bg);}
-.hz-tri-info{font-size:11.5px;color:var(--ink-dim);}
+.hz-tri-info{font-size:12px;color:var(--ink-dim);}
 .hz-tri-reset{margin-left:6px;opacity:.85;}
-.rlabel{font-family:var(--font-body);font-size:10px;font-weight:600;fill:var(--ink);opacity:.78;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:2.2px;}
+.rlabel{font-family:var(--font-body);font-size:12px;font-weight:600;fill:var(--ink);opacity:.78;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:2.2px;}
 
 /* indicateurs en ligne */
 .inds{display:flex;gap:10px 16px;flex-wrap:wrap;align-content:flex-start;}
 .ind{display:flex;flex-direction:column;min-width:54px;}
 .ind .n{font-family:var(--font-title);font-size:22px;font-weight:700;color:var(--gold-text);line-height:1;}
-.ind .l{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.ind .l{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
 
 /* fiche */
 .fiche .ph{height:112px;border-radius:var(--r);display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;flex-shrink:0;}
@@ -126,35 +126,35 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .opt:hover{background:var(--gold-a20);border-color:var(--gold);transform:translateY(-2px);}
 .opt .i{font-size:18px;display:block;margin-bottom:3px;}
 .opt.choisi{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
-.opt .ct{display:block;font-size:11px;font-weight:600;opacity:.65;margin-top:3px;}
+.opt .ct{display:block;font-size:12px;font-weight:600;opacity:.65;margin-top:3px;}
 .opt.choisi .ct{opacity:.85;}
 .hz-lentille-pick{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
-.hz-lentille-pick label{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;}
+.hz-lentille-pick label{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;}
 .hz-lentille-pick select{flex:1;font-family:var(--font-body);font-size:13px;padding:5px 8px;border-radius:var(--r-sm);
   border:1px solid var(--gold-a35);background:var(--gold-a10);color:var(--gold-text);cursor:pointer;}
-.hz-lentille-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
+.hz-lentille-info{font-size:12px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
 /* ── Geste fondateur thème→lieu (Carnet du coin, §B2/B4) ── */
 .hz-geste-etape{margin-bottom:12px;}
-.hz-geste-lbl{font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
-.hz-geste-aide{font-size:11.5px;color:var(--ink-dim);margin-bottom:7px;}
+.hz-geste-lbl{font-size:12px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+.hz-geste-aide{font-size:12px;color:var(--ink-dim);margin-bottom:7px;}
 .hz-themes-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .hz-theme-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-body);font-size:12.5px;
   padding:6px 11px;border-radius:999px;border:1px solid var(--gold-a35);background:var(--gold-a10);
   color:var(--ink);cursor:pointer;transition:all .15s;}
 .hz-theme-chip:hover{background:var(--gold-a20);}
 .hz-theme-chip.on{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);font-weight:600;}
-.hz-theme-chip .ct{font-size:10.5px;opacity:.7;}
+.hz-theme-chip .ct{font-size:12px;opacity:.7;}
 .hz-theme-chip.on .ct{opacity:.85;}
 /* 8e thème Couchage : il est désormais sa propre PORTE (porte B), à égalité avec
    la porte des activités. Plus d'appendice « mis à part » : c'est un départ égal. */
 .hz-theme-chip-nuit{margin-left:0;}
 /* Séparateur « — ou — » entre les deux portes (activités / couchage). Marque le
    choix de départ égal, sans hiérarchie. */
-.hz-geste-ou{font-size:11px;color:var(--ink-dim);text-align:center;margin:10px 0 8px;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
+.hz-geste-ou{font-size:12px;color:var(--ink-dim);text-align:center;margin:10px 0 8px;letter-spacing:1px;text-transform:uppercase;opacity:.75;}
 .hz-lieu-tag{display:inline-flex;align-items:center;gap:7px;font-size:14.5px;padding:8px 14px;border-radius:var(--r-sm);
   background:var(--gold);color:var(--chrome-bg);font-weight:600;}
 .hz-lieu-tag .x{cursor:pointer;opacity:.8;font-weight:700;font-size:15px;}
-.hz-geste-info{font-size:11.5px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
+.hz-geste-info{font-size:12px;color:var(--ink-dim);margin-top:8px;min-height:16px;}
 .hz-en-avant{display:none!important;}
 .hz-en-avant-DEAD{width:100%;margin-top:12px;padding:11px;border:none;border-radius:var(--r);
   background:var(--gold);color:var(--chrome-bg);font-family:var(--font-body);font-size:14px;
@@ -171,7 +171,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .b-vote{overflow:visible;}
 .hz-bandeau{padding:9px 13px;display:block;}
 .hz-bandeau-ligne{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.hz-bandeau-hint{font-size:11px;color:var(--ink-dim);}
+.hz-bandeau-hint{font-size:12px;color:var(--ink-dim);}
 .hz-bandeau-spacer{flex:1;}
 .hz-porte-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body);
   font-size:14.5px;padding:10px 19px;border-radius:999px;border:1px solid var(--gold-a35);
@@ -195,9 +195,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .hz-stats-inline{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
 .hz-stats-inline .ind{display:flex;align-items:baseline;gap:4px;}
 .hz-stats-inline .n{font-size:15px;font-weight:600;color:var(--gold-text);font-family:var(--font-title);}
-.hz-stats-inline .l{font-size:9.5px;color:var(--ink-dim);}
+.hz-stats-inline .l{font-size:12px;color:var(--ink-dim);}
 .hz-porte-panneau{margin-top:10px;padding-top:9px;border-top:1px solid var(--gold-a20);}
-.hz-porte-sous{font-size:10.5px;color:var(--ink-dim);margin-bottom:8px;}
+.hz-porte-sous{font-size:12px;color:var(--ink-dim);margin-bottom:8px;}
 /* ═══ CONTRÔLES FLOTTANTS SUR LA CARTE (map-first) ═══ */
 .b-map .bb{position:relative;}
 /* ── CARTE IGN DU COIN (B18 · 2b-1) : quand un coin est ouvert, la vue zoomée
@@ -239,7 +239,7 @@ body.hz-coin-carte .hz-ov-tl .hz-ov-titre{display:none;}  /* « Clique une régi
 .hz-db-cell{text-align:center;padding:9px 15px;}
 .hz-db-cell+.hz-db-cell{border-left:1px solid var(--gold-a35);}
 .hz-db-cell b{display:block;font-family:var(--font-title);font-size:19px;font-weight:800;color:var(--gold-text);line-height:1;}
-.hz-db-cell i{display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-dim);font-style:normal;margin-top:3px;}
+.hz-db-cell i{display:block;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-dim);font-style:normal;margin-top:3px;}
 .hz-ov-tr{top:12px;right:12px;}
 .hz-ov-bl{bottom:14px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .hz-ov-br{bottom:14px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
@@ -252,7 +252,7 @@ body.hz-coin-carte .hz-ov-tl .hz-ov-titre{display:none;}  /* « Clique une régi
 .hz-ov-stats{gap:19px;}
 .hz-ov-stats .ind{display:inline-flex;align-items:baseline;gap:5px;}
 .hz-ov-stats .n{font-size:19px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
-.hz-ov-stats .l{font-size:10.5px;color:var(--ink-dim);font-style:normal;}
+.hz-ov-stats .l{font-size:12px;color:var(--ink-dim);font-style:normal;}
 .hz-ov-portes{display:flex;gap:8px;}
 .hz-ov-portes .hz-porte-btn{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);
   box-shadow:0 2px 10px rgba(0,0,0,.14);font-weight:500;}
@@ -289,7 +289,7 @@ body.hz-explo-on #hz-btn-revue{display:none;}
 .hz-rond-ctrl{gap:9px;}
 .hz-rond-hint-off{display:none;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
-.hz-rond-compte{font-size:11px;color:var(--ink-dim);white-space:nowrap;}
+.hz-rond-compte{font-size:12px;color:var(--ink-dim);white-space:nowrap;}
 body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-poignee{width:10px;height:10px;border-radius:50%;background:var(--gold);
   border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);}
@@ -309,7 +309,7 @@ body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
   display:flex;align-items:center;gap:8px;flex-shrink:0;}
 body.hz-explo-on .hz-rond-jauge{display:none;}
 .hz-rond-jauge-ic{width:18px;height:18px;border-radius:50%;background:var(--terracotta);
-  display:flex;align-items:center;justify-content:center;font-size:10px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
   color:var(--terracotta-light);flex-shrink:0;}
 .hz-rond-jauge-piste{position:relative;width:96px;height:5px;border-radius:3px;
   background:var(--gold-a10);touch-action:none;cursor:pointer;flex-shrink:0;}
@@ -397,7 +397,7 @@ body.hz-explo-on .b-map .francemap{transition:none;}
 .hz-rail-btn:hover{border-color:var(--gold-a35);}
 .hz-rail-btn.actif{background:var(--gold-a10);border-color:var(--gold-a35);}
 .hz-rail-badge{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;
-  border-radius:10px;background:#d8456e;color:#fff;font-size:11.5px;font-weight:700;
+  border-radius:10px;background:#d8456e;color:#fff;font-size:12px;font-weight:700;
   display:none;align-items:center;justify-content:center;padding:0 5px;}
 .hz-rail-badge.actif{display:flex;}
 
@@ -447,7 +447,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-explo-bas .hz-swipe-card .nom{font-size:18px;}
 .hz-explo-bas .hz-swipe-actions{gap:18px;padding:0;}
 .hz-explo-bas .hz-swipe-act .hz-act-ic{width:50px;height:50px;font-size:22px;}
-.hz-explo-bas .hz-swipe-act .hz-act-lbl{font-size:11.5px;}
+.hz-explo-bas .hz-swipe-act .hz-act-lbl{font-size:12px;}
 .hz-explo-bas .hz-swipe-aimees{display:flex;flex-direction:column;height:100%;min-height:0;}
 .hz-explo-bas .hz-swipe-aimees-liste{max-height:none;flex:1;}
 /* la carte invite au clic quand on attend un lieu */
@@ -460,14 +460,14 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-cf{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
 .hz-cf.limit{opacity:.9;}
 .hz-cf-ph{height:96px;background-size:cover;background-position:center;position:relative;}
-.hz-cf-type{position:absolute;left:6px;bottom:6px;font-size:9.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 8px;border-radius:10px;}
+.hz-cf-type{position:absolute;left:6px;bottom:6px;font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.55);padding:2px 8px;border-radius:10px;}
 .hz-cf-body{padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
 .hz-cf-notes{display:flex;gap:4px;}
-.hz-cf-note{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--gold-a20);color:var(--gold-deep);}
+.hz-cf-note{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--gold-a20);color:var(--gold-deep);}
 .hz-cf-nom{font-family:var(--font-title);font-size:14px;font-weight:600;color:var(--ink);line-height:1.25;}
 .hz-cf-tags{display:flex;gap:3px;flex-wrap:wrap;}
-.hz-cf-tags span{font-size:9px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
-.hz-coin-soustitre{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
+.hz-cf-tags span{font-size:12px;background:var(--gold-a10);color:var(--gold-deep);padding:1px 6px;border-radius:10px;}
+.hz-coin-soustitre{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px;margin:10px 0 6px;}
 /* ── ÉTAPE 1 : INVITATION (avant tout coup de cœur) ── */
 .hz-invite{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:6px 0;}
 .hz-invite-txt{display:flex;flex-direction:column;gap:5px;flex:1;min-width:240px;}
@@ -485,9 +485,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-panier-tt{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--gold-text);}
 .hz-panier-recap{display:flex;flex-wrap:wrap;gap:14px;}
 .hz-pr-grp{min-width:160px;}
-.hz-pr-tete{font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.hz-pr-tete{font-size:12px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
 .hz-pr-tete.limit{color:var(--ink-dim);}
-.hz-pr-n{background:var(--gold-a10);color:var(--gold-deep);font-size:10px;padding:1px 7px;border-radius:9px;}
+.hz-pr-n{background:var(--gold-a10);color:var(--gold-deep);font-size:12px;padding:1px 7px;border-radius:9px;}
 .hz-pr-fiche{display:flex;align-items:center;gap:7px;padding:4px 0;}
 .hz-pr-mini{width:26px;height:26px;border-radius:5px;background-size:cover;background-position:center;background-color:var(--gold-a20);flex-shrink:0;}
 .hz-pr-nom{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
@@ -507,7 +507,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-coin-coins{display:flex;gap:4px;background:var(--bg);border:1px solid var(--surface-line);border-radius:var(--r-sm);padding:3px;}
 .hz-coin-coin-onglet{font-family:var(--font-body);font-size:12.5px;padding:6px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--ink-dim);cursor:pointer;display:flex;align-items:center;gap:5px;transition:.15s;}
 .hz-coin-coin-onglet.on{background:var(--gold);color:var(--chrome-bg);font-weight:600;}
-.hz-coin-coin-onglet .n{font-size:10.5px;opacity:.7;}
+.hz-coin-coin-onglet .n{font-size:12px;opacity:.7;}
 .hz-coin-modebtn{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);}
 .hz-coin-modebtn:hover{background:var(--gold-a10);}
 /* ── Mode swipe (refondu : fil continu) ── */
@@ -516,9 +516,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-deck{position:relative;width:100%;min-height:300px;}
 .hz-swipe-card,.hz-swipe-transition{position:absolute;inset:0;background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;display:flex;flex-direction:column;transition:transform .28s ease,opacity .28s ease;}
 .hz-swipe-card .ph{height:185px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;}
-.hz-swipe-card .ph .region-badge{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
-.hz-swipe-card .ph .type{font-size:10.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
-.hz-swipe-jn{position:absolute;top:10px;left:10px;font-size:11px;font-weight:700;color:#fff;
+.hz-swipe-card .ph .region-badge{font-size:12px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
+.hz-swipe-card .ph .type{font-size:12px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:3px 10px;border-radius:12px;}
+.hz-swipe-jn{position:absolute;top:10px;left:10px;font-size:12px;font-weight:700;color:#fff;
   padding:4px 10px;border-radius:12px;}
 .hz-swipe-jn.jour{background:rgba(190,130,10,.88);}
 .hz-swipe-jn.nuit{background:rgba(30,38,85,.88);}
@@ -526,12 +526,12 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-swipe-card .notes{font-size:13px;color:var(--gold-text);letter-spacing:1px;}
 .hz-swipe-card .nom{font-family:var(--font-title);font-size:19px;font-weight:700;color:var(--ink);line-height:1.2;}
 .hz-swipe-card .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
-.hz-swipe-card .tags span{font-size:10px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 9px;border-radius:12px;}
+.hz-swipe-card .tags span{font-size:12px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 9px;border-radius:12px;}
 .hz-swipe-card .desc{font-size:12.5px;color:var(--ink-dim);line-height:1.5;margin-top:4px;}
-.hz-swipe-card .infos{display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:11.5px;color:var(--ink-dim);}
+.hz-swipe-card .infos{display:flex;flex-direction:column;gap:3px;margin-top:6px;font-size:12px;color:var(--ink-dim);}
 .hz-swipe-card .infos a{color:var(--gold-text);}
 /* MATCH / SPARK : l'étincelle nominative (or = âme de la marque). Pas un score. */
-.hz-spark{margin-top:7px;font-size:11.5px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:11px;padding:3px 10px;display:inline-block;line-height:1.3;}
+.hz-spark{margin-top:7px;font-size:12px;font-weight:600;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:11px;padding:3px 10px;display:inline-block;line-height:1.3;}
 /* cartes de transition (Cap sur… / Juste à côté…) */
 .hz-swipe-transition{align-items:center;justify-content:center;text-align:center;gap:8px;padding:24px;background:var(--gold-a10);border:1.5px dashed var(--gold-a35);}
 .hz-swipe-transition.limit{background:var(--bg);}
@@ -567,7 +567,7 @@ body.hz-explo-on #hz-rail{display:none;}
 /* barre de progression (remplace les onglets) */
 .hz-swipe-progres{height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;width:160px;}
 .hz-swipe-progres-barre{height:100%;background:var(--gold);transition:width .3s;}
-.hz-swipe-progres-txt{font-size:11px;color:var(--ink-dim);margin-left:8px;}
+.hz-swipe-progres-txt{font-size:12px;color:var(--ink-dim);margin-left:8px;}
 .hz-coin-coins{display:flex;align-items:center;}
 .hz-swipe-aimees{min-width:0;}
 .hz-swipe-aimees-tt{font-size:13px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
@@ -578,16 +578,16 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-aimee .ic{font-size:13px;}
 .hz-aimee-vide{font-size:12px;color:var(--ink-dim);padding:4px 2px;}
 .hz-aimee-grp-tt{display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.4px;
+  font-size:12px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.4px;
   padding:8px 2px 5px;margin-top:6px;border-bottom:1px solid var(--gold-a20);}
 .hz-aimee-grp-tt:first-child{margin-top:0;}
 .hz-aimee-grp-tt.limit{color:var(--ink-dim);}
 /* Séparateur « 🌙 Où dormir » dans le panier : marque la frontière jour/nuit.
    Trait un peu plus appuyé pour qu'on voie nettement le bloc couchage. */
 .hz-aimee-grp-tt.nuit{color:var(--ink);border-bottom:1.5px solid var(--gold-a35);margin-top:12px;}
-.hz-aimee-grp-n{font-weight:600;font-size:10.5px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0;}
+.hz-aimee-grp-n{font-weight:600;font-size:12px;background:var(--gold-a10);color:var(--gold-deep);padding:2px 8px;border-radius:10px;text-transform:none;letter-spacing:0;}
 .hz-aimee-grp-tt.limit .hz-aimee-grp-n{background:var(--surface-line);color:var(--ink-dim);}
-.hz-aimee-retirer{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
+.hz-aimee-retirer{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;}
 .hz-aimee-retirer:hover{border-color:#d8456e;color:#d8456e;}
 #hz-drawer-coeurs-corps .hz-aimee{flex-wrap:wrap;gap:8px 14px;padding:12px;}
 #hz-drawer-coeurs-corps .hz-aimee .mini{width:88px;height:88px;border-radius:11px;}
@@ -599,23 +599,23 @@ body.hz-explo-on #hz-rail{display:none;}
 #hz-swipe-aimees-liste .hz-aimee .hz-aimee-actions{flex:1 0 100%;justify-content:flex-end;}
 .hz-aimee .nm .st{font-size:12px;font-weight:400;color:var(--ink-dim);margin-top:2px;}
 .hz-aimee-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.hz-aimee-epingle{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
-.hz-non-leader{font-family:var(--font-body);font-size:10px;cursor:pointer;background:none;border:1px dashed var(--ink-dim);color:var(--ink-dim);padding:3px 8px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-aimee-epingle{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-non-leader{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px dashed var(--ink-dim);color:var(--ink-dim);padding:3px 8px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-non-leader:hover{border-color:var(--gold-a35);color:var(--gold-text);}
 .hz-aimee-epingle:hover{background:var(--gold-a10);}
-.hz-aimee-vote{font-family:var(--font-body);font-size:10.5px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
+.hz-aimee-vote{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;}
 .hz-aimee-vote:hover{border-color:var(--gold);color:var(--gold-text);}
 /* Badge d'état de la fiche riche au clic sur la carte (02/07) — un seul badge,
    couleur = ce que la fiche vit (pas le monde jour/nuit, déjà dit par le marqueur). */
-.hz-pop-badge{display:inline-block;font-size:10px;font-weight:700;color:#fff;padding:3px 9px;border-radius:12px;}
+.hz-pop-badge{display:inline-block;font-size:12px;font-weight:700;color:#fff;padding:3px 9px;border-radius:12px;}
 .hz-pr-vote{flex-shrink:0;font-size:12px;line-height:1;cursor:pointer;background:none;border:1px solid var(--surface-line);color:var(--ink-dim);padding:3px 6px;border-radius:8px;}
 .hz-pr-vote:hover{border-color:var(--gold);color:var(--gold-text);}
-.hz-aimee-tag-vote{font-size:10.5px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;border:none;cursor:pointer;font-family:var(--font-body);}
+.hz-aimee-tag-vote{font-size:12px;color:var(--gold-text);background:var(--gold-a10);padding:3px 9px;border-radius:12px;flex-shrink:0;white-space:nowrap;border:none;cursor:pointer;font-family:var(--font-body);}
 .hz-aimee-tag-vote:hover{background:var(--gold-a20);}
 .hz-pr-tag-vote{flex-shrink:0;font-size:12px;line-height:1;color:var(--gold-text);background:var(--gold-a10);padding:3px 6px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font-body);}
 .hz-pr-tag-vote:hover{background:var(--gold-a20);}
 /* ── Modale de création de vote, portée depuis cockpit.html (B18-Inc.A2) ── */
-.q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:11px;cursor:pointer;}
+.q-close-btn{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);border-radius:7px;padding:3px 10px;font-size:12px;cursor:pointer;}
 .q-close-btn:hover{background:var(--gold-a20);}
 .vmodal-bg{position:fixed;inset:0;background:rgba(10,7,3,.62);display:flex;align-items:center;justify-content:center;z-index:10500;padding:18px;}
 .vmodal{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);box-shadow:var(--shadow);width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:20px;}
@@ -630,7 +630,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .vbtn{flex:1;padding:11px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:13px;font-family:var(--font-body);}
 .vbtn-go{background:linear-gradient(90deg,var(--gold),var(--gold-light));color:#1a1208;}
 .vbtn-no{background:none;border:1.5px solid var(--surface-line);color:var(--ink-dim);}
-.vhint{font-size:11px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
+.vhint{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:4px;}
 .vhint-fiche-btn{display:block;width:100%;text-align:left;font-size:13px;font-family:var(--font-body);
   color:var(--ink);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r);
   padding:10px 12px;cursor:pointer;}
@@ -649,7 +649,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .q-opt .v{margin-left:auto;font-size:12px;color:var(--gold-text);font-weight:700;}
 .q-opt.q-chosen{background:var(--gold-a20);border-color:var(--gold);}
 .hz-aimees-pied{display:flex;flex-direction:row;gap:7px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--surface-line);}
-.hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
+.hz-aimees-btn{flex:1;font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
 .hz-aimees-btn.refaire{background:none;border:1px solid var(--gold-a35);color:var(--gold-text);}
 .hz-aimees-btn.refaire:hover{background:var(--gold-a10);}
 .hz-aimees-btn.envoi{background:var(--gold);border:1px solid var(--gold);color:var(--chrome-bg);}
@@ -661,7 +661,7 @@ body.hz-explo-on #hz-rail{display:none;}
 /* barre de vote — portée fidèlement du Carnet (même geste, même apparence) */
 .vote-bar{display:flex;gap:4px;align-items:center;margin-top:4px;padding-top:6px;border-top:1px solid var(--surface-line);flex-wrap:wrap;}
 .vote-btn{display:flex;align-items:center;gap:3px;padding:4px 9px;border-radius:20px;border:1.5px solid transparent;
-  font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;background:none;}
+  font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .2s;background:none;}
 .vote-btn:hover{transform:scale(1.06);}
 .vote-btn.love{border-color:rgba(220,60,100,.2);color:#d8456e;}
 .vote-btn.love.active{background:rgba(220,60,100,.12);border-color:rgba(220,60,100,.4);}
@@ -669,7 +669,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .vote-btn.derived.active{opacity:1;background:rgba(44,80,160,.1);border-color:rgba(44,80,160,.4);}
 .vote-btn.ecartee{border-color:var(--surface-line);color:var(--ink-dim);}
 .vote-btn.ecartee.active{background:var(--surface-line);opacity:.85;}
-.vote-count{font-size:9.5px;font-weight:600;}
+.vote-count{font-size:12px;font-weight:600;}
 /* ── SEUIL : overlay plein écran (porté du pattern maison .vy-overlay) ── */
 .hz-seuil-overlay{position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(3px);
   z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;}
@@ -681,7 +681,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-seuil-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 4px;}
 .hz-seuil-sous{font-size:14px;color:var(--ink-dim);line-height:1.55;margin:0 0 18px;}
 .hz-seuil-coins{margin-bottom:16px;}
-.hz-seuil-grp-tt{font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
+.hz-seuil-grp-tt{font-size:12px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
 .hz-seuil-grp{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
 .hz-seuil-grp-limit{opacity:.78;}
 .hz-seuil-grp-limit .hz-seuil-coin{border-style:dashed;}
@@ -710,7 +710,7 @@ body.hz-explo-on #hz-rail{display:none;}
   box-shadow:0 2px 10px rgba(0,0,0,.14);}
 .hz-recommencer:hover{border-color:var(--gold);color:var(--gold-text);}
 /* ── Bloc gauche : VOTE DU GROUPE (vrai, signé) ── */
-.hz-vote-sig{font-size:11px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
+.hz-vote-sig{font-size:12px;font-weight:700;color:var(--gold-text);background:var(--gold-a20);
   border-radius:var(--r-pill,999px);padding:3px 11px;display:inline-block;margin-bottom:9px;}
 .hz-vote-opt{display:flex;align-items:center;gap:9px;text-align:left;padding:11px 13px;}
 .hz-vo-lbl{flex:1;font-size:14px;}
@@ -719,7 +719,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-vo-n{font-weight:700;font-size:13px;min-width:16px;text-align:right;color:var(--gold-text);}
 .hz-vote-opt.mene{border-color:var(--gold);}
 .hz-vote-pied{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;
-  font-size:11.5px;color:var(--ink-dim);flex-wrap:wrap;}
+  font-size:12px;color:var(--ink-dim);flex-wrap:wrap;}
 .hz-pied-btn{font-family:var(--font-body);font-size:12px;font-weight:600;cursor:pointer;
   padding:5px 12px;border-radius:var(--r-pill,999px);border:1px solid var(--gold-a35);
   background:var(--gold-a10);color:var(--gold-text);transition:.15s;}
@@ -727,21 +727,21 @@ body.hz-explo-on #hz-rail{display:none;}
 /* ── Bloc gauche : INVITE / SUGGESTION du site (distincte d'un vrai vote) ── */
 .hz-invite{font-size:12px;color:var(--ink-dim);font-style:italic;line-height:1.5;
   border:1px dashed var(--gold-a35);border-radius:var(--r-sm);padding:8px 10px;margin-bottom:10px;}
-.hz-invite-tag{font-style:normal;font-weight:700;color:var(--gold-text);font-size:10.5px;
+.hz-invite-tag{font-style:normal;font-weight:700;color:var(--gold-text);font-size:12px;
   display:inline-block;margin-right:4px;}
 .hz-leader{border:1.5px solid var(--gold);border-radius:var(--r);background:var(--gold-a20);
   padding:12px;margin-bottom:11px;animation:ldPulse 2.4s ease-in-out infinite;}
 @keyframes ldPulse{0%,100%{box-shadow:0 0 0 0 var(--gold-a35);}50%{box-shadow:0 0 0 6px transparent;}}
 .hz-ld-tt{font-family:var(--font-title);font-size:15px;color:var(--gold-text);font-weight:700;
   display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-.hz-ld-sub{font-size:11.5px;color:var(--ink-dim);margin-bottom:10px;line-height:1.4;}
+.hz-ld-sub{font-size:12px;color:var(--ink-dim);margin-bottom:10px;line-height:1.4;}
 .hz-ld-cand{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--gold-a35);
   border-radius:var(--r-sm);margin-bottom:6px;background:var(--surface);}
 .hz-ld-cand .av{width:26px;height:26px;border-radius:50%;background:var(--gold-a20);display:flex;
   align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
 .hz-ld-cand .nm{flex:1;font-size:13px;color:var(--ink);}
 .hz-ld-cand .vx{font-weight:700;color:var(--gold-text);font-size:13px;min-width:18px;text-align:right;}
-.hz-ld-vote{cursor:pointer;font-size:11px;border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);
+.hz-ld-vote{cursor:pointer;font-size:12px;border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);
   padding:3px 10px;color:var(--gold-text);background:transparent;transition:.15s;}
 .hz-ld-vote:hover{background:var(--gold);color:var(--chrome-bg);}
 .hz-ld-vote.mien{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
@@ -760,7 +760,7 @@ body.hz-explo-on #hz-rail{display:none;}
 .write-l{display:flex;flex-direction:column;}
 .write textarea{resize:none;min-height:46px;font-size:13.5px;}   /* le style des champs vient d'app.css */
 .write-r{display:flex;flex-direction:column;gap:6px;}
-.write-r .lbl{font-size:11px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+.write-r .lbl{font-size:12px;color:var(--gold-text);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
 .write-create{display:flex;gap:10px;align-items:flex-start;flex-shrink:0;}
 .write-create textarea{flex:1;}
 .write-create .write-r{min-width:200px;}
@@ -777,9 +777,9 @@ body.hz-explo-on #hz-rail{display:none;}
   cursor:pointer;color:var(--gold-text);background:transparent;transition:.15s;display:inline-flex;align-items:center;gap:5px;}
 .hz-vm-opt:hover{border-color:var(--gold);}
 .hz-vm-opt.gagne{background:var(--gold);color:var(--chrome-bg);border-color:var(--gold);}
-.hz-vm-opt .n{opacity:.6;font-size:11px;}
-.hz-vm-meta{font-size:10.5px;color:var(--ink-dim);margin-top:6px;display:flex;gap:8px;align-items:center;}
-.hz-vm-appliquer{font-size:11px;cursor:pointer;color:var(--gold-text);border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);padding:2px 9px;}
+.hz-vm-opt .n{opacity:.6;font-size:12px;}
+.hz-vm-meta{font-size:12px;color:var(--ink-dim);margin-top:6px;display:flex;gap:8px;align-items:center;}
+.hz-vm-appliquer{font-size:12px;cursor:pointer;color:var(--gold-text);border:1px solid var(--gold-a35);border-radius:var(--r-pill,999px);padding:2px 9px;}
 .hz-vm-appliquer:hover{background:var(--gold);color:var(--chrome-bg);}
 .vt{display:flex;flex-wrap:wrap;gap:5px;}
 
@@ -867,7 +867,7 @@ body.hz-explo-on #hz-rail{display:none;}
            laisser passer le clic région dans les zones vides. -->
       <div class="hz-ov hz-ov-tl">
         <div class="hz-dashboard" id="hz-dashboard" style="display:none;">
-          <span class="hz-db-cell"><b id="hz-db-dist">—<span style="font-size:9px;">km</span></b><i>aller-retour</i></span>
+          <span class="hz-db-cell"><b id="hz-db-dist">—<span style="font-size:12px;">km</span></b><i>aller-retour</i></span>
           <span class="hz-db-cell"><b id="hz-db-duree">—</b><i>de route</i></span>
           <span class="hz-db-cell"><b id="hz-db-etapes">0</b><i>étapes</i></span>
         </div>
@@ -1367,7 +1367,7 @@ function hzAfficheMaison(){
   if(HZ_MAISON_MK){ HZ_CARTE_REPOS.removeLayer(HZ_MAISON_MK); HZ_MAISON_MK=null; }
   HZ_MAISON_MK=L.marker([HZ_DOMICILE.lat,HZ_DOMICILE.lng],
     {icon:RNR_MARQUEURS.iconeMaison({taille:32}), zIndexOffset:1000}).addTo(HZ_CARTE_REPOS)
-    .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHtmlHz(HZ_DOMICILE.nom||'La maison')+'</div><div style="font-size:11px;color:#888;padding:0 2px;">Départ et retour du voyage</div></div>',
+    .bindPopup('<div style="font-family:Inter,sans-serif;min-width:150px;"><div style="font-weight:700;font-size:14px;padding:0 2px;">🏠 '+escapeHtmlHz(HZ_DOMICILE.nom||'La maison')+'</div><div style="font-size:12px;color:#888;padding:0 2px;">Départ et retour du voyage</div></div>',
     {maxWidth:220, autoPan:false, closeButton:false});
   if(!HZ_TACTILE){
     HZ_MAISON_MK.on('mouseover', ()=>HZ_MAISON_MK.openPopup());
@@ -1388,13 +1388,13 @@ function hzMajDashboard(d){
   }
   if(d.distance_km!=null){
     const el=document.getElementById('hz-db-dist');
-    if(el) el.innerHTML=d.distance_km+'<span style="font-size:9px;"> km</span>';
+    if(el) el.innerHTML=d.distance_km+'<span style="font-size:12px;"> km</span>';
   }
   if(d.duree_h!=null){
     const el=document.getElementById('hz-db-duree');
     if(el){
       const H=Math.floor(d.duree_h), M=Math.round((d.duree_h-H)*60);
-      el.innerHTML = H>0 ? (H+'<span style="font-size:9px;">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span style="font-size:9px;"> min</span>');
+      el.innerHTML = H>0 ? (H+'<span style="font-size:12px;">h</span>'+(M>0?String(M).padStart(2,'0'):'')) : (M+'<span style="font-size:12px;"> min</span>');
     }
   }
 }
@@ -1526,7 +1526,7 @@ function hzPopupFicheHtml(f){
   let badge='', actions='';
   const dogEtat=RNR_FICHE_COMPLETE.dogEtatDe(f);
   const dogLabel=RNR_FICHE_COMPLETE.DOG_LABELS[dogEtat];
-  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:10px;">'+dogLabel+'</span>':'';
+  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:12px;">'+dogLabel+'</span>':'';
   const propId=HZ_VOTE_DE_FICHE[f.id];
   if(retenu){
     badge='<span class="hz-pop-badge" style="background:var(--mk-epingle)">📌 Retenue pour ce voyage</span>';
@@ -1555,14 +1555,14 @@ function hzPopupFicheHtml(f){
   // léger (texte tronqué), mais un chemin existe désormais vers la fiche
   // complète (RNR_FICHE_COMPLETE, la même que le Carnet) sans quitter la carte.
   const texteApercu=(f.commentaire||f.description||'').trim();
-  const apercu=texteApercu?'<div style="font-size:11px;color:var(--ink-dim,#aaa);padding:0 2px 6px;line-height:1.4;">'+escapeHtmlHz(texteApercu.length>110?texteApercu.slice(0,110)+'…':texteApercu)+'</div>':'';
+  const apercu=texteApercu?'<div style="font-size:12px;color:var(--ink-dim,#aaa);padding:0 2px 6px;line-height:1.4;">'+escapeHtmlHz(texteApercu.length>110?texteApercu.slice(0,110)+'…':texteApercu)+'</div>':'';
   const regionLabel=(typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||'');
   return '<div class="hz-pop" style="font-family:Inter,sans-serif;min-width:200px;max-width:250px;">'+
     photo+
     (badge?'<div style="padding:0 2px 4px;">'+badge+'</div>':'')+
     '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
     '<div style="padding:0 2px 4px;">'+dogBadge+'</div>'+
-    '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(regionLabel)+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+    '<div style="font-size:12px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(regionLabel)+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
     apercu+
     (actions?'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 2px 2px;">'+actions+'</div>':'')+
     '<div style="padding:4px 2px 2px;"><button class="hz-aimee-vote" type="button" onclick="event.stopPropagation();hzOuvreGrandeFiche(\''+f.id+'\',event)" style="width:100%;">'+(enVote?'📖 Voir la fiche et voter':'📖 Lire la fiche complète')+'</button></div>'+
@@ -1579,14 +1579,14 @@ function hzTooltipFicheHtml(f){
   const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
   const dogEtat=RNR_FICHE_COMPLETE.dogEtatDe(f);
   const dogLabel=RNR_FICHE_COMPLETE.DOG_LABELS[dogEtat];
-  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:9.5px;padding:2px 7px;">'+dogLabel+'</span>':'';
+  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:12px;padding:2px 7px;">'+dogLabel+'</span>':'';
   const photo=f.photo_url
     ? '<div style="height:86px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');"></div>'
     : '';
   return '<div style="font-family:Inter,sans-serif;white-space:normal;">'+photo+
     '<div style="padding:8px 10px 9px;">'+
       '<div style="font-weight:700;font-size:12.5px;line-height:1.3;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
-      '<div style="font-size:10.5px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz((typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||''))+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+      '<div style="font-size:12px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz((typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||''))+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
       '<div style="margin-top:5px;">'+dogBadge+'</div>'+
     '</div>'+
   '</div>';
@@ -4548,9 +4548,9 @@ function initExploCarte(){
   const bounds=[];
   toutes.forEach(l=>{
     const retenue=HZ_RETENUS.has(l.id);
-    const badge=retenue?'<br><span style="font-size:10px;color:var(--mk-epingle,#1d9e75);font-weight:700;">📌 épinglée pour ce voyage</span>':'';
+    const badge=retenue?'<br><span style="font-size:12px;color:var(--mk-epingle,#1d9e75);font-weight:700;">📌 épinglée pour ce voyage</span>':'';
     const popup='<div style="font-family:sans-serif;min-width:150px;"><strong style="font-size:13px;">'+
-      escapeHtmlHz(l.nom||'—')+'</strong><br><span style="font-size:10px;color:#888;">'+
+      escapeHtmlHz(l.nom||'—')+'</strong><br><span style="font-size:12px;color:#888;">'+
       escapeHtmlHz((l.type||'Lieu')+(l.sous_region?(' · '+l.sous_region):''))+'</span>'+badge+'</div>';
     // Moteur unique : forme = jour/nuit, couleur = mon rapport (épingle/cœur/neutre)
     const icon = (window.RNR_MARQUEURS) ? RNR_MARQUEURS.icone(l, hzEtatLieu(l.id)) : null;
