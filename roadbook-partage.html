@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RockNRoad · Roadbook partagé</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="app.css">
+<style>
+/* Page publique — Bloc4 (19/07). Ne charge JAMAIS chrome.js (redirige vers
+   index.html si pas de session) : cette page doit fonctionner sans compte,
+   pour n'importe qui reçoit un lien par SMS/WhatsApp/etc. Même principe que
+   fiche-partagee.html, étendu à un Roadbook entier plutôt qu'à une fiche. */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;}
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;padding:24px 14px 48px;}
+.rp-brand{display:flex;align-items:center;gap:8px;margin-bottom:20px;color:var(--gold);
+  font-family:var(--font-title);font-weight:700;font-size:17px;letter-spacing:.02em;}
+.rp-brand span.tag{color:var(--ink-dim,#999);font-weight:500;font-size:12px;}
+.rp-wrap{max-width:680px;width:100%;}
+.rp-card{background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;
+  width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;margin-bottom:18px;}
+.rp-state{padding:48px 24px;text-align:center;color:var(--ink);}
+.rp-state .ic{font-size:40px;margin-bottom:14px;}
+.rp-state h2{font-family:var(--font-title);font-size:19px;margin-bottom:8px;}
+.rp-state p{opacity:.7;font-size:14px;line-height:1.5;}
+.rp-cta{margin-top:12px;text-align:center;font-size:13px;opacity:.6;}
+.rp-cta a{color:var(--gold);text-decoration:none;font-weight:600;}
+
+/* En-tête voyage : nom, dates, description — mêmes couleurs sûres sur papier
+   clair que fiche-partagee.html (--ink/--paper ne sont pas fiables en thème
+   sombre, correctif du 16/07 repris ici à l'identique). */
+.rp-entete{padding:26px 24px 20px;}
+.rp-entete h1{font-family:var(--font-title);font-size:24px;color:#1a1208;margin-bottom:6px;}
+.rp-entete .rp-dest{color:#8a6d2f;font-size:14px;font-weight:600;margin-bottom:10px;}
+.rp-entete .rp-desc{color:#6B5F4A;font-size:14px;line-height:1.5;margin-bottom:12px;}
+.rp-meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:#8a7a5f;}
+.rp-meta span{display:inline-flex;align-items:center;gap:4px;}
+.rp-contributeurs{margin-top:14px;font-size:12.5px;color:#8a7a5f;}
+.rp-contributeurs b{color:#6B5F4A;}
+
+#rp-map{height:280px;width:100%;background:#e8e0cf;}
+
+.rp-etapes{padding:20px 24px 8px;}
+.rp-etapes h2{font-family:var(--font-title);font-size:16px;color:#1a1208;margin-bottom:14px;}
+.rp-etape-bloc{margin-bottom:22px;}
+.rp-etape-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+  color:#8a6d2f;background:var(--gold-a10);border:1px solid var(--gold-a35);
+  border-radius:20px;padding:3px 11px;margin-bottom:8px;}
+.rp-excursion{margin-left:22px;border-left:2px solid var(--gold-a20);padding-left:14px;}
+.rp-excursion .rp-etape-badge{background:transparent;}
+#rp-card .gf-title{color:#1a1208!important;}
+#rp-card .gf-desc,#rp-card .gf-quote p,#rp-card .gf-conseil p{color:#6B5F4A!important;}
+.rp-fiche-wrap{border:1px solid var(--gold-a20);border-radius:12px;overflow:hidden;margin-bottom:4px;}
+</style>
+</head>
+<body>
+<div class="rp-brand">🐾 RockNRoad <span class="tag">· Roadbook partagé</span></div>
+<div class="rp-wrap">
+  <div class="rp-card" id="rp-card">
+    <div class="rp-state" id="rp-loading">
+      <div class="ic">⏳</div>
+      <h2>Chargement du Roadbook…</h2>
+    </div>
+  </div>
+</div>
+<div class="rp-cta">Envoyé depuis RockNRoad, l'appli de voyage en groupe.</div>
+
+<script src="tags.js"></script>
+<script src="lightbox.js"></script>
+<script src="fiche-complete.js"></script>
+<script>
+const SURL = "https://cazqllstxhuecoqpktwm.supabase.co";
+const SKEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhenFsbHN0eGh1ZWNvcXBrdHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzOTExNTQsImV4cCI6MjA5NDk2NzE1NH0.6YYAJXG4s-h78YUp2pd7fBvQJzDprSxtSkUZTv6ZtZs";
+const EDGE_FN = SURL + '/functions/v1/dynamic-action';
+
+function rpEtat(icone, titre, texte){
+  document.getElementById('rp-card').innerHTML =
+    '<div class="rp-state"><div class="ic">'+icone+'</div><h2>'+titre+'</h2><p>'+(texte||'')+'</p></div>';
+}
+function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+(async function(){
+  const jeton = new URLSearchParams(window.location.search).get('j');
+  if(!jeton){ rpEtat('🔗','Lien incomplet','Ce lien de Roadbook partagé est incomplet ou invalide.'); return; }
+
+  try{
+    const r = await fetch(EDGE_FN, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},
+      body: JSON.stringify({ action:'get_shared_voyage', jeton })
+    });
+    const j = await r.json();
+
+    if(j.error === 'lien_expire'){
+      rpEtat('⌛','Ce lien a expiré','Les Roadbooks partagés restent accessibles 30 jours. Demande un nouveau lien à la personne qui te l\'a envoyé.');
+      return;
+    }
+    if(!r.ok || j.error){
+      rpEtat('🤷','Roadbook introuvable','Ce lien ne correspond à aucun Roadbook RockNRoad valide.');
+      return;
+    }
+
+    const v = j.voyage;
+    const etapes = j.etapes || [];
+    const contributeurs = j.contributeurs || [];
+
+    // Index uid -> nom, pour retrouver le nom du séjour parent d'une excursion
+    const nomParUid = {};
+    etapes.forEach(e => { if(e.lieu) nomParUid[e.uid] = e.lieu.nom; });
+
+    let metaHtml = '';
+    if(v.date_debut) metaHtml += '<span>📅 '+rpEsc(v.date_debut)+(v.date_fin_envisagee?' → '+rpEsc(v.date_fin_envisagee):'')+'</span>';
+    if(v.nb_participants) metaHtml += '<span>👥 '+v.nb_participants+' participant'+(v.nb_participants>1?'s':'')+'</span>';
+    if(v.animaux_a_bord) metaHtml += '<span>🐾 avec animaux</span>';
+    if(v.depart_nom) metaHtml += '<span>🚏 Départ : '+rpEsc(v.depart_nom)+'</span>';
+
+    let etapesHtml = '';
+    etapes.forEach(e => {
+      if(!e.lieu) return;
+      const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(e.lieu.note, e.lieu.user_ratings_total);
+      const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(e.lieu.note_famille);
+      const estExcursion = !!e.rattache_a_nuit_uid;
+      let badge = '';
+      if(!estExcursion && e.nb_nuits > 1){
+        badge = '<div class="rp-etape-badge">🏕️ Séjour · '+e.nb_nuits+' nuits</div>';
+      } else if(estExcursion){
+        const nomParent = nomParUid[e.rattache_a_nuit_uid] || 'le séjour';
+        badge = '<div class="rp-etape-badge">↳ Excursion'+(e.jour_offset?' · Jour '+e.jour_offset:'')+' depuis '+rpEsc(nomParent)+'</div>';
+      }
+      const ficheHtml = RNR_FICHE_COMPLETE.html(e.lieu, { noteG, noteF });
+      etapesHtml += '<div class="rp-etape-bloc'+(estExcursion?' rp-excursion':'')+'">'+badge+
+        '<div class="rp-fiche-wrap">'+ficheHtml+'</div></div>';
+    });
+
+    let contribHtml = '';
+    if(contributeurs.length){
+      contribHtml = '<div class="rp-contributeurs">🧑‍🤝‍🧑 Préparé par <b>'+contributeurs.map(rpEsc).join(', ')+'</b></div>';
+    }
+
+    document.getElementById('rp-card').innerHTML =
+      '<div class="rp-entete">'+
+        '<h1>'+rpEsc(v.nom||'Voyage')+'</h1>'+
+        (v.destination_libre ? '<div class="rp-dest">📍 '+rpEsc(v.destination_libre)+'</div>' : '') +
+        (v.but_voyage ? '<div class="rp-desc">'+rpEsc(v.but_voyage)+'</div>' : (v.description ? '<div class="rp-desc">'+rpEsc(v.description)+'</div>' : '')) +
+        '<div class="rp-meta">'+metaHtml+'</div>'+
+        contribHtml+
+      '</div>'+
+      '<div id="rp-map"></div>'+
+      '<div class="rp-etapes"><h2>🗺️ Itinéraire ('+etapes.filter(e=>e.lieu).length+' étape'+(etapes.length>1?'s':'')+')</h2>'+
+        (etapesHtml || '<p style="color:#8a7a5f;font-size:13px;">Aucune étape dans ce Roadbook pour l\'instant.</p>') +
+      '</div>';
+
+    // Cette page vit hors de tout compte : les liens Horizon/vote posés par
+    // le gabarit partagé pour tout autre contexte demandent une session —
+    // inutiles et trompeurs ici. Retrait ciblé, sans forker le gabarit (loi :
+    // un seul moteur de rendu, jamais une variante "publique" du template).
+    document.querySelectorAll('#rp-card a[href*="horizon.html"]').forEach(el => el.remove());
+
+    // Carte : marqueurs + tracé EN LIGNE DROITE uniquement — jamais d'appel
+    // ORS depuis cette page publique sans compte (voir commentaire v27 côté
+    // serveur : protéger le quota ORS d'un trafic non authentifié qui peut
+    // circuler largement une fois le lien envoyé).
+    const pts = [];
+    if(v.depart_lat && v.depart_lng) pts.push([v.depart_lat, v.depart_lng]);
+    etapes.forEach(e => { if(e.lieu && e.lieu.lat && e.lieu.lng) pts.push([e.lieu.lat, e.lieu.lng]); });
+    if(v.retour_lat && v.retour_lng) pts.push([v.retour_lat, v.retour_lng]);
+
+    if(pts.length){
+      const map = L.map('rp-map', { zoomControl:true, scrollWheelZoom:false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'© OpenStreetMap', maxZoom:18
+      }).addTo(map);
+      pts.forEach((p,i) => {
+        L.circleMarker(p, { radius:7, color:'#8a6d2f', fillColor:'#d4af37', fillOpacity:1, weight:2 })
+          .addTo(map).bindTooltip(String(i+1), {permanent:false});
+      });
+      if(pts.length > 1){
+        L.polyline(pts, { color:'#8a6d2f', weight:3, opacity:.7, dashArray:'6,6' }).addTo(map);
+      }
+      map.fitBounds(L.latLngBounds(pts), { padding:[30,30] });
+    } else {
+      document.getElementById('rp-map').style.display = 'none';
+    }
+
+  }catch(e){
+    rpEtat('⚠️','Impossible de charger le Roadbook','Vérifie ta connexion et réessaie dans un instant.');
+  }
+})();
+</script>
+</body>
+</html>

@@ -326,6 +326,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
       <div class="panel-actions panel-actions-top">
         <button class="tb-btn tb-btn-print" onclick="window.print()">🖨️ Imprimer</button>
         <button class="tb-btn tb-btn-print" id="rb-btn-gmaps" onclick="rbExporteGoogleMaps()" title="Envoie ce trajet dans Google Maps, prêt à naviguer">📍 Envoyer vers le GPS</button>
+        <button class="tb-btn tb-btn-print" id="rb-btn-partager" onclick="partagerRoadbook(this)" title="Génère un lien public (sans compte) montrant tout ce Roadbook, valable 30 jours">🔗 Partager</button>
         <button class="tb-btn tb-btn-clear" onclick="clearAll()">🗑 Tout effacer</button>
       </div>
       <p style="margin:4px 14px 0;font-size:11px;color:var(--ink-dim);">📍 fonctionne mieux depuis un téléphone (l'itinéraire s'ouvre directement dans l'appli)</p>
@@ -2004,6 +2005,44 @@ function clearAll(){
   render();
   rafraichitRetenues();
   rbVerifieCoherenceDates();
+}
+
+// ── PARTAGE ROADBOOK ENTIER (Bloc4, 19/07) — lien public en lecture seule,
+// 30 jours, même principe que partagerFiche (B66, carnet.html) mais pour
+// tout le voyage (carte + étapes + fiche complète de chaque lieu) plutôt
+// qu'une seule fiche. N'importe quel membre du groupe peut le faire (même
+// logique que créer/modifier un voyage — décision Bruno 19/07).
+async function partagerRoadbook(btn){
+  if(!VOYAGE_ID){ alert('Aucun voyage actif à partager.'); return; }
+  const texteOriginal = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳'; }
+  try{
+    const {data:{session}} = await sb.auth.getSession();
+    if(!session){ alert('Connexion requise pour partager.'); return; }
+
+    const r = await fetch(SURL + '/functions/v1/dynamic-action', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body: JSON.stringify({ action:'create_share_voyage', voyage_id: VOYAGE_ID })
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok){ alert('Erreur : '+(j.reason||j.error||'partage impossible')); return; }
+
+    const nomVoyage = (document.getElementById('rb-nom')?.value || 'ce voyage');
+    const lienPartage = window.location.origin + window.location.pathname.replace(/voyage\.html$/,'') + 'roadbook-partage.html?j=' + j.jeton;
+    const texte = 'Regarde notre Roadbook RockNRoad : ' + nomVoyage;
+
+    if(navigator.share){
+      await navigator.share({ title: nomVoyage, text: texte, url: lienPartage }).catch(()=>{});
+    } else {
+      await navigator.clipboard.writeText(lienPartage);
+      alert('🔗 Lien copié — colle-le dans ton SMS. Valable 30 jours, sans compte requis pour le consulter.');
+    }
+  }catch(e){
+    alert('Erreur de partage : '+e.message);
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = texteOriginal; }
+  }
 }
 
 // ── Haversine ─────────────────────────────────────────────────────────────────
