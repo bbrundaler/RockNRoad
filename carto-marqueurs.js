@@ -332,11 +332,32 @@
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (rows) {
         if (rows && rows.length && rows[0] && rows[0].trace) {
+          _toucherCachePersistant(cle, cfg); // (19/07, purge) — hit : encore utilisé, on écarte la purge à venir.
           return { trace: rows[0].trace, distance_km: rows[0].distance_km, duree_h: rows[0].duree_h };
         }
         return null;
       })
       .catch(function () { return null; });
+  }
+  /* (19/07, suite B91 — retour Bruno sur l'absence de purge) : traces_ors_cache
+     grandirait indéfiniment sans jamais rien retirer. maj_le n'était posé qu'à
+     l'écriture initiale — un trajet consulté des centaines de fois sans jamais
+     être recalculé aurait fini par paraître "vieux" et purgeable alors qu'il
+     est activement utilisé. On rafraîchit donc maj_le à chaque hit (fire-and-
+     forget, jamais bloquant : un échec ici ne doit jamais retarder l'affichage
+     du tracé, déjà résolu par le hit lui-même). */
+  function _toucherCachePersistant(cle, cfg) {
+    if (!cfg || !cfg.surl || !cfg.skey) return;
+    fetch(cfg.surl + '/rest/v1/traces_ors_cache?cle=eq.' + encodeURIComponent(cle), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': cfg.skey,
+        'Authorization': 'Bearer ' + cfg.skey,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ maj_le: new Date().toISOString() })
+    }).catch(function () {});
   }
   function _ecrireCachePersistant(cle, res, cfg) {
     if (!cfg || !cfg.surl || !cfg.skey) return;
@@ -354,6 +375,31 @@
         cle: cle, trace: res.trace, distance_km: res.distance_km, duree_h: res.duree_h, maj_le: new Date().toISOString()
       })
     }).catch(function (e) { console.warn('RNR_MARQUEURS : écriture cache persistant échouée (non bloquant).', e); });
+    _demanderPurgeCache(cfg);
+  }
+  /* PURGE DU CACHE PERSISTANT (19/07, B91 suite — retour Bruno : "pas de purge,
+     ça va grandir indéfiniment"). Pas de pg_cron, pas de nouvelle
+     infrastructure : on greffe la purge sur le point d'entrée déjà existant
+     (une écriture cache = un peu de trafic sur le site = bon moment pour
+     nettoyer). Passe par l'Edge Function (service_role, GRANT DELETE déjà
+     vérifié en base) plutôt que d'ouvrir une policy DELETE publique sur
+     traces_ors_cache — un visiteur anonyme n'a aucune raison de pouvoir
+     vider ce cache lui-même. Une seule tentative par page chargée (pas à
+     chaque écriture : un Roadbook avec plusieurs pétales peut écrire
+     plusieurs fois d'affilée), fire-and-forget, jamais bloquant. */
+  var _purgeCacheDejaDemandee = false;
+  function _demanderPurgeCache(cfg) {
+    if (_purgeCacheDejaDemandee || !cfg || !cfg.surl || !cfg.skey) return;
+    _purgeCacheDejaDemandee = true;
+    fetch(cfg.surl + '/functions/v1/dynamic-action', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': cfg.skey,
+        'Authorization': 'Bearer ' + cfg.skey
+      },
+      body: JSON.stringify({ action: 'purge_traces_cache' })
+    }).catch(function () {});
   }
 
   /* Distance à vol d'oiseau (km, formule de Haversine). Sert de repli quand un
