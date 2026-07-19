@@ -64,20 +64,20 @@
 .sites-grid,.camps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:16px;}
 
 /* SITE CARD */
-.site-card{background:var(--paper);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
+.site-card{background:var(--paper);color:var(--paper-ink);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;}
 .site-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);}
 .site-photo{height:200px;background:var(--bg);background-size:cover!important;background-position:center!important;position:relative;flex-shrink:0;}
 .site-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.6),transparent 50%);pointer-events:none;}
 .site-overlay{position:absolute;bottom:7px;left:9px;right:9px;z-index:2;}
 .type-badge{font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.85);}
 .site-emoji{display:none!important;}
-.site-name{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:5px;line-height:1.25;}
+.site-name{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:700;color:var(--paper-ink);margin-bottom:5px;line-height:1.25;}
 .site-body{padding:14px 16px;}
-.site-desc{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.site-desc{font-size:11.5px;color:var(--paper-ink-dim);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .dog-tag{display:inline-flex;align-items:center;gap:3px;background:var(--st-ok-bg);color:var(--st-ok-ink);font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* .dog-photo-badge / .dog-info-box (19/07) : déplacées dans app.css, partagées
    par toutes les pages qui rendent une fiche — ne plus dupliquer ici. */
-.conseil-box{background:var(--gold-a10);border-left:2px solid var(--gold-a35);padding:5px 8px;font-size:10.5px;color:var(--ink-dim);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.conseil-box{background:var(--gold-a10);border-left:2px solid var(--gold-a35);padding:5px 8px;font-size:10.5px;color:var(--paper-ink-dim);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
 .maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--ink);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
 .maps-btn:hover{background:#333;} /* bouton maps sombre : invariant */
@@ -85,14 +85,14 @@
 .google-btn:hover{background:var(--gold-a20);}
 
 /* CAMP CARD */
-.camp-card{background:var(--paper);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--surface-line);transition:all .2s;display:flex;flex-direction:column;}
+.camp-card{background:var(--paper);color:var(--paper-ink);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--surface-line);transition:all .2s;display:flex;flex-direction:column;}
 .camp-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
 .camp-card.coup-coeur{border-top-color:var(--gold);}
 .camp-header{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:3px;}
-.camp-name{font-size:12px;font-weight:700;color:var(--ink);line-height:1.3;flex:1;}
+.camp-name{font-size:12px;font-weight:700;color:var(--paper-ink);line-height:1.3;flex:1;}
 .camp-stars,.camp-note{background:var(--green);color:white;font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:4px;flex-shrink:0;}
-.camp-lieu{font-size:9.5px;color:var(--ink-dim);margin-bottom:5px;}
-.camp-desc{font-size:10.5px;color:var(--ink-dim);line-height:1.45;margin-bottom:7px;}
+.camp-lieu{font-size:9.5px;color:var(--paper-ink-dim);margin-bottom:5px;}
+.camp-desc{font-size:10.5px;color:var(--paper-ink-dim);line-height:1.45;margin-bottom:7px;}
 .camp-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;}
 .camp-tag{background:var(--bg);color:var(--ink-dim);font-size:8px;font-weight:600;padding:2px 6px;border-radius:8px;}
 .camp-footer{display:flex;align-items:center;flex-wrap:wrap;gap:5px;border-top:1px solid var(--paper-line);padding-top:8px;margin-top:auto;}
@@ -149,7 +149,7 @@
 /* votes : teintes de STATUT (love/save/top) — rgba pâles invariants, accents via --st-* */
 .vote-filter-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;
   border:1.5px solid var(--surface-line);background:var(--paper);font-size:11px;font-weight:700;cursor:pointer;
-  font-family:'Inter',sans-serif;transition:all .2s;color:var(--ink-dim);}
+  font-family:'Inter',sans-serif;transition:all .2s;color:var(--paper-ink-dim);}
 .vote-filter-btn:hover{border-color:var(--gold);color:var(--gold-text);}
 .vote-filter-btn.active-love{background:rgba(220,60,100,.1);border-color:rgba(220,60,100,.4);color:var(--st-love);}
 .vote-filter-btn.active-top{background:var(--gold-a20);border-color:var(--gold);color:var(--gold-text);}
@@ -211,10 +211,10 @@
 
 /* DISTANCES */
 .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px;}
-.dcard{background:var(--paper);border-radius:8px;padding:12px 14px;box-shadow:var(--shadow);text-align:center;}
-.dfrom{font-size:9px;color:var(--ink-dim);font-weight:600;margin-bottom:2px;}
-.dkm{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink);margin-bottom:1px;}
-.dt{font-size:10px;color:var(--ink-dim);}
+.dcard{background:var(--paper);color:var(--paper-ink);border-radius:8px;padding:12px 14px;box-shadow:var(--shadow);text-align:center;}
+.dfrom{font-size:9px;color:var(--paper-ink-dim);font-weight:600;margin-bottom:2px;}
+.dkm{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--paper-ink);margin-bottom:1px;}
+.dt{font-size:10px;color:var(--paper-ink-dim);}
 
 /* RESPONSIVE */
 @media(max-width:1200px){.sites-grid,.camps-grid,.dgrid{grid-template-columns:repeat(3,1fr)!important;}}
@@ -232,10 +232,10 @@
 .sec-lead{font-size:13px;color:var(--ink-dim);margin-bottom:18px;line-height:1.6;}
 .info-banner{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:8px;padding:11px 16px;font-size:12px;color:var(--ink-dim);line-height:1.65;margin-bottom:20px;}
 .tips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
-.tip-card{background:var(--paper);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border-top:3px solid var(--gold);}
-.tip-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:10px;}
+.tip-card{background:var(--paper);color:var(--paper-ink);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);border-top:3px solid var(--gold);}
+.tip-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--paper-ink);margin-bottom:10px;}
 .tip-list{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:5px;}
-.tip-list li{font-size:11.5px;color:var(--ink-dim);line-height:1.45;}
+.tip-list li{font-size:11.5px;color:var(--paper-ink-dim);line-height:1.45;}
 .script-box{background:var(--paper);border:1px solid var(--gold-a20);border-radius:8px;padding:16px 20px;font-size:12px;color:var(--paper-ink-dim);line-height:1.7;margin-top:6px;}
 .camp-intro{background:rgba(44,80,22,.05);border-left:3px solid var(--pyr);border-radius:0 6px 6px 0;padding:9px 13px;font-size:12px;color:var(--green);line-height:1.6;margin-bottom:14px;}
 @media(max-width:900px){.tips-grid{grid-template-columns:1fr!important;}}
@@ -288,18 +288,18 @@ body.rnr-filtre-jour .rg-bloc-nuit{display:none!important;}
 body.rnr-filtre-nuit .rg-bloc-jour{display:none!important;}
 
 /* Panneau info dynamique carte */
-#carte-info-panel{background:var(--paper);border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
-.cip-idle{padding:18px 20px;display:flex;align-items:center;gap:14px;color:var(--ink-dim);}
+#carte-info-panel{background:var(--paper);color:var(--paper-ink);border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.08);margin-top:16px;overflow:hidden;transition:all .25s;}
+.cip-idle{padding:18px 20px;display:flex;align-items:center;gap:14px;color:var(--paper-ink-dim);}
 .cip-idle .cip-icon{font-size:28px;opacity:.5;}
-.cip-idle p{font-size:12px;line-height:1.5;margin:0;color:var(--ink-dim);}
+.cip-idle p{font-size:12px;line-height:1.5;margin:0;color:var(--paper-ink-dim);}
 .cip-active{display:grid;grid-template-columns:1fr auto;align-items:start;gap:0;}
 .cip-main{padding:16px 20px;}
-.cip-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:2px;}
-.cip-meta{font-size:11px;color:var(--ink-dim);margin-bottom:10px;}
+.cip-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--paper-ink);margin-bottom:2px;}
+.cip-meta{font-size:11px;color:var(--paper-ink-dim);margin-bottom:10px;}
 .cip-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;}
 .cip-stat{text-align:center;min-width:70px;}
-.cip-stat-val{font-size:20px;font-weight:800;color:var(--ink);line-height:1;}
-.cip-stat-lbl{font-size:9px;color:var(--ink-dim);font-weight:600;letter-spacing:1px;margin-top:2px;}
+.cip-stat-val{font-size:20px;font-weight:800;color:var(--paper-ink);line-height:1;}
+.cip-stat-lbl{font-size:9px;color:var(--paper-ink-dim);font-weight:600;letter-spacing:1px;margin-top:2px;}
 .cip-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
 .cip-tag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--gold-a10);color:var(--gold-text);}
 .cip-side{padding:16px;background:var(--bg);border-left:1px solid var(--surface-line);display:flex;flex-direction:column;gap:8px;min-width:140px;}
@@ -307,8 +307,8 @@ body.rnr-filtre-nuit .rg-bloc-jour{display:none!important;}
 .cip-dog-yes{background:var(--st-ok-bg);color:var(--st-ok-ink);}
 .cip-dog-no{background:var(--st-bad-bg);color:var(--st-bad-ink);}
 .cip-maps-link{display:block;background:var(--chrome-bg);color:var(--gold);font-size:10px;font-weight:700;padding:7px 12px;border-radius:8px;text-decoration:none;text-align:center;}
-.cip-dist{font-size:11px;color:var(--ink);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;text-align:center;}
-.cip-dist strong{display:block;font-size:16px;font-weight:800;color:var(--ink);}
+.cip-dist{font-size:11px;color:var(--paper-ink);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;text-align:center;}
+.cip-dist strong{display:block;font-size:16px;font-weight:800;color:var(--paper-ink);}
 
 /* ── RÉGION MAP + RÉCAP VIEW ─────────────────────────────── */
 /* Pastilles dans le bandeau région coloré (05/07 v2, retour Bruno) : Fiches /
@@ -1165,7 +1165,7 @@ function updateCarteInfoPanel(l){
   const photoBg=l.photo_url?`background:url('${l.photo_url}') center/cover no-repeat`:'background:var(--bg)';
 
   panel.innerHTML=`
-  <div style="display:flex;gap:0;background:var(--paper);border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
+  <div style="display:flex;gap:0;background:var(--paper);color:var(--paper-ink);border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.08);">
     ${l.photo_url?`<div style="width:190px;min-height:170px;flex-shrink:0;${photoBg};background-size:cover;background-position:center;border-radius:12px 0 0 12px;"></div>`:''}
     <div style="flex:1;display:flex;flex-direction:column;">
       <div class="cip-main" style="flex:1;">
@@ -1174,7 +1174,7 @@ function updateCarteInfoPanel(l){
         <div class="cip-row">${noteG}${noteF}${distHtml}</div>
         ${l.dog_info?`<div style="font-size:10px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-top:8px;font-style:italic;">${l.dog_info.slice(0,100)}</div>`:''}
         ${tags?`<div class="cip-tags">${tags}</div>`:''}
-        ${l.description?`<p style="font-size:11px;color:var(--ink-dim);margin-top:8px;line-height:1.5;">${l.description.slice(0,120)}…</p>`:''}
+        ${l.description?`<p style="font-size:11px;color:var(--paper-ink-dim);margin-top:8px;line-height:1.5;">${l.description.slice(0,120)}…</p>`:''}
       </div>
     </div>
     <div class="cip-side" style="border-left:1px solid var(--surface-line);min-width:130px;">
@@ -1342,7 +1342,7 @@ function buildFicheContent(region){
     const campings=lx.filter(l=>l.type==='Camping'||l.type==='Halte');
 
     if(sites.length){
-      html+=`<div style="background:var(--paper);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+      html+=`<div style="background:var(--paper);color:var(--paper-ink);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
         <div style="background:${col};padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">🗺 ${sites.length} lieu${sites.length>1?'x':''}</div>`;
       sites.forEach((l,i)=>{
         const _de=dogEtatDe(l);
@@ -1352,7 +1352,7 @@ function buildFicheContent(region){
           <div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;margin-top:1px;">${i+1}</div>
           <div style="flex:1;">
             <div style="font-size:12px;font-weight:700;">${l.nom||'—'}</div>
-            <div style="font-size:9px;color:var(--ink-dim);">${l.type||''}${l.sous_region?' · '+l.sous_region:''}</div>
+            <div style="font-size:9px;color:var(--paper-ink-dim);">${l.type||''}${l.sous_region?' · '+l.sous_region:''}</div>
             <span style="display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:8px;margin-top:2px;${dogStyle}">${dog}</span>
           </div>
           ${l.note?`<span style="background:var(--green);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;">★${l.note}</span>`:''}
@@ -1361,7 +1361,7 @@ function buildFicheContent(region){
       html+='</div>';
     }
     if(campings.length){
-      html+=`<div style="background:var(--paper);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+      html+=`<div style="background:var(--paper);color:var(--paper-ink);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
         <div style="background:var(--gold-deep);padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:white;">⛺ ${campings.length} camping${campings.length>1?'s':''}</div>`;
       campings.forEach(l=>{
         html+=`<div style="padding:9px 14px;border-bottom:1px solid var(--surface-line);">
@@ -1369,7 +1369,7 @@ function buildFicheContent(region){
             <div style="font-size:12px;font-weight:700;">${l.nom||'—'}</div>
             ${l.note?`<span style="background:var(--green);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;">★${l.note}</span>`:''}
           </div>
-          <div style="font-size:9px;color:var(--ink-dim);">📍 ${l.sous_region||l.region||''}</div>
+          <div style="font-size:9px;color:var(--paper-ink-dim);">📍 ${l.sous_region||l.region||''}</div>
           ${l.tel?`<div style="margin-top:3px;"><a href="tel:${l.tel}" style="font-size:11px;font-weight:600;color:var(--st-link);text-decoration:none;">📞 ${l.tel}</a></div>`:''}
           ${l.site_web?`<a href="${l.site_web}" target="_blank" style="font-size:10px;font-weight:600;color:var(--st-link);background:var(--st-link-bg);border:1px solid var(--st-link-line);padding:1px 8px;border-radius:4px;text-decoration:none;display:inline-block;margin-top:3px;">🌐 Site</a>`:''}
         </div>`;
@@ -1523,7 +1523,7 @@ function makeDynCard(l, cardType){
     <div class="site-body">
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px;">${noteG}${noteF}</div>
       <h3 class="site-name">${l.nom||'—'}</h3>
-      ${l.commentaire?`<div style="font-size:10px;color:var(--ink-dim);font-style:italic;border-left:2px solid var(--gold-a35);padding-left:6px;margin-bottom:5px;line-height:1.4;">${l.commentaire.slice(0,80)}${l.commentaire.length>80?'...':''}</div>`:''}
+      ${l.commentaire?`<div style="font-size:10px;color:var(--paper-ink-dim);font-style:italic;border-left:2px solid var(--gold-a35);padding-left:6px;margin-bottom:5px;line-height:1.4;">${l.commentaire.slice(0,80)}${l.commentaire.length>80?'...':''}</div>`:''}
       ${l.description?`<p class="site-desc">${l.description}</p>`:''}
       ${horairesHtml}
       ${dogInfoHtml}
@@ -1993,7 +1993,7 @@ function showToast(msg){
 #gf-modal{ /* GRANDE FICHE : suit les rôles (papier en clair, sombre en sombre) — décision Bruno 12/06.
   09/07 : colonne scrollable (gf-body) + bandeau vote fixe (gf-vote-footer), même principe qu'Horizon —
   le vote de la testeuse doit rester visible sans scroller la fiche. */
-  background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;max-height:86vh;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;}
+  background:var(--paper);color:var(--paper-ink);border:1px solid var(--gold-a35);border-radius:16px;max-width:560px;width:100%;max-height:86vh;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;}
 #gf-body{overflow-y:auto;}
 </style>
 

@@ -2144,7 +2144,7 @@ window.addEventListener('resize',()=>{if(map)map.invalidateSize();});
 </script>
 <!-- Grande fiche (lecture seule) — même rendu que Carnet/Horizon (fiche-complete.js) -->
 <div id="vr-gf-overlay" style="position:fixed;inset:0;background:rgba(15,13,9,.55);z-index:4000;display:none;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)vrFermeGrandeFiche()">
-  <div style="background:var(--paper);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
+  <div style="background:var(--paper);color:var(--paper-ink);border:1px solid var(--gold-a35);border-radius:16px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);">
     <div id="vr-gf-body"></div>
   </div>
 </div>
