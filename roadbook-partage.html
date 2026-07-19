@@ -180,10 +180,17 @@ function rpEsc(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
         L.circleMarker(p, { radius:7, color:'#8a6d2f', fillColor:'#d4af37', fillOpacity:1, weight:2 })
           .addTo(map).bindTooltip(String(i+1), {permanent:false});
       });
-      if(pts.length > 1){
+      // Tracé (19/07, option 2) : si voyage.html a déjà mémorisé le VRAI
+      // tracé routier (calculé côté privé, authentifié), on l'affiche tel
+      // quel. Cette page publique n'appelle JAMAIS ORS elle-même — sinon
+      // garde le repli ligne droite habituel entre les points.
+      const traceReelle = Array.isArray(v.trace_geojson) && v.trace_geojson.length > 1 ? v.trace_geojson : null;
+      if(traceReelle){
+        L.polyline(traceReelle, { color:'#8a6d2f', weight:4, opacity:.85 }).addTo(map);
+      } else if(pts.length > 1){
         L.polyline(pts, { color:'#8a6d2f', weight:3, opacity:.7, dashArray:'6,6' }).addTo(map);
       }
-      map.fitBounds(L.latLngBounds(pts), { padding:[30,30] });
+      map.fitBounds(L.latLngBounds(traceReelle || pts), { padding:[30,30] });
     } else {
       document.getElementById('rp-map').style.display = 'none';
     }

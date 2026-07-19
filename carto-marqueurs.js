@@ -480,7 +480,7 @@
     var hit = _routeCache[cle];
     if (hit) {
       _dessineTrace(layer, hit.trace, leger, couleur);
-      return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true });
+      return Promise.resolve({ ok: true, distance_km: hit.distance_km, duree_h: hit.duree_h, cache: true, trace: hit.trace });
     }
 
     // Repli immédiat si on n'a pas de quoi appeler l'Edge Function.
@@ -496,7 +496,11 @@
       .then(function (res) {
         _routeCache[cle] = res;
         _dessineTrace(layer, res.trace, leger, couleur);
-        return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h };
+        // trace incluse dans la résolution (19/07, Bloc4 suite) : permet à
+        // l'appelant (voyage.html) de mémoriser le VRAI tracé routier en base
+        // pour l'afficher sur la page publique de partage SANS jamais rappeler
+        // ORS depuis un accès non authentifié (cf. commentaire dynamic-action v27).
+        return { ok: true, distance_km: res.distance_km, duree_h: res.duree_h, trace: res.trace };
       })
       .catch(function (e) {
         // (18/07, B76) Journalisation systématique AVANT de retomber sur le

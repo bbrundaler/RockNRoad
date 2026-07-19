@@ -1637,6 +1637,29 @@ function majTotauxRoute(r){
   if(elP) elP.style.display = r.partiel ? 'inline' : 'none';
 }
 
+// ── MÉMORISATION DU TRACÉ ROUTIER (Bloc4 suite, 19/07) — la page publique de
+// partage (roadbook-partage.html) ne doit JAMAIS appeler ORS elle-même (un
+// lien sans compte peut circuler largement, protège le quota). On mémorise
+// donc ici le vrai tracé calculé côté privé, à chaque fois qu'il est
+// (re)calculé avec succès pour le trajet PRINCIPAL (pas les excursions —
+// hors scope pour l'instant, la page publique garde son repli ligne droite
+// pour elles). Dédoublonné : on n'écrit que si le tracé a réellement changé
+// depuis la dernière sauvegarde de cette session, pour ne pas spammer la
+// base à chaque render.
+let _RB_DERNIER_TRACE_SAUVE = null;
+async function rbSauveTraceRoute(trace){
+  if(!VOYAGE_ID || !Array.isArray(trace) || !trace.length) return;
+  const signature = trace.length+':'+trace[0].join(',')+':'+trace[trace.length-1].join(',');
+  if(signature === _RB_DERNIER_TRACE_SAUVE) return;
+  _RB_DERNIER_TRACE_SAUVE = signature;
+  try{
+    await sb.from('voyages').update({
+      trace_geojson: trace,
+      trace_maj_le: new Date().toISOString()
+    }).eq('id', VOYAGE_ID);
+  }catch(e){ console.warn('Roadbook: sauvegarde tracé partagé', e); }
+}
+
 /* Branche le comportement STANDARD d'un marqueur-fiche sur la carte Roadbook
    (10/07, retour Bruno) : survol souris = petite carte (le bindPopup déjà posé
    par l'appelant), clic = fiche complète. Manquait sur cette carte alors que
@@ -1734,7 +1757,10 @@ function renderMap(){
     if(latlngs.length>=2){
       if(window.RNR_MARQUEURS && RNR_MARQUEURS.traceRoute){
         RNR_MARQUEURS.traceRoute(map, routeLayer, latlngs, {surl:SURL, skey:SKEY})
-          .then(r=>{ if(r && r.ok) majTotauxRoute(r); })
+          .then(r=>{
+            if(r && r.ok) majTotauxRoute(r);
+            if(r && r.ok && !r.partiel && Array.isArray(r.trace)) rbSauveTraceRoute(r.trace);
+          })
           .catch(()=>{});
       } else {
         const colTrace = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || '#C8A84B';
