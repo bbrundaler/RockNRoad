@@ -142,7 +142,7 @@ input::placeholder{color:#b8ad96;}
     <div class="logo-badge">🐾 Family Road Trip App</div>
     <h1 style="font-size:38px;letter-spacing:-1px;">Rock<em>N</em>Road</h1>
     <p style="font-size:12px;letter-spacing:6px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:2px;">Aventures</p>
-    <p id="sousTitre" style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Accès privé · Famille</p>
+    <p id="sousTitre" style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">La route est ouverte. À vous de la tracer.</p>
   </div>
 
   <div class="divider"></div>
@@ -157,7 +157,7 @@ input::placeholder{color:#b8ad96;}
   </div>
 
   <button class="btn" id="loginBtn" onclick="login()">
-    <span>Valider →</span>
+    <span>C'est parti →</span>
   </button>
 
   <button class="link-oubli" id="oubliBtn" onclick="afficherOubli()">Mot de passe oublié ?</button>
@@ -243,10 +243,10 @@ function afficherOubli() {
     modeOubli = false;
     pwdGroup.style.display = '';
     btn.disabled = false;
-    btn.querySelector('span').textContent = 'Valider →';
+    btn.querySelector('span').textContent = "C'est parti →";
     btn.setAttribute('onclick', 'login()');
     oubli.textContent = 'Mot de passe oublié ?';
-    if (sousTitre) sousTitre.textContent = 'Accès privé · Famille';
+    if (sousTitre) sousTitre.textContent = 'La route est ouverte. À vous de la tracer.';
     document.getElementById('error').classList.remove('show');
     document.getElementById('infoOubli').classList.remove('show');
   }
