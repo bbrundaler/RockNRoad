@@ -384,7 +384,21 @@ body[data-theme="kraft"] .team-av-nudge{border-radius:4px;}
 .gf-bottom-actions{display:flex;flex-wrap:wrap;gap:8px;}
 .gf-btn-dark{background:#161410;border:1px solid var(--gold-a35,rgba(200,168,75,.35));color:#E8C86B;font-size:11px;padding:6px 11px;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;}
 @media print{.gf-bottom-row{display:none;}} /* liens cliquables inutiles sur papier */
+/* ── DOG-FRIENDLY (19/07) — le Cahier n'a jamais chargé app.css (voir note
+   ci-dessus) : sans cette reprise, le badge que fiche-complete.js ajoute
+   maintenant automatiquement à CHAQUE page de fiche sortirait sans habillage
+   à l'impression. Couleurs sémantiques identiques au reste du site (pas
+   retintées par thème) : le statut chien doit se reconnaître d'un coup
+   d'œil, pareil sur Kraft/Atlas/Édition. */
+.dog-photo-badge{position:static;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.dog-photo-badge.yes,.dog-photo-badge.oui{background:#dceedb;color:#1f4d16;}
+.dog-photo-badge.no,.dog-photo-badge.non{background:#fbe1d6;color:#8a2600;}
+.dog-photo-badge.na,.dog-photo-badge.inconnu{background:#f4ecd2;color:#6b530f;}
+.dog-photo-badge.conditions{background:#fae4bf;color:#7a4a08;}
 .dog-info-box{font-size:11px;color:#1f4d16;background:#e8f4e8;border-left:2px solid #1f4d16;padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:12px;line-height:1.5;font-style:italic;}
+.dog-info-box.no,.dog-info-box.non{color:#8a2600;background:#fbe1d6;border-left-color:#8a2600;}
+.dog-info-box.na,.dog-info-box.inconnu{color:#6b530f;background:#f4ecd2;border-left-color:#6b530f;}
+.dog-info-box.conditions{color:#7a4a08;background:#fae4bf;border-left-color:#7a4a08;}
 
 /* ── Page « fiche complète » du Cahier (10/07) : une étape = sa vraie fiche,
    pas un résumé. accent = liseré de la couleur du séjour pour les pages

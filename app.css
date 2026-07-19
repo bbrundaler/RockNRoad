@@ -458,6 +458,21 @@ a.rr-paper:hover, .rr-paper.rr-hover:hover {
 .rnr-retenue-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--mk-epingle,#2c5016);}
 .rnr-ecartee-banner{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:5px 12px;border-radius:12px;background:var(--ink-dim,#666);}
 
+/* ── DOG-FRIENDLY (19/07) — déplacé ici depuis carnet.html : le badge doit
+   vivre partout où fiche-complete.js rend une fiche (Carnet, Horizon, fiche
+   partagée), pas dans le <style> local d'une seule page. Deux formes : en
+   overlay sur une photo de liste (position absolute par défaut) et « posée »
+   dans la rangée de badges de la grande fiche (position:static, inline). */
+.dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
+.dog-photo-badge.yes,.dog-photo-badge.oui{background:rgba(44,80,22,.82);color:#b8f0b0;}
+.dog-photo-badge.no,.dog-photo-badge.non{background:rgba(180,40,0,.82);color:#ffd0c0;}
+.dog-photo-badge.na,.dog-photo-badge.inconnu{background:rgba(60,50,20,.75);color:#f5d98a;}
+.dog-photo-badge.conditions{background:rgba(186,117,23,.82);color:#ffe0a8;}
+.dog-info-box{font-size:10px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
+.dog-info-box.no,.dog-info-box.non{color:var(--st-bad-ink);background:var(--st-bad-bg);border-left-color:var(--st-bad-ink);}
+.dog-info-box.na,.dog-info-box.inconnu{color:var(--st-na-ink);background:var(--st-na-bg);border-left-color:var(--st-na-ink);}
+.dog-info-box.conditions{color:var(--st-warn-ink);background:var(--st-warn-bg);border-left-color:var(--st-warn-line);}
+
 /* ── BANDEAU VOTE (09/07, retour Bruno) ─────────────────────────────────────
    Hors du scroll de la fiche, toujours visible : la testeuse ne voyait pas
    le choix Garder/Écarter, caché tout en bas d'une fiche avec photo+texte.

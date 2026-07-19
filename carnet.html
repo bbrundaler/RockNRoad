@@ -75,15 +75,8 @@
 .site-body{padding:14px 16px;}
 .site-desc{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .dog-tag{display:inline-flex;align-items:center;gap:3px;background:var(--st-ok-bg);color:var(--st-ok-ink);font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-bottom:4px;border:1px solid rgba(44,80,22,.1);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.dog-photo-badge{position:absolute;top:8px;right:9px;z-index:3;display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,.3);}
-.dog-photo-badge.yes,.dog-photo-badge.oui{background:rgba(44,80,22,.82);color:#b8f0b0;}
-.dog-photo-badge.no,.dog-photo-badge.non{background:rgba(180,40,0,.82);color:#ffd0c0;}
-.dog-photo-badge.na,.dog-photo-badge.inconnu{background:rgba(60,50,20,.75);color:#f5d98a;}
-.dog-photo-badge.conditions{background:rgba(186,117,23,.82);color:#ffe0a8;}
-.dog-info-box{font-size:10px;color:var(--st-ok-ink);background:var(--st-ok-bg);border-left:2px solid var(--st-ok-ink);padding:4px 8px;border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.45;font-style:italic;}
-.dog-info-box.no,.dog-info-box.non{color:var(--st-bad-ink);background:var(--st-bad-bg);border-left-color:var(--st-bad-ink);}
-.dog-info-box.na,.dog-info-box.inconnu{color:var(--st-na-ink);background:var(--st-na-bg);border-left-color:var(--st-na-ink);}
-.dog-info-box.conditions{color:var(--st-warn-ink);background:var(--st-warn-bg);border-left-color:var(--st-warn-line);}
+/* .dog-photo-badge / .dog-info-box (19/07) : déplacées dans app.css, partagées
+   par toutes les pages qui rendent une fiche — ne plus dupliquer ici. */
 .conseil-box{background:var(--gold-a10);border-left:2px solid var(--gold-a35);padding:5px 8px;font-size:10.5px;color:var(--ink-dim);line-height:1.45;border-radius:0 4px 4px 0;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .site-actions-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:7px;}
 .maps-btn{display:inline-flex;align-items:center;gap:3px;background:var(--ink);color:var(--gold);font-size:9.5px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;}
@@ -529,16 +522,12 @@ function regionSlugDe(l){
 }
 let allLieux = []; // cache global
 
-// ── DOG-FRIENDLY : source unique de vérité (lit dog_etat, fallback dog_friendly) ──
-// 4 états : oui / conditions / non / inconnu. Les fiches pas encore migrées
-// n'ont que l'ancien booléen dog_friendly → on le traduit.
-function dogEtatDe(l){
-  if(l.dog_etat) return l.dog_etat;                 // nouvelle colonne prioritaire
-  if(l.dog_friendly===true) return 'oui';            // fallback ancien booléen
-  if(l.dog_friendly===false) return 'non';
-  return 'inconnu';
-}
-const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🐕 Chien sous conditions',non:'🚫 Chien non admis',inconnu:'❓ Chien à vérifier'};
+// ── DOG-FRIENDLY : source unique de vérité désormais dans fiche-complete.js
+// (19/07, B78/B80 — un seul endroit, plus jamais dupliqué page par page).
+// Alias locaux conservés pour ne pas toucher aux dizaines d'appels existants
+// dans ce fichier (list cards, popup carte, sommaire).
+const dogEtatDe = RNR_FICHE_COMPLETE.dogEtatDe;
+const DOG_LABELS = RNR_FICHE_COMPLETE.DOG_LABELS;
 
 /* ════════════════════════════════════════════════════════════════
    PREMIER CHOIX DANS LA FICHE — collectif, partagé au groupe (v14).
@@ -1911,15 +1900,11 @@ function openGrandeFiche(id){
   const l = allLieux.find(x => x.id === id || x.id === String(id));
   if(!l){ showToast('Fiche introuvable','error'); return; }
 
-  const dogStatus = dogEtatDe(l);
-  const dogLabel  = DOG_LABELS[dogStatus];
-
   const noteG = RNR_FICHE_COMPLETE.badgeNoteGoogle(l.note, l.user_ratings_total);
   const noteF = RNR_FICHE_COMPLETE.badgeNoteFamille(l.note_famille);
-  const dogBadge = dogLabel ? `<span class="dog-photo-badge ${dogStatus}" style="position:static;font-size:11px;">${dogLabel}</span>` : '';
 
   document.getElementById('gf-body').innerHTML = RNR_FICHE_COMPLETE.html(l, {
-    noteG, noteF, dogBadge,
+    noteG, noteF,
     closeButtonHtml: '<button class="gf-close" onclick="closeGrandeFiche()">✕</button>',
     extraActionsHtml: `<button class="gf-btn-dark" data-lid="${l.id}" onclick="closeGrandeFiche();openEditModal(this.dataset.lid)">✏️ Modifier</button><button class="gf-btn-gold" data-lid="${l.id}" onclick="partagerFiche(this.dataset.lid, this)">🔗 Partager cette fiche</button>`
   });

@@ -1524,6 +1524,9 @@ function hzPopupFicheHtml(f){
   const estLeader=(typeof peuxEpinglerHz==='function') && peuxEpinglerHz(f);
 
   let badge='', actions='';
+  const dogEtat=RNR_FICHE_COMPLETE.dogEtatDe(f);
+  const dogLabel=RNR_FICHE_COMPLETE.DOG_LABELS[dogEtat];
+  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:10px;">'+dogLabel+'</span>':'';
   const propId=HZ_VOTE_DE_FICHE[f.id];
   if(retenu){
     badge='<span class="hz-pop-badge" style="background:var(--mk-epingle)">📌 Retenue pour ce voyage</span>';
@@ -1558,6 +1561,7 @@ function hzPopupFicheHtml(f){
     photo+
     (badge?'<div style="padding:0 2px 4px;">'+badge+'</div>':'')+
     '<div style="font-weight:700;font-size:14px;margin-bottom:3px;padding:0 2px;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
+    '<div style="padding:0 2px 4px;">'+dogBadge+'</div>'+
     '<div style="font-size:11px;color:#888;padding:0 2px 8px;">'+escapeHtmlHz(regionLabel)+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
     apercu+
     (actions?'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:0 2px 2px;">'+actions+'</div>':'')+
@@ -1573,6 +1577,9 @@ function hzPopupFicheHtml(f){
 // conflit : le pattern standard tooltip=lire / popup=agir.
 function hzTooltipFicheHtml(f){
   const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+  const dogEtat=RNR_FICHE_COMPLETE.dogEtatDe(f);
+  const dogLabel=RNR_FICHE_COMPLETE.DOG_LABELS[dogEtat];
+  const dogBadge=dogLabel?'<span class="dog-photo-badge '+dogEtat+'" style="position:static;font-size:9.5px;padding:2px 7px;">'+dogLabel+'</span>':'';
   const photo=f.photo_url
     ? '<div style="height:86px;background:#ddd center/cover no-repeat url(\''+escapeHtmlHz(f.photo_url)+'\');"></div>'
     : '';
@@ -1580,6 +1587,7 @@ function hzTooltipFicheHtml(f){
     '<div style="padding:8px 10px 9px;">'+
       '<div style="font-weight:700;font-size:12.5px;line-height:1.3;white-space:normal;">'+(nuit?'🌙 ':'')+escapeHtmlHz(f.nom||'—')+'</div>'+
       '<div style="font-size:10.5px;color:#8a8a8a;margin-top:2px;white-space:normal;">'+escapeHtmlHz((typeof labelRegionSvg==='function')?labelRegionSvg(f._regionSvg||f.region||''):(f.region||''))+(f.type?' · '+escapeHtmlHz(f.type):'')+'</div>'+
+      '<div style="margin-top:5px;">'+dogBadge+'</div>'+
     '</div>'+
   '</div>';
 }

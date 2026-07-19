@@ -16,8 +16,12 @@
 // gabarit en une "fiche à voter" différente d'une "fiche à lire").
 //
 // Usage : RNR_FICHE_COMPLETE.html(lieu, {
-//   noteG, noteF, dogBadge,     // badges déjà formatés — utiliser badgeNoteGoogle/
-//                               // badgeNoteFamille ci-dessous pour rester lisibles
+//   noteG, noteF,               // badges déjà formatés — utiliser badgeNoteGoogle/
+//                               // badgeNoteFamille ci-dessous pour rester lisibles.
+//                               // Le badge dog-friendly n'est PAS un opt : il est
+//                               // calculé automatiquement depuis lieu.dog_etat par
+//                               // ce module (19/07) — aucune page hôte n'a plus à
+//                               // y penser, exactement la leçon du B78/B80.
 //   extraActionsHtml,           // ex: bouton crayon (Carnet uniquement)
 //   closeButtonHtml,            // bouton fermer, propre à chaque page
 //   galerieGrande,              // (17/07) true = galerie en grand (photo
@@ -31,6 +35,26 @@
   function esc(s){ return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function photosDe(l){
     return [...new Set([l.photo_url,...(l.photos_urls||[])].filter(Boolean))];
+  }
+  // ═══════════════════════════════════════════════════════════════════════
+  // DOG-FRIENDLY (19/07) — source unique de vérité, déplacée ici depuis
+  // carnet.html. Raison : Horizon, le Cahier et la fiche partagée rendent
+  // tous une fiche via ce module mais n'affichaient jamais l'info chien —
+  // exactement le trou B78/B80 (moteur canonique existant mais pas écouté
+  // par tous les appelants). Cette fois le badge est construit ICI, à
+  // l'intérieur de html(), donc impossible à oublier : aucune page hôte n'a
+  // plus besoin d'y penser. 4 états ; repli sur l'ancien booléen dog_friendly
+  // pour les fiches pas encore migrées.
+  function dogEtatDe(l){
+    if(l.dog_etat) return l.dog_etat;
+    if(l.dog_friendly===true) return 'oui';
+    if(l.dog_friendly===false) return 'non';
+    return 'inconnu';
+  }
+  const DOG_LABELS={oui:'🐕 Chien OK',conditions:'🐕 Chien sous conditions',non:'🚫 Chien non admis',inconnu:'❓ Chien à vérifier'};
+  function dogBadgeAuto(l){
+    const etat=dogEtatDe(l), label=DOG_LABELS[etat];
+    return label?'<span class="dog-photo-badge '+etat+'" style="position:static;font-size:11px;">'+label+'</span>':'';
   }
   // Sujet (05/07, retour Bruno) : texte vert sur fond vert, illisible. Un seul
   // badge défini ici — le corriger une fois le corrige partout.
@@ -110,12 +134,12 @@
       </div>
       ${galerie}
       <div class="gf-content">
-        <div class="gf-badges">${opts.noteG||''}${opts.noteF||''}${badgeEtoiles(l.etoiles)}${opts.dogBadge||''}</div>
+        <div class="gf-badges">${opts.noteG||''}${opts.noteF||''}${badgeEtoiles(l.etoiles)}${dogBadgeAuto(l)}</div>
         <h2 class="gf-title">${esc(l.nom||'—')}</h2>
         ${l.adresse||l.sous_region?`<p class="gf-sub">${esc(l.adresse||l.sous_region)}</p>`:''}
         ${l.description?`<p class="gf-desc">${esc(l.description)}</p>`:''}
         ${l.commentaire?`<div class="gf-quote"><div class="gf-quote-t">💬 LE MOT DE LA FAMILLE</div><p>${esc(l.commentaire)}</p></div>`:''}
-        ${l.dog_info?`<div class="dog-info-box" style="margin-bottom:14px;">🐾 ${esc(l.dog_info)}</div>`:''}
+        ${l.dog_info?`<div class="dog-info-box ${dogEtatDe(l)}" style="margin-bottom:14px;">🐾 ${esc(l.dog_info)}</div>`:''}
         ${l.conseil?`<div class="gf-conseil"><div class="gf-conseil-t">💡 Conseil</div><p>${esc(l.conseil)}</p></div>`:''}
         ${pratique?`<div class="gf-grid">${pratique}</div>`:''}
         ${tags?`<div class="gf-tags">${tags}</div>`:''}
@@ -130,5 +154,5 @@
       </div>
     `;
   }
-  window.RNR_FICHE_COMPLETE = { html, photosDe, badgeNoteGoogle, badgeNoteFamille, badgeEtoiles, _openLb:ouvrirLightbox };
+  window.RNR_FICHE_COMPLETE = { html, photosDe, badgeNoteGoogle, badgeNoteFamille, badgeEtoiles, dogEtatDe, DOG_LABELS, dogBadgeAuto, _openLb:ouvrirLightbox };
 })();
