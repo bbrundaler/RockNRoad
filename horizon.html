@@ -432,8 +432,9 @@ body.hz-explo-on #hz-rail{display:none;}
 .hz-titre-sep{color:var(--ink-dim);}
 .hz-explo-progres-wrap{flex:1;height:6px;background:var(--surface-line);border-radius:3px;overflow:hidden;min-width:60px;}
 .hz-explo-progres{height:100%;width:0;background:var(--gold);transition:width .3s;}
-.hz-explo-liste{font-family:var(--font-body);font-size:12px;cursor:pointer;background:none;border:1px solid var(--gold-a35);color:var(--gold-text);padding:5px 11px;border-radius:var(--r-sm);flex-shrink:0;}
-.hz-explo-liste:hover{background:var(--gold-a10);}
+/* (20/07, retour Bruno) : .hz-explo-liste retirée avec les 2 boutons qui
+   l'utilisaient (Carnet, Liste) — vieille idée, rognait le texte de la
+   région à gauche. #hz-explo-titre récupère cette place (déjà en flex:1). */
 .hz-explo-fermer{width:32px;height:32px;border-radius:50%;border:1px solid var(--surface-line);background:var(--bg);color:var(--ink);cursor:pointer;font-size:15px;flex-shrink:0;}
 .hz-explo-fermer:hover{border-color:var(--gold);}
 .hz-explo-carte{height:40%;min-height:190px;background:var(--bg);flex-shrink:0;}
@@ -1083,8 +1084,6 @@ body.hz-explo-on #hz-rail{display:none;}
     <div class="hz-explo-tete">
       <h3 id="hz-explo-titre">Exploration</h3>
       <div class="hz-explo-progres-wrap"><div class="hz-explo-progres" id="hz-explo-progres"></div></div>
-      <button class="hz-explo-liste" id="hz-explo-carnet" type="button" onclick="hzOuvreLienCarnet()" title="Voir cette région dans le Carnet">📓 Carnet</button>
-      <button class="hz-explo-liste" id="hz-explo-liste" type="button">▦ Liste</button>
       <button class="hz-explo-fermer" id="hz-explo-fermer" type="button" title="fermer">✕</button>
     </div>
     <div class="hz-explo-carte" id="hz-explo-carte"></div>
@@ -4450,11 +4449,8 @@ function ouvreExplo(){
 // Lien contextuel (05/07) : depuis la région explorée, voir ses fiches dans le
 // Carnet — même slug D-22 des deux côtés (carto.js), pas de renormalisation
 // séparée (la leçon du bug "tombé sur du vide" du 05/07, admin.html).
-function hzOuvreLienCarnet(){
-  const slug=HZ_LIEUX && HZ_LIEUX[0];
-  if(!slug) return;
-  window.open('carnet.html#'+slug, '_blank', 'noopener');
-}
+// (20/07, retour Bruno) : hzOuvreLienCarnet() retirée avec le bouton "📓 Carnet"
+// du bandeau swipe ci-dessus (vieille idée, rognait le texte de la région).
 function majTitrePopup(slugActuel){
   const titre=document.getElementById('hz-explo-titre');
   if(!titre) return;
@@ -4641,13 +4637,8 @@ function brancheExplo(){
   if(f && !f._cable){ f._cable=true; f.addEventListener('click',fermeExplo); }
   const ov=document.getElementById('hz-explo');
   if(ov && !ov._cable){ ov._cable=true; ov.addEventListener('click',e=>{ if(e.target===ov && !ov.classList.contains('hz-explo-inline')) fermeExplo(); }); }
-  const li=document.getElementById('hz-explo-liste');
-  if(li && !li._cable){ li._cable=true; li.addEventListener('click',()=>{
-    fermeExplo();
-    HZ_SWIPE_MODE='liste'; appliqueModeBande();
-    const corps=document.getElementById('hz-coin-corps');
-    if(corps) corps.scrollIntoView({behavior:'smooth',block:'center'});
-  }); }
+  // (20/07, retour Bruno) : le câblage du bouton "▦ Liste" est retiré avec
+  // lui — le mode liste reste accessible via basculeModeBande() ailleurs.
 }
 
 // ════════════════════════════════════════════════════════════════
