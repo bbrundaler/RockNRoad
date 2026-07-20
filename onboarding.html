@@ -934,6 +934,18 @@ document.addEventListener('DOMContentLoaded', function(){
 // depuis la naissance déjà saisie dans ce même formulaire, jamais un champ
 // "type de membre" séparé à construire. Les animaux (RNR_ANIMAUX) n'ont de
 // toute façon jamais de ligne membres : aucun risque de leur imposer un champ.
+// (20/07, retour Bruno) : ne pas compter sur la personne pour taper le +33
+// elle-même — habitude locale ("06...") la plus probable. On convertit
+// systématiquement au format international au moment d'enregistrer, pour
+// que SMS/WhatsApp marchent aussi une fois en voyage, sans rien demander
+// de plus à qui remplit le formulaire.
+function normaliseTelStockage(tel){
+  var d=String(tel||'').trim().replace(/[^\d+]/g,'');
+  if(!d) return '';
+  if(d.charAt(0)==='+') return d;                              // déjà international : inchangé
+  if(d.charAt(0)==='0' && d.length===10) return '+33'+d.slice(1); // local FR classique
+  return '+'+d; // saisie ambiguë (pas de 0 initial, pas de +) : on suppose un indicatif déjà tapé
+}
 function estMajeur(mois, annee){
   if(!mois || !/^\d{4}$/.test(annee)) return true; // prudence : inconnu → traité comme adulte
   const naissance=new Date(parseInt(annee,10), parseInt(mois,10)-1, 1);
@@ -1019,7 +1031,7 @@ async function saveProfil(){
       pseudo, prenom, nom, avatar:selectedEmoji, photo_url:selectedPhotoUrl, photos_disponibles:galeriePhotos,
       email: (currentUser && currentUser.email) ? currentUser.email : null,
       naissance_mois_annee: mois+'/'+annee,
-      telephone: telephone || null,
+      telephone: telephone ? normaliseTelStockage(telephone) : null,
       consent_marketing: document.getElementById('m-consent').checked,
       consent_marketing_date: document.getElementById('m-consent').checked ? new Date().toISOString() : null
     };

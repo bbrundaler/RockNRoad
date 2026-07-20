@@ -612,6 +612,17 @@
     if(d.charAt(0)==='0' && d.length===10) return '33'+d.slice(1);
     return d;
   }
+  // (20/07, retour Bruno) : ne pas compter sur la personne pour taper le +33
+  // elle-même en modifiant son profil — même conversion systématique qu'à
+  // l'inscription (onboarding.html), pour que le format stocké soit toujours
+  // le même quel que soit le point d'entrée.
+  function normaliseTelStockage(tel){
+    var d=String(tel||'').trim().replace(/[^\d+]/g,'');
+    if(!d) return '';
+    if(d.charAt(0)==='+') return d;
+    if(d.charAt(0)==='0' && d.length===10) return '+33'+d.slice(1);
+    return '+'+d;
+  }
   // (20/07, retour Bruno) : mailto seul ne suffit pas — SMS et WhatsApp sont
   // de simples liens, comme mailto, aucune API/clé nécessaire. On propose les
   // trois quand le téléphone existe, email seul sinon (compatibilité arrière
@@ -720,7 +731,7 @@
         var chosen=[]; corps.querySelectorAll('.rnrc-pf-chip.on').forEach(function(c){ chosen.push(c.dataset.v); });
         var payload={
           voyageur_depuis: document.getElementById('rnrc-pf-depuis').value || null,
-          telephone: telSaisi || null,
+          telephone: telSaisi ? normaliseTelStockage(telSaisi) : null,
           passions: chosen.length?chosen:null,
           presentation: (document.getElementById('rnrc-pf-presentation').value||'').trim() || null,
           photo_url: (document.getElementById('rnrc-pf-photo').value||'').trim() || null,
