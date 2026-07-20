@@ -28,7 +28,18 @@
    — la barre du haut est injectée par chrome.js (la couverture).   */
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{height:100%;overflow-x:hidden;overflow-y:auto;}  /* peut grandir si beaucoup d'infos (logique Cockpit) */
-body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
+/* (20/07, retour Bruno — Étape 1 de M2) : body passe en colonne flexible.
+   Avant, .stage (la scène carte) n'avait AUCUNE hauteur garantie par le
+   site — l'intention "plein écran moins la barre du haut" existait dans un
+   commentaire, jamais en CSS. Tout reposait par accident sur la taille du
+   SVG (560×560) pour donner une hauteur à la carte. Ce correctif rend la
+   hauteur EXPLICITE et robuste : .stage (flex:1, plus bas) prend tout
+   l'espace qui reste entre la barre du haut (sticky) et le bandeau CGU
+   (chrome.js), quelle que soit leur hauteur exacte — utile le jour où une
+   traduction change la hauteur du bandeau (extension internationale,
+   Master). Ajout pur : rien n'est retiré, le SVG reste en place à cette
+   étape, intouché. */
+body{font-family:var(--font-body);color:var(--ink);background:var(--bg);display:flex;flex-direction:column;min-height:100vh;}
 
 /* SCÈNE = hauteur écran moins la barre du chrome (56px), en grille, sans scroll */
 .stage{
@@ -38,6 +49,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   grid-template-areas:
     "map";
   min-height:0;
+  flex:1;
 }
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
   box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0;}
@@ -793,7 +805,7 @@ body.hz-explo-on #hz-rail{display:none;}
 
 @media(max-width:880px){
   html,body{overflow:auto;}
-  .stage{height:auto;grid-template-columns:1fr;grid-template-areas:"map";}
+  .stage{height:auto;flex:none;grid-template-columns:1fr;grid-template-areas:"map";}
   .b-map{min-height:48vh;}
   .b-write .bb{flex-direction:column;}
 }
