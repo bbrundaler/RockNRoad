@@ -136,6 +136,7 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
 .mbr-nom{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .mbr-nom .moi{font-size:12px;color:var(--ink-dim);font-weight:500;margin-left:5px;}
 .mbr-crown{font-size:12px;color:var(--gold-text);font-weight:700;margin-top:1px;}
+.mbr-nouveau{font-size:10.5px;color:var(--gold-deep);background:var(--gold-a20);border:1px solid var(--gold-a35);border-radius:999px;padding:2px 8px;margin-left:7px;font-weight:700;letter-spacing:.3px;vertical-align:middle;}
 .mbr-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--gold);cursor:pointer;}
 .mbr-actions{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
 .mbr-lead-btn{font-size:12px;padding:4px 9px;border-radius:999px;cursor:pointer;
@@ -382,6 +383,12 @@ const {createClient}=supabase;
 const sb=createClient(SURL,SKEY);
 
 let currentUser=null, membreId=null, myGroupeId=null, myRole=null, mode=null;
+// (20/07, B77 suite) inviteIdActuel conserve l'invite_id des metadonnees pour
+// l'appel notify_member_joined en fin de saveProfil() — le mail de bienvenue
+// doit porter le VRAI prenom choisi, connu seulement une fois le profil
+// rempli, pas au chargement de la page. vientDeRejoindre distingue un premier
+// rattachement reel d'une simple re-edition de profil (jamais de mail en double).
+let inviteIdActuel=null, vientDeRejoindre=false;
 let avatarFile=null, geoResult={lat:null,lng:null}, geoTimer=null, selectedEmoji='🦊', selectedPhotoUrl=null, galeriePhotos=[];
 
 const EMOJIS=['🦊','🐻','🦁','🐰','🦉','🐺','🐶','🐱','🦝','🐼','🐨','🐯','🚐','⛺','🏔️','🌍','🧭','⭐'];
@@ -515,19 +522,20 @@ function ajouterPhotoGalerie(input){
     el.addEventListener('click',()=>{ if(mode!=='member') el.classList.toggle('on'); }));
 
   const meta=currentUser.user_metadata||{};
+  inviteIdActuel = meta.invite_id || null;
   if(meta.groupe_id){
     try{
       const {data:already}=await sb.from('membres').select('id').eq('user_id',currentUser.id).maybeSingle();
       if(!already){
         await sb.from('membres').insert({user_id:currentUser.id,groupe_id:meta.groupe_id,role:meta.role||'membre'});
-        // (18/07, B75) La personne vient de devenir membre : elle peut donc
-        // supprimer la ligne "en attente" qui la concernait (RLS is_member_of,
-        // vraie maintenant). Ne s'applique qu'aux invitations envoyées par
-        // invite_group_member (invite_id présent) — les invitations
-        // super-admin (Console) n'en ont pas, rien à nettoyer pour elles.
-        if(meta.invite_id){
-          try{ await sb.from('invitations_groupe').delete().eq('id',meta.invite_id); }catch(e){ console.warn('nettoyage invitation',e); }
-        }
+        vientDeRejoindre = true;
+        // (20/07, B77 suite) Le nettoyage de la ligne "en attente" ET l'email
+        // de bienvenue sont désormais déclenchés ENSEMBLE, côté serveur,
+        // depuis saveProfil() une fois le profil rempli — pas ici. Un droit
+        // d'écriture ne doit pas rester côté client (même principe que le
+        // reste du site), et le mail doit porter le vrai prénom choisi,
+        // pas encore connu à ce stade du chargement. Voir notify_member_joined
+        // dans dynamic-action.
       }
       await sb.auth.updateUser({data:{groupe_id:null,role:null,invite_id:null}});
     }catch(e){ console.warn('Rattachement invité :',e); }
@@ -607,7 +615,7 @@ async function chargerMembres(){
   if(!box) return;
   try{
     const [{data:ms},{data:vs},{data:invs}] = await Promise.all([
-      sb.from('membres').select('id,user_id,pseudo,prenom,avatar,photo_url,email').eq('groupe_id',myGroupeId),
+      sb.from('membres').select('id,user_id,pseudo,prenom,avatar,photo_url,email,joined_at').eq('groupe_id',myGroupeId),
       sb.from('voyages').select('id,nom,est_principal,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true}),
       sb.from('invitations_groupe').select('id,email,nom,created_at').eq('groupe_id',myGroupeId).order('created_at',{ascending:true})
     ]);
@@ -706,6 +714,14 @@ function rendreMembres(){
     const animes = leaderDeQuoi(m.id);
     const crown = animes.length
       ? '<div class="mbr-crown">👑 '+animes.map(v=>escMbr(v.nom||'Voyage')).join(', ')+'</div>' : '';
+    // (20/07, B77 suite — signal organisateur, en-app plutôt qu'un email de
+    // plus) : un membre dont le rattachement date de moins de 7 jours porte
+    // un petit badge "Nouveau", visible seulement par l'organisateur qui
+    // l'attendait — pas de notification push, juste visible au prochain
+    // passage sur cette page (cohérent avec le principe écran réactif).
+    const recent = (myRole==='admin' && !estMoi && m.joined_at
+      && (Date.now()-new Date(m.joined_at).getTime()) < 7*24*60*60*1000);
+    const badgeNouveau = recent ? '<span class="mbr-nouveau">Nouveau</span>' : '';
     const chk = m.email
       ? '<input type="checkbox" class="mbr-chk" data-email="'+escMbr(m.email)+'" title="Cocher pour écrire un mail">'
       : '<input type="checkbox" class="mbr-chk" disabled title="Pas d\'adresse enregistrée">';
@@ -713,7 +729,7 @@ function rendreMembres(){
       ? '<button type="button" class="mbr-lead-btn" onclick="ouvrirPanneauLeader(\''+m.id+'\')">👑 Leader…</button>' : '';
     return '<div class="mbr-row">'+chk+avHtml
       + '<div class="mbr-info"><div class="mbr-nom">'+escMbr(nom)
-      + (estMoi?'<span class="moi">(moi)</span>':'')+'</div>'+crown
+      + (estMoi?'<span class="moi">(moi)</span>':'')+badgeNouveau+'</div>'+crown
       + '<div id="panel-'+m.id+'"></div>'
       + '</div>'
       + '<div class="mbr-actions">'+leadBtn+'</div>'
@@ -1037,6 +1053,26 @@ async function saveProfil(){
     };
     const {error:ie}=await sb.from('membres').update(identite).eq('user_id',currentUser.id);
     if(ie)throw ie;
+
+    // (20/07, B77 suite) Mail de bienvenue + nettoyage serveur de l'invitation
+    // "en attente" — UNE SEULE FOIS, seulement pour un vrai premier
+    // rattachement. Volontairement hors du try/catch qui protège la sauvegarde
+    // du profil : un mail qui échoue ne doit jamais faire échouer
+    // l'enregistrement déjà réussi ci-dessus.
+    if(vientDeRejoindre){
+      try{
+        const {data:{session:sNJ}}=await sb.auth.getSession();
+        const tokenNJ=sNJ?.access_token;
+        if(tokenNJ){
+          await fetch(EDGE_FN,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+tokenNJ},
+            body:JSON.stringify({action:'notify_member_joined', invite_id:inviteIdActuel})
+          });
+        }
+      }catch(e){ console.warn('notify_member_joined',e); }
+      vientDeRejoindre=false;
+    }
 
     showToast('✅ Enregistré !');
     // On SORT de la page : retour au Hub (toute entrée dans le site passe par le
