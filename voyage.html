@@ -31,12 +31,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
    défaut (résumé en un coup d'œil) ; un clic déplie le formulaire complet.
    Ces champs sont aussi ceux qui nourriront la version imprimée plus tard. ── */
 #rb-infos{flex-shrink:0;background:var(--surface);border:1px solid var(--gold-a35,rgba(200,168,75,.35));
-  border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.14);margin:7px 14px 6px;}
-.rb-infos-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 16px;cursor:pointer;}
-.rb-infos-resume{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rb-infos-resume b{font-family:var(--font-title);font-weight:700;}
+  border-radius:13px;box-shadow:0 2px 10px rgba(0,0,0,.14);margin:7px 14px 6px;overflow:hidden;}
+/* (20/07, retour Bruno) : ancienne barre résumé+"Modifier ›" retravaillée —
+   personne ne la trouvait (rien ne signalait qu'elle était cliquable, le
+   résumé et le bouton posés aux deux bouts sans lien visuel). Bandeau-titre
+   permanent "⚙️ Réglages du voyage" retenu (option 2 du comparatif) : toujours
+   visible, se lit comme une entrée de menu plutôt qu'un texte d'état. */
+.rb-infos-bar{cursor:pointer;}
+.rb-infos-titre{background:var(--gold-a10);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;transition:background .15s;}
+.rb-infos-bar:hover .rb-infos-titre{background:var(--gold-a20);}
+.rb-infos-titre-txt{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:6px;}
+.rb-infos-chevron{color:var(--gold);font-size:12px;display:inline-block;transition:transform .2s;}
+.rb-infos-chevron.open{transform:rotate(180deg);}
+.rb-infos-resume{padding:9px 16px;font-size:13px;color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rb-infos-resume b{font-family:var(--font-title);font-weight:700;color:var(--ink);}
 .rb-infos-resume .dim{color:var(--ink-dim);margin:0 2px;}
-.rb-infos-edit{background:none;border:none;color:var(--gold-text);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;}
 .rb-infos-form{padding:4px 16px 14px;border-top:1px solid var(--surface-line);}
 .rb-infos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;}
 .rb-infos-grid label,.rb-infos-but{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--ink-dim);text-transform:uppercase;}
@@ -299,8 +308,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 <div id="app-main">
   <div id="rb-infos">
     <div class="rb-infos-bar" onclick="rbInfosToggle()">
-      <span class="rb-infos-resume" id="rb-infos-resume">Chargement du voyage…</span>
-      <button class="rb-infos-edit" type="button">Modifier ›</button>
+      <div class="rb-infos-titre">
+        <span class="rb-infos-titre-txt">⚙️ Réglages du voyage</span>
+        <span class="rb-infos-chevron" id="rb-infos-chevron">▾</span>
+      </div>
+      <div class="rb-infos-resume" id="rb-infos-resume">Chargement du voyage…</div>
     </div>
     <div class="rb-infos-form" id="rb-infos-form" style="display:none">
       <div class="rb-infos-grid">
@@ -525,8 +537,9 @@ async function voyageChargeSelecteurChrome(){
   // redessine ici, une fois RB_INFO au complet, pour que tout soit juste dès l'arrivée sur la page.
   render();
   rbVerifieCoherenceDates();   // (09/07) le voyage peut déjà être incohérent avant toute modification
-  // Arrivée depuis « ✏️ Modifier ce voyage » (menu du sélecteur, chrome.js) : on ouvre
-  // directement le formulaire, sans que la personne ait à deviner où cliquer.
+  // Arrivée depuis l'icône ⚙️ réglages d'un voyage (menu du sélecteur, chrome.js,
+  // 20/07) : on ouvre directement le formulaire, sans que la personne ait à
+  // deviner où cliquer.
   try{
     if(new URLSearchParams(window.location.search).get('modifier')==='1'){
       if(document.getElementById('rb-infos-form').style.display==='none') rbInfosToggle();
@@ -1247,6 +1260,8 @@ function rbInfosToggle(){
   const ouvre = form.style.display === 'none';
   if(ouvre) rbInfosRemplirForm();
   form.style.display = ouvre ? 'block' : 'none';
+  const chevron = document.getElementById('rb-infos-chevron');
+  if(chevron) chevron.classList.toggle('open', ouvre);
 }
 
 // (20/07, retour Bruno) : qui du groupe part sur CE voyage, indépendamment du

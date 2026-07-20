@@ -89,13 +89,17 @@
   +'border:1px solid var(--gold-a35);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.4);'
   +'min-width:210px;padding:5px;z-index:1000;display:none;}'
   +'.rnrc-vy-menu.open{display:block;}'
+  +'.rnrc-vy-row{display:flex;align-items:center;gap:2px;}'
   +'.rnrc-vy-item{display:block;width:100%;text-align:left;font-size:13.5px;color:var(--chrome-ink);'
   +'background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-family:var(--font-body);}'
+  +'.rnrc-vy-row .rnrc-vy-item{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
   +'.rnrc-vy-item:hover{background:var(--gold-a10);}'
   +'.rnrc-vy-item.actif{color:var(--gold-light);font-weight:600;}'
+  +'.rnrc-vy-reglage{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;'
+  +'background:none;border:none;border-radius:7px;cursor:pointer;font-size:13px;opacity:.55;transition:all .15s;color:var(--chrome-ink);text-decoration:none;}'
+  +'.rnrc-vy-reglage:hover{opacity:1;background:var(--gold-a20);}'
   +'.rnrc-vy-sep{height:1px;background:var(--gold-a20);margin:5px 0;}'
   +'.rnrc-vy-new{color:var(--gold-light);font-weight:600;}'
-  +'.rnrc-vy-modifier{text-decoration:none;}'
   +'.rnrc-vy-supprimer{color:var(--terracotta);}'
   +'@media(max-width:700px){.rnrc-voyage{font-size:14px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}'
   +'.rnrc-console{width:30px;height:30px;border-radius:50%;cursor:pointer;display:none;'
@@ -341,6 +345,8 @@
         vyBtn.querySelector('.rnrc-vy-nom').textContent = actifNom;
         vyMenu.innerHTML = '';
         (liste||[]).forEach(function(v){
+          var row = document.createElement('div');
+          row.className = 'rnrc-vy-row';
           var it = document.createElement('button');
           it.className = 'rnrc-vy-item' + (v.nom===actifNom ? ' actif' : '');
           it.textContent = v.nom;
@@ -348,15 +354,26 @@
             e.stopPropagation(); vyMenu.classList.remove('open');
             if(typeof onChange==='function') onChange(v.id);
           });
-          vyMenu.appendChild(it);
+          // (20/07, retour Bruno) : réglages accessibles pour N'IMPORTE QUEL
+          // voyage de la liste, pas seulement celui déjà actif — avant, il
+          // fallait d'abord basculer dessus puis chercher "Modifier ce
+          // voyage" (qui ne s'appliquait de toute façon qu'à l'actif, un
+          // seul point d'entrée physique, jamais trouvé). On bascule ET on
+          // ouvre directement le formulaire, en un clic.
+          var reg = document.createElement('a');
+          reg.className = 'rnrc-vy-reglage';
+          reg.href = 'javascript:void(0)';
+          reg.title = 'Réglages de « ' + v.nom + ' »';
+          reg.textContent = '⚙️';
+          reg.addEventListener('click', function(e){
+            e.stopPropagation(); e.preventDefault(); vyMenu.classList.remove('open');
+            try{ sessionStorage.setItem('rnr_voyage_id', v.id); sessionStorage.setItem('rnr_voyage_nom', v.nom); }catch(err){}
+            window.location.href = 'voyage.html?modifier=1';
+          });
+          row.appendChild(it); row.appendChild(reg);
+          vyMenu.appendChild(row);
         });
         var sep = document.createElement('div'); sep.className='rnrc-vy-sep'; vyMenu.appendChild(sep);
-        var mod = document.createElement('a');
-        mod.className = 'rnrc-vy-item rnrc-vy-modifier';
-        mod.href = 'voyage.html?modifier=1';
-        mod.textContent = '✏️ Modifier ce voyage';
-        vyMenu.appendChild(mod);
-        var sep2 = document.createElement('div'); sep2.className='rnrc-vy-sep'; vyMenu.appendChild(sep2);
         var nw = document.createElement('button');
         nw.className = 'rnrc-vy-item rnrc-vy-new';
         nw.textContent = '+ Nouveau voyage';
