@@ -2624,8 +2624,9 @@ let HZ_TRI_ESTOMPEES=new Set();   // vue : régions écartées de l'ENVIE ACTIVE
 //  Une envie = { id, nom, emoji, estompees:[slugs] }. On en a plusieurs,
 //  une seule ACTIVE à la fois ; on passe de l'une à l'autre (barre des envies).
 //  Persistées en localStorage par groupe (brouillon perso, comme le tri).
-//  HZ_TRI_ESTOMPEES = la vue de l'envie active → tout le code de tri existant
-//  (basculeRegion, appliqueCascade) continue d'opérer sur l'envie active.
+//  HZ_TRI_ESTOMPEES = la vue de l'envie active. (20/07) basculeRegion() a été
+//  retiré (zéro appelant réel) — appliqueCascade() reste vivant, utilisé par
+//  le changement d'envie normal (chips de thème), pas par le tri éteint.
 // ════════════════════════════════════════════════════════════════
 let HZ_TRI_GROUPE_ID=null;        // posé au chargement (groupeId réel)
 let HZ_ENVIES=[];                 // [{id,nom,emoji,estompees}]
@@ -3094,14 +3095,11 @@ function rendVoteGroupeGrand(box){
   meta.appendChild(appl);
   box.appendChild(meta);
 }
-function resetTri(){
-  // reset = vider l'envie ACTIVE (pas toutes les envies)
-  HZ_TRI_ESTOMPEES=new Set();
-  syncEnvieDepuisVue();
-  sauveEnvies();
-  appliqueCascade();
-  majInfoTri();
-}
+// (20/07, retour Bruno) : resetTri() retiré — la mécanique d'exclusion de
+// région (éteindre une région pour une envie) est un ancien système, déjà
+// remplacé par les chips de thème (choisitTheme, rendThemesChips) que Bruno
+// utilise aujourd'hui. Son seul déclencheur possible était le bouton
+// "Trier en jouant" (barre jamais affichée) — zéro appelant réel, vérifié.
 
 // Liste des régions de la carte (slugs présents dans le SVG).
 function regionsSvgPresentes(){
@@ -3154,25 +3152,8 @@ function majInfoTri(){
     info.textContent = eteintes ? (eteintes+' région'+(eteintes>1?'s':'')+' écartée'+(eteintes>1?'s':'')) : '';
   }
 }
-function basculeRegion(reg){
-  const code=reg.getAttribute('data-r');
-  if(HZ_TRI_ESTOMPEES.has(code)){
-    HZ_TRI_ESTOMPEES.delete(code);            // rallumer : toujours permis
-    appliqueCascade();
-  }else{
-    // garde-fou : le moteur refusera d'éteindre sous le seuil → on anticipe le message
-    if(nbAllumees()<=HZ_MIN_ALLUMEES){
-      const info=document.getElementById('hz-tri-info');
-      if(info) info.textContent='On garde au moins '+HZ_MIN_ALLUMEES+' régions en lice 🙂';
-      return;
-    }
-    HZ_TRI_ESTOMPEES.add(code);                // éteindre : estompe, réversible
-    appliqueCascade();
-  }
-  sauveTri();
-  majInfoTri();
-  rendBarreEnvies();
-}
+// (20/07, retour Bruno) : basculeRegion() retiré pour la même raison que
+// resetTri() ci-dessus — zéro appelant réel nulle part sur le site.
 function brancheModeTri(){
   const btn=document.getElementById('hz-tri-toggle');
   const map=document.querySelector('.francemap');
@@ -3184,8 +3165,8 @@ function brancheModeTri(){
     btn.textContent = HZ_MODE_TRI ? '✓ Terminer le tri' : '✂️ Trier en jouant';
     majInfoTri();
   });
-  const rb=document.getElementById('hz-tri-reset');
-  if(rb) rb.addEventListener('click', resetTri);
+  // (20/07) le bouton "Tout rallumer" (#hz-tri-reset) appelait resetTri(),
+  // retirée avec basculeRegion() ci-dessus (zéro appelant réel des deux).
 }
 
 
