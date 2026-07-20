@@ -38,12 +38,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
    permanent "⚙️ Réglages du voyage" retenu (option 2 du comparatif) : toujours
    visible, se lit comme une entrée de menu plutôt qu'un texte d'état. */
 .rb-infos-bar{cursor:pointer;}
-.rb-infos-titre{background:var(--gold-a10);padding:7px 16px;display:flex;align-items:center;justify-content:space-between;transition:background .15s;}
+.rb-infos-titre{background:var(--gold-a10);padding:9px 16px;display:flex;align-items:center;gap:10px;transition:background .15s;}
 .rb-infos-bar:hover .rb-infos-titre{background:var(--gold-a20);}
-.rb-infos-titre-txt{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:6px;}
-.rb-infos-chevron{color:var(--gold);font-size:12px;display:inline-block;transition:transform .2s;}
+.rb-infos-titre-txt{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);flex-shrink:0;white-space:nowrap;}
+.rb-infos-titre-sep{color:var(--gold-a35);flex-shrink:0;}
+.rb-infos-chevron{color:var(--gold);font-size:12px;display:inline-block;flex-shrink:0;margin-left:auto;transition:transform .2s;}
 .rb-infos-chevron.open{transform:rotate(180deg);}
-.rb-infos-resume{padding:9px 16px;font-size:13px;color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rb-infos-resume{font-size:13px;color:var(--ink-dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rb-infos-resume b{font-family:var(--font-title);font-weight:700;color:var(--ink);}
 .rb-infos-resume .dim{color:var(--ink-dim);margin:0 2px;}
 .rb-infos-form{padding:4px 16px 14px;border-top:1px solid var(--surface-line);}
@@ -310,9 +311,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
     <div class="rb-infos-bar" onclick="rbInfosToggle()">
       <div class="rb-infos-titre">
         <span class="rb-infos-titre-txt">⚙️ Réglages du voyage</span>
+        <span class="rb-infos-titre-sep">│</span>
+        <span class="rb-infos-resume" id="rb-infos-resume">Chargement du voyage…</span>
         <span class="rb-infos-chevron" id="rb-infos-chevron">▾</span>
       </div>
-      <div class="rb-infos-resume" id="rb-infos-resume">Chargement du voyage…</div>
     </div>
     <div class="rb-infos-form" id="rb-infos-form" style="display:none">
       <div class="rb-infos-grid">
