@@ -227,6 +227,10 @@ select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-a10);}
               <label for="m-naiss-annee">Année de naissance *</label>
               <input type="text" id="m-naiss-annee" placeholder="1980" maxlength="4" inputmode="numeric">
             </div>
+            <div class="fg full">
+              <label for="m-telephone" id="m-telephone-lbl">Téléphone <span class="lbl-soft" id="m-telephone-hint">(obligatoire pour un adulte — pour que le groupe puisse te joindre par SMS/WhatsApp, pas seulement par mail)</span></label>
+              <input type="tel" id="m-telephone" placeholder="06 12 34 56 78" inputmode="tel" autocomplete="tel">
+            </div>
           </div>
           <div class="emoji-label">Mon avatar</div>
           <div class="emoji-grid" id="emoji-grid"></div>
@@ -539,7 +543,7 @@ function ajouterPhotoGalerie(input){
 
 async function loadProfile(){
   const {data:membre,error:me}=await sb.from('membres')
-    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, photo_url, photos_disponibles, nom, prenom, naissance_mois_annee, consent_marketing')
+    .select('id, groupe_id, role, is_superadmin, pseudo, avatar, photo_url, photos_disponibles, nom, prenom, naissance_mois_annee, telephone, consent_marketing')
     .eq('user_id',currentUser.id).maybeSingle();
   if(me) console.warn('lecture membres:',me);
 
@@ -548,6 +552,7 @@ async function loadProfile(){
     if(membre.pseudo) document.getElementById('m-pseudo').value=membre.pseudo;
     if(membre.prenom) document.getElementById('m-prenom').value=membre.prenom;
     if(membre.nom) document.getElementById('m-nom').value=membre.nom;
+    if(membre.telephone) document.getElementById('m-telephone').value=membre.telephone;
     if(membre.consent_marketing) document.getElementById('m-consent').checked=true;
     if(membre.naissance_mois_annee){
       // format stocké : 'MM/AAAA'
@@ -557,6 +562,7 @@ async function loadProfile(){
         document.getElementById('m-naiss-annee').value=parts[1];
       }
     }
+    majLibelleTelephone();
     if(membre.avatar) pickEmoji(membre.avatar);
     galeriePhotos = Array.isArray(membre.photos_disponibles) ? membre.photos_disponibles.slice(0, GALERIE_MAX) : [];
     if(membre.photo_url){
@@ -917,6 +923,32 @@ function previewAvatar(input){
   reader.onload=e=>document.getElementById('avatar-preview').innerHTML=`<img src="${e.target.result}" alt="">`;
   reader.readAsDataURL(avatarFile);
 }
+document.addEventListener('DOMContentLoaded', function(){
+  const mo=document.getElementById('m-naiss-mois'), an=document.getElementById('m-naiss-annee');
+  if(mo) mo.addEventListener('change', majLibelleTelephone);
+  if(an) an.addEventListener('input', majLibelleTelephone);
+});
+
+// (20/07, retour Bruno) : téléphone obligatoire pour un adulte (SMS/WhatsApp
+// plus naturels que le mail pour ce public), optionnel pour un mineur — calculé
+// depuis la naissance déjà saisie dans ce même formulaire, jamais un champ
+// "type de membre" séparé à construire. Les animaux (RNR_ANIMAUX) n'ont de
+// toute façon jamais de ligne membres : aucun risque de leur imposer un champ.
+function estMajeur(mois, annee){
+  if(!mois || !/^\d{4}$/.test(annee)) return true; // prudence : inconnu → traité comme adulte
+  const naissance=new Date(parseInt(annee,10), parseInt(mois,10)-1, 1);
+  const limite18=new Date(); limite18.setFullYear(limite18.getFullYear()-18);
+  return naissance<=limite18;
+}
+function majLibelleTelephone(){
+  const mois=document.getElementById('m-naiss-mois').value;
+  const annee=document.getElementById('m-naiss-annee').value.trim();
+  const hint=document.getElementById('m-telephone-hint');
+  if(!hint) return;
+  hint.textContent = estMajeur(mois,annee)
+    ? '(obligatoire pour un adulte — pour que le groupe puisse te joindre par SMS/WhatsApp, pas seulement par mail)'
+    : '(optionnel pour un mineur)';
+}
 
 async function saveProfil(){
   const btn=document.getElementById('save-btn');
@@ -925,12 +957,17 @@ async function saveProfil(){
   const nom=document.getElementById('m-nom').value.trim();
   const mois=document.getElementById('m-naiss-mois').value;
   const annee=document.getElementById('m-naiss-annee').value.trim();
+  const telephone=document.getElementById('m-telephone').value.trim();
 
   if(!prenom||!nom){ showError('Votre prénom et votre nom sont obligatoires.'); return; }
   if(!pseudo){ showError('Choisissez un pseudo — c\'est ainsi que le groupe vous reconnaîtra.'); return; }
   if(!mois||!/^\d{4}$/.test(annee)){ showError('Indiquez votre mois et année de naissance (année sur 4 chiffres).'); return; }
   const an=parseInt(annee,10);
   if(an<1900||an>new Date().getFullYear()){ showError('Année de naissance invalide.'); return; }
+  if(estMajeur(mois,annee)){
+    const chiffres=telephone.replace(/[^\d]/g,'');
+    if(chiffres.length<8){ showError('Indiquez votre numéro de téléphone — le groupe doit pouvoir vous joindre par SMS/WhatsApp, pas seulement par mail. (Optionnel seulement pour un mineur.)'); return; }
+  }
 
   if(mode==='create'||mode==='admin'){
     const gnom=document.getElementById('g-nom').value.trim();
@@ -982,6 +1019,7 @@ async function saveProfil(){
       pseudo, prenom, nom, avatar:selectedEmoji, photo_url:selectedPhotoUrl, photos_disponibles:galeriePhotos,
       email: (currentUser && currentUser.email) ? currentUser.email : null,
       naissance_mois_annee: mois+'/'+annee,
+      telephone: telephone || null,
       consent_marketing: document.getElementById('m-consent').checked,
       consent_marketing_date: document.getElementById('m-consent').checked ? new Date().toISOString() : null
     };

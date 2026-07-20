@@ -589,6 +589,46 @@
       '</div>';
     document.body.appendChild(ov);
   }
+  // (20/07, retour Bruno) : téléphone obligatoire pour un adulte (SMS/WhatsApp
+  // plus naturels que le mail pour ce public), optionnel pour un mineur —
+  // calculé depuis naissance_mois_annee (format 'MM/AAAA', saisi à
+  // l'inscription), jamais un champ "type de membre" séparé à construire.
+  function estMajeurM(m){
+    var na = m && m.naissance_mois_annee;
+    if(!na) return true; // prudence : inconnu → traité comme adulte
+    var parts = String(na).split('/');
+    if(parts.length!==2) return true;
+    var mois=parseInt(parts[0],10), annee=parseInt(parts[1],10);
+    if(!mois||!annee) return true;
+    var naissance=new Date(annee, mois-1, 1);
+    var limite18=new Date(); limite18.setFullYear(limite18.getFullYear()-18);
+    return naissance<=limite18;
+  }
+  // wa.me exige un format international sans 0 initial ni espaces : on ne
+  // normalise QUE pour WhatsApp (sms:/tel: acceptent le format local tel quel).
+  function normaliseTelIntl(tel){
+    var d=String(tel||'').replace(/[^\d+]/g,'');
+    if(d.charAt(0)==='+') return d.slice(1);
+    if(d.charAt(0)==='0' && d.length===10) return '33'+d.slice(1);
+    return d;
+  }
+  // (20/07, retour Bruno) : mailto seul ne suffit pas — SMS et WhatsApp sont
+  // de simples liens, comme mailto, aucune API/clé nécessaire. On propose les
+  // trois quand le téléphone existe, email seul sinon (compatibilité arrière
+  // pour les profils pas encore mis à jour).
+  function contactBoutonsHtml(m){
+    var html='';
+    if(m.telephone){
+      var brut=String(m.telephone).replace(/'/g,'');
+      var intl=normaliseTelIntl(m.telephone);
+      html+='<button type="button" class="rnrc-pf-mail-btn" onclick="window.location.href=\'sms:'+brut+'\'">💬 SMS à '+window.rnrNomMembre(m,m.email)+'</button>';
+      html+='<button type="button" class="rnrc-pf-mail-btn" onclick="window.open(\'https://wa.me/'+intl+'\',\'_blank\')">🟢 WhatsApp à '+window.rnrNomMembre(m,m.email)+'</button>';
+    }
+    if(m.email){
+      html+='<button type="button" class="rnrc-pf-mail-btn" onclick="window.location.href=\'mailto:'+String(m.email).replace(/'/g,'')+'\'">✉️ Email à '+window.rnrNomMembre(m,m.email)+'</button>';
+    }
+    return html;
+  }
   function ouvrirProfil(m){
     ensureProfilDom();
     var estSoi = _monMembre && (m.id===_monMembre.id);
@@ -610,6 +650,8 @@
         '<div><span class="rnrc-pf-lbl">Voyageur(se) depuis</span><select id="rnrc-pf-depuis">'+
           VOYAGEUR_DEPUIS_CHOIX.map(function(o){ return '<option value="'+o.v+'"'+(o.v===(m.voyageur_depuis||'')?' selected':'')+'>'+o.label+'</option>'; }).join('')+
         '</select></div>'+
+        '<div><span class="rnrc-pf-lbl">Téléphone <em style="font-weight:400;opacity:.7;">'+(estMajeurM(m)?'(pour que le groupe te joigne par SMS/WhatsApp, pas seulement par mail)':'(optionnel)')+'</em></span>'+
+        '<input type="tel" id="rnrc-pf-telephone" placeholder="06 12 34 56 78" value="'+(m.telephone?String(m.telephone).replace(/"/g,'&quot;'):'')+'"></div>'+
         '<div><span class="rnrc-pf-lbl">Ta passion voyage <em style="font-weight:400;opacity:.7;">(optionnel)</em></span>'+
         '<div class="rnrc-pf-chips" id="rnrc-pf-passions">'+
           PASSIONS_CHOIX.map(function(p){ return '<span class="rnrc-pf-chip'+(passions.indexOf(p.v)>=0?' on':'')+'" data-v="'+p.v+'" onclick="window.__rnrProfilTogglePassion(this)">'+p.label+'</span>'; }).join('')+
@@ -669,10 +711,16 @@
       };
       window.__rnrProfilSauver = async function(){
         var btn=foot.querySelector('button'); var txt=btn.textContent;
+        var telSaisi=(document.getElementById('rnrc-pf-telephone').value||'').trim();
+        if(estMajeurM(_monMembre) && telSaisi.replace(/[^\d]/g,'').length<8){
+          alert('Indique ton numéro de téléphone — le groupe doit pouvoir te joindre par SMS/WhatsApp, pas seulement par mail.');
+          return;
+        }
         btn.disabled=true; btn.textContent='⏳ Enregistrement…';
         var chosen=[]; corps.querySelectorAll('.rnrc-pf-chip.on').forEach(function(c){ chosen.push(c.dataset.v); });
         var payload={
           voyageur_depuis: document.getElementById('rnrc-pf-depuis').value || null,
+          telephone: telSaisi || null,
           passions: chosen.length?chosen:null,
           presentation: (document.getElementById('rnrc-pf-presentation').value||'').trim() || null,
           photo_url: (document.getElementById('rnrc-pf-photo').value||'').trim() || null,
@@ -702,10 +750,11 @@
         (passionsLabels.length ? '<p><b>Passions</b> '+passionsLabels.join(' · ')+'</p>' : '')+
         '<p>'+(m.presentation ? m.presentation.replace(/</g,'&lt;') : '<span class="vide">Pas encore de présentation.</span>')+'</p>'+
       '</div>'+
-      // (18/07, retour Bruno) : pouvoir écrire directement à la personne
-      // depuis son profil, pas seulement la lire — mailto, rien n'est
-      // envoyé par le site (même principe que "Écrire aux membres cochés").
-      (m.email ? '<button type="button" class="rnrc-pf-mail-btn" onclick="window.location.href=\'mailto:'+String(m.email).replace(/'/g,'')+'\'">✉️ Écrire à '+window.rnrNomMembre(m,m.email)+'</button>' : '');
+      // (18/07, retour Bruno, étendu 20/07) : pouvoir écrire directement à la
+      // personne depuis son profil, pas seulement la lire — Email/SMS/WhatsApp,
+      // rien n'est envoyé par le site (même principe que "Écrire aux membres
+      // cochés" : ce sont de simples liens, jamais un envoi côté serveur).
+      contactBoutonsHtml(m);
     }
     document.getElementById('rnrc-profil-overlay').classList.add('open');
   }
