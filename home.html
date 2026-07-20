@@ -457,6 +457,18 @@ async function creerPremierVoyage(){
     if(VY_MEMBRE_ID) row.cree_par=VY_MEMBRE_ID;
     const {data:cree,error}=await sb.from('voyages').insert(row).select('id,nom').single();
     if(error){ console.warn('Hub: création voyage',error); if(err) err.textContent='Création impossible, réessayez.'; if(btn){btn.disabled=false;btn.textContent='Créer ce voyage →';} return; }
+    // (20/07, retour Bruno) : à la création, TOUT le groupe est coché comme
+    // participant par défaut (décision explicite) — on décoche ensuite qui
+    // ne vient pas, dans voyage.html. Non-bloquant : un échec ici ne doit
+    // jamais empêcher la création du voyage lui-même (le voyage existe déjà
+    // à ce stade), juste la liste sera vide et à cocher manuellement.
+    try{
+      const {data:membresGroupe}=await sb.from('membres').select('id').eq('groupe_id',VY_GROUPE_ID);
+      if(cree && membresGroupe && membresGroupe.length){
+        const lignes=membresGroupe.map(function(m){ return {voyage_id:cree.id, membre_id:m.id}; });
+        await sb.from('voyage_participants').insert(lignes);
+      }
+    }catch(e){ console.warn('Hub: pré-remplissage participants', e); }
     // le nouveau voyage devient l'actif → Horizon s'ouvrira dessus (vierge)
     try{
       if(cree){ sessionStorage.setItem('rnr_voyage_id',cree.id); sessionStorage.setItem('rnr_voyage_nom',cree.nom); }

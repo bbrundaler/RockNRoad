@@ -594,10 +594,24 @@ async function rnrChangerTheme(theme){
 }
 window.rnrChangerTheme = rnrChangerTheme;
 let MEMBRES=[];
+// (20/07, retour Bruno) : l'équipe du Cahier suivait jusqu'ici TOUT le groupe,
+// sans tenir compte du fait que plusieurs voyages peuvent être réfléchis en
+// parallèle sans que tout le monde vienne sur chacun. Filtre désormais par
+// voyage_participants (géré dans voyage.html, un seul endroit qui décide qui
+// coche quoi). Repli : si aucune ligne n'existe pour ce voyage (anciens
+// voyages créés avant ce soir, ou pré-remplissage raté à la création) — tout
+// le groupe, jamais une liste vide qui ferait disparaître tout le monde.
 async function chargerMembres(){
   if(!GROUPE_ID) return;
   try{
-    const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,photo_cahier,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
+    let idsParticipants=null;
+    if(VOYAGE_ID){
+      const {data:part}=await sb.from('voyage_participants').select('membre_id').eq('voyage_id',VOYAGE_ID);
+      if(part && part.length) idsParticipants=part.map(function(p){return p.membre_id;});
+    }
+    let q=sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,photo_cahier,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
+    if(idsParticipants) q=q.in('id',idsParticipants);
+    const {data}=await q;
     MEMBRES=data||[];
   }catch(e){ console.warn('Cahier: membres', e); }
 }

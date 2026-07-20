@@ -312,6 +312,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <label>Retour envisagé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-infos-date-fin" type="date"></label>
         <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
       </div>
+      <div class="rb-infos-but">
+        <span>Qui part sur CE voyage <span class="rb-infos-optionnel">(le Cahier ne listera que les personnes cochées ici — tout le groupe est coché par défaut)</span></span>
+        <div id="rb-participants-liste" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;"></div>
+      </div>
       <label class="rb-infos-but">Description <span class="rb-infos-optionnel">(optionnel)</span><textarea id="rb-but" rows="2" placeholder="Ce que ce voyage doit apporter au groupe"></textarea></label>
       <label class="rb-infos-but">📝 Notes du groupe <span class="rb-infos-optionnel">(optionnel — un espace libre, à plusieurs)</span><textarea id="rb-notes-groupe" rows="3" placeholder="Choses à ne pas oublier, idées en vrac, trucs à vérifier… tout ce qui pourra nourrir Le Cahier."></textarea></label>
       <p class="rb-infos-note">📍 Départ : <span id="rb-infos-resume-depart">la maison du groupe</span> · Retour : <span id="rb-infos-resume-retour">la maison du groupe</span> — modifiables dans la liste des étapes ci-dessous (première et dernière fiche).</p>
@@ -1235,6 +1239,7 @@ function rbInfosRemplirForm(){
   const rd=document.getElementById('rb-infos-resume-depart'); if(rd) rd.textContent = (RB_INFO.depart_lat!=null) ? (RB_INFO.depart_nom||'lieu personnalisé') : 'la maison du groupe';
   const rr=document.getElementById('rb-infos-resume-retour'); if(rr) rr.textContent = (RB_INFO.retour_lat!=null) ? (RB_INFO.retour_nom||'lieu personnalisé') : 'la maison du groupe';
   const err = document.getElementById('rb-infos-err'); if(err) err.textContent='';
+  rbParticipantsCharge();
 }
 
 function rbInfosToggle(){
@@ -1242,6 +1247,55 @@ function rbInfosToggle(){
   const ouvre = form.style.display === 'none';
   if(ouvre) rbInfosRemplirForm();
   form.style.display = ouvre ? 'block' : 'none';
+}
+
+// (20/07, retour Bruno) : qui du groupe part sur CE voyage, indépendamment du
+// groupe complet — jusqu'ici le Cahier listait systématiquement tout le
+// groupe, sans tenir compte du fait que plusieurs voyages peuvent être
+// réfléchis en parallèle sans que tout le monde vienne sur chacun. Table de
+// liaison voyage_participants (même patron que voyage_leaders). Rendu et
+// sauvegarde vivent ICI, un seul endroit — le Cahier (cahier.html) se
+// contentera de LIRE cette table, jamais de la construire lui-même.
+async function rbParticipantsCharge(){
+  const zone = document.getElementById('rb-participants-liste');
+  if(!zone || !GROUPE_ID || !VOYAGE_ID) return;
+  zone.innerHTML = '<span style="font-size:12px;color:var(--ink-dim);">Chargement…</span>';
+  try{
+    const [{data:membresGroupe}, {data:dejaCoches}] = await Promise.all([
+      sb.from('membres').select('id,pseudo,prenom,avatar').eq('groupe_id',GROUPE_ID),
+      sb.from('voyage_participants').select('membre_id').eq('voyage_id',VOYAGE_ID)
+    ]);
+    const idsCoches = new Set((dejaCoches||[]).map(function(r){return r.membre_id;}));
+    // Voyage tout juste créé, pas encore de ligne voyage_participants du tout
+    // (cas limite : le pré-remplissage de home.html a échoué, ou un voyage
+    // créé avant ce soir) : on retombe sur "tout coché", jamais "personne".
+    const aucuneLigne = idsCoches.size===0;
+    zone.innerHTML = (membresGroupe||[]).map(function(m){
+      const nom = m.prenom || m.pseudo || 'Voyageur';
+      const coche = aucuneLigne ? true : idsCoches.has(m.id);
+      return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;'
+        +'text-transform:none;letter-spacing:0;color:var(--paper-ink);cursor:pointer;background:none;">'
+        +'<input type="checkbox" class="rb-participant-cb" data-membre="'+m.id+'"'+(coche?' checked':'')+'>'
+        +(m.avatar?m.avatar+' ':'')+nom+'</label>';
+    }).join('') || '<span style="font-size:12px;color:var(--ink-dim);">Aucun membre dans le groupe.</span>';
+  }catch(e){
+    console.warn('Roadbook: chargement participants', e);
+    zone.innerHTML = '<span style="font-size:12px;color:var(--st-bad-ink);">Chargement impossible.</span>';
+  }
+}
+async function rbParticipantsSauver(){
+  const zone = document.getElementById('rb-participants-liste');
+  if(!zone || !VOYAGE_ID) return;
+  const cochesId = [...zone.querySelectorAll('.rb-participant-cb:checked')].map(function(c){ return c.dataset.membre; });
+  try{
+    // Repli simple et sûr : on remplace l'état complet plutôt que de diffuser
+    // des inserts/deletes ciblés — le volume (quelques membres par groupe,
+    // décision Bruno : groupes ≤10-12 personnes) rend ça largement suffisant.
+    await sb.from('voyage_participants').delete().eq('voyage_id',VOYAGE_ID);
+    if(cochesId.length){
+      await sb.from('voyage_participants').insert(cochesId.map(function(id){ return {voyage_id:VOYAGE_ID, membre_id:id}; }));
+    }
+  }catch(e){ console.warn('Roadbook: sauvegarde participants', e); }
 }
 
 async function rbInfosSave(){
@@ -1265,6 +1319,7 @@ async function rbInfosSave(){
   try{
     const {error} = await sb.from('voyages').update(row).eq('id',VOYAGE_ID);
     if(error) throw error;
+    await rbParticipantsSauver();
     RB_INFO = Object.assign({}, RB_INFO, row);
     try{ sessionStorage.setItem('rnr_voyage_nom', nom); }catch(e){}  // le sélecteur du chrome lit ce cache (même moteur qu'Horizon/Carnet)
     rbInfosRender();
