@@ -94,19 +94,7 @@
             </div>
             <div class="rnr-fe-fg">
               <label class="rnr-fe-label">Type</label>
-              <select class="rnr-fe-select" id="rnr-fe-type">
-                <option value="Site">Site / Visite</option>
-                <option value="Camping">Camping</option>
-                <option value="Restaurant">Restaurant</option>
-                <option value="Randonnee">Randonnée</option>
-                <option value="Plage">Plage</option>
-                <option value="Musee">Musée</option>
-                <option value="Culture">Culture</option>
-                <option value="Chateau">Château</option>
-                <option value="Cave">Cave / Dégustation</option>
-                <option value="Halte">Halte</option>
-                <option value="Autre">Autre</option>
-              </select>
+              <select class="rnr-fe-select" id="rnr-fe-type">${window.RNR_TAGS ? RNR_TAGS.optionsTypeHtml() : '<option value="Site">Site / Visite</option>'}</select>
             </div>
             <div class="rnr-fe-fg">
               <label class="rnr-fe-label">Sous-région</label>

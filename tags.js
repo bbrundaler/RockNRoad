@@ -133,11 +133,19 @@
      ─────────────────────────────────────────────────────────────────── */
   const TYPES = {
     Site:       { libelle:'Site à visiter',   emoji:'🏛️', famille:'visiter',  jourNuit:'jour' },
-    Camping:    { libelle:'Camping',          emoji:'⛺', famille:'nuit',     jourNuit:'nuit' },
-    Plage:      { libelle:'Plage / Lac',      emoji:'🏖️', famille:'nature',   jourNuit:'jour' },
-    Randonnee:  { libelle:'Randonnée / Vélo', emoji:'🥾', famille:'activite', jourNuit:'jour' },
     Restaurant: { libelle:'Restaurant',       emoji:'🍽️', famille:'pause',    jourNuit:'jour' },
-    Halte:      { libelle:'Halte / Étape',    emoji:'🚗', famille:'pause',    jourNuit:'jour' }
+    Randonnee:  { libelle:'Randonnée / Vélo', emoji:'🥾', famille:'activite', jourNuit:'jour' },
+    Plage:      { libelle:'Plage / Lac',      emoji:'🏖️', famille:'nature',   jourNuit:'jour' },
+    Musee:      { libelle:'Musée',            emoji:'🖼️', famille:'visiter',  jourNuit:'jour' },
+    Culture:    { libelle:'Culture',          emoji:'🎭', famille:'visiter',  jourNuit:'jour' },
+    Chateau:    { libelle:'Château',          emoji:'🏰', famille:'visiter',  jourNuit:'jour' },
+    Cave:       { libelle:'Cave / Dégustation', emoji:'🍷', famille:'pause',  jourNuit:'jour' },
+    Halte:      { libelle:'Halte / Étape',    emoji:'🚗', famille:'pause',    jourNuit:'jour' },
+    Autre:      { libelle:'Autre',            emoji:'📌', famille:'visiter',  jourNuit:'jour' },
+    Camping:    { libelle:'Camping',          emoji:'⛺', famille:'nuit',     jourNuit:'nuit' },
+    SpotNuit:   { libelle:'Spot nuit',        emoji:'🌌', famille:'nuit',     jourNuit:'nuit' },
+    CampBase:   { libelle:'Camp de base',     emoji:'🏡', famille:'nuit',     jourNuit:'nuit' },
+    HotelGite:  { libelle:'Hôtel / Gîte',     emoji:'🛏️', famille:'nuit',     jourNuit:'nuit' }
   };
 
   /* ───────────────────────────────────────────────────────────────────
@@ -289,6 +297,19 @@
 
     // true si la fiche est un couchage (où l'on dort). Confort par-dessus jourNuitFiche.
     estCouchage(fiche){ return api.jourNuitFiche(fiche) === 'nuit'; },
+
+    // ══ MENU TYPE — un seul endroit (règle Master : une liste, une source) ══
+    // Génère les <optgroup> Jour/Nuit du menu Type, dans l'ordre de TYPES.
+    // admin.html ET fiche-edit.js appellent CETTE fonction plutôt que de
+    // recopier chacun leur propre liste HTML — si un type change ici, les
+    // deux pages suivent automatiquement, jamais de liste à resynchroniser.
+    optionsTypeHtml(){
+      const grp=(jn)=>Object.entries(TYPES)
+        .filter(([,v])=>v.jourNuit===jn)
+        .map(([cle,v])=>'<option value="'+cle+'">'+v.libelle+'</option>').join('');
+      return '<optgroup label="☀️ Jour">'+grp('jour')+'</optgroup>'+
+             '<optgroup label="🌙 Nuit">'+grp('nuit')+'</optgroup>';
+    },
 
     // ══ CŒUR AUTO : classe un lieu depuis son NOM puis ses types Google ══
     // Priorité (décision 08/06 — le NOM prime) :

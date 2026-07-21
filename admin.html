@@ -221,12 +221,6 @@ input.auto-filled{background:var(--gold-a10);border-color:rgba(200,168,75,.4);}
         <label>Type *</label>
         <select id="type" onchange="updatePreview()">
           <option value="">— Choisir —</option>
-          <option value="Site">🏛️ Site à visiter</option>
-          <option value="Camping">⛺ Camping</option>
-          <option value="Plage">🏖️ Plage / Lac</option>
-          <option value="Randonnee">🥾 Randonnée / Vélo</option>
-          <option value="Restaurant">🍽️ Restaurant</option>
-          <option value="Halte">🚗 Halte / Étape</option>
         </select>
       </div>
       <div class="fg">
@@ -1657,5 +1651,18 @@ function showToast(msg,type='success'){
 </script>
 <script src="tags.js"></script>
 <script src="themes-horizon.js"></script>
+<script>
+// Menu Type : plus de liste recopiée ici (règle Master — une liste, une source,
+// même logique que les tokens CSS). admin.html se contente d'ajouter le
+// "— Choisir —" (propre à ce formulaire de création) puis reprend TOUT le
+// reste depuis tags.js/RNR_TAGS.optionsTypeHtml() — la même fonction que
+// fiche-edit.js. Si un type change, les deux pages suivent automatiquement.
+(function(){
+  var sel=document.getElementById('type');
+  if(sel && window.RNR_TAGS){
+    sel.innerHTML='<option value="">— Choisir —</option>'+RNR_TAGS.optionsTypeHtml();
+  }
+})();
+</script>
 </body>
 </html>
