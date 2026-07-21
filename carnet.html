@@ -1642,8 +1642,16 @@ const RNR_NAV_NEUTRE='#8a8a8a';
 // populateRegionContent (qui l'utilisait en dur) — le bandeau régional en a
 // besoin aussi pour son compte « X fiches jour / X fiches nuit ». Un seul
 // endroit, les deux appelants s'y réfèrent.
-const RNR_TYPES_NUIT_CARNET=['Camping','Halte','Terrain particulier','Bivouac','Accueil privé','Teardrop'];
-function estNuitCarnet(l){ return !!(l && (l.monde_nuit || RNR_TYPES_NUIT_CARNET.includes(l.type))); }
+// (21/07, retour Bruno) : RNR_TYPES_NUIT_CARNET était une 3e liste, dupliquée
+// ET fausse — elle classait "Halte" en nuit (alors que tags.js le classe en
+// jour) et citait des types qui n'existent même pas ("Bivouac", "Teardrop"...).
+// Root cause du "Camp de base classé en jour" : cette fonction ne connaissait
+// jamais les nouveaux types nuit. Supprimée — un seul endroit, RNR_TAGS.
+function estNuitCarnet(l){
+  if(!l) return false;
+  if(window.RNR_TAGS) return RNR_TAGS.estCouchage(l);
+  return !!l.monde_nuit; // repli si tags.js n'a pas chargé (ne devrait pas arriver)
+}
 
 // ── FILTRE TAGS/ÉTOILES PAR RÉGION (16/07) ──────────────────────────────
 // Toujours visible (retour Bruno : jamais derrière un clic/menu à chercher).
