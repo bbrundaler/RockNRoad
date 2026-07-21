@@ -109,6 +109,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .montage-card-retirer{display:block;width:100%;font-family:var(--font-body);font-size:11.5px;color:var(--ink-dim);
   background:var(--bg);border:none;border-top:1px solid var(--surface-line);padding:9px;cursor:pointer;text-align:center;}
 .montage-card-retirer:hover{color:var(--danger,#c0392b);}
+.montage-card-gestion{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:var(--bg);border-top:1px solid var(--surface-line);}
+.montage-card-gestion .lbl{font-size:11px;color:var(--ink-dim);flex-shrink:0;}
+.mini-ph{position:relative;width:44px;height:44px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;}
+.mini-ph button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger,#c0392b);
+  color:#fff;border:none;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
@@ -849,10 +854,15 @@ function renderMontage(){
       });
       const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
       const vide = photosEtape.length ? '' : ' vide';
-      const retirer = photosEtape.length ? '<button class="montage-card-retirer" onclick="souvViderEtape(\''+item.uid+'\')">Retirer les photos de cette étape</button>' : '';
+      const gestion = photosEtape.length ? (
+        '<div class="montage-card-gestion"><span class="lbl">Photos de cette étape :</span>'+
+        photosEtape.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
+          '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
+        '</div>'
+      ) : '';
       return '<div class="montage-card'+vide+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
         (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
-        contenu+retirer+'</div>';
+        contenu+gestion+'</div>';
     }).join('');
   }
   colLivre += '</div>';
@@ -896,6 +906,22 @@ async function souvViderEtape(uid){
   }
 }
 window.souvViderEtape = souvViderEtape;
+
+// Retire une seule photo (celle-là seulement) — elle revient dans "à ranger".
+// Complète souvViderEtape (qui vide toute une étape d'un coup) : ici on
+// choisit précisément laquelle sortir, sans toucher aux autres.
+async function souvRetirerUnePhoto(photoId){
+  const rangement=RANGEMENTS[photoId]; if(!rangement) return;
+  try{
+    const del=await sb.from('souvenir_cahier_photos').delete().in('id',[rangement.id]);
+    if(del.error) throw del.error;
+    await chargerRangements(); renderMain();
+  }catch(e){
+    console.warn('Souvenir: retrait d\'une photo', e);
+    alert('Le retrait n\'a pas pu être enregistré : '+(e&&e.message?e.message:String(e)));
+  }
+}
+window.souvRetirerUnePhoto = souvRetirerUnePhoto;
 
 function souvOngletsHtml(){
   return '<div class="souv-onglets">'+
