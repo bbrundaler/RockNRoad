@@ -37,6 +37,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
   display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:var(--shadow);}
 .bh{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
+.souv-onglets{display:flex;gap:2px;padding:8px 16px 0;flex-shrink:0;}
+.souv-onglets button{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:var(--ink-dim);
+  background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;}
+.souv-onglets button.actif{color:var(--gold-text);border-bottom-color:var(--gold);}
 .bh .ic{font-size:15px;}
 .bh h3{font-family:var(--font-title);font-size:14.5px;font-weight:600;flex:1;color:var(--ink);}
 
@@ -85,6 +89,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* -- montage (après la fenêtre de collecte) -- */
 .montage-wrap{flex:1;min-height:0;overflow:auto;padding:14px 16px;}
 .cahier-copie-note{padding:8px 16px;font-size:11.5px;color:var(--ink-dim);font-style:italic;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
+.cahier-selecteur{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
+.cahier-selecteur select{font-family:var(--font-body);font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;flex:1;min-width:160px;}
+.cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;white-space:nowrap;}
 .montage-h{font-family:var(--font-title);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-text);margin:14px 0 8px;}
 .montage-h:first-child{margin-top:0;}
 .tri-item{display:flex;gap:10px;align-items:center;background:var(--gold-a10);border:1px solid var(--surface-line);border-radius:var(--r);padding:8px;margin-bottom:8px;flex-wrap:wrap;}
@@ -222,6 +229,8 @@ let CANAL_PHOTOS=null;
 let ITINERAIRE=[]; // pour le montage bloc③ : uid, ordre, rattache + tous les champs de la fiche (lieux.*)
 let LEADERS=new Set();
 let TOUS_VOYAGES=[]; // pour le tourniquet + la carte à tags (bloc④), toujours de vraies données
+let MODE_ACTIF=null; // 'galerie' | 'montage' — deux onglets TOUJOURS accessibles (retour Bruno 21/07 :
+                      // "il ne faut pas être bloqué"). La date ne choisit plus qu'un réglage par défaut.
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 function fmtDateCourt(d){
@@ -287,23 +296,21 @@ async function chargerMembres(){
 
 // Même source que le Cahier (voyage_itineraire + lieux) — le montage range
 // une photo brute sur une VRAIE étape du voyage, jamais une liste inventée.
-let SOUVENIR_CAHIER=null; // {id, cree_le, valide_par, valide_le, infos_snapshot, ...}
+let SOUVENIR_CAHIER=null; // le carnet actuellement affiché (officiel ou personnel) — {id, type, membre_id, cree_le, valide_par, valide_le, ...}
+let CAHIERS_DISPONIBLES=[]; // tous les carnets de ce voyage (officiel + un par participant qui en a créé un)
+let RANGEMENTS={}; // rangement du carnet actif : { voyage_photo_id: {id, etape_uid, legende} }
 
-// ══ ÉTAPE A (21/07, retour Bruno) — la copie figée ══
-// cahier.html n'est JAMAIS touché. Au premier passage en montage (fenêtre de
-// collecte terminée), on copie une fois pour toutes : les infos du voyage
-// (sans memo_blocs, qui est une page technique) + l'itinéraire + les fiches
-// complètes de l'itinéraire (lieu_snapshot = copie intégrale, jamais retouchée
-// si la fiche d'origine change ensuite). Ensuite Souvenir ne relit plus JAMAIS
-// voyage_itineraire/lieux : tout vient de souvenir_cahiers/souvenir_cahier_etapes.
-async function chargerOuCreerCahierSouvenir(){
-  if(!VOYAGE_ID) return;
+// ══ ÉTAPE A — la copie figée des étapes (21/07, retour Bruno) ══
+// cahier.html n'est JAMAIS touché. Au premier passage en montage, on copie une
+// fois pour toutes l'itinéraire (fiches complètes, jamais retouchées si la
+// fiche d'origine change ensuite) — UNE SEULE fois par voyage, partagée par
+// TOUS les carnets (officiel + personnels, étape B) : ils rangent les photos
+// différemment, mais racontent le même voyage.
+async function assurerEtapesSnapshot(){
   try{
-    const {data:existant}=await sb.from('souvenir_cahiers').select('*')
-      .eq('voyage_id',VOYAGE_ID).eq('type','officiel').maybeSingle();
-    if(existant){ SOUVENIR_CAHIER=existant; return; }
+    const {data:existant}=await sb.from('souvenir_cahier_etapes').select('id').eq('voyage_id',VOYAGE_ID).limit(1);
+    if(existant && existant.length) return true;
 
-    // Pas encore de copie : on la fabrique maintenant, une seule fois.
     const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let lieuxMap={};
@@ -311,6 +318,30 @@ async function chargerOuCreerCahierSouvenir(){
       const {data:fs}=await sb.from('lieux').select('*').in('id',ids);
       (fs||[]).forEach(f=>{ lieuxMap[f.id]=f; });
     }
+    const etapes=(rows||[]).map(r=>{
+      const f=lieuxMap[r.lieu_id]; if(!f) return null;
+      return { voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, uid:r.uid,
+        ordre:r.ordre, rattache_a_nuit_uid:r.rattache_a_nuit_uid||null, nb_nuits:r.nb_nuits||null,
+        lieu_snapshot:f };
+    }).filter(Boolean);
+    if(etapes.length){
+      const insE=await sb.from('souvenir_cahier_etapes').insert(etapes);
+      if(insE.error) throw insE.error;
+    }
+    return true;
+  }catch(e){ console.warn('Souvenir: copie figée des étapes', e); return false; }
+}
+
+// ══ ÉTAPE B — le carnet (officiel ou personnel) ══
+// Crée le carnet demandé s'il n'existe pas encore. type='officiel' (un seul,
+// partagé) ou 'personnel' (un par membre qui le souhaite, membreId requis).
+async function chargerOuCreerCahier(type, membreId){
+  try{
+    let q=sb.from('souvenir_cahiers').select('*').eq('voyage_id',VOYAGE_ID).eq('type',type);
+    q = membreId ? q.eq('membre_id',membreId) : q.is('membre_id',null);
+    const {data:existant}=await q.maybeSingle();
+    if(existant) return existant;
+
     const infosSnapshot={
       nom:RB_INFO.nom||null, destination_libre:RB_INFO.destination_libre||null,
       date_debut:RB_INFO.date_debut||null, date_fin_envisagee:RB_INFO.date_fin_envisagee||null,
@@ -320,32 +351,52 @@ async function chargerOuCreerCahierSouvenir(){
       // volontairement PAS memo_blocs — page technique, exclue de la copie (consigne Bruno)
     };
     const ins=await sb.from('souvenir_cahiers').insert({
-      voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, type:'officiel',
+      voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, type, membre_id:membreId||null,
+      nom: type==='personnel' ? 'Le carnet de '+nomEnvoyeur(membreId) : null,
       infos_snapshot:infosSnapshot, cahier_theme:RB_INFO.cahier_theme||null,
       cree_par:MON_MEMBRE_ID
     }).select().single();
     if(ins.error) throw ins.error;
-    SOUVENIR_CAHIER=ins.data;
+    return ins.data;
+  }catch(e){ console.warn('Souvenir: création du carnet', e); return null; }
+}
 
-    const etapes=(rows||[]).map(r=>{
-      const f=lieuxMap[r.lieu_id]; if(!f) return null;
-      return { souvenir_cahier_id:SOUVENIR_CAHIER.id, groupe_id:GROUPE_ID, uid:r.uid,
-        ordre:r.ordre, rattache_a_nuit_uid:r.rattache_a_nuit_uid||null, nb_nuits:r.nb_nuits||null,
-        lieu_snapshot:f };
-    }).filter(Boolean);
-    if(etapes.length){
-      const insE=await sb.from('souvenir_cahier_etapes').insert(etapes);
-      if(insE.error) throw insE.error;
-    }
-  }catch(e){ console.warn('Souvenir: copie figée du Cahier', e); SOUVENIR_CAHIER=null; }
+async function chargerListeCahiers(){
+  CAHIERS_DISPONIBLES=[];
+  if(!VOYAGE_ID) return;
+  try{
+    const {data}=await sb.from('souvenir_cahiers').select('*').eq('voyage_id',VOYAGE_ID).order('cree_le',{ascending:true});
+    CAHIERS_DISPONIBLES=data||[];
+  }catch(e){ console.warn('Souvenir: liste des carnets', e); }
+}
+
+async function chargerRangements(){
+  RANGEMENTS={};
+  if(!SOUVENIR_CAHIER) return;
+  try{
+    const {data}=await sb.from('souvenir_cahier_photos').select('id,voyage_photo_id,etape_uid,legende').eq('cahier_id',SOUVENIR_CAHIER.id);
+    (data||[]).forEach(r=>{ RANGEMENTS[r.voyage_photo_id]=r; });
+  }catch(e){ console.warn('Souvenir: rangements du carnet', e); }
+}
+
+// Prépare TOUT (étapes partagées + carnet officiel + son rangement) — appelé
+// au premier passage en montage. Les carnets personnels se créent à la demande
+// (bouton), pas automatiquement.
+async function preparerMontage(){
+  const ok=await assurerEtapesSnapshot();
+  if(!ok) return;
+  await chargerListeCahiers();
+  SOUVENIR_CAHIER = CAHIERS_DISPONIBLES.find(c=>c.type==='officiel') || await chargerOuCreerCahier('officiel', null);
+  if(SOUVENIR_CAHIER && !CAHIERS_DISPONIBLES.find(c=>c.id===SOUVENIR_CAHIER.id)) CAHIERS_DISPONIBLES.push(SOUVENIR_CAHIER);
+  await Promise.all([chargerItineraire(), chargerRangements()]);
 }
 
 async function chargerItineraire(){
   ITINERAIRE=[];
-  if(!SOUVENIR_CAHIER) return; // pas encore de copie (voyage pas encore en montage)
+  if(!VOYAGE_ID) return;
   try{
     const {data:rows}=await sb.from('souvenir_cahier_etapes').select('uid,ordre,rattache_a_nuit_uid,nb_nuits,lieu_snapshot')
-      .eq('souvenir_cahier_id',SOUVENIR_CAHIER.id).order('ordre',{ascending:true});
+      .eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     ITINERAIRE=(rows||[]).map(r=>Object.assign({}, r.lieu_snapshot, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null}));
   }catch(e){ console.warn('Souvenir: itinéraire (copie figée)', e); ITINERAIRE=[]; }
 }
@@ -640,16 +691,48 @@ async function souvRangerPhoto(photoId){
   const uid=row.querySelector('.tri-select').value;
   const legende=row.querySelector('.tri-legende').value.trim();
   if(!uid){ alert('Choisis une étape avant de ranger cette photo.'); return; }
+  if(!SOUVENIR_CAHIER) return;
   try{
-    const up=await sb.from('voyage_photos').update({etape_uid:uid, legende:legende||null}).eq('id',photoId);
-    if(up.error) throw up.error;
-    await chargerPhotos(); renderMain();
+    const existant=RANGEMENTS[photoId];
+    let err=null;
+    if(existant){
+      const up=await sb.from('souvenir_cahier_photos').update({etape_uid:uid, legende:legende||null}).eq('id',existant.id);
+      err=up.error;
+    } else {
+      const ins=await sb.from('souvenir_cahier_photos').insert({
+        cahier_id:SOUVENIR_CAHIER.id, groupe_id:GROUPE_ID, voyage_photo_id:photoId, etape_uid:uid, legende:legende||null
+      });
+      err=ins.error;
+    }
+    if(err) throw err;
+    await chargerRangements(); renderMain();
   }catch(e){
     console.warn('Souvenir: rangement photo', e);
     alert('Le rangement n\'a pas pu être enregistré : '+(e&&e.message?e.message:String(e)));
   }
 }
 window.souvRangerPhoto = souvRangerPhoto;
+
+// Bascule d'un carnet à l'autre (officiel ↔ personnels) — même base d'étapes,
+// rangement propre à chacun.
+async function souvChangerCahier(cahierId){
+  const c=CAHIERS_DISPONIBLES.find(x=>x.id===cahierId); if(!c) return;
+  SOUVENIR_CAHIER=c;
+  await chargerRangements();
+  renderMain();
+}
+window.souvChangerCahier = souvChangerCahier;
+
+async function souvCreerCarnetPerso(){
+  if(!MON_MEMBRE_ID) return;
+  const deja=CAHIERS_DISPONIBLES.find(c=>c.type==='personnel' && c.membre_id===MON_MEMBRE_ID);
+  if(deja){ await souvChangerCahier(deja.id); return; }
+  const c=await chargerOuCreerCahier('personnel', MON_MEMBRE_ID);
+  if(!c){ alert('Le carnet n\'a pas pu être créé.'); return; }
+  CAHIERS_DISPONIBLES.push(c);
+  await souvChangerCahier(c.id);
+}
+window.souvCreerCarnetPerso = souvCreerCarnetPerso;
 
 async function souvValider(){
   if(!SOUVENIR_CAHIER||!MON_MEMBRE_ID) return;
@@ -666,22 +749,35 @@ async function souvValider(){
 }
 window.souvValider = souvValider;
 
-// Le montage : les photos déjà rangées se regroupent par étape et se rendent
-// via le MÊME moteur que le Cahier (RNR_FICHE_COMPLETE) — la fiche réelle du
-// lieu, dont on remplace juste la galerie par les vraies photos du voyage et
-// la citation par la légende posée par le groupe. Un seul moteur, jamais une
-// redite (B114/Q4).
+function optionsCahiersHtml(){
+  return CAHIERS_DISPONIBLES.map(c=>{
+    const label = c.type==='officiel' ? 'Cahier Souvenir officiel' : (c.nom || ('Le carnet de '+nomEnvoyeur(c.membre_id)));
+    return '<option value="'+c.id+'"'+(SOUVENIR_CAHIER&&c.id===SOUVENIR_CAHIER.id?' selected':'')+'>'+esc(label)+'</option>';
+  }).join('');
+}
+
+// Le montage : les photos déjà rangées DANS CE CARNET se regroupent par étape
+// et se rendent via le MÊME moteur que le Cahier (RNR_FICHE_COMPLETE) — la
+// fiche réelle du lieu, dont on remplace juste la galerie par les vraies
+// photos du voyage et la citation par la légende posée pour ce carnet. Un
+// seul moteur, jamais une redite (B114/Q4). Chaque carnet (officiel ou
+// personnel, étape B) range les MÊMES photos à sa façon, sans se marcher dessus.
 function renderMontage(){
   if(!SOUVENIR_CAHIER){
     return '<div class="etat-vide"><div class="t">Le Cahier Souvenir n\'a pas pu être préparé</div>'+
       '<div class="s">Réessaie de recharger la page dans un instant.</div></div>';
   }
-  const aRanger = PHOTOS.filter(p=>!p.etape_uid);
-  const rangees = PHOTOS.filter(p=>p.etape_uid);
+  const aRanger = PHOTOS.filter(p=>!RANGEMENTS[p.id]);
+  const rangees = PHOTOS.filter(p=>RANGEMENTS[p.id]);
   const parEtape = {};
-  rangees.forEach(p=>{ (parEtape[p.etape_uid] = parEtape[p.etape_uid]||[]).push(p); });
+  rangees.forEach(p=>{ const uid=RANGEMENTS[p.id].etape_uid; (parEtape[uid] = parEtape[uid]||[]).push(p); });
 
-  let html = '<div class="cahier-copie-note">Cahier Souvenir — copie du voyage figée le '+esc(fmtDateCourt(new Date(SOUVENIR_CAHIER.cree_le)))+'. Le Cahier de voyage original n\'est pas modifié.</div>';
+  let html = '<div class="cahier-copie-note">Cahier Souvenir — copie du voyage figée. Le Cahier de voyage original n\'est pas modifié.</div>';
+  html += '<div class="cahier-selecteur">'+
+    '<select onchange="souvChangerCahier(this.value)">'+optionsCahiersHtml()+'</select>'+
+    (CAHIERS_DISPONIBLES.find(c=>c.type==='personnel'&&c.membre_id===MON_MEMBRE_ID) ? '' :
+      '<button onclick="souvCreerCarnetPerso()">+ Créer mon carnet</button>') +
+    '</div>';
   html += '<div class="montage-wrap">';
 
   if(aRanger.length){
@@ -691,7 +787,7 @@ function renderMontage(){
         '<div class="tri-th" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
         '<div class="tri-meta">'+esc(nomEnvoyeur(p.membre_id))+'<br>'+esc(fmtRelatif(p.created_at))+'</div>'+
         '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
-        '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)">'+
+        '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)"'+(p.legende?' value="'+esc(p.legende)+'"':'')+'>'+
         '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger</button>'+
       '</div>';
     }).join('');
@@ -703,7 +799,7 @@ function renderMontage(){
     html += uidsOrdonnes.map(uid=>{
       const item=ITINERAIRE.find(it=>it.uid===uid);
       const photosEtape=parEtape[uid];
-      const legendes=[...new Set(photosEtape.map(p=>p.legende).filter(Boolean))];
+      const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
       const synthetique=Object.assign({}, item, {
         photo_url: photosEtape[0].url,
         photos_urls: photosEtape.slice(1).map(p=>p.url),
@@ -721,7 +817,9 @@ function renderMontage(){
   html += '</div>';
 
   const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
-  if(SOUVENIR_CAHIER && SOUVENIR_CAHIER.valide_par){
+  if(SOUVENIR_CAHIER.type!=='officiel'){
+    // carnet personnel : pas de validation leader, c'est un espace perso
+  } else if(SOUVENIR_CAHIER.valide_par){
     html += '<div class="montage-valid-bar"><span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>'+
       '<span class="montage-valid-txt">Toujours modifiable — ranger une nouvelle photo ne retire pas la validation.</span></div>';
   } else if(estLeader && uidsOrdonnes.length){
@@ -734,53 +832,89 @@ function renderMontage(){
   return html;
 }
 
-function renderMain(){
-  const el=document.getElementById('souv-main');
-  const titre=document.getElementById('souv-titre');
-  const bh=document.getElementById('souv-bh');
-  titre.textContent = RB_INFO.nom ? 'Souvenir — '+RB_INFO.nom : 'Souvenir';
-  const etat=etatSouvenir();
-  if(bh) bh.style.display = (etat==='live') ? 'none' : 'flex'; // fusionné dans la bande dorée en mode live
+function souvOngletsHtml(){
+  return '<div class="souv-onglets">'+
+    '<button class="'+(MODE_ACTIF==='galerie'?'actif':'')+'" onclick="souvChangerMode(\'galerie\')">Galerie</button>'+
+    '<button class="'+(MODE_ACTIF==='montage'?'actif':'')+'" onclick="souvChangerMode(\'montage\')">Montage</button>'+
+  '</div>';
+}
 
-  if(etat==='dates_manquantes'){
-    el.innerHTML = '<div class="etat-vide">'+
-      '<div class="t">Pas encore de dates pour ce voyage</div>'+
-      '<div class="s">Souvenir s\'active automatiquement une fois les dates de départ et de retour renseignées — ça reste facultatif, mais c\'est ce qui ouvre la fenêtre de collecte des photos.</div>'+
-      '<a class="lien" href="voyage.html">Renseigner les dates →</a></div>';
-    return;
+// Changer d'onglet est TOUJOURS possible, quelle que soit la période du
+// voyage (retour Bruno 21/07) — la date ne choisit qu'un onglet par défaut
+// au premier chargement, elle ne bloque plus jamais l'accès à l'autre.
+async function souvChangerMode(mode){
+  MODE_ACTIF=mode;
+  if(mode==='montage' && !SOUVENIR_CAHIER){
+    renderMain(); // affiche un état de préparation pendant le chargement
+    await preparerMontage();
   }
-  if(etat==='avant_fenetre'){
-    const fen=calculeFenetre();
-    const debut=new Date(RB_INFO.date_debut+'T00:00:00');
-    el.innerHTML = '<div class="etat-vide">'+
-      '<div class="t">Le voyage est prévu du '+esc(fmtDateCourt(debut))+' au '+esc(fmtDateCourt(new Date(RB_INFO.date_fin_envisagee+'T00:00:00')))+'</div>'+
-      '<div class="s">L\'envoi de photos s\'ouvrira une semaine avant, le '+esc(fmtDateCourt(fen.ouverture))+'.</div></div>';
-    return;
-  }
-  if(etat==='apres_fenetre'){
-    el.innerHTML = renderMontage();
-    return;
-  }
+  renderMain();
+}
+window.souvChangerMode = souvChangerMode;
 
-  // mode live
-  const debut=new Date(RB_INFO.date_debut+'T00:00:00');
-  const fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
-  let html = '<div class="live-band"><span class="live-dot"></span>'+
-    '<span class="lb-txt"><span class="lb-t">Souvenir — '+esc(RB_INFO.nom||'Ce voyage')+' — en ce moment</span>'+
+// Le petit bandeau du haut de la Galerie change de ton selon la période, mais
+// n'affiche jamais un mur bloquant : le bouton d'envoi et le fil restent
+// toujours accessibles en dessous, quelle que soit la date.
+function bandeGalerieHtml(phase){
+  const nomVoyage=RB_INFO.nom||'Ce voyage';
+  if(phase==='dates_manquantes'){
+    return '<div class="live-band"><span class="lb-txt"><span class="lb-t">Souvenir — '+esc(nomVoyage)+'</span>'+
+      '<span class="lb-s">Astuce : renseigne les dates du voyage (<a href="voyage.html" style="color:inherit">ici</a>) pour activer les rappels automatiques.</span></span>'+
+      '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
+  }
+  if(phase==='avant_fenetre'){
+    const debut=new Date(RB_INFO.date_debut+'T00:00:00'), fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
+    return '<div class="live-band"><span class="lb-txt"><span class="lb-t">Souvenir — '+esc(nomVoyage)+' — à venir</span>'+
+      '<span class="lb-s">'+esc(fmtDateCourt(debut))+' → '+esc(fmtDateCourt(fin))+'</span></span>'+
+      '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
+  }
+  if(phase==='apres_fenetre'){
+    return '<div class="live-band"><span class="lb-txt"><span class="lb-t">Souvenir — '+esc(nomVoyage)+' — voyage passé</span>'+
+      '<span class="lb-s">Tu peux toujours ajouter une photo ici.</span></span>'+
+      '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
+  }
+  // phase 'live'
+  const debut=new Date(RB_INFO.date_debut+'T00:00:00'), fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
+  return '<div class="live-band"><span class="live-dot"></span>'+
+    '<span class="lb-txt"><span class="lb-t">Souvenir — '+esc(nomVoyage)+' — en ce moment</span>'+
     '<span class="lb-s">'+esc(fmtDateCourt(debut))+' → '+esc(fmtDateCourt(fin))+'</span></span>'+
     '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
+}
+
+function renderGalerie(phase){
+  let html = bandeGalerieHtml(phase);
   if(!PHOTOS.length){
     html += '<div class="live-vide">Personne n\'a encore envoyé de photo — sois le premier !</div>';
   } else {
     html += '<div class="live-grid">'+PHOTOS.map((p,i)=>{
       return '<div class="souv-item" onclick="souvOuvrirLightbox('+i+')"><img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt=""><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+(p.legende?'<br><i>'+esc(p.legende)+'</i>':'')+'</div></div>';
     }).join('')+'</div>';
-    // (21/07, retour Bruno) : l'ancienne phrase générique "Nom de l'envoyeur +
-    // date" expliquait une info déjà affichée sur chaque vignette — redondant,
-    // retirée. Le vrai bug était ailleurs : chargerPhotos() ne redemandait pas
-    // la légende à la base, donc elle n'apparaissait jamais (corrigé ci-dessus).
   }
-  el.innerHTML = html;
+  return html;
+}
+
+function renderMain(){
+  const el=document.getElementById('souv-main');
+  const titre=document.getElementById('souv-titre');
+  const bh=document.getElementById('souv-bh');
+  titre.textContent = RB_INFO.nom ? 'Souvenir — '+RB_INFO.nom : 'Souvenir';
+  const phase=etatSouvenir();
+
+  // Réglage par défaut au tout premier rendu seulement — ensuite MODE_ACTIF
+  // n'est plus jamais recalculé automatiquement, il obéit uniquement aux clics.
+  if(MODE_ACTIF===null) MODE_ACTIF = (phase==='apres_fenetre') ? 'montage' : 'galerie';
+
+  if(bh) bh.style.display = (MODE_ACTIF==='galerie') ? 'none' : 'flex'; // fusionné dans la bande dorée en Galerie
+
+  let corps;
+  if(MODE_ACTIF==='montage'){
+    corps = SOUVENIR_CAHIER ? renderMontage() :
+      '<div class="etat-vide"><div class="t">Préparation du Cahier Souvenir…</div></div>';
+  } else {
+    corps = renderGalerie(phase);
+  }
+
+  el.innerHTML = souvOngletsHtml() + corps;
 }
 
 (async()=>{
@@ -792,8 +926,7 @@ function renderMain(){
   // collecte terminée — jamais avant, pour ne pas figer un itinéraire encore
   // en construction pendant la préparation du voyage.
   if(etatSouvenir()==='apres_fenetre'){
-    await chargerOuCreerCahierSouvenir();
-    await chargerItineraire();
+    await preparerMontage();
   }
   renderMain();
   renderTourniquet();
