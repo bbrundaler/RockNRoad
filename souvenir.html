@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <script src="chrome.js"></script>
+<script src="tags.js"></script>
+<script src="fiche-complete.js"></script>
+<script src="lightbox.js"></script>
 <style>
 /* SOUVENIR v3 (20/07 suite, B114) — bloc② : l'écran principal est câblé au réel
    (fenêtre de collecte + mode live + galerie temps réel). La carte à tags, le
@@ -72,6 +75,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .ph .meta b{display:block;font-size:10px;}
 .live-note{padding:0 16px 10px;font-size:11px;color:var(--ink-dim);font-style:italic;text-align:center;flex-shrink:0;}
 .live-vide{padding:20px;text-align:center;font-size:12.5px;color:var(--ink-dim);font-style:italic;}
+
+/* -- montage (après la fenêtre de collecte) -- */
+.montage-wrap{flex:1;min-height:0;overflow:auto;padding:14px 16px;}
+.montage-h{font-family:var(--font-title);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-text);margin:14px 0 8px;}
+.montage-h:first-child{margin-top:0;}
+.tri-item{display:flex;gap:10px;align-items:center;background:var(--gold-a10);border:1px solid var(--surface-line);border-radius:var(--r);padding:8px;margin-bottom:8px;flex-wrap:wrap;}
+.tri-item .tri-th{width:56px;height:56px;border-radius:var(--r-sm);background-size:cover;background-position:center;flex-shrink:0;}
+.tri-item .tri-meta{font-size:10.5px;color:var(--ink-dim);flex-shrink:0;width:80px;}
+.tri-item select,.tri-item input[type=text]{font-family:var(--font-body);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--surface-line);border-radius:6px;padding:6px 8px;}
+.tri-item select{flex:1;min-width:120px;}
+.tri-item input[type=text]{flex:2;min-width:140px;}
+.tri-item button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;flex-shrink:0;}
+.montage-card{border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;background:var(--surface);}
+.montage-valid-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-top:1px solid var(--surface-line);flex-wrap:wrap;flex-shrink:0;}
+.montage-valid-txt{font-size:11.5px;color:var(--ink-dim);}
+.montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:8px 16px;cursor:pointer;}
+.montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;font-size:11px;color:var(--gold-light);}
 
 /* ══════════ CARTE À TAGS (1/3) — à venir, bloc④ ══════════ */
 .b-map{grid-area:map;}
@@ -138,9 +158,11 @@ const {createClient}=supabase;
 const sb=createClient(RNR_SURL,RNR_SKEY);
 let VOYAGE_ID=null, GROUPE_ID=null, MON_MEMBRE_ID=null;
 let MEMBRES=[];
-let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,destination_libre:''};
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,destination_libre:'',souvenir_valide_par:null,souvenir_valide_le:null};
 let PHOTOS=[];
 let CANAL_PHOTOS=null;
+let ITINERAIRE=[]; // pour le montage bloc③ : uid, ordre, rattache + tous les champs de la fiche (lieux.*)
+let LEADERS=new Set();
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 function fmtDateCourt(d){
@@ -191,7 +213,7 @@ async function chargeSelecteurChrome(){
 async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
-    const {data}=await sb.from('voyages').select('nom,date_debut,date_fin_envisagee,destination_libre').eq('id',VOYAGE_ID).single();
+    const {data}=await sb.from('voyages').select('nom,date_debut,date_fin_envisagee,destination_libre,souvenir_valide_par,souvenir_valide_le').eq('id',VOYAGE_ID).single();
     if(data) RB_INFO=data;
   }catch(e){ console.warn('Souvenir: infos voyage', e); }
 }
@@ -202,6 +224,32 @@ async function chargerMembres(){
     const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url').eq('groupe_id',GROUPE_ID);
     MEMBRES=data||[];
   }catch(e){ console.warn('Souvenir: membres', e); }
+}
+
+// Même source que le Cahier (voyage_itineraire + lieux) — le montage range
+// une photo brute sur une VRAIE étape du voyage, jamais une liste inventée.
+async function chargerItineraire(){
+  if(!VOYAGE_ID){ ITINERAIRE=[]; return; }
+  try{
+    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,rattache_a_nuit_uid').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
+    let infos={};
+    if(ids.length){
+      const {data:fs}=await sb.from('lieux').select('*').in('id',ids);
+      (fs||[]).forEach(f=>{ infos[f.id]=f; });
+    }
+    ITINERAIRE=(rows||[]).map(r=>{
+      const f=infos[r.lieu_id]; if(!f) return null;
+      return Object.assign({}, f, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null});
+    }).filter(Boolean);
+  }catch(e){ console.warn('Souvenir: itinéraire', e); ITINERAIRE=[]; }
+}
+async function chargerLeaders(){
+  if(!VOYAGE_ID){ LEADERS=new Set(); return; }
+  try{
+    const {data}=await sb.from('voyage_leaders').select('membre_id').eq('voyage_id',VOYAGE_ID);
+    LEADERS=new Set((data||[]).map(r=>r.membre_id));
+  }catch(e){ console.warn('Souvenir: leaders', e); }
 }
 
 function nomEnvoyeur(membreId){
@@ -244,7 +292,7 @@ function abonnerRealtime(){
   let t=null;
   CANAL_PHOTOS = sb.channel('souv-photos:'+VOYAGE_ID)
     .on('postgres_changes',
-      {event:'INSERT', schema:'public', table:'voyage_photos', filter:'voyage_id=eq.'+VOYAGE_ID},
+      {event:'*', schema:'public', table:'voyage_photos', filter:'voyage_id=eq.'+VOYAGE_ID},
       function(){ if(t) clearTimeout(t); t=setTimeout(async function(){ await chargerPhotos(); renderMain(); }, 150); })
     .subscribe();
 }
@@ -293,6 +341,107 @@ function souvPhotoChoisie(input){
 }
 window.souvPhotoChoisie = souvPhotoChoisie;
 
+function optionsItineraireHtml(selectedUid){
+  let n=0;
+  return '<option value="">— choisir une étape —</option>' + ITINERAIRE.map(it=>{
+    if(!it.rattache) n++;
+    const label = (it.rattache?'↳ ':'') + (it.rattache?'':(n+'. ')) + (it.nom||'—');
+    return '<option value="'+esc(it.uid)+'"'+(it.uid===selectedUid?' selected':'')+'>'+esc(label)+'</option>';
+  }).join('');
+}
+
+async function souvRangerPhoto(photoId){
+  const row=document.getElementById('tri-'+photoId); if(!row) return;
+  const uid=row.querySelector('.tri-select').value;
+  const legende=row.querySelector('.tri-legende').value.trim();
+  if(!uid){ alert('Choisis une étape avant de ranger cette photo.'); return; }
+  try{
+    const up=await sb.from('voyage_photos').update({etape_uid:uid, legende:legende||null}).eq('id',photoId);
+    if(up.error) throw up.error;
+    await chargerPhotos(); renderMain();
+  }catch(e){
+    console.warn('Souvenir: rangement photo', e);
+    alert('Le rangement n\'a pas pu être enregistré : '+(e&&e.message?e.message:String(e)));
+  }
+}
+window.souvRangerPhoto = souvRangerPhoto;
+
+async function souvValider(){
+  if(!VOYAGE_ID||!MON_MEMBRE_ID) return;
+  try{
+    const up=await sb.from('voyages').update({souvenir_valide_par:MON_MEMBRE_ID, souvenir_valide_le:new Date().toISOString()}).eq('id',VOYAGE_ID);
+    if(up.error) throw up.error;
+    await chargerInfosVoyage(); renderMain();
+  }catch(e){
+    console.warn('Souvenir: validation', e);
+    alert('La validation n\'a pas pu être enregistrée : '+(e&&e.message?e.message:String(e)));
+  }
+}
+window.souvValider = souvValider;
+
+// Le montage : les photos déjà rangées se regroupent par étape et se rendent
+// via le MÊME moteur que le Cahier (RNR_FICHE_COMPLETE) — la fiche réelle du
+// lieu, dont on remplace juste la galerie par les vraies photos du voyage et
+// la citation par la légende posée par le groupe. Un seul moteur, jamais une
+// redite (B114/Q4).
+function renderMontage(){
+  const aRanger = PHOTOS.filter(p=>!p.etape_uid);
+  const rangees = PHOTOS.filter(p=>p.etape_uid);
+  const parEtape = {};
+  rangees.forEach(p=>{ (parEtape[p.etape_uid] = parEtape[p.etape_uid]||[]).push(p); });
+
+  let html = '<div class="montage-wrap">';
+
+  if(aRanger.length){
+    html += '<div class="montage-h">📥 À ranger ('+aRanger.length+')</div>';
+    html += aRanger.map(p=>{
+      return '<div class="tri-item" id="tri-'+p.id+'">'+
+        '<div class="tri-th" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
+        '<div class="tri-meta">'+esc(nomEnvoyeur(p.membre_id))+'<br>'+esc(fmtRelatif(p.created_at))+'</div>'+
+        '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
+        '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)">'+
+        '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger</button>'+
+      '</div>';
+    }).join('');
+  }
+
+  const uidsOrdonnes = ITINERAIRE.map(it=>it.uid).filter(uid=>parEtape[uid]);
+  if(uidsOrdonnes.length){
+    html += '<div class="montage-h">📖 L\'album ('+uidsOrdonnes.length+' étape'+(uidsOrdonnes.length>1?'s':'')+')</div>';
+    html += uidsOrdonnes.map(uid=>{
+      const item=ITINERAIRE.find(it=>it.uid===uid);
+      const photosEtape=parEtape[uid];
+      const legendes=[...new Set(photosEtape.map(p=>p.legende).filter(Boolean))];
+      const synthetique=Object.assign({}, item, {
+        photo_url: photosEtape[0].url,
+        photos_urls: photosEtape.slice(1).map(p=>p.url),
+        commentaire: legendes.join(' — ') || item.commentaire || ''
+      });
+      const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
+      return '<div class="montage-card">'+contenu+'</div>';
+    }).join('');
+  }
+
+  if(!aRanger.length && !uidsOrdonnes.length){
+    html += '<div class="live-vide">Aucune photo n\'a été envoyée pendant la fenêtre de collecte.</div>';
+  }
+
+  html += '</div>';
+
+  const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
+  if(RB_INFO.souvenir_valide_par){
+    html += '<div class="montage-valid-bar"><span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(RB_INFO.souvenir_valide_par))+'</span>'+
+      '<span class="montage-valid-txt">Toujours modifiable — ranger une nouvelle photo ne retire pas la validation.</span></div>';
+  } else if(estLeader && uidsOrdonnes.length){
+    html += '<div class="montage-valid-bar"><span class="montage-valid-txt">Le montage peut continuer même après validation.</span>'+
+      '<button class="montage-valid-btn" onclick="souvValider()">Valider le Cahier Souvenir</button></div>';
+  } else if(uidsOrdonnes.length){
+    html += '<div class="montage-valid-bar"><span class="montage-valid-txt">Seul un leader du voyage peut valider le Cahier Souvenir.</span></div>';
+  }
+
+  return html;
+}
+
 function renderMain(){
   const el=document.getElementById('souv-main');
   const titre=document.getElementById('souv-titre');
@@ -314,9 +463,7 @@ function renderMain(){
     return;
   }
   if(etat==='apres_fenetre'){
-    el.innerHTML = '<div class="etat-vide"><span class="ic">📖</span>'+
-      '<div class="t">La fenêtre de collecte est terminée</div>'+
-      '<div class="s">'+(PHOTOS.length? PHOTOS.length+' photo'+(PHOTOS.length>1?'s':'')+' envoyée'+(PHOTOS.length>1?'s':'')+' par le groupe — le montage du Cahier Souvenir arrive bientôt.' : 'Aucune photo n\'a été envoyée pendant la fenêtre de collecte.')+'</div></div>';
+    el.innerHTML = renderMontage();
     return;
   }
 
@@ -341,7 +488,7 @@ function renderMain(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){ window.location.href="index.html"; return; }
   await resoutVoyageId(session.user.id);
-  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos()]);
+  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerItineraire(), chargerLeaders()]);
   renderMain();
   abonnerRealtime();
   if(window.rnrChrome) chargeSelecteurChrome(); else window.addEventListener('load', chargeSelecteurChrome);
