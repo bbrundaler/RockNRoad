@@ -38,7 +38,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:var(--shadow);}
 .bh{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 #souv-bh{background:linear-gradient(90deg,var(--gold-deep),var(--gold) 60%,var(--gold-light));
-  color:#1a1208;padding:9px 14px;flex-wrap:wrap;row-gap:4px;}
+  color:#1a1208;padding:9px 14px;flex-wrap:wrap;row-gap:4px;min-height:42px;box-sizing:border-box;}
 #souv-bh .sb-t{font-family:var(--font-title);font-weight:700;font-size:14.5px;flex:1;min-width:140px;}
 #souv-bh .sb-s{font-size:11.5px;font-weight:600;opacity:.85;margin-left:-4px;}
 #souv-bh button{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;
@@ -86,7 +86,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* -- montage (après la fenêtre de collecte) -- */
 .montage-wrap{flex:1;min-height:0;overflow:auto;padding:14px 16px;}
-.cahier-copie-note{padding:8px 16px;font-size:11.5px;color:var(--ink-dim);font-style:italic;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 .cahier-selecteur{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
 .cahier-selecteur select{font-family:var(--font-body);font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;flex:1;min-width:160px;}
 .cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;white-space:nowrap;}
@@ -770,7 +769,7 @@ function renderMontage(){
   const parEtape = {};
   rangees.forEach(p=>{ const uid=RANGEMENTS[p.id].etape_uid; (parEtape[uid] = parEtape[uid]||[]).push(p); });
 
-  let html = '<div class="cahier-copie-note">Cahier Souvenir — copie du voyage figée. Le Cahier de voyage original n\'est pas modifié.</div>';
+  let html = '';
   html += '<div class="cahier-selecteur">'+
     '<select onchange="souvChangerCahier(this.value)">'+optionsCahiersHtml()+'</select>'+
     (CAHIERS_DISPONIBLES.find(c=>c.type==='personnel'&&c.membre_id===MON_MEMBRE_ID) ? '' :
