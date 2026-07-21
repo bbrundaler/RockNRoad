@@ -56,25 +56,26 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* -- mode live -- */
 .live-band{background:linear-gradient(90deg,var(--gold-deep),var(--gold) 60%,var(--gold-light));
-  color:#1a1208;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+  color:#1a1208;padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--danger,#c0392b);box-shadow:0 0 0 4px rgba(192,57,43,.25);
   animation:pulse 1.6s infinite;flex-shrink:0;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
-.live-band .lb-t{font-family:var(--font-title);font-weight:700;font-size:13.5px;}
+.live-band .lb-txt{flex:1;min-width:120px;}
+.live-band .lb-t{font-family:var(--font-title);font-weight:700;font-size:13.5px;display:block;}
 .live-band .lb-s{font-size:11px;opacity:.85;}
-.live-send{padding:10px 16px 4px;display:flex;justify-content:center;flex-shrink:0;}
-.live-send button{font-family:var(--font-title);font-weight:700;font-size:13px;color:#1a1208;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);
-  padding:9px 22px;display:flex;align-items:center;gap:7px;cursor:pointer;box-shadow:0 6px 16px var(--gold-a35);}
-.live-send button:disabled{opacity:.6;cursor:wait;}
+.live-band button{font-family:var(--font-title);font-weight:700;font-size:13px;color:#1a1208;
+  background:var(--surface);border:none;border-radius:var(--r-pill);
+  padding:9px 20px;display:flex;align-items:center;gap:7px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25);
+  flex-shrink:0;white-space:nowrap;}
+.live-band button:disabled{opacity:.6;cursor:wait;}
 /* Mosaïque en colonnes (façon Pinterest/Google Photos) : chaque photo garde
    sa vraie forme, jamais recadrée en carré. Classe renommée "souv-item"
    (au lieu de "ph") après collision constatée avec une classe existante
    d'app.css qui écrasait le cadrage — leçon : jamais de nom de classe à
    2-3 lettres sur une page qui charge le style global du site. */
-.live-grid{column-count:3;column-gap:8px;padding:10px 16px 12px;flex:1;min-height:0;overflow:auto;}
+.live-grid{column-count:4;column-gap:7px;padding:8px 16px 12px;}
 .souv-item{break-inside:avoid;margin-bottom:8px;border-radius:var(--r);overflow:hidden;position:relative;
-  box-shadow:0 3px 10px rgba(0,0,0,.28);background:var(--gold-a10);}
+  box-shadow:0 3px 10px rgba(0,0,0,.28);background:var(--gold-a10);cursor:pointer;}
 .souv-item img{display:block;width:100%;height:auto;}
 .souv-item .meta{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top,rgba(15,13,9,.92) 45%,transparent);
   padding:18px 8px 6px;font-size:11px;color:#fff;line-height:1.3;}
@@ -117,6 +118,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .b-shelf{grid-area:shelf;}
 .shelf-vide{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;}
 .carousel{flex:1;min-height:0;padding:10px 16px;display:flex;align-items:center;justify-content:flex-start;gap:12px;overflow-x:auto;scrollbar-width:thin;}
+.shelf-titre{flex-shrink:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center;
+  padding:8px 16px 8px 0;border-right:1px solid var(--gold-a20);margin-right:2px;max-width:110px;}
+.shelf-titre b{font-family:var(--font-title);font-size:9.5px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--gold-text);display:block;margin-bottom:3px;}
+.shelf-titre span{font-family:var(--font-title);font-size:14px;font-weight:600;line-height:1.2;color:var(--ink);}
 .trip{flex-shrink:0;width:96px;border-radius:var(--r);overflow:hidden;cursor:pointer;
   border:1px solid var(--gold-a20);transition:transform .2s,opacity .2s,border-color .2s;opacity:.65;}
 .trip:hover{opacity:.9;}
@@ -150,7 +156,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ══════════ ÉCRAN PRINCIPAL (2/3) ══════════ -->
   <div class="blk b-main">
-    <div class="bh"><h3 id="souv-titre">Souvenir</h3></div>
+    <div class="bh" id="souv-bh"><h3 id="souv-titre">Souvenir</h3></div>
     <div class="main-body" id="souv-main">
       <div class="etat-vide"><div class="t">Chargement…</div></div>
     </div>
@@ -167,7 +173,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ══════════ TOURNIQUET ══════════ -->
   <div class="blk b-shelf">
-    <div class="bh"><h3>Nos aventures, au fil des années</h3></div>
     <div class="shelf-vide" id="souv-shelf-wrap">
       <div class="a-venir">L'étagère de vos voyages passés arrive bientôt.</div>
     </div>
@@ -373,6 +378,14 @@ function renderAmbiance(){
   }, 4000);
 }
 
+// Clic pour agrandir une photo du mode live : même carrousel que le Carnet/
+// Horizon (RNR_LIGHTBOX, déjà chargé sur la page) — flèches gauche/droite
+// pour parcourir toutes les photos du voyage, jamais un second composant.
+function souvOuvrirLightbox(i){
+  if(window.RNR_LIGHTBOX) RNR_LIGHTBOX.open(PHOTOS.map(p=>p.url), i);
+}
+window.souvOuvrirLightbox = souvOuvrirLightbox;
+
 function souvSwitchVoyage(id){
   if(!id||id===VOYAGE_ID) return;
   const v=TOUS_VOYAGES.find(x=>x.id===id);
@@ -389,7 +402,8 @@ function renderTourniquet(){
     return;
   }
   wrap.className='carousel';
-  wrap.innerHTML = TOUS_VOYAGES.map(v=>{
+  wrap.innerHTML = '<div class="shelf-titre"><b>Souvenir</b><span>Nos aventures, au fil des années</span></div>' +
+  TOUS_VOYAGES.map(v=>{
     const mid = v.id===VOYAGE_ID ? ' mid' : '';
     const cover = v._cover ? "style=\"background-image:url('"+String(v._cover).replace(/'/g,'')+"')\"" : '';
     return '<div class="trip'+mid+'" onclick="souvSwitchVoyage(\''+v.id+'\')">'+
@@ -662,8 +676,10 @@ function renderMontage(){
 function renderMain(){
   const el=document.getElementById('souv-main');
   const titre=document.getElementById('souv-titre');
+  const bh=document.getElementById('souv-bh');
   titre.textContent = RB_INFO.nom ? 'Souvenir — '+RB_INFO.nom : 'Souvenir';
   const etat=etatSouvenir();
+  if(bh) bh.style.display = (etat==='live') ? 'none' : 'flex'; // fusionné dans la bande dorée en mode live
 
   if(etat==='dates_manquantes'){
     el.innerHTML = '<div class="etat-vide">'+
@@ -674,9 +690,10 @@ function renderMain(){
   }
   if(etat==='avant_fenetre'){
     const fen=calculeFenetre();
+    const debut=new Date(RB_INFO.date_debut+'T00:00:00');
     el.innerHTML = '<div class="etat-vide">'+
-      '<div class="t">La collecte de photos n\'a pas encore commencé</div>'+
-      '<div class="s">Elle s\'ouvrira le '+esc(fmtDateCourt(fen.ouverture))+', une semaine avant le départ.</div></div>';
+      '<div class="t">Le voyage est prévu du '+esc(fmtDateCourt(debut))+' au '+esc(fmtDateCourt(new Date(RB_INFO.date_fin_envisagee+'T00:00:00')))+'</div>'+
+      '<div class="s">L\'envoi de photos s\'ouvrira une semaine avant, le '+esc(fmtDateCourt(fen.ouverture))+'.</div></div>';
     return;
   }
   if(etat==='apres_fenetre'){
@@ -685,16 +702,17 @@ function renderMain(){
   }
 
   // mode live
-  const fen=calculeFenetre();
+  const debut=new Date(RB_INFO.date_debut+'T00:00:00');
+  const fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
   let html = '<div class="live-band"><span class="live-dot"></span>'+
-    '<span class="lb-t">'+esc(RB_INFO.nom||'Ce voyage')+' — en ce moment</span>'+
-    '<span class="lb-s">'+esc(fmtDateCourt(fen.ouverture))+' → '+esc(fmtDateCourt(fen.fermeture))+'</span></div>'+
-    '<div class="live-send"><button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
+    '<span class="lb-txt"><span class="lb-t">Souvenir — '+esc(RB_INFO.nom||'Ce voyage')+' — en ce moment</span>'+
+    '<span class="lb-s">'+esc(fmtDateCourt(debut))+' → '+esc(fmtDateCourt(fin))+'</span></span>'+
+    '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
   if(!PHOTOS.length){
     html += '<div class="live-vide">Personne n\'a encore envoyé de photo — sois le premier !</div>';
   } else {
-    html += '<div class="live-grid">'+PHOTOS.map(p=>{
-      return '<div class="souv-item"><img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt=""><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+(p.legende?'<br><i>'+esc(p.legende)+'</i>':'')+'</div></div>';
+    html += '<div class="live-grid">'+PHOTOS.map((p,i)=>{
+      return '<div class="souv-item" onclick="souvOuvrirLightbox('+i+')"><img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt=""><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+(p.legende?'<br><i>'+esc(p.legende)+'</i>':'')+'</div></div>';
     }).join('')+'</div>';
     // (21/07, retour Bruno) : l'ancienne phrase générique "Nom de l'envoyeur +
     // date" expliquait une info déjà affichée sur chaque vignette — redondant,
