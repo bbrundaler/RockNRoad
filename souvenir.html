@@ -172,6 +172,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 </div>
 
+<!-- aperçu avant envoi : cadrage déjà fait (auto), juste une légende à poser -->
+<div id="souv-apercu-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,13,9,.72);z-index:6000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);box-shadow:var(--shadow-hover);max-width:360px;width:100%;padding:16px;">
+    <div id="souv-apercu-img" style="width:100%;aspect-ratio:1;border-radius:var(--r);background-size:cover;background-position:center;background-color:var(--bg);margin-bottom:12px;"></div>
+    <input type="text" id="souv-apercu-legende" placeholder="Une petite légende ? (optionnel)" maxlength="140"
+      style="width:100%;font-family:var(--font-body);font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--surface-line);border-radius:8px;padding:9px 11px;box-sizing:border-box;margin-bottom:12px;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" onclick="souvAnnulerEnvoi()" style="font-family:var(--font-body);font-size:12.5px;color:var(--ink-dim);background:transparent;border:1px solid var(--surface-line);border-radius:var(--r-pill);padding:8px 16px;cursor:pointer;">Annuler</button>
+      <button type="button" id="souv-apercu-envoyer" onclick="souvConfirmerEnvoi()" style="font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:8px 18px;cursor:pointer;">📤 Publier</button>
+    </div>
+  </div>
+</div>
+
 <!-- champ fichier caché pour l'envoi de photo -->
 <input type="file" id="souv-photo-file" accept="image/*" style="display:none" onchange="souvPhotoChoisie(this)">
 
@@ -450,15 +463,18 @@ function abonnerRealtime(){
 function souvEnvoyerClic(){ document.getElementById('souv-photo-file').click(); }
 window.souvEnvoyerClic = souvEnvoyerClic;
 
+let SOUV_BLOB_EN_ATTENTE=null;
+
 // Même moulinette que partout ailleurs sur le site (redimension canvas, retrait
 // EXIF au passage — obligation S9) mais en plus grande taille : c'est une
-// galerie souvenir destinée à être regardée/imprimée, pas un avatar.
+// galerie souvenir destinée à être regardée/imprimée, pas un avatar. La photo
+// n'est PAS envoyée tout de suite : un petit aperçu s'ouvre d'abord pour
+// laisser une légende (retour Bruno, 21/07 — comme "Petit Potin" : nom+
+// commentaire posés au moment de l'envoi, pas retrouvés plus tard).
 function souvPhotoChoisie(input){
   const f=input.files&&input.files[0]; input.value='';
   if(!f) return;
   if(!/^image\//.test(f.type)){ alert('Ce fichier n\'est pas une image.'); return; }
-  const btn=document.getElementById('souv-btn-envoi');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Envoi…'; }
   const img=new Image(); const url=URL.createObjectURL(f);
   img.onload=()=>{
     URL.revokeObjectURL(url);
@@ -466,30 +482,52 @@ function souvPhotoChoisie(input){
     if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } } else { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
     const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
     cv.getContext('2d').drawImage(img,0,0,w,h);
-    cv.toBlob(async(blob)=>{
-      if(!blob){ if(btn){btn.disabled=false;btn.textContent='📤 Envoyer une photo';} return; }
-      try{
-        const chemin=VOYAGE_ID+'/'+Date.now()+'-'+(MON_MEMBRE_ID||'x').slice(0,8)+'.jpg';
-        const up=await sb.storage.from('photos-souvenir').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
-        if(up.error) throw up.error;
-        const pub=sb.storage.from('photos-souvenir').getPublicUrl(chemin);
-        const publicUrl=pub&&pub.data&&pub.data.publicUrl;
-        if(!publicUrl) throw new Error('URL publique introuvable');
-        const ins=await sb.from('voyage_photos').insert({voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, membre_id:MON_MEMBRE_ID, url:publicUrl});
-        if(ins.error) throw ins.error;
-        await chargerPhotos(); renderMain();
-      }catch(e){
-        console.warn('Souvenir: envoi photo', e);
-        alert('La photo n\'a pas pu être envoyée : '+(e&&e.message?e.message:String(e)));
-      }finally{
-        if(btn){ btn.disabled=false; btn.textContent='📤 Envoyer une photo'; }
-      }
+    cv.toBlob((blob)=>{
+      if(!blob){ alert('Cette photo n\'a pas pu être préparée.'); return; }
+      SOUV_BLOB_EN_ATTENTE=blob;
+      const prev=document.getElementById('souv-apercu-img');
+      if(prev) prev.style.backgroundImage="url('"+cv.toDataURL('image/jpeg',0.7)+"')";
+      const leg=document.getElementById('souv-apercu-legende'); if(leg) leg.value='';
+      const ov=document.getElementById('souv-apercu-overlay'); if(ov) ov.style.display='flex';
     }, 'image/jpeg', 0.85);
   };
-  img.onerror=()=>{ URL.revokeObjectURL(url); if(btn){btn.disabled=false;btn.textContent='📤 Envoyer une photo';} };
+  img.onerror=()=>{ URL.revokeObjectURL(url); alert('Cette image n\'a pas pu être lue.'); };
   img.src=url;
 }
 window.souvPhotoChoisie = souvPhotoChoisie;
+
+function souvAnnulerEnvoi(){
+  SOUV_BLOB_EN_ATTENTE=null;
+  const ov=document.getElementById('souv-apercu-overlay'); if(ov) ov.style.display='none';
+}
+window.souvAnnulerEnvoi = souvAnnulerEnvoi;
+
+async function souvConfirmerEnvoi(){
+  if(!SOUV_BLOB_EN_ATTENTE) return;
+  const blob=SOUV_BLOB_EN_ATTENTE;
+  const legende=(document.getElementById('souv-apercu-legende').value||'').trim();
+  const btn=document.getElementById('souv-apercu-envoyer');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Envoi…'; }
+  try{
+    const chemin=VOYAGE_ID+'/'+Date.now()+'-'+(MON_MEMBRE_ID||'x').slice(0,8)+'.jpg';
+    const up=await sb.storage.from('photos-souvenir').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
+    if(up.error) throw up.error;
+    const pub=sb.storage.from('photos-souvenir').getPublicUrl(chemin);
+    const publicUrl=pub&&pub.data&&pub.data.publicUrl;
+    if(!publicUrl) throw new Error('URL publique introuvable');
+    const ins=await sb.from('voyage_photos').insert({voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, membre_id:MON_MEMBRE_ID, url:publicUrl, legende:legende||null});
+    if(ins.error) throw ins.error;
+    SOUV_BLOB_EN_ATTENTE=null;
+    const ov=document.getElementById('souv-apercu-overlay'); if(ov) ov.style.display='none';
+    await chargerPhotos(); renderMain();
+  }catch(e){
+    console.warn('Souvenir: envoi photo', e);
+    alert('La photo n\'a pas pu être envoyée : '+(e&&e.message?e.message:String(e)));
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='📤 Publier'; }
+  }
+}
+window.souvConfirmerEnvoi = souvConfirmerEnvoi;
 
 function optionsItineraireHtml(selectedUid){
   let n=0;
@@ -627,7 +665,7 @@ function renderMain(){
     html += '<div class="live-vide">Personne n\'a encore envoyé de photo — sois le premier !</div>';
   } else {
     html += '<div class="live-grid">'+PHOTOS.map(p=>{
-      return '<div class="ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+'</div></div>';
+      return '<div class="ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+(p.legende?'<br><i>'+esc(p.legende)+'</i>':'')+'</div></div>';
     }).join('')+'</div>';
     html += '<div class="live-note">Nom de l\'envoyeur + date — le montage rangera tout après.</div>';
   }
