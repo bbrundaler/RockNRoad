@@ -76,7 +76,12 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;}
 .vy-modal{background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-lg);
   box-shadow:var(--shadow);max-width:440px;width:100%;padding:26px 24px;text-align:center;
-  animation:vyPop .25s ease;}
+  animation:vyPop .25s ease;position:relative;}
+.vy-close{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(0,0,0,.25);border:none;color:var(--ink-dim);font-size:15px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;line-height:1;}
+.vy-close:hover{background:rgba(0,0,0,.4);color:var(--ink);}
+.vy-overlay.vy-annulable .vy-close{display:flex;}
 @keyframes vyPop{from{transform:scale(.95);opacity:0;}to{transform:scale(1);opacity:1;}}
 .vy-emoji{font-size:38px;margin-bottom:4px;}
 .vy-titre{font-family:var(--font-title);font-size:23px;color:var(--gold-text);margin:0 0 6px;}
@@ -372,12 +377,30 @@ async function verifierPremierVoyage(groupeId, userId){
     if(!count || count===0 || forceNouveau){
       const m=document.getElementById('vy-modal');
       if(m){ m.style.display='flex';
+        // (20/07, retour Bruno) : "+ Nouveau voyage" (sélecteur de voyage, ou
+        // le tourniquet de Souvenir) amène ici via ?nouveau=1 — mais le groupe
+        // a DÉJÀ au moins un voyage dans ce cas, donc annuler doit être
+        // possible (avant : aucune croix, un clic parti amenait dans un cul-
+        // de-sac). Le tout premier voyage du groupe (count===0) reste
+        // obligatoire — rien à annuler vers, la modale reste fermée à la croix.
+        m.classList.toggle('vy-annulable', !(!count || count===0));
         const btn=document.getElementById('vy-creer');
         if(btn && !btn._lie){ btn.addEventListener('click', creerPremierVoyage); btn._lie=true; }
       }
     }
   }catch(e){ console.warn('Hub: vérif voyage',e); }
 }
+function vyFermerSiAnnulable(){
+  const m=document.getElementById('vy-modal');
+  if(!m || !m.classList.contains('vy-annulable')) return;
+  m.style.display='none';
+  // nettoie ?nouveau=1 de l'URL pour qu'un rechargement ne rouvre pas la modale
+  if(/[?&]nouveau=1/.test(location.search)){
+    const url=new URL(location.href); url.searchParams.delete('nouveau');
+    history.replaceState(null,'',url.pathname+url.search+url.hash);
+  }
+}
+window.vyFermerSiAnnulable = vyFermerSiAnnulable;
 
 // Géocodage départ/retour — même service que le Roadbook (Nominatim/OpenStreetMap, gratuit,
 // sans clé) : un seul comportement de géocodage, copié à l'identique (une maison par page,
@@ -1096,8 +1119,9 @@ function escapeHubHtml(t){ const d=document.createElement('div'); d.textContent=
 </script>
 
 <!-- ════ MODAL : créer le premier voyage (1ère connexion, aucun voyage) ════ -->
-<div id="vy-modal" class="vy-overlay" style="display:none">
+<div id="vy-modal" class="vy-overlay" style="display:none" onclick="if(event.target===this)vyFermerSiAnnulable()">
   <div class="vy-modal">
+    <button type="button" class="vy-close" onclick="vyFermerSiAnnulable()">✕</button>
     <div class="vy-emoji">🧭</div>
     <h2 class="vy-titre">Votre premier voyage</h2>
     <p class="vy-sous">Avant d'imaginer, donnez vie à votre aventure. C'est le point de départ de tout&nbsp;: un nom, une saison, et l'envie de partir ensemble.</p>
