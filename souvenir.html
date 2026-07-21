@@ -109,6 +109,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .montage-card-retirer{display:block;width:100%;font-family:var(--font-body);font-size:11.5px;color:var(--ink-dim);
   background:var(--bg);border:none;border-top:1px solid var(--surface-line);padding:9px;cursor:pointer;text-align:center;}
 .montage-card-retirer:hover{color:var(--danger,#c0392b);}
+.stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
 
@@ -976,6 +977,16 @@ function renderMain(){
 
   el.innerHTML = souvOngletsHtml() + corps;
 }
+
+// En Montage, cliquer une photo déjà placée ne doit PAS ouvrir le lecteur
+// plein écran (c'est le rôle de la Galerie, pas de l'atelier — retour Bruno
+// 21/07) : on intercepte juste ce clic précis, en amont du moteur partagé
+// (fiche-complete.js), sans jamais le modifier lui-même.
+document.getElementById('souv-main').addEventListener('click', function(e){
+  if(MODE_ACTIF==='montage' && e.target.closest('.gf-cover, .gf-galerie-grande-ph')){
+    e.stopPropagation();
+  }
+}, true);
 
 (async()=>{
   const {data:{session}}=await sb.auth.getSession();
