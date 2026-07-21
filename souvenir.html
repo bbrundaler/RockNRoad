@@ -33,6 +33,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .col{display:flex;flex-direction:column;gap:11px;min-height:0;min-width:0;}
 .col-left{flex:2;}
 .col-right{flex:1;}
+/* Mode Montage : plus besoin de la carte, du tourniquet ni de l'ambiance —
+   ce n'est pas leur moment. Le bloc principal prend toute la place pour
+   devenir un vrai atelier de montage (retour Bruno 21/07). */
+.stage.mode-montage .col-right,
+.stage.mode-montage .b-shelf{display:none;}
+.stage.mode-montage .col-left{flex:1;}
 
 .blk{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r-lg);
   display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:var(--shadow);}
@@ -80,25 +86,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .live-note{padding:0 16px 10px;font-size:11px;color:var(--ink-dim);font-style:italic;text-align:center;flex-shrink:0;}
 .live-vide{padding:20px;text-align:center;font-size:12.5px;color:var(--ink-dim);font-style:italic;}
 
-/* -- montage (après la fenêtre de collecte) -- */
-.montage-wrap{flex:1;min-height:0;overflow:auto;padding:14px 16px;}
-.cahier-selecteur{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
-.cahier-selecteur select{font-family:var(--font-body);font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;flex:1;min-width:160px;}
+/* -- l'atelier de montage (après la fenêtre de collecte) -- */
+.cahier-selecteur{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
+.cahier-selecteur select{font-family:var(--font-body);font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;min-width:160px;}
 .cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;white-space:nowrap;}
-.montage-h{font-family:var(--font-title);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-text);margin:14px 0 8px;}
-.montage-h:first-child{margin-top:0;}
-.tri-item{display:flex;gap:10px;align-items:center;background:var(--gold-a10);border:1px solid var(--surface-line);border-radius:var(--r);padding:8px;margin-bottom:8px;flex-wrap:wrap;}
-.tri-item .tri-th{width:56px;height:56px;border-radius:var(--r-sm);background-size:cover;background-position:center;flex-shrink:0;}
-.tri-item .tri-meta{font-size:10.5px;color:var(--ink-dim);flex-shrink:0;width:80px;}
-.tri-item select,.tri-item input[type=text]{font-family:var(--font-body);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--surface-line);border-radius:6px;padding:6px 8px;}
-.tri-item select{flex:1;min-width:120px;}
-.tri-item input[type=text]{flex:2;min-width:140px;}
-.tri-item button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;flex-shrink:0;}
-.montage-card{border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;background:var(--surface);}
-.montage-valid-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-top:1px solid var(--surface-line);flex-wrap:wrap;flex-shrink:0;}
-.montage-valid-txt{font-size:11.5px;color:var(--ink-dim);}
-.montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:8px 16px;cursor:pointer;}
-.montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;font-size:11px;color:var(--gold-light);}
+.cahier-selecteur .montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:7px 16px;cursor:pointer;margin-left:auto;}
+.cahier-selecteur .montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;font-size:11.5px;color:var(--gold-light);margin-left:auto;}
+
+.atelier-corps{flex:1;min-height:0;display:flex;}
+.atelier-tri{width:320px;flex-shrink:0;overflow:auto;padding:14px;border-right:1px solid var(--surface-line);background:var(--bg);}
+.atelier-tri-item{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.atelier-tri-item .img{width:100%;height:170px;background-size:cover;background-position:center;}
+.atelier-tri-item .corps{padding:10px 12px;}
+.atelier-tri-item .meta{font-size:11.5px;color:var(--ink-dim);margin-bottom:8px;}
+.atelier-tri-item select,.atelier-tri-item input[type=text]{display:block;width:100%;font-family:var(--font-body);font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--surface-line);border-radius:8px;padding:8px 10px;margin-bottom:8px;box-sizing:border-box;}
+.atelier-tri-item button{width:100%;font-family:var(--font-title);font-weight:700;font-size:13px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:9px;cursor:pointer;}
+.atelier-livre{flex:1;min-width:0;overflow:auto;padding:20px 24px;}
+.montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);}
 
 /* ══════════ CARTE À TAGS (1/3) — à venir, bloc④ ══════════ */
 .b-map{flex:2;min-height:0;}
@@ -156,7 +160,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 </style>
 </head>
 <body>
-<div class="stage">
+<div class="stage" id="stage">
 
   <div class="col col-left">
     <!-- ══════════ ÉCRAN PRINCIPAL ══════════ -->
@@ -774,32 +778,48 @@ function renderMontage(){
   const rangees = PHOTOS.filter(p=>RANGEMENTS[p.id]);
   const parEtape = {};
   rangees.forEach(p=>{ const uid=RANGEMENTS[p.id].etape_uid; (parEtape[uid] = parEtape[uid]||[]).push(p); });
+  const uidsOrdonnes = ITINERAIRE.map(it=>it.uid).filter(uid=>parEtape[uid]);
 
-  let html = '';
-  html += '<div class="cahier-selecteur">'+
+  // ══ la barre : quel carnet, et sa validation ══
+  let barre = '<div class="cahier-selecteur">'+
     '<select onchange="souvChangerCahier(this.value)">'+optionsCahiersHtml()+'</select>'+
     (CAHIERS_DISPONIBLES.find(c=>c.type==='personnel'&&c.membre_id===MON_MEMBRE_ID) ? '' :
-      '<button onclick="souvCreerCarnetPerso()">+ Créer mon carnet</button>') +
-    '</div>';
-  html += '<div class="montage-wrap">';
+      '<button onclick="souvCreerCarnetPerso()">+ Créer mon carnet</button>');
+  const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
+  if(SOUVENIR_CAHIER.type==='officiel'){
+    if(SOUVENIR_CAHIER.valide_par){
+      barre += '<span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>';
+    } else if(estLeader && uidsOrdonnes.length){
+      barre += '<button class="montage-valid-btn" onclick="souvValider()">Valider le Cahier Souvenir</button>';
+    }
+  }
+  barre += '</div>';
 
-  if(aRanger.length){
-    html += '<div class="montage-h">À ranger ('+aRanger.length+')</div>';
-    html += aRanger.map(p=>{
-      return '<div class="tri-item" id="tri-'+p.id+'">'+
-        '<div class="tri-th" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
-        '<div class="tri-meta">'+esc(nomEnvoyeur(p.membre_id))+'<br>'+esc(fmtRelatif(p.created_at))+'</div>'+
-        '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
-        '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)"'+(p.legende?' value="'+esc(p.legende)+'"':'')+'>'+
-        '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger</button>'+
+  // ══ colonne de gauche : la pile des photos à ranger, une par une, en grand ══
+  let colTri = '<div class="atelier-tri">';
+  if(!aRanger.length){
+    colTri += '<div class="live-vide">Tout est rangé !</div>';
+  } else {
+    colTri += aRanger.map(p=>{
+      return '<div class="atelier-tri-item" id="tri-'+p.id+'">'+
+        '<div class="img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
+        '<div class="corps">'+
+          '<div class="meta">'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'</div>'+
+          '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
+          '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)"'+(p.legende?' value="'+esc(p.legende)+'"':'')+'>'+
+          '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger dans le cahier</button>'+
+        '</div>'+
       '</div>';
     }).join('');
   }
+  colTri += '</div>';
 
-  const uidsOrdonnes = ITINERAIRE.map(it=>it.uid).filter(uid=>parEtape[uid]);
+  // ══ colonne de droite : le cahier assemblé, en grand, page par page ══
+  // Même moteur que le Cahier (RNR_FICHE_COMPLETE) — juste toute la largeur
+  // disponible pour être vraiment lisible, plus coincé dans un coin (B114/Q4).
+  let colLivre = '<div class="atelier-livre">';
   if(uidsOrdonnes.length){
-    html += '<div class="montage-h">L\'album ('+uidsOrdonnes.length+' étape'+(uidsOrdonnes.length>1?'s':'')+')</div>';
-    html += uidsOrdonnes.map(uid=>{
+    colLivre += uidsOrdonnes.map(uid=>{
       const item=ITINERAIRE.find(it=>it.uid===uid);
       const photosEtape=parEtape[uid];
       const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
@@ -811,28 +831,12 @@ function renderMontage(){
       const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
       return '<div class="montage-card">'+contenu+'</div>';
     }).join('');
+  } else {
+    colLivre += '<div class="live-vide">Le cahier se remplit au fur et à mesure que tu ranges des photos à gauche.</div>';
   }
+  colLivre += '</div>';
 
-  if(!aRanger.length && !uidsOrdonnes.length){
-    html += '<div class="live-vide">Aucune photo n\'a été envoyée pendant la fenêtre de collecte.</div>';
-  }
-
-  html += '</div>';
-
-  const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
-  if(SOUVENIR_CAHIER.type!=='officiel'){
-    // carnet personnel : pas de validation leader, c'est un espace perso
-  } else if(SOUVENIR_CAHIER.valide_par){
-    html += '<div class="montage-valid-bar"><span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>'+
-      '<span class="montage-valid-txt">Toujours modifiable — ranger une nouvelle photo ne retire pas la validation.</span></div>';
-  } else if(estLeader && uidsOrdonnes.length){
-    html += '<div class="montage-valid-bar"><span class="montage-valid-txt">Le montage peut continuer même après validation.</span>'+
-      '<button class="montage-valid-btn" onclick="souvValider()">Valider le Cahier Souvenir</button></div>';
-  } else if(uidsOrdonnes.length){
-    html += '<div class="montage-valid-bar"><span class="montage-valid-txt">Seul un leader du voyage peut valider le Cahier Souvenir.</span></div>';
-  }
-
-  return html;
+  return barre + '<div class="atelier-corps">'+colTri+colLivre+'</div>';
 }
 
 function souvOngletsHtml(){
@@ -895,12 +899,14 @@ function renderGalerie(){
 function renderMain(){
   const el=document.getElementById('souv-main');
   const bh=document.getElementById('souv-bh');
+  const stage=document.getElementById('stage');
   const phase=etatSouvenir();
 
   // Réglage par défaut au tout premier rendu seulement — ensuite MODE_ACTIF
   // n'est plus jamais recalculé automatiquement, il obéit uniquement aux clics.
   if(MODE_ACTIF===null) MODE_ACTIF = (phase==='apres_fenetre') ? 'montage' : 'galerie';
 
+  if(stage) stage.classList.toggle('mode-montage', MODE_ACTIF==='montage');
   bh.innerHTML = renderEnTete(phase);
 
   let corps;
