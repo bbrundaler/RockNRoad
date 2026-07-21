@@ -106,6 +106,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
   color:var(--gold-text);font-size:11px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);pointer-events:none;}
+.montage-card-retirer{display:block;width:100%;font-family:var(--font-body);font-size:11.5px;color:var(--ink-dim);
+  background:var(--bg);border:none;border-top:1px solid var(--surface-line);padding:9px;cursor:pointer;text-align:center;}
+.montage-card-retirer:hover{color:var(--danger,#c0392b);}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
 
@@ -845,9 +848,10 @@ function renderMontage(){
       });
       const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
       const vide = photosEtape.length ? '' : ' vide';
-      return '<div class="montage-card'+vide+'" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
+      const retirer = photosEtape.length ? '<button class="montage-card-retirer" onclick="souvViderEtape(\''+item.uid+'\')">Retirer les photos de cette étape</button>' : '';
+      return '<div class="montage-card'+vide+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
         (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
-        contenu+'</div>';
+        contenu+retirer+'</div>';
     }).join('');
   }
   colLivre += '</div>';
@@ -873,6 +877,24 @@ async function souvDropSurEtape(e, uid){
   await assignerPhotoAEtape(photoId, uid, legende);
 }
 window.souvDropSurEtape = souvDropSurEtape;
+
+// Retire toutes les photos rangées sur cette étape — elles reviennent dans
+// "à ranger", rien n'est supprimé (juste dérangé). Répond au manque signalé
+// par Bruno : une fois glissée, une photo était coincée sans façon de la
+// ressortir.
+async function souvViderEtape(uid){
+  const idsAVider=Object.keys(RANGEMENTS).filter(pid=>RANGEMENTS[pid].etape_uid===uid);
+  if(!idsAVider.length) return;
+  try{
+    const del=await sb.from('souvenir_cahier_photos').delete().in('id', idsAVider.map(pid=>RANGEMENTS[pid].id));
+    if(del.error) throw del.error;
+    await chargerRangements(); renderMain();
+  }catch(e){
+    console.warn('Souvenir: retrait des photos', e);
+    alert('Le retrait n\'a pas pu être enregistré : '+(e&&e.message?e.message:String(e)));
+  }
+}
+window.souvViderEtape = souvViderEtape;
 
 function souvOngletsHtml(){
   return '<div class="souv-onglets">'+
