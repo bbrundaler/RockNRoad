@@ -143,31 +143,31 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
   <!-- ══════════ ÉCRAN PRINCIPAL (2/3) ══════════ -->
   <div class="blk b-main">
-    <div class="bh"><span class="ic">🌅</span><h3 id="souv-titre">Souvenir</h3></div>
+    <div class="bh"><h3 id="souv-titre">Souvenir</h3></div>
     <div class="main-body" id="souv-main">
-      <div class="etat-vide"><span class="ic">⏳</span><div class="t">Chargement…</div></div>
+      <div class="etat-vide"><div class="t">Chargement…</div></div>
     </div>
   </div>
 
   <!-- ══════════ CARTE À TAGS (1/3) ══════════ -->
   <div class="blk b-map">
-    <div class="bh"><span class="ic">🗺️</span><h3>Les images qui restent</h3></div>
+    <div class="bh"><h3>Les images qui restent</h3></div>
     <div class="map-wrap" id="souv-map-wrap">
-      <div class="a-venir"><span class="ic">🗺️</span>La carte de tes voyages<br>arrive bientôt ici.</div>
+      <div class="a-venir">La carte de tes voyages<br>arrive bientôt ici.</div>
     </div>
   </div>
 
   <!-- ══════════ TOURNIQUET ══════════ -->
   <div class="blk b-shelf">
-    <div class="bh"><span class="ic">📚</span><h3>Nos aventures, au fil des années</h3></div>
+    <div class="bh"><h3>Nos aventures, au fil des années</h3></div>
     <div class="shelf-vide" id="souv-shelf-wrap">
-      <div class="a-venir"><span class="ic">📚</span>L'étagère de vos voyages passés arrive bientôt.</div>
+      <div class="a-venir">L'étagère de vos voyages passés arrive bientôt.</div>
     </div>
   </div>
 
   <!-- ══════════ CARRÉ AMBIANCE ══════════ -->
   <div class="blk b-ambiance" id="souv-ambiance-wrap">
-    <div class="a-venir"><span class="ic">✨</span>Ambiance à venir</div>
+    <div class="a-venir">Ambiance à venir</div>
   </div>
 
 </div>
@@ -347,11 +347,11 @@ function renderAmbiance(){
   const wrap=document.getElementById('souv-ambiance-wrap'); if(!wrap) return;
   if(AMBIANCE_TIMER){ clearInterval(AMBIANCE_TIMER); AMBIANCE_TIMER=null; }
   if(!AMBIANCE_PHOTOS.length){
-    wrap.innerHTML='<div class="a-venir"><span class="ic">✨</span>Les premières photos du groupe<br>animeront ce coin-là.</div>';
+    wrap.innerHTML='<div class="a-venir">Les premières photos du groupe<br>animeront ce coin-là.</div>';
     return;
   }
   wrap.innerHTML='<div class="amb-photo on" id="souv-amb-a"></div><div class="amb-photo" id="souv-amb-b"></div>'+
-    '<div class="amb-label">✨ souvenirs en vrac</div>';
+    '<div class="amb-label">souvenirs en vrac</div>';
   let idx=0, surA=true;
   const elA=document.getElementById('souv-amb-a'), elB=document.getElementById('souv-amb-b');
   elA.style.backgroundImage="url('"+AMBIANCE_PHOTOS[0].replace(/'/g,'')+"')";
@@ -377,7 +377,7 @@ function renderTourniquet(){
   const wrap=document.getElementById('souv-shelf-wrap'); if(!wrap) return;
   if(!TOUS_VOYAGES.length){
     wrap.className='shelf-vide';
-    wrap.innerHTML='<div class="a-venir"><span class="ic">📚</span>Pas encore de voyage — le premier écrira la première page.</div>';
+    wrap.innerHTML='<div class="a-venir">Pas encore de voyage — le premier écrira la première page.</div>';
     return;
   }
   wrap.className='carousel';
@@ -385,12 +385,12 @@ function renderTourniquet(){
     const mid = v.id===VOYAGE_ID ? ' mid' : '';
     const cover = v._cover ? "style=\"background-image:url('"+String(v._cover).replace(/'/g,'')+"')\"" : '';
     return '<div class="trip'+mid+'" onclick="souvSwitchVoyage(\''+v.id+'\')">'+
-      '<div class="ph2"'+cover+'>'+(v._cover?'':'🧭')+'</div>'+
+      '<div class="ph2"'+cover+'>'+(v._cover?'':'')+'</div>'+
       '<div class="in"><div class="y">'+esc(v._annee)+'</div><div class="n">'+esc(v.nom||'—')+'</div></div>'+
     '</div>';
   }).join('') +
   '<div class="trip new" onclick="window.location.href=\'home.html?nouveau=1\'">'+
-    '<div class="ph2">➕</div><div class="in"><div class="n">Nouveau voyage</div></div>'+
+    '<div class="ph2">+</div><div class="in"><div class="n">Nouveau voyage</div></div>'+
   '</div>';
 }
 
@@ -402,7 +402,7 @@ function renderCarteTags(){
   const wrap=document.getElementById('souv-map-wrap'); if(!wrap) return;
   const avecGeo=TOUS_VOYAGES.filter(v=>v._lat!=null&&v._lng!=null);
   if(!avecGeo.length){
-    wrap.innerHTML='<div class="a-venir"><span class="ic">🗺️</span>Les tags apparaîtront ici<br>dès qu\'un voyage aura un itinéraire.</div>';
+    wrap.innerHTML='<div class="a-venir">Les tags apparaîtront ici<br>dès qu\'un voyage aura un itinéraire.</div>';
     return;
   }
   const latMin=41, latMax=51.5, lngMin=-5, lngMax=9.6;
@@ -507,7 +507,7 @@ async function souvConfirmerEnvoi(){
   const blob=SOUV_BLOB_EN_ATTENTE;
   const legende=(document.getElementById('souv-apercu-legende').value||'').trim();
   const btn=document.getElementById('souv-apercu-envoyer');
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Envoi…'; }
+  if(btn){ btn.disabled=true; btn.textContent='Envoi…'; }
   try{
     const chemin=VOYAGE_ID+'/'+Date.now()+'-'+(MON_MEMBRE_ID||'x').slice(0,8)+'.jpg';
     const up=await sb.storage.from('photos-souvenir').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
@@ -581,7 +581,7 @@ function renderMontage(){
   let html = '<div class="montage-wrap">';
 
   if(aRanger.length){
-    html += '<div class="montage-h">📥 À ranger ('+aRanger.length+')</div>';
+    html += '<div class="montage-h">À ranger ('+aRanger.length+')</div>';
     html += aRanger.map(p=>{
       return '<div class="tri-item" id="tri-'+p.id+'">'+
         '<div class="tri-th" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
@@ -595,7 +595,7 @@ function renderMontage(){
 
   const uidsOrdonnes = ITINERAIRE.map(it=>it.uid).filter(uid=>parEtape[uid]);
   if(uidsOrdonnes.length){
-    html += '<div class="montage-h">📖 L\'album ('+uidsOrdonnes.length+' étape'+(uidsOrdonnes.length>1?'s':'')+')</div>';
+    html += '<div class="montage-h">L\'album ('+uidsOrdonnes.length+' étape'+(uidsOrdonnes.length>1?'s':'')+')</div>';
     html += uidsOrdonnes.map(uid=>{
       const item=ITINERAIRE.find(it=>it.uid===uid);
       const photosEtape=parEtape[uid];
@@ -637,7 +637,7 @@ function renderMain(){
   const etat=etatSouvenir();
 
   if(etat==='dates_manquantes'){
-    el.innerHTML = '<div class="etat-vide"><span class="ic">🗓️</span>'+
+    el.innerHTML = '<div class="etat-vide">'+
       '<div class="t">Pas encore de dates pour ce voyage</div>'+
       '<div class="s">Souvenir s\'active automatiquement une fois les dates de départ et de retour renseignées — ça reste facultatif, mais c\'est ce qui ouvre la fenêtre de collecte des photos.</div>'+
       '<a class="lien" href="voyage.html">Renseigner les dates →</a></div>';
@@ -645,7 +645,7 @@ function renderMain(){
   }
   if(etat==='avant_fenetre'){
     const fen=calculeFenetre();
-    el.innerHTML = '<div class="etat-vide"><span class="ic">⏳</span>'+
+    el.innerHTML = '<div class="etat-vide">'+
       '<div class="t">La collecte de photos n\'a pas encore commencé</div>'+
       '<div class="s">Elle s\'ouvrira le '+esc(fmtDateCourt(fen.ouverture))+', une semaine avant le départ.</div></div>';
     return;
