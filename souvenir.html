@@ -84,6 +84,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* -- montage (après la fenêtre de collecte) -- */
 .montage-wrap{flex:1;min-height:0;overflow:auto;padding:14px 16px;}
+.cahier-copie-note{padding:8px 16px;font-size:11.5px;color:var(--ink-dim);font-style:italic;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 .montage-h{font-family:var(--font-title);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-text);margin:14px 0 8px;}
 .montage-h:first-child{margin-top:0;}
 .tri-item{display:flex;gap:10px;align-items:center;background:var(--gold-a10);border:1px solid var(--surface-line);border-radius:var(--r);padding:8px;margin-bottom:8px;flex-wrap:wrap;}
@@ -115,23 +116,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* ══════════ TOURNIQUET (bas, large) — à venir, bloc④ ══════════ */
 .b-shelf{flex-shrink:0;}
 .shelf-vide{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;}
-.carousel{flex:1;min-height:0;padding:10px 16px;display:flex;align-items:center;justify-content:flex-start;gap:12px;overflow-x:auto;scrollbar-width:thin;}
+.carousel{flex:1;min-height:0;padding:14px 16px;display:flex;align-items:center;justify-content:flex-start;gap:14px;overflow-x:auto;scrollbar-width:thin;}
 .shelf-titre{flex-shrink:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center;
-  padding:10px 16px;border-radius:var(--r);margin-right:4px;max-width:120px;
+  padding:12px 18px;border-radius:var(--r);margin-right:4px;max-width:140px;
   background:linear-gradient(160deg,var(--ink),#2a2015);}
-.shelf-titre b{font-family:var(--font-title);font-size:10px;font-weight:700;letter-spacing:.8px;
-  text-transform:uppercase;color:var(--gold);display:block;margin-bottom:4px;}
-.shelf-titre span{font-family:var(--font-title);font-size:14.5px;font-weight:600;line-height:1.25;color:var(--gold-light);}
-.trip{flex-shrink:0;width:96px;border-radius:var(--r);overflow:hidden;cursor:pointer;
-  border:1px solid var(--gold-a20);transition:transform .2s,opacity .2s,border-color .2s;opacity:.65;}
+.shelf-titre b{font-family:var(--font-title);font-size:11px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--gold);display:block;margin-bottom:5px;}
+.shelf-titre span{font-family:var(--font-title);font-size:16px;font-weight:600;line-height:1.3;color:var(--gold-light);}
+.trip{flex-shrink:0;width:130px;border-radius:var(--r);overflow:hidden;cursor:pointer;
+  border:1px solid var(--gold-a20);transition:transform .2s,opacity .2s,border-color .2s;opacity:.7;}
 .trip:hover{opacity:.9;}
-.trip.mid{width:126px;opacity:1;border-color:var(--gold);box-shadow:0 10px 24px rgba(0,0,0,.4);transform:translateY(-3px);}
-.trip .ph2{height:64px;background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));background-size:cover;background-position:center;
-  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold-text);}
-.trip.mid .ph2{height:86px;font-size:26px;}
-.trip .in{padding:6px 7px;background:var(--surface);}
-.trip .in .y{font-size:9.5px;font-weight:700;letter-spacing:.8px;color:var(--gold-text);text-transform:uppercase;}
-.trip .in .n{font-family:var(--font-title);font-size:11px;font-weight:600;line-height:1.15;margin-top:1px;color:var(--ink);
+.trip.mid{width:168px;opacity:1;border-color:var(--gold);box-shadow:0 10px 24px rgba(0,0,0,.4);transform:translateY(-3px);}
+.trip .ph2{height:90px;background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--gold-text);}
+.trip.mid .ph2{height:116px;font-size:32px;}
+.trip .in{padding:8px 10px;background:var(--surface);}
+.trip .in .y{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--gold-text);text-transform:uppercase;}
+.trip .in .n{font-family:var(--font-title);font-size:14px;font-weight:600;line-height:1.2;margin-top:2px;color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .trip.new .ph2{opacity:.7;}
 .trip.new .n{color:var(--gold-text);}
@@ -215,7 +216,7 @@ const {createClient}=supabase;
 const sb=createClient(RNR_SURL,RNR_SKEY);
 let VOYAGE_ID=null, GROUPE_ID=null, MON_MEMBRE_ID=null;
 let MEMBRES=[];
-let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,destination_libre:'',souvenir_valide_par:null,souvenir_valide_le:null};
+let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,destination_libre:'',nb_participants:null,nb_animaux:null,but_voyage:'',notes_groupe:'',budget_estime:null,cahier_theme:null};
 let PHOTOS=[];
 let CANAL_PHOTOS=null;
 let ITINERAIRE=[]; // pour le montage bloc③ : uid, ordre, rattache + tous les champs de la fiche (lieux.*)
@@ -271,7 +272,7 @@ async function chargeSelecteurChrome(){
 async function chargerInfosVoyage(){
   if(!VOYAGE_ID) return;
   try{
-    const {data}=await sb.from('voyages').select('nom,date_debut,date_fin_envisagee,destination_libre,souvenir_valide_par,souvenir_valide_le').eq('id',VOYAGE_ID).single();
+    const {data}=await sb.from('voyages').select('nom,date_debut,date_fin_envisagee,destination_libre,nb_participants,nb_animaux,but_voyage,notes_groupe,budget_estime,cahier_theme').eq('id',VOYAGE_ID).single();
     if(data) RB_INFO=data;
   }catch(e){ console.warn('Souvenir: infos voyage', e); }
 }
@@ -286,21 +287,67 @@ async function chargerMembres(){
 
 // Même source que le Cahier (voyage_itineraire + lieux) — le montage range
 // une photo brute sur une VRAIE étape du voyage, jamais une liste inventée.
-async function chargerItineraire(){
-  if(!VOYAGE_ID){ ITINERAIRE=[]; return; }
+let SOUVENIR_CAHIER=null; // {id, cree_le, valide_par, valide_le, infos_snapshot, ...}
+
+// ══ ÉTAPE A (21/07, retour Bruno) — la copie figée ══
+// cahier.html n'est JAMAIS touché. Au premier passage en montage (fenêtre de
+// collecte terminée), on copie une fois pour toutes : les infos du voyage
+// (sans memo_blocs, qui est une page technique) + l'itinéraire + les fiches
+// complètes de l'itinéraire (lieu_snapshot = copie intégrale, jamais retouchée
+// si la fiche d'origine change ensuite). Ensuite Souvenir ne relit plus JAMAIS
+// voyage_itineraire/lieux : tout vient de souvenir_cahiers/souvenir_cahier_etapes.
+async function chargerOuCreerCahierSouvenir(){
+  if(!VOYAGE_ID) return;
   try{
-    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,rattache_a_nuit_uid').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const {data:existant}=await sb.from('souvenir_cahiers').select('*')
+      .eq('voyage_id',VOYAGE_ID).eq('type','officiel').maybeSingle();
+    if(existant){ SOUVENIR_CAHIER=existant; return; }
+
+    // Pas encore de copie : on la fabrique maintenant, une seule fois.
+    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
-    let infos={};
+    let lieuxMap={};
     if(ids.length){
       const {data:fs}=await sb.from('lieux').select('*').in('id',ids);
-      (fs||[]).forEach(f=>{ infos[f.id]=f; });
+      (fs||[]).forEach(f=>{ lieuxMap[f.id]=f; });
     }
-    ITINERAIRE=(rows||[]).map(r=>{
-      const f=infos[r.lieu_id]; if(!f) return null;
-      return Object.assign({}, f, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null});
+    const infosSnapshot={
+      nom:RB_INFO.nom||null, destination_libre:RB_INFO.destination_libre||null,
+      date_debut:RB_INFO.date_debut||null, date_fin_envisagee:RB_INFO.date_fin_envisagee||null,
+      nb_participants:RB_INFO.nb_participants||null, nb_animaux:RB_INFO.nb_animaux||null,
+      but_voyage:RB_INFO.but_voyage||null, notes_groupe:RB_INFO.notes_groupe||null,
+      budget_estime:RB_INFO.budget_estime||null
+      // volontairement PAS memo_blocs — page technique, exclue de la copie (consigne Bruno)
+    };
+    const ins=await sb.from('souvenir_cahiers').insert({
+      voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, type:'officiel',
+      infos_snapshot:infosSnapshot, cahier_theme:RB_INFO.cahier_theme||null,
+      cree_par:MON_MEMBRE_ID
+    }).select().single();
+    if(ins.error) throw ins.error;
+    SOUVENIR_CAHIER=ins.data;
+
+    const etapes=(rows||[]).map(r=>{
+      const f=lieuxMap[r.lieu_id]; if(!f) return null;
+      return { souvenir_cahier_id:SOUVENIR_CAHIER.id, groupe_id:GROUPE_ID, uid:r.uid,
+        ordre:r.ordre, rattache_a_nuit_uid:r.rattache_a_nuit_uid||null, nb_nuits:r.nb_nuits||null,
+        lieu_snapshot:f };
     }).filter(Boolean);
-  }catch(e){ console.warn('Souvenir: itinéraire', e); ITINERAIRE=[]; }
+    if(etapes.length){
+      const insE=await sb.from('souvenir_cahier_etapes').insert(etapes);
+      if(insE.error) throw insE.error;
+    }
+  }catch(e){ console.warn('Souvenir: copie figée du Cahier', e); SOUVENIR_CAHIER=null; }
+}
+
+async function chargerItineraire(){
+  ITINERAIRE=[];
+  if(!SOUVENIR_CAHIER) return; // pas encore de copie (voyage pas encore en montage)
+  try{
+    const {data:rows}=await sb.from('souvenir_cahier_etapes').select('uid,ordre,rattache_a_nuit_uid,nb_nuits,lieu_snapshot')
+      .eq('souvenir_cahier_id',SOUVENIR_CAHIER.id).order('ordre',{ascending:true});
+    ITINERAIRE=(rows||[]).map(r=>Object.assign({}, r.lieu_snapshot, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null}));
+  }catch(e){ console.warn('Souvenir: itinéraire (copie figée)', e); ITINERAIRE=[]; }
 }
 async function chargerLeaders(){
   if(!VOYAGE_ID){ LEADERS=new Set(); return; }
@@ -605,11 +652,13 @@ async function souvRangerPhoto(photoId){
 window.souvRangerPhoto = souvRangerPhoto;
 
 async function souvValider(){
-  if(!VOYAGE_ID||!MON_MEMBRE_ID) return;
+  if(!SOUVENIR_CAHIER||!MON_MEMBRE_ID) return;
   try{
-    const up=await sb.from('voyages').update({souvenir_valide_par:MON_MEMBRE_ID, souvenir_valide_le:new Date().toISOString()}).eq('id',VOYAGE_ID);
+    const le=new Date().toISOString();
+    const up=await sb.from('souvenir_cahiers').update({valide_par:MON_MEMBRE_ID, valide_le:le}).eq('id',SOUVENIR_CAHIER.id);
     if(up.error) throw up.error;
-    await chargerInfosVoyage(); renderMain();
+    SOUVENIR_CAHIER.valide_par=MON_MEMBRE_ID; SOUVENIR_CAHIER.valide_le=le;
+    renderMain();
   }catch(e){
     console.warn('Souvenir: validation', e);
     alert('La validation n\'a pas pu être enregistrée : '+(e&&e.message?e.message:String(e)));
@@ -623,12 +672,17 @@ window.souvValider = souvValider;
 // la citation par la légende posée par le groupe. Un seul moteur, jamais une
 // redite (B114/Q4).
 function renderMontage(){
+  if(!SOUVENIR_CAHIER){
+    return '<div class="etat-vide"><div class="t">Le Cahier Souvenir n\'a pas pu être préparé</div>'+
+      '<div class="s">Réessaie de recharger la page dans un instant.</div></div>';
+  }
   const aRanger = PHOTOS.filter(p=>!p.etape_uid);
   const rangees = PHOTOS.filter(p=>p.etape_uid);
   const parEtape = {};
   rangees.forEach(p=>{ (parEtape[p.etape_uid] = parEtape[p.etape_uid]||[]).push(p); });
 
-  let html = '<div class="montage-wrap">';
+  let html = '<div class="cahier-copie-note">Cahier Souvenir — copie du voyage figée le '+esc(fmtDateCourt(new Date(SOUVENIR_CAHIER.cree_le)))+'. Le Cahier de voyage original n\'est pas modifié.</div>';
+  html += '<div class="montage-wrap">';
 
   if(aRanger.length){
     html += '<div class="montage-h">À ranger ('+aRanger.length+')</div>';
@@ -667,8 +721,8 @@ function renderMontage(){
   html += '</div>';
 
   const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
-  if(RB_INFO.souvenir_valide_par){
-    html += '<div class="montage-valid-bar"><span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(RB_INFO.souvenir_valide_par))+'</span>'+
+  if(SOUVENIR_CAHIER && SOUVENIR_CAHIER.valide_par){
+    html += '<div class="montage-valid-bar"><span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>'+
       '<span class="montage-valid-txt">Toujours modifiable — ranger une nouvelle photo ne retire pas la validation.</span></div>';
   } else if(estLeader && uidsOrdonnes.length){
     html += '<div class="montage-valid-bar"><span class="montage-valid-txt">Le montage peut continuer même après validation.</span>'+
@@ -733,7 +787,14 @@ function renderMain(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){ window.location.href="index.html"; return; }
   await resoutVoyageId(session.user.id);
-  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerItineraire(), chargerLeaders(), chargerTourniquetEtCarte()]);
+  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerLeaders(), chargerTourniquetEtCarte()]);
+  // La copie figée (souvenir_cahiers) ne se fabrique qu'une fois la fenêtre de
+  // collecte terminée — jamais avant, pour ne pas figer un itinéraire encore
+  // en construction pendant la préparation du voyage.
+  if(etatSouvenir()==='apres_fenetre'){
+    await chargerOuCreerCahierSouvenir();
+    await chargerItineraire();
+  }
   renderMain();
   renderTourniquet();
   renderCarteTags();
