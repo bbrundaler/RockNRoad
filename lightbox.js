@@ -13,8 +13,8 @@
     const css=`
 #rnr-lb{position:fixed;inset:0;background:rgba(15,13,9,.82);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;}
 #rnr-lb.open{display:flex;}
-#rnr-lb-inner{background:#1a1710;border-radius:14px;overflow:hidden;max-width:640px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.6);}
-#rnr-lb-main{width:100%;height:420px;background-size:cover;background-position:center;position:relative;}
+#rnr-lb-inner{background:#1a1710;border-radius:14px;overflow:hidden;max-width:min(1100px,90vw);width:100%;box-shadow:0 24px 64px rgba(0,0,0,.6);}
+#rnr-lb-main{width:100%;height:66vh;min-height:320px;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#0d0b08;position:relative;}
 #rnr-lb-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;}
 #rnr-lb-close{position:absolute;top:10px;left:12px;background:rgba(0,0,0,.5);color:#fff;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;z-index:2;}
 #rnr-lb-close:hover{background:rgba(200,50,0,.6);}
