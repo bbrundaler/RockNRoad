@@ -102,7 +102,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .atelier-tri-item select,.atelier-tri-item input[type=text]{display:block;width:100%;font-family:var(--font-body);font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--surface-line);border-radius:8px;padding:8px 10px;margin-bottom:8px;box-sizing:border-box;}
 .atelier-tri-item button{width:100%;font-family:var(--font-title);font-weight:700;font-size:13px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:9px;cursor:pointer;}
 .atelier-livre{flex:1;min-width:0;overflow:auto;padding:20px 24px;}
-.montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);position:relative;}
+.montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
+.montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
+  color:var(--gold-text);font-size:11px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);pointer-events:none;}
+.atelier-tri-item[draggable="true"]{cursor:grab;}
+.atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
 
 /* ══════════ CARTE À TAGS (1/3) — à venir, bloc④ ══════════ */
 .b-map{flex:2;min-height:0;}
@@ -693,10 +698,7 @@ function optionsItineraireHtml(selectedUid){
   }).join('');
 }
 
-async function souvRangerPhoto(photoId){
-  const row=document.getElementById('tri-'+photoId); if(!row) return;
-  const uid=row.querySelector('.tri-select').value;
-  const legende=row.querySelector('.tri-legende').value.trim();
+async function assignerPhotoAEtape(photoId, uid, legende){
   if(!uid){ alert('Choisis une étape avant de ranger cette photo.'); return; }
   if(!SOUVENIR_CAHIER) return;
   try{
@@ -717,6 +719,13 @@ async function souvRangerPhoto(photoId){
     console.warn('Souvenir: rangement photo', e);
     alert('Le rangement n\'a pas pu être enregistré : '+(e&&e.message?e.message:String(e)));
   }
+}
+
+async function souvRangerPhoto(photoId){
+  const row=document.getElementById('tri-'+photoId); if(!row) return;
+  const uid=row.querySelector('.tri-select').value;
+  const legende=row.querySelector('.tri-legende').value.trim();
+  await assignerPhotoAEtape(photoId, uid, legende);
 }
 window.souvRangerPhoto = souvRangerPhoto;
 
@@ -795,16 +804,18 @@ function renderMontage(){
   }
   barre += '</div>';
 
-  // ══ colonne de gauche : la pile des photos à ranger, une par une, en grand ══
+  // ══ colonne de gauche : la pile des photos à ranger, une par une, en grand.
+  // Glisse une photo directement sur sa page à droite (comme Mixbook/Canva/
+  // Shutterfly) — le menu déroulant reste disponible pour qui préfère cliquer.
   let colTri = '<div class="atelier-tri">';
   if(!aRanger.length){
     colTri += '<div class="live-vide">Tout est rangé !</div>';
   } else {
     colTri += aRanger.map(p=>{
-      return '<div class="atelier-tri-item" id="tri-'+p.id+'">'+
+      return '<div class="atelier-tri-item" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')">'+
         '<div class="img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
         '<div class="corps">'+
-          '<div class="meta">'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'</div>'+
+          '<div class="meta">'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+' · <i>glisse-la sur sa page →</i></div>'+
           '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
           '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)"'+(p.legende?' value="'+esc(p.legende)+'"':'')+'>'+
           '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger dans le cahier</button>'+
@@ -814,30 +825,54 @@ function renderMontage(){
   }
   colTri += '</div>';
 
-  // ══ colonne de droite : le cahier assemblé, en grand, page par page ══
-  // Même moteur que le Cahier (RNR_FICHE_COMPLETE) — juste toute la largeur
-  // disponible pour être vraiment lisible, plus coincé dans un coin (B114/Q4).
+  // ══ colonne de droite : TOUT le cahier, page par page, dans l'ordre réel du
+  // voyage — même les étapes sans photo Souvenir pour l'instant (retour
+  // Bruno : "injecter tout le cahier", comme une vraie page qu'on remplit
+  // au fil de l'eau, pas une liste qui grandit sans repère). Chaque page est
+  // une cible de dépôt pour le glisser-déposer. Même moteur que le Cahier
+  // (RNR_FICHE_COMPLETE), juste toute la largeur pour être lisible (B114/Q4).
   let colLivre = '<div class="atelier-livre">';
-  if(uidsOrdonnes.length){
-    colLivre += uidsOrdonnes.map(uid=>{
-      const item=ITINERAIRE.find(it=>it.uid===uid);
-      const photosEtape=parEtape[uid];
+  if(!ITINERAIRE.length){
+    colLivre += '<div class="live-vide">Le voyage n\'a pas encore d\'itinéraire.</div>';
+  } else {
+    colLivre += ITINERAIRE.map(item=>{
+      const photosEtape=parEtape[item.uid]||[];
       const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
       const synthetique=Object.assign({}, item, {
-        photo_url: photosEtape[0].url,
-        photos_urls: photosEtape.slice(1).map(p=>p.url),
+        photo_url: photosEtape.length ? photosEtape[0].url : (item.photo_url||null),
+        photos_urls: photosEtape.length ? photosEtape.slice(1).map(p=>p.url) : (item.photos_urls||[]),
         commentaire: legendes.join(' — ') || item.commentaire || ''
       });
       const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
-      return '<div class="montage-card">'+contenu+'</div>';
+      const vide = photosEtape.length ? '' : ' vide';
+      return '<div class="montage-card'+vide+'" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
+        (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
+        contenu+'</div>';
     }).join('');
-  } else {
-    colLivre += '<div class="live-vide">Le cahier se remplit au fur et à mesure que tu ranges des photos à gauche.</div>';
   }
   colLivre += '</div>';
 
   return barre + '<div class="atelier-corps">'+colTri+colLivre+'</div>';
 }
+
+// Glisser-déposer : la photo suit la souris depuis la pile de gauche jusqu'à
+// sa page à droite. Reprend le même rangement que le bouton "Ranger" — juste
+// déclenché autrement.
+function souvDragStart(e, photoId){
+  e.dataTransfer.setData('text/plain', photoId);
+  e.dataTransfer.effectAllowed='move';
+}
+window.souvDragStart = souvDragStart;
+
+async function souvDropSurEtape(e, uid){
+  e.preventDefault();
+  const photoId=e.dataTransfer.getData('text/plain');
+  if(!photoId) return;
+  const row=document.getElementById('tri-'+photoId);
+  const legende = row ? row.querySelector('.tri-legende').value.trim() : '';
+  await assignerPhotoAEtape(photoId, uid, legende);
+}
+window.souvDropSurEtape = souvDropSurEtape;
 
 function souvOngletsHtml(){
   return '<div class="souv-onglets">'+
