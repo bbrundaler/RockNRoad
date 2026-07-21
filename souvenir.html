@@ -100,10 +100,30 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
     radial-gradient(circle at 70% 70%,rgba(200,168,75,.08),transparent 50%), var(--bg);}
 .a-venir{text-align:center;padding:16px;font-size:12px;color:var(--ink-dim);}
 .a-venir .ic{font-size:22px;display:block;margin-bottom:6px;opacity:.6;}
+.map-tag{position:absolute;background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-pill);
+  padding:4px 9px 4px 5px;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--ink);
+  box-shadow:var(--shadow);cursor:pointer;transition:transform .2s;white-space:nowrap;}
+.map-tag:hover{transform:scale(1.08);border-color:var(--gold);z-index:5;}
+.map-tag.actif{border-color:var(--gold);background:var(--gold-a20);}
+.map-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
 
 /* ══════════ TOURNIQUET (bas, large) — à venir, bloc④ ══════════ */
 .b-shelf{grid-area:shelf;}
 .shelf-vide{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;}
+.carousel{flex:1;min-height:0;padding:10px 16px;display:flex;align-items:center;justify-content:flex-start;gap:12px;overflow-x:auto;scrollbar-width:thin;}
+.trip{flex-shrink:0;width:96px;border-radius:var(--r);overflow:hidden;cursor:pointer;
+  border:1px solid var(--gold-a20);transition:transform .2s,opacity .2s,border-color .2s;opacity:.65;}
+.trip:hover{opacity:.9;}
+.trip.mid{width:126px;opacity:1;border-color:var(--gold);box-shadow:0 10px 24px rgba(0,0,0,.4);transform:translateY(-3px);}
+.trip .ph2{height:64px;background:linear-gradient(135deg,var(--gold-a20),var(--gold-a35));background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold-text);}
+.trip.mid .ph2{height:86px;font-size:26px;}
+.trip .in{padding:6px 7px;background:var(--surface);}
+.trip .in .y{font-size:9.5px;font-weight:700;letter-spacing:.8px;color:var(--gold-text);text-transform:uppercase;}
+.trip .in .n{font-family:var(--font-title);font-size:11px;font-weight:600;line-height:1.15;margin-top:1px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.trip.new .ph2{opacity:.7;}
+.trip.new .n{color:var(--gold-text);}
 
 /* ══════════ CARRÉ AMBIANCE (bas-droite) — à venir, bloc⑤ ══════════ */
 .b-ambiance{grid-area:ambiance;position:relative;align-items:center;justify-content:center;display:flex;}
@@ -128,7 +148,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <!-- ══════════ CARTE À TAGS (1/3) ══════════ -->
   <div class="blk b-map">
     <div class="bh"><span class="ic">🗺️</span><h3>Les images qui restent</h3></div>
-    <div class="map-wrap">
+    <div class="map-wrap" id="souv-map-wrap">
       <div class="a-venir"><span class="ic">🗺️</span>La carte de tes voyages<br>arrive bientôt ici.</div>
     </div>
   </div>
@@ -136,7 +156,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <!-- ══════════ TOURNIQUET ══════════ -->
   <div class="blk b-shelf">
     <div class="bh"><span class="ic">📚</span><h3>Nos aventures, au fil des années</h3></div>
-    <div class="shelf-vide">
+    <div class="shelf-vide" id="souv-shelf-wrap">
       <div class="a-venir"><span class="ic">📚</span>L'étagère de vos voyages passés arrive bientôt.</div>
     </div>
   </div>
@@ -163,6 +183,7 @@ let PHOTOS=[];
 let CANAL_PHOTOS=null;
 let ITINERAIRE=[]; // pour le montage bloc③ : uid, ordre, rattache + tous les champs de la fiche (lieux.*)
 let LEADERS=new Set();
+let TOUS_VOYAGES=[]; // pour le tourniquet + la carte à tags (bloc④), toujours de vraies données
 
 function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'':t); return d.innerHTML; }
 function fmtDateCourt(d){
@@ -250,6 +271,92 @@ async function chargerLeaders(){
     const {data}=await sb.from('voyage_leaders').select('membre_id').eq('voyage_id',VOYAGE_ID);
     LEADERS=new Set((data||[]).map(r=>r.membre_id));
   }catch(e){ console.warn('Souvenir: leaders', e); }
+}
+
+// Tourniquet + carte à tags (bloc④) : les VRAIS voyages du groupe, jamais une
+// liste inventée. Couverture = la première photo Souvenir de ce voyage (si
+// la collecte a déjà commencé) ; position sur la carte = centroïde des vraies
+// coordonnées de son itinéraire (même source que la carto régionale du site).
+async function chargerTourniquetEtCarte(){
+  if(!GROUPE_ID){ TOUS_VOYAGES=[]; return; }
+  try{
+    const {data:vs}=await sb.from('voyages').select('id,nom,date_debut,date_fin_envisagee,est_principal,created_at').eq('groupe_id',GROUPE_ID).order('created_at',{ascending:true});
+    TOUS_VOYAGES=vs||[];
+    if(!TOUS_VOYAGES.length) return;
+    const ids=TOUS_VOYAGES.map(v=>v.id);
+    const [itinsRes, photosRes]=await Promise.all([
+      sb.from('voyage_itineraire').select('voyage_id,lieu_id').in('voyage_id',ids),
+      sb.from('voyage_photos').select('voyage_id,url,created_at').in('voyage_id',ids).order('created_at',{ascending:true})
+    ]);
+    const itins=itinsRes.data||[], photos=photosRes.data||[];
+    const lieuIds=[...new Set(itins.map(r=>r.lieu_id))];
+    let lieuxMap={};
+    if(lieuIds.length){
+      const {data:ls}=await sb.from('lieux').select('id,lat,lng').in('id',lieuIds);
+      (ls||[]).forEach(l=>{ lieuxMap[l.id]=l; });
+    }
+    TOUS_VOYAGES.forEach(v=>{
+      const pts=itins.filter(r=>r.voyage_id===v.id).map(r=>lieuxMap[r.lieu_id]).filter(l=>l&&l.lat!=null&&l.lng!=null);
+      if(pts.length){
+        v._lat=pts.reduce((s,p)=>s+Number(p.lat),0)/pts.length;
+        v._lng=pts.reduce((s,p)=>s+Number(p.lng),0)/pts.length;
+      }
+      const cov=photos.find(p=>p.voyage_id===v.id);
+      v._cover=cov?cov.url:null;
+      const d=v.date_debut||v.created_at;
+      v._annee=d?new Date(d).getFullYear():'';
+    });
+  }catch(e){ console.warn('Souvenir: tourniquet/carte', e); TOUS_VOYAGES=[]; }
+}
+
+function souvSwitchVoyage(id){
+  if(!id||id===VOYAGE_ID) return;
+  const v=TOUS_VOYAGES.find(x=>x.id===id);
+  try{ sessionStorage.setItem('rnr_voyage_id',id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+  window.location.reload();
+}
+window.souvSwitchVoyage = souvSwitchVoyage;
+
+function renderTourniquet(){
+  const wrap=document.getElementById('souv-shelf-wrap'); if(!wrap) return;
+  if(!TOUS_VOYAGES.length){
+    wrap.className='shelf-vide';
+    wrap.innerHTML='<div class="a-venir"><span class="ic">📚</span>Pas encore de voyage — le premier écrira la première page.</div>';
+    return;
+  }
+  wrap.className='carousel';
+  wrap.innerHTML = TOUS_VOYAGES.map(v=>{
+    const mid = v.id===VOYAGE_ID ? ' mid' : '';
+    const cover = v._cover ? "style=\"background-image:url('"+String(v._cover).replace(/'/g,'')+"')\"" : '';
+    return '<div class="trip'+mid+'" onclick="souvSwitchVoyage(\''+v.id+'\')">'+
+      '<div class="ph2"'+cover+'>'+(v._cover?'':'🧭')+'</div>'+
+      '<div class="in"><div class="y">'+esc(v._annee)+'</div><div class="n">'+esc(v.nom||'—')+'</div></div>'+
+    '</div>';
+  }).join('') +
+  '<div class="trip new" onclick="window.location.href=\'home.html?nouveau=1\'">'+
+    '<div class="ph2">➕</div><div class="in"><div class="n">Nouveau voyage</div></div>'+
+  '</div>';
+}
+
+// Positionnement approximatif sur un cadre France (pas un vrai Leaflet ici —
+// c'est un accès rapide décoratif, pas un outil de mesure ; le vrai routage/
+// la vraie carto restent exclusivement dans Horizon/Roadbook, ORS + maille
+// 22 régions, jamais remplacés par cette approximation).
+function renderCarteTags(){
+  const wrap=document.getElementById('souv-map-wrap'); if(!wrap) return;
+  const avecGeo=TOUS_VOYAGES.filter(v=>v._lat!=null&&v._lng!=null);
+  if(!avecGeo.length){
+    wrap.innerHTML='<div class="a-venir"><span class="ic">🗺️</span>Les tags apparaîtront ici<br>dès qu\'un voyage aura un itinéraire.</div>';
+    return;
+  }
+  const latMin=41, latMax=51.5, lngMin=-5, lngMax=9.6;
+  wrap.innerHTML = avecGeo.map(v=>{
+    const top=Math.min(92,Math.max(5, (latMax-v._lat)/(latMax-latMin)*100));
+    const left=Math.min(92,Math.max(5, (v._lng-lngMin)/(lngMax-lngMin)*100));
+    const actif = v.id===VOYAGE_ID ? ' actif' : '';
+    return '<div class="map-tag'+actif+'" style="top:'+top.toFixed(1)+'%;left:'+left.toFixed(1)+'%;" onclick="souvSwitchVoyage(\''+v.id+'\')">'+
+      '<span class="dot"></span>'+esc(v.nom||'—')+' \''+String(v._annee).slice(-2)+'</div>';
+  }).join('');
 }
 
 function nomEnvoyeur(membreId){
@@ -488,8 +595,10 @@ function renderMain(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){ window.location.href="index.html"; return; }
   await resoutVoyageId(session.user.id);
-  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerItineraire(), chargerLeaders()]);
+  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerItineraire(), chargerLeaders(), chargerTourniquetEtCarte()]);
   renderMain();
+  renderTourniquet();
+  renderCarteTags();
   abonnerRealtime();
   if(window.rnrChrome) chargeSelecteurChrome(); else window.addEventListener('load', chargeSelecteurChrome);
 })();
