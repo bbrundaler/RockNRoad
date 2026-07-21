@@ -180,7 +180,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
       style="width:100%;font-family:var(--font-body);font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--surface-line);border-radius:8px;padding:9px 11px;box-sizing:border-box;margin-bottom:12px;">
     <div style="display:flex;gap:8px;justify-content:flex-end;">
       <button type="button" onclick="souvAnnulerEnvoi()" style="font-family:var(--font-body);font-size:12.5px;color:var(--ink-dim);background:transparent;border:1px solid var(--surface-line);border-radius:var(--r-pill);padding:8px 16px;cursor:pointer;">Annuler</button>
-      <button type="button" id="souv-apercu-envoyer" onclick="souvConfirmerEnvoi()" style="font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:8px 18px;cursor:pointer;">📤 Publier</button>
+      <button type="button" id="souv-apercu-envoyer" onclick="souvConfirmerEnvoi()" style="font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:8px 18px;cursor:pointer;">↑ Publier</button>
     </div>
   </div>
 </div>
@@ -524,7 +524,7 @@ async function souvConfirmerEnvoi(){
     console.warn('Souvenir: envoi photo', e);
     alert('La photo n\'a pas pu être envoyée : '+(e&&e.message?e.message:String(e)));
   }finally{
-    if(btn){ btn.disabled=false; btn.textContent='📤 Publier'; }
+    if(btn){ btn.disabled=false; btn.textContent='↑ Publier'; }
   }
 }
 window.souvConfirmerEnvoi = souvConfirmerEnvoi;
@@ -660,7 +660,7 @@ function renderMain(){
   let html = '<div class="live-band"><span class="live-dot"></span>'+
     '<span class="lb-t">'+esc(RB_INFO.nom||'Ce voyage')+' — en ce moment</span>'+
     '<span class="lb-s">'+esc(fmtDateCourt(fen.ouverture))+' → '+esc(fmtDateCourt(fen.fermeture))+'</span></div>'+
-    '<div class="live-send"><button id="souv-btn-envoi" onclick="souvEnvoyerClic()">📤 Envoyer une photo</button></div>';
+    '<div class="live-send"><button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button></div>';
   if(!PHOTOS.length){
     html += '<div class="live-vide">Personne n\'a encore envoyé de photo — sois le premier !</div>';
   } else {
