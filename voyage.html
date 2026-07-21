@@ -47,6 +47,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
 .rb-infos-resume{font-size:13px;color:var(--ink-dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rb-infos-resume b{font-family:var(--font-title);font-weight:700;color:var(--ink);}
 .rb-infos-resume .dim{color:var(--ink-dim);margin:0 2px;}
+.rb-infos-resume .rappel-dates{color:var(--gold-text);font-weight:600;}
 .rb-infos-form{padding:4px 16px 14px;border-top:1px solid var(--surface-line);}
 .rb-infos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0;}
 .rb-infos-grid label,.rb-infos-but{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--ink-dim);text-transform:uppercase;}
@@ -322,8 +323,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);height:1
         <label>Destination<input id="rb-dest" type="text" placeholder="calculée depuis vos étapes"></label>
         <label>Participants<input id="rb-nb" type="number" min="1" placeholder="Nombre de personnes"></label>
         <label>Animaux <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-animaux" type="number" min="0" placeholder="0"></label>
-        <label>Date de départ <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-infos-date-debut" type="date"></label>
-        <label>Retour envisagé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-infos-date-fin" type="date"></label>
+        <label>Date de départ <span class="rb-infos-optionnel">(utile pour Souvenir plus tard)</span><input id="rb-infos-date-debut" type="date"></label>
+        <label>Retour envisagé <span class="rb-infos-optionnel">(utile pour Souvenir plus tard)</span><input id="rb-infos-date-fin" type="date"></label>
         <label>Budget estimé <span class="rb-infos-optionnel">(optionnel)</span><input id="rb-budget" type="number" min="0" step="1" placeholder="ex. 800 €"></label>
       </div>
       <div class="rb-infos-but">
@@ -1233,7 +1234,7 @@ function rbInfosRender(){
   const morceaux = [
     '<b>' + (RB_INFO.nom || 'Roadbook') + '</b>',
     dest,
-    datesTxt,
+    datesTxt || '<span class="rappel-dates">dates à préciser</span>',
     RB_INFO.nb_participants ? RB_INFO.nb_participants + ' pers.' : null,
     RB_INFO.nb_animaux ? '🐾 '+RB_INFO.nb_animaux : null,
     (RB_INFO.budget_estime!=null && RB_INFO.budget_estime!=='') ? '≈ ' + Math.round(RB_INFO.budget_estime) + ' €' : null
