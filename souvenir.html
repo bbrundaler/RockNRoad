@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="chrome.js"></script>
 <script src="tags.js"></script>
 <script src="fiche-complete.js"></script>
@@ -96,17 +98,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 
 /* ══════════ CARTE À TAGS (1/3) — à venir, bloc④ ══════════ */
 .b-map{grid-area:map;}
-.map-wrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 30% 30%,rgba(200,168,75,.10),transparent 50%),
-    radial-gradient(circle at 70% 70%,rgba(200,168,75,.08),transparent 50%), var(--bg);}
+.map-wrap{position:relative;flex:1;min-height:0;}
+#souv-map-wrap.map-wrap > .a-venir{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;background:var(--surface);}
+#souv-leaflet{position:absolute;inset:0;border-radius:0 0 var(--r-lg) var(--r-lg);}
+.leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);}
+.leaflet-popup-tip{background:var(--surface);}
+.leaflet-popup-content{font-family:var(--font-body);font-size:12.5px;margin:9px 12px;}
+.leaflet-popup-content b{font-family:var(--font-title);display:block;margin-bottom:3px;}
+.leaflet-popup-content a{color:var(--gold-text);font-weight:600;font-size:11.5px;}
 .a-venir{text-align:center;padding:16px;font-size:12px;color:var(--ink-dim);}
 .a-venir .ic{font-size:22px;display:block;margin-bottom:6px;opacity:.6;}
-.map-tag{position:absolute;background:var(--surface);border:1px solid var(--gold-a35);border-radius:var(--r-pill);
-  padding:4px 9px 4px 5px;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--ink);
-  box-shadow:var(--shadow);cursor:pointer;transition:transform .2s;white-space:nowrap;}
-.map-tag:hover{transform:scale(1.08);border-color:var(--gold);z-index:5;}
-.map-tag.actif{border-color:var(--gold);background:var(--gold-a20);}
-.map-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
 
 /* ══════════ TOURNIQUET (bas, large) — à venir, bloc④ ══════════ */
 .b-shelf{grid-area:shelf;}
@@ -154,7 +155,8 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   <div class="blk b-map">
     <div class="bh"><h3>Les images qui restent</h3></div>
     <div class="map-wrap" id="souv-map-wrap">
-      <div class="a-venir">La carte de tes voyages<br>arrive bientôt ici.</div>
+      <div id="souv-leaflet"></div>
+      <div class="a-venir" id="souv-map-vide" style="display:none">Les points apparaîtront ici<br>dès qu'un voyage aura un itinéraire.</div>
     </div>
   </div>
 
@@ -399,21 +401,42 @@ function renderTourniquet(){
 // c'est un accès rapide décoratif, pas un outil de mesure ; le vrai routage/
 // la vraie carto restent exclusivement dans Horizon/Roadbook, ORS + maille
 // 22 régions, jamais remplacés par cette approximation).
+// Vraie carte Leaflet, même fond et mêmes réglages que la mini-carte du Hub
+// (home.html, HUB_MAP) — un point réel par voyage, sur ses vraies coordonnées.
+let SOUV_MAP=null;
+let SOUV_MARKERS={};
 function renderCarteTags(){
-  const wrap=document.getElementById('souv-map-wrap'); if(!wrap) return;
+  const wrap=document.getElementById('souv-map-wrap');
+  const vide=document.getElementById('souv-map-vide');
   const avecGeo=TOUS_VOYAGES.filter(v=>v._lat!=null&&v._lng!=null);
+  if(!wrap) return;
   if(!avecGeo.length){
-    wrap.innerHTML='<div class="a-venir">Les tags apparaîtront ici<br>dès qu\'un voyage aura un itinéraire.</div>';
+    if(vide) vide.style.display='flex';
     return;
   }
-  const latMin=41, latMax=51.5, lngMin=-5, lngMax=9.6;
-  wrap.innerHTML = avecGeo.map(v=>{
-    const top=Math.min(92,Math.max(5, (latMax-v._lat)/(latMax-latMin)*100));
-    const left=Math.min(92,Math.max(5, (v._lng-lngMin)/(lngMax-lngMin)*100));
-    const actif = v.id===VOYAGE_ID ? ' actif' : '';
-    return '<div class="map-tag'+actif+'" style="top:'+top.toFixed(1)+'%;left:'+left.toFixed(1)+'%;" onclick="souvSwitchVoyage(\''+v.id+'\')">'+
-      '<span class="dot"></span>'+esc(v.nom||'—')+' \''+String(v._annee).slice(-2)+'</div>';
-  }).join('');
+  try{
+    if(vide) vide.style.display='none';
+    if(!SOUV_MAP){
+      SOUV_MAP=L.map('souv-leaflet',{scrollWheelZoom:true}).setView([46.5,2.5],6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(SOUV_MAP);
+    }
+    Object.values(SOUV_MARKERS).forEach(mk=>SOUV_MAP.removeLayer(mk));
+    SOUV_MARKERS={};
+    avecGeo.forEach(v=>{
+      const actif = v.id===VOYAGE_ID;
+      const mk=L.circleMarker([v._lat,v._lng],{
+        radius:actif?10:8, color:'#3a2e12', weight:2,
+        fillColor: actif?'#e8c468':'#c8a84b', fillOpacity:.92
+      }).addTo(SOUV_MAP);
+      mk.bindPopup('<b>'+esc(v.nom||'—')+'</b>'+esc(String(v._annee))+
+        '<br><a href="javascript:void(0)" onclick="souvSwitchVoyage(\''+v.id+'\')">Voir ce voyage →</a>');
+      SOUV_MARKERS[v.id]=mk;
+    });
+    setTimeout(()=>{ try{ SOUV_MAP.invalidateSize(); }catch(e){} }, 200); // la carte était cachée au montage (grid flex)
+  }catch(e){
+    console.warn('Souvenir: carte Leaflet', e);
+    if(vide){ vide.textContent='La carte n\'a pas pu se charger.'; vide.style.display='flex'; }
+  }
 }
 
 function nomEnvoyeur(membreId){
