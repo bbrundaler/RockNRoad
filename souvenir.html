@@ -64,10 +64,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .etat-vide .s{font-size:12.5px;color:var(--ink-dim);max-width:340px;line-height:1.4;}
 .etat-vide a.lien{font-size:12.5px;color:var(--gold-text);text-decoration:underline;margin-top:2px;}
 
-/* -- mode live : la pastille rouge, réutilisée dans le titre (bh) -- */
-.live-dot{width:8px;height:8px;border-radius:50%;background:var(--danger,#c0392b);box-shadow:0 0 0 4px rgba(192,57,43,.25);
-  animation:pulse 1.6s infinite;flex-shrink:0;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 /* Mosaïque en colonnes (façon Pinterest/Google Photos) : chaque photo garde
    sa vraie forme, jamais recadrée en carré. Classe renommée "souv-item"
    (au lieu de "ph") après collision constatée avec une classe existante
@@ -308,7 +304,7 @@ async function assurerEtapesSnapshot(){
     const {data:existant}=await sb.from('souvenir_cahier_etapes').select('id').eq('voyage_id',VOYAGE_ID).limit(1);
     if(existant && existant.length) return true;
 
-    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
+    const {data:rows}=await sb.from('voyage_itineraire').select('uid,lieu_id,ordre,nb_nuits,rattache_a_nuit_uid,jour_offset').eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
     const ids=[...new Set((rows||[]).map(r=>r.lieu_id))];
     let lieuxMap={};
     if(ids.length){
@@ -319,7 +315,7 @@ async function assurerEtapesSnapshot(){
       const f=lieuxMap[r.lieu_id]; if(!f) return null;
       return { voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, uid:r.uid,
         ordre:r.ordre, rattache_a_nuit_uid:r.rattache_a_nuit_uid||null, nb_nuits:r.nb_nuits||null,
-        lieu_snapshot:f };
+        jour_offset:r.jour_offset||null, lieu_snapshot:f };
     }).filter(Boolean);
     if(etapes.length){
       const insE=await sb.from('souvenir_cahier_etapes').insert(etapes);
@@ -392,9 +388,19 @@ async function chargerItineraire(){
   ITINERAIRE=[];
   if(!VOYAGE_ID) return;
   try{
-    const {data:rows}=await sb.from('souvenir_cahier_etapes').select('uid,ordre,rattache_a_nuit_uid,nb_nuits,lieu_snapshot')
+    const {data:rows}=await sb.from('souvenir_cahier_etapes').select('uid,ordre,rattache_a_nuit_uid,nb_nuits,jour_offset,lieu_snapshot')
       .eq('voyage_id',VOYAGE_ID).order('ordre',{ascending:true});
-    ITINERAIRE=(rows||[]).map(r=>Object.assign({}, r.lieu_snapshot, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null}));
+    const items=(rows||[]).map(r=>Object.assign({}, r.lieu_snapshot, {uid:r.uid, ordre:r.ordre, rattache:r.rattache_a_nuit_uid||null, jour:r.jour_offset||0}));
+    // La colonne "ordre" seule ne suffit pas : une excursion peut s'y trouver
+    // avant son propre camp de base (constaté sur La Rochotte). On reconstruit
+    // le bon ordre : chaque camp de base (rattache=null) dans son ordre propre,
+    // suivi immédiatement de ses excursions triées par jour — comme le Roadbook.
+    const chaine=items.filter(it=>!it.rattache).sort((a,b)=>a.ordre-b.ordre);
+    const parNuit={};
+    items.filter(it=>it.rattache).forEach(it=>{ (parNuit[it.rattache]=parNuit[it.rattache]||[]).push(it); });
+    Object.values(parNuit).forEach(liste=>liste.sort((a,b)=>(a.jour-b.jour)||(a.ordre-b.ordre)));
+    ITINERAIRE=[];
+    chaine.forEach(it=>{ ITINERAIRE.push(it); (parNuit[it.uid]||[]).forEach(ex=>ITINERAIRE.push(ex)); });
   }catch(e){ console.warn('Souvenir: itinéraire (copie figée)', e); ITINERAIRE=[]; }
 }
 async function chargerLeaders(){
@@ -862,7 +868,6 @@ function renderEnTete(phase){
   if(MODE_ACTIF==='montage'){
     return '<span class="sb-t">'+titre+'</span>';
   }
-  let dot='';
   if(phase==='dates_manquantes'){
     titre += ' · Astuce : <a href="voyage.html" style="color:inherit">renseigne les dates</a>';
   } else if(phase==='avant_fenetre'){
@@ -873,9 +878,8 @@ function renderEnTete(phase){
   } else {
     const debut=new Date(RB_INFO.date_debut+'T00:00:00'), fin=new Date(RB_INFO.date_fin_envisagee+'T00:00:00');
     titre += ' · En ce moment · '+esc(fmtDateCourt(debut))+' → '+esc(fmtDateCourt(fin));
-    dot='<span class="live-dot"></span>';
   }
-  return dot+'<span class="sb-t">'+titre+'</span>'+
+  return '<span class="sb-t">'+titre+'</span>'+
     '<button id="souv-btn-envoi" onclick="souvEnvoyerClic()">↑ Envoyer une photo</button>';
 }
 
