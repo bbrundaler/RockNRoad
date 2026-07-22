@@ -95,6 +95,13 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   padding:18px 8px 6px;font-size:11px;color:#fff;line-height:1.3;}
 .souv-item .meta b{display:block;font-size:11.5px;}
 .souv-item .meta i{display:block;font-size:10.5px;opacity:.9;margin-top:1px;}
+.souv-item-img-wrap{position:relative;}
+.souv-item-suppr{position:absolute;top:6px;right:6px;z-index:2;width:22px;height:22px;border:none;border-radius:50%;
+  background:rgba(20,16,10,.65);color:#fff;font-size:12px;line-height:22px;padding:0;cursor:pointer;}
+.souv-item img{cursor:pointer;}
+.souv-item-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:10.5px;
+  color:var(--ink);background:var(--surface);border:none;padding:6px 8px;}
+.souv-item-legende::placeholder{color:var(--ink-dim);}
 .live-note{padding:0 16px 10px;font-size:11px;color:var(--ink-dim);font-style:italic;text-align:center;flex-shrink:0;}
 .live-vide{padding:20px;text-align:center;font-size:12.5px;color:var(--ink-dim);font-style:italic;}
 
@@ -118,7 +125,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .dash-ph{position:relative;background:var(--bg);border:1px solid var(--gold-a20);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);}
 .dash-ph-suppr{position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;border:none;border-radius:50%;
   background:rgba(20,16,10,.7);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
-.dash-ph-img{width:100%;aspect-ratio:1;background-size:cover;background-position:center;cursor:pointer;}
+.dash-ph-img{width:100%;aspect-ratio:1;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:var(--surface);cursor:pointer;}
 .dash-ph-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:10px;
   background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:4px 6px;}
 .dash-ph[draggable="true"]{cursor:grab;}
@@ -169,6 +176,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .sv-e-photo-slot{position:relative;overflow:hidden;border-right:1px solid var(--paper-line);}
 .sv-e-photo-slot:last-child{border-right:none;}
 .sv-e-photo-slot .sv-galerie{height:100%;width:100%;margin:0;padding:0;}
+.sv-e-photo-slot .sv-ph-bloc{width:100%;height:100%;}
 .sv-e-photo-slot .sv-ph{width:100%;height:100%;border-radius:0;border:none;}
 .sv-e-zone-stats{margin:0 14px 14px;display:flex;padding:12px 0;}
 .sv-e-stat{flex:1;text-align:center;border-left:1px solid var(--paper-line);padding:0 6px;}
@@ -244,6 +252,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .page-dd-row.actif .page-dd-label{color:var(--gold-text);font-weight:600;}
 .page-dd-plus{width:22px;height:22px;flex-shrink:0;font-family:var(--font-title);font-weight:700;font-size:13px;
   color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:6px;padding:0;cursor:pointer;}
+.page-dd-suppr{width:22px;height:22px;flex-shrink:0;font-family:var(--font-title);font-weight:700;font-size:12px;
+  color:var(--ink-dim);background:var(--bg);border:1px solid var(--surface-line);border-radius:6px;padding:0;cursor:pointer;}
+.page-dd-suppr:hover{color:var(--danger,#c0392b);}
 /* En-têtes et stats éditables (B138/B139) — chacun garde SA propre allure
    par défaut (var(--sv-x, défaut)) tant que rien n'est choisi ; répond au
    moteur de style dès qu'un choix est fait, comme le reste de la page. */
@@ -263,11 +274,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   font-size:var(--sv-size,20px);}
 .sv-cadres-grille{display:grid;gap:10px;flex:1;min-height:340px;}
 .sv-cadre{position:relative;border:1.5px dashed var(--gold-a35);border-radius:6px;overflow:hidden;min-height:80px;}
-.sv-cadre-bascule{position:absolute;top:6px;right:6px;z-index:3;width:24px;height:24px;border:1px solid var(--paper-line);
+.sv-cadre-bascule{position:absolute;top:6px;left:6px;z-index:3;width:24px;height:24px;border:1px solid var(--paper-line);
   border-radius:6px;background:var(--paper);color:var(--ink-dim);font-size:11px;font-weight:700;line-height:22px;
   padding:0;cursor:pointer;}
 .sv-cadre-photo .sv-galerie{height:100%;width:100%;margin:0;padding:0;display:flex;}
-.sv-cadre-photo .sv-ph{flex:1;height:100%;width:auto;border-radius:0;border:none;}
+.sv-cadre-photo .sv-ph-bloc{flex:1;height:100%;}
+.sv-cadre-photo .sv-ph{height:100%;width:100%;border-radius:0;border:none;}
 .sv-cadre-textarea{height:100%;min-height:80px;resize:none;padding:26px 10px 10px;box-sizing:border-box;}
 .sv-page-libre-supprimer{display:block;margin:10px auto 0;font-family:var(--font-body);font-size:11px;color:var(--ink-dim);
   background:transparent;border:1px dashed var(--paper-line);border-radius:6px;padding:8px 14px;cursor:pointer;flex-shrink:0;}
@@ -332,10 +344,14 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   background:rgba(20,16,10,.75);color:#fff;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
 .sv-equipe-invite-hint{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);font-style:italic;margin:2px 0 0;}
 .sv-galerie{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px 0;}
+.sv-ph-bloc{flex-shrink:0;width:84px;}
 .sv-ph{position:relative;width:84px;height:84px;border-radius:var(--r);background-size:cover;background-position:center;
   border:1px solid var(--surface-line);flex-shrink:0;}
 .sv-ph-x{position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;border-radius:50%;
   background:rgba(20,16,10,.72);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
+.sv-ph-legende{display:block;width:84px;box-sizing:border-box;margin-top:4px;font-family:var(--font-body);
+  font-size:10px;color:var(--paper-ink);background:var(--paper);border:1px solid var(--paper-line);
+  border-radius:6px;padding:3px 6px;}
 .sv-equipe-ajout{display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px 4px;align-items:center;justify-content:center;}
 .sv-equipe-ajout input{font-family:var(--font-body);font-size:12.5px;color:var(--paper-ink);background:var(--paper);
   border:1px solid var(--paper-line);border-radius:8px;padding:7px 10px;flex:1 1 140px;min-width:0;}
@@ -824,13 +840,35 @@ function carteInviteSouvenirHtml(inv, parEtape){
 // ici par les pages libres ①②③④ ; les étapes gardent pour l'instant leur
 // propre affichage (RNR_FICHE_COMPLETE, partagé avec Carnet/Horizon —
 // pas touché sans en discuter d'abord).
-function galeriePhotosHtml(photos){
+// (B144, 22/07, retour Bruno) : une photo déjà rangée doit pouvoir recevoir
+// une légende à tout moment — pas seulement au moment où elle est encore
+// dans la pile "à ranger". Un seul champ, une seule sauvegarde
+// (voyage_photos.legende), peu importe où la photo est affichée ensuite.
+function galeriePhotosHtml(photos, opts){
   if(!photos.length) return '';
+  const avecLegende = !opts || opts.legende!==false;
   return '<div class="sv-galerie">'+photos.map(p=>
-    '<div class="sv-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'
+    '<div class="sv-ph-bloc">'
+    + '<div class="sv-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'
       +'<button class="sv-ph-x" onclick="event.stopPropagation();souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button>'
     +'</div>'
+    + (avecLegende ? '<input type="text" class="sv-ph-legende" placeholder="Légende (optionnel)" value="'+(p.legende?esc(p.legende):'')+'" onclick="event.stopPropagation()" oninput="souvLegendePhotoChange(\''+p.id+'\', this.value)">' : '')
+    + '</div>'
   ).join('')+'</div>';
+}
+let _legendePhotoSaveTimer=null;
+function souvLegendePhotoChange(photoId, valeur){
+  const p=PHOTOS.find(x=>x.id===photoId);
+  if(p) p.legende=valeur; // reflet immédiat en mémoire, pas d'attente du serveur
+  clearTimeout(_legendePhotoSaveTimer);
+  _legendePhotoSaveTimer=setTimeout(()=>sauvegarderLegendePhoto(photoId, valeur), 700);
+}
+window.souvLegendePhotoChange = souvLegendePhotoChange;
+async function sauvegarderLegendePhoto(photoId, valeur){
+  try{
+    const up=await sb.from('voyage_photos').update({legende:valeur||null}).eq('id', photoId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde légende photo', e); }
 }
 
 // ══ Texte enrichi façon Word (B140, 22/07) — retour Bruno : "je surligne un
@@ -1239,7 +1277,7 @@ function rendrePageLibreHtml(pageLibre, parEtape){
     } else {
       const photos=parEtape[uid]||[];
       cadresHtml += '<div class="sv-cadre sv-cadre-photo" style="'+span+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+uid+'\')">'+btnBascule
-        + (photos.length ? galeriePhotosHtml(photos) : '<div class="sv-zone-vide">Glisse une photo ici</div>')
+        + (photos.length ? galeriePhotosHtml(photos,{legende:false}) : '<div class="sv-zone-vide">Glisse une photo ici</div>')
       + '</div>';
     }
   }
@@ -1885,6 +1923,7 @@ function renderMontage(){
     + (DD_PAGES_OUVERT ? ('<div class="page-dd-panel">'+listePages.map(p=>
         '<div class="page-dd-row'+(p.uid===PAGE_ACTIF?' actif':'')+'">'
         + '<span class="page-dd-label" onclick="souvChangerPage(\''+esc(p.uid)+'\')">'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</span>'
+        + (p.type==='page_libre' ? '<button class="page-dd-suppr" onclick="event.stopPropagation();souvSupprimerPageLibre(\''+esc(p.pageLibre.id)+'\')" title="Supprimer cette page">✕</button>' : '')
         + '<button class="page-dd-plus" onclick="souvCreerPageLibre(\''+esc(p.uid)+'\')" title="Ajouter une page après celle-ci">+</button>'
         + '</div>'
       ).join('')+'</div>') : '')
@@ -2008,7 +2047,7 @@ function renderMontage(){
         const photosSlot=parEtape[uid]||[];
         let contenu;
         if(photosSlot.length){
-          contenu=galeriePhotosHtml(photosSlot);
+          contenu=galeriePhotosHtml(photosSlot,{legende:false});
         } else if(i===1){
           const heritee=photoHeriteeCahier();
           contenu = heritee
@@ -2227,7 +2266,14 @@ function renderGalerie(){
     return '<div class="live-vide">Personne n\'a encore envoyé de photo — sois le premier !</div>';
   }
   return '<div class="live-grid">'+PHOTOS.map((p,i)=>{
-    return '<div class="souv-item" onclick="souvOuvrirLightbox('+i+')"><img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt=""><div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+(p.legende?'<br><i>'+esc(p.legende)+'</i>':'')+'</div></div>';
+    return '<div class="souv-item">'
+      + '<button class="souv-item-suppr" onclick="event.stopPropagation();souvSupprimerPhotoDefinitivement(\''+p.id+'\')" title="Supprimer définitivement cette photo">✕</button>'
+      + '<div class="souv-item-img-wrap">'
+        + '<img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt="" onclick="souvOuvrirLightbox('+i+')">'
+        + '<div class="meta"><b>'+esc(nomEnvoyeur(p.membre_id))+'</b>'+esc(fmtRelatif(p.created_at))+'</div>'
+      + '</div>'
+      + '<input type="text" class="souv-item-legende" placeholder="Légende (optionnel)" value="'+(p.legende?esc(p.legende):'')+'" oninput="souvLegendePhotoChange(\''+p.id+'\', this.value)">'
+    + '</div>';
   }).join('')+'</div>';
 }
 
