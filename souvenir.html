@@ -135,6 +135,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border:1px solid var(--surface-line);border-radius:var(--r-pill);padding:2px 7px;}
 .sv-equipe-citation{font-family:var(--font-body);font-size:11px;font-style:italic;color:var(--ink-dim);
   line-height:1.4;margin:4px 0 0;}
+.sv-equipe-invite{border-style:dashed;}
+.sv-equipe-invite-retirer{position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;
+  background:var(--surface);color:var(--ink-dim);font-size:11px;line-height:20px;padding:0;cursor:pointer;}
+.sv-equipe-invite-hint{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);font-style:italic;margin:2px 0 0;}
+.sv-equipe-ajout{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 4px;align-items:center;}
+.sv-equipe-ajout input{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--surface-line);border-radius:8px;padding:7px 10px;flex:1 1 140px;min-width:0;}
+.sv-equipe-ajout button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);
+  background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:7px 14px;
+  cursor:pointer;white-space:nowrap;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
@@ -565,6 +575,28 @@ function carteAnimalSouvenirHtml(a){
     +'<div class="sv-equipe-av" style="'+bg+'">'+avTxt+'</div>'
     +'<p class="sv-equipe-nom">'+esc(nom)+'</p>'
     +(a.infos?'<p class="sv-equipe-citation">'+esc(a.infos)+'</p>':'')
+  +'</div>';
+}
+// Cartes "invité" (B127, 22/07) : des gens rencontrés en route, pas encore
+// sur RockNRoad — Bruno veut pouvoir leur donner la même carte que les
+// membres, ajoutée à la volée par n'importe quel participant du carnet.
+// Stockées dans souvenir_cahiers.invites (jsonb), PROPRES à ce carnet —
+// jamais mélangées aux vrais membres/animaux du groupe. La photo réutilise
+// exactement le même mécanisme de dépose que les 4 pages libres (uid
+// spécial __invite__<id>__, aucune nouvelle table, aucun nouveau moteur).
+function carteInviteSouvenirHtml(inv, parEtape){
+  const uid='__invite__'+inv.id+'__';
+  const photos=parEtape[uid]||[];
+  const photoUrl=photos.length?photos[0].url:null;
+  const bg = photoUrl ? ("background-image:url('"+String(photoUrl).replace(/'/g,'')+"');") : 'background:var(--gold-a20);';
+  const avTxt = photoUrl ? '' : ((inv.nom||'?').charAt(0).toUpperCase());
+  return '<div class="sv-equipe-carte sv-equipe-invite" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+uid+'\')">'
+    +'<button class="sv-equipe-invite-retirer" onclick="souvRetirerInvite(\''+inv.id+'\')" title="Retirer cette personne">✕</button>'
+    +'<span class="sv-equipe-leader sv-equipe-compagnon">Rencontré·e en route</span>'
+    +'<div class="sv-equipe-av" style="'+bg+'">'+avTxt+'</div>'
+    +'<p class="sv-equipe-nom">'+esc(inv.nom||'—')+'</p>'
+    +(inv.note?'<p class="sv-equipe-citation">'+esc(inv.note)+'</p>':'')
+    +(photos.length?'':'<p class="sv-equipe-invite-hint">Dépose une photo ici</p>')
   +'</div>';
 }
 function genererTexteTrajet(){
@@ -1014,11 +1046,18 @@ function renderMontage(){
     const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
     const photosBloc = parEtape[b.uid] || [];
     let cartesHtml='';
-    if(b.cle==='equipe' && (MEMBRES.length || ANIMAUX.length)){
+    if(b.cle==='equipe'){
       const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
       const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
-      const cartes = MEMBRES.map(m=>carteMembreSouvenirHtml(m,choixPassions,choixDepuis)).concat(ANIMAUX.map(carteAnimalSouvenirHtml));
-      cartesHtml = '<div class="sv-equipe-grid">'+cartes.join('')+'</div>';
+      const cartes = MEMBRES.map(m=>carteMembreSouvenirHtml(m,choixPassions,choixDepuis))
+        .concat(ANIMAUX.map(carteAnimalSouvenirHtml))
+        .concat((SOUVENIR_CAHIER.invites||[]).map(inv=>carteInviteSouvenirHtml(inv,parEtape)));
+      cartesHtml = (cartes.length ? '<div class="sv-equipe-grid">'+cartes.join('')+'</div>' : '')
+        + '<div class="sv-equipe-ajout">'
+        +   '<input type="text" id="sv-invite-nom" placeholder="Prénom / surnom" maxlength="40">'
+        +   '<input type="text" id="sv-invite-note" placeholder="Un mot (optionnel)" maxlength="80">'
+        +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
+        + '</div>';
     }
     const gestion = photosBloc.length ? (
       '<div class="montage-card-gestion"><span class="lbl">Photos de cette page :</span>'+
@@ -1139,6 +1178,39 @@ async function sauvegarderTexteLibre(cahierId, blocsTexte){
     const up=await sb.from('souvenir_cahiers').update({blocs_texte:blocsTexte}).eq('id',cahierId);
     if(up.error) throw up.error;
   }catch(e){ console.warn('Souvenir: sauvegarde texte libre', e); }
+}
+
+// Cartes invité (B127) : ajout/retrait, propre au carnet courant.
+function souvAjouterInvite(){
+  const nomEl=document.getElementById('sv-invite-nom'), noteEl=document.getElementById('sv-invite-note');
+  const nom=((nomEl&&nomEl.value)||'').trim();
+  if(!nom){ if(nomEl) nomEl.focus(); return; }
+  const note=((noteEl&&noteEl.value)||'').trim();
+  if(!SOUVENIR_CAHIER) return;
+  const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('inv'+Date.now()+Math.random().toString(36).slice(2));
+  SOUVENIR_CAHIER.invites=(SOUVENIR_CAHIER.invites||[]).concat([{id,nom,note}]);
+  sauvegarderInvites(SOUVENIR_CAHIER.id, SOUVENIR_CAHIER.invites);
+  renderMain();
+}
+window.souvAjouterInvite = souvAjouterInvite;
+function souvRetirerInvite(id){
+  if(!SOUVENIR_CAHIER) return;
+  if(!confirm('Retirer cette personne du carnet ?')) return;
+  SOUVENIR_CAHIER.invites=(SOUVENIR_CAHIER.invites||[]).filter(i=>i.id!==id);
+  sauvegarderInvites(SOUVENIR_CAHIER.id, SOUVENIR_CAHIER.invites);
+  // nettoyage : pas de photo orpheline sous sa carte disparue
+  try{
+    sb.from('souvenir_cahier_photos').delete().eq('cahier_id',SOUVENIR_CAHIER.id).eq('etape_uid','__invite__'+id+'__')
+      .then(()=>{}).catch(e=>console.warn('Souvenir: nettoyage photo invité', e));
+  }catch(e){ console.warn('Souvenir: nettoyage photo invité', e); }
+  renderMain();
+}
+window.souvRetirerInvite = souvRetirerInvite;
+async function sauvegarderInvites(cahierId, invites){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({invites}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde invités', e); }
 }
 
 function souvOngletsHtml(){
