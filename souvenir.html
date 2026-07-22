@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad · Souvenir · L'aventure ne s'oublie pas</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700&family=Caveat:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -131,6 +131,18 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border:1px solid var(--gold-a35);border-radius:50%;width:28px;height:28px;flex-shrink:0;cursor:pointer;}
 .page-nav:disabled{opacity:.3;cursor:default;}
 .atelier-livre{flex:1 1 50%;min-width:0;overflow:auto;padding:20px 24px;}
+.atelier-onglets{flex-shrink:0;display:flex;border-bottom:1px solid var(--surface-line);}
+.atelier-onglets button{flex:1;font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--ink-dim);
+  background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;}
+.atelier-onglets button.actif{color:var(--gold-text);border-bottom-color:var(--gold);background:var(--gold-a10);}
+.dash-outils-mep{display:flex;flex-direction:column;gap:6px;}
+.mep-label{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
+.dash-outils-mep select{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--surface-line);border-radius:8px;padding:6px 8px;}
+.mep-boutons{display:flex;gap:6px;margin-top:4px;}
+.mep-btn{width:34px;height:34px;font-family:var(--font-title);font-size:14px;color:var(--ink-dim);
+  background:var(--surface);border:1px solid var(--surface-line);border-radius:8px;cursor:pointer;}
+.mep-btn.actif{color:var(--gold-text);background:var(--gold-a10);border-color:var(--gold-a35);}
 .montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);position:relative;}
 .montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
@@ -145,8 +157,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   color:#fff;border:none;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
 .bloc-libre-head{padding:16px 18px 6px;}
 .bloc-libre-texte{display:block;width:100%;box-sizing:border-box;min-height:110px;margin:6px 18px 16px;width:calc(100% - 36px);
-  font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--bg);
+  font-family:inherit;font-size:inherit;font-weight:inherit;font-style:inherit;text-align:inherit;line-height:1.6;color:var(--ink);background:var(--bg);
   border:1px solid var(--surface-line);border-radius:var(--r);padding:12px 14px;resize:vertical;}
+.sv-page-style{display:block;}
 .sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 18px 4px;}
 .sv-equipe-carte{position:relative;flex:1 1 150px;max-width:190px;background:var(--bg);border:1px solid var(--surface-line);
   border-radius:var(--r);padding:14px 12px 12px;text-align:center;}
@@ -396,6 +409,7 @@ let CAHIERS_DISPONIBLES=[]; // tous les carnets de ce voyage (officiel + un par 
 let PAGE_ACTIF=null; // uid de la page affichée dans l'atelier (B128, 22/07) — un
 // seul endroit affiché à la fois, PAS remis à zéro en changeant de carnet
 // (les pages ont le même uid dans tous les carnets, seul leur contenu diffère)
+let ONGLET_ATELIER='photos'; // 'photos' | 'style' — l'onglet actif du tableau de bord (B130, 22/07)
 let RANGEMENTS={}; // rangement du carnet actif : { voyage_photo_id: {id, etape_uid, legende} }
 
 // ══ ÉTAPE A — la copie figée des étapes (21/07, retour Bruno) ══
@@ -653,6 +667,93 @@ function galeriePhotosHtml(photos){
       +'<button class="sv-ph-x" onclick="event.stopPropagation();souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button>'
     +'</div>'
   ).join('')+'</div>';
+}
+
+// ══ Moteur de style texte (B130, 22/07) — UN SEUL moteur, universel à
+// TOUTES les pages du Cahier Souvenir (retour Bruno : "pas d'outils par
+// page, un moteur comme les CSS"). Chaque page garde son propre réglage,
+// mais le mécanisme qui les applique est unique — ajouter un futur contrôle
+// ici le rend disponible partout, d'un coup.
+// GARDE-FOU (Bruno, souligné trois fois) : ceci n'habille QUE Cahier
+// Souvenir. On n'ajoute et ne modifie RIEN dans fiche-complete.js ni
+// cahier.html — le style s'applique depuis l'EXTÉRIEUR, par héritage CSS
+// sur un simple wrapper (cf. .sv-page-style dans renderMontage), jamais en
+// touchant le moteur de rendu partagé. Sur les pages d'étape, seuls les
+// éléments qui n'ont pas déjà leur propre style explicite dans la fiche
+// partagée en profitent — c'est voulu, pas un bug : l'identité visuelle du
+// lieu (titre, badges) reste celle de la fiche partout ailleurs sur le site.
+const SOUV_POLICES=[
+  {v:'title', label:'Élégant', css:"'Playfair Display', serif"},
+  {v:'manuscrite', label:'Manuscrite', css:"'Caveat', cursive"},
+  {v:'machine', label:'Machine à écrire', css:"'Special Elite', monospace"}
+];
+const SOUV_TAILLES=[
+  {v:'petit', label:'Petit', css:'12px'},
+  {v:'grand', label:'Grand', css:'18px'}
+];
+function styleTextePage(uid){
+  return (SOUVENIR_CAHIER && SOUVENIR_CAHIER.styles_texte && SOUVENIR_CAHIER.styles_texte[uid]) || {};
+}
+function cssPourStylePage(uid){
+  const s=styleTextePage(uid);
+  const police=SOUV_POLICES.find(p=>p.v===s.police);
+  const taille=SOUV_TAILLES.find(t=>t.v===s.taille);
+  let css='font-family:var(--font-body);font-size:13.5px;font-weight:400;font-style:normal;text-align:left;';
+  if(police) css+='font-family:'+police.css+';';
+  if(taille) css+='font-size:'+taille.css+';';
+  if(s.gras) css+='font-weight:700;';
+  if(s.italique) css+='font-style:italic;';
+  if(s.alignement) css+='text-align:'+s.alignement+';';
+  return css;
+}
+function souvDefinirStylePage(champ, valeur){
+  if(!SOUVENIR_CAHIER || !PAGE_ACTIF) return;
+  const styles=Object.assign({}, SOUVENIR_CAHIER.styles_texte);
+  const page=Object.assign({}, styles[PAGE_ACTIF]);
+  if(valeur==='' || valeur==null) delete page[champ]; else page[champ]=valeur;
+  styles[PAGE_ACTIF]=page;
+  SOUVENIR_CAHIER.styles_texte=styles;
+  sauvegarderStylesTexte(SOUVENIR_CAHIER.id, styles);
+  renderMain();
+}
+window.souvDefinirStylePage = souvDefinirStylePage;
+function souvBasculerStylePage(champ){
+  souvDefinirStylePage(champ, styleTextePage(PAGE_ACTIF)[champ] ? '' : true);
+}
+window.souvBasculerStylePage = souvBasculerStylePage;
+async function sauvegarderStylesTexte(cahierId, styles){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({styles_texte:styles}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde styles texte', e); }
+}
+function souvChangerOngletAtelier(nom){
+  ONGLET_ATELIER=nom;
+  renderMain();
+}
+window.souvChangerOngletAtelier = souvChangerOngletAtelier;
+function rendreOngletMiseEnPage(){
+  const s=styleTextePage(PAGE_ACTIF);
+  let html='<div class="dash-outils dash-outils-mep">';
+  html+='<p class="dash-outils-hint">Le même outil marche sur toutes les pages — chaque page garde son propre réglage.</p>';
+  html+='<label class="mep-label">Police</label>';
+  html+='<select onchange="souvDefinirStylePage(\'police\', this.value)">';
+  html+='<option value="">Standard</option>';
+  html+=SOUV_POLICES.map(p=>'<option value="'+p.v+'"'+(s.police===p.v?' selected':'')+'>'+esc(p.label)+'</option>').join('');
+  html+='</select>';
+  html+='<label class="mep-label">Taille</label>';
+  html+='<select onchange="souvDefinirStylePage(\'taille\', this.value)">';
+  html+='<option value="">Normal</option>';
+  html+=SOUV_TAILLES.map(t=>'<option value="'+t.v+'"'+(s.taille===t.v?' selected':'')+'>'+esc(t.label)+'</option>').join('');
+  html+='</select>';
+  html+='<div class="mep-boutons">';
+  html+='<button class="mep-btn'+(s.gras?' actif':'')+'" onclick="souvBasculerStylePage(\'gras\')" title="Gras"><b>G</b></button>';
+  html+='<button class="mep-btn'+(s.italique?' actif':'')+'" onclick="souvBasculerStylePage(\'italique\')" title="Italique"><i>I</i></button>';
+  html+='<button class="mep-btn'+(s.alignement==='left'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'left\')" title="Aligner à gauche">⇤</button>';
+  html+='<button class="mep-btn'+(s.alignement==='center'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'center\')" title="Centrer">≡</button>';
+  html+='<button class="mep-btn'+(s.alignement==='right'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'right\')" title="Aligner à droite">⇥</button>';
+  html+='</div></div>';
+  return html;
 }
 
 function genererTexteTrajet(){
@@ -1145,24 +1246,34 @@ function renderMontage(){
   selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
   selecteurPage += '</div>';
 
-  // ══ colonne de gauche : le tableau de bord — sélecteurs, outils, photos ══
+  // ══ colonne de gauche : le tableau de bord — sélecteurs, onglets Photos/
+  // Mise en page (B130, 22/07 : "un moteur comme les css", pas d'outils
+  // par page — le même onglet vit sur toutes les pages) ══
   let colTri = '<div class="atelier-tri">';
   colTri += barreCarnet;
   colTri += selecteurPage;
-  colTri += '<div class="dash-outils"><p class="dash-outils-hint">Outils de mise en page — à construire page par page. '
-    + 'Clique sur une photo pour la ranger sur la page affichée à droite, ou glisse-la dessus.</p></div>';
-  colTri += '<div class="dash-photos">';
-  if(!aRanger.length){
-    colTri += '<div class="live-vide">Tout est rangé !</div>';
+  colTri += '<div class="atelier-onglets">'
+    + '<button class="'+(ONGLET_ATELIER==='photos'?'actif':'')+'" onclick="souvChangerOngletAtelier(\'photos\')">📷 Photos</button>'
+    + '<button class="'+(ONGLET_ATELIER==='style'?'actif':'')+'" onclick="souvChangerOngletAtelier(\'style\')">🎨 Mise en page</button>'
+    + '</div>';
+  if(ONGLET_ATELIER==='style'){
+    colTri += rendreOngletMiseEnPage();
   } else {
-    colTri += aRanger.map(p=>
-      '<div class="dash-ph" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'">'+
-        '<div class="dash-ph-img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" onclick="souvRangerSurPageActive(\''+p.id+'\')" title="Ranger sur la page affichée"></div>'+
-        '<input type="text" class="dash-ph-legende" placeholder="légende" value="'+(p.legende?esc(p.legende):'')+'">'+
-      '</div>'
-    ).join('');
+    colTri += '<div class="dash-outils"><p class="dash-outils-hint">Clique sur une photo pour la ranger sur la page affichée à droite, ou glisse-la dessus.</p></div>';
+    colTri += '<div class="dash-photos">';
+    if(!aRanger.length){
+      colTri += '<div class="live-vide">Tout est rangé !</div>';
+    } else {
+      colTri += aRanger.map(p=>
+        '<div class="dash-ph" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'">'+
+          '<div class="dash-ph-img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" onclick="souvRangerSurPageActive(\''+p.id+'\')" title="Ranger sur la page affichée"></div>'+
+          '<input type="text" class="dash-ph-legende" placeholder="légende" value="'+(p.legende?esc(p.legende):'')+'">'+
+        '</div>'
+      ).join('');
+    }
+    colTri += '</div>';
   }
-  colTri += '</div></div>';
+  colTri += '</div>';
 
   // ══ colonne de droite : LA page active, seule, sans aucune barre au-dessus ══
   const blocLibreHtml = (b) => {
@@ -1194,7 +1305,7 @@ function renderMontage(){
     ? (pageActive.type==='libre' ? blocLibreHtml(pageActive.bloc) : rendreEtapePageHtml(pageActive.item, parEtape))
     : '<div class="live-vide">Cette page n\'existe plus.</div>';
 
-  const colLivre = '<div class="atelier-livre">'+pageHtml+'</div>';
+  const colLivre = '<div class="atelier-livre"><div class="sv-page-style" style="'+cssPourStylePage(PAGE_ACTIF)+'">'+pageHtml+'</div></div>';
 
   return '<div class="atelier-corps">'+colTri+colLivre+'</div>';
 }
