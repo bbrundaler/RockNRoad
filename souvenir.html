@@ -173,6 +173,22 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .sv-e-stat:first-child{border-left:none;}
 .sv-e-stat b{display:block;font-family:var(--font-title);font-size:15px;color:var(--paper-ink);}
 .sv-e-stat span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);}
+
+/* ── Autres pages « papier » (B134, 22/07) : même langage que la Page de
+   garde — en-tête calé sur cahier.html (kicker + titre), zones en
+   pointillés, texte sombre sur papier clair. ── */
+.sv-e-zone-entete{padding:6px 14px;margin:0 auto 14px;display:inline-block;}
+.sv-e-kicker{margin:0 0 2px;font-family:var(--font-body);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-dim);}
+.sv-e-titre-page{margin:0;font-family:var(--font-title);font-weight:700;font-size:26px;color:var(--paper-ink);}
+.sv-e-zone-cartes{margin:0 14px 14px;padding:10px 4px;}
+.sv-e-zone-libre{margin:0 14px 14px;padding:12px;min-height:70px;text-align:left;}
+.sv-e-zone-libre-hint{margin:0 0 8px;font-family:var(--font-body);font-size:11.5px;color:var(--gold-deep);
+  font-style:italic;text-align:center;}
+.sv-e-texte-libre,.sv-e-texte-principal{display:block;width:100%;box-sizing:border-box;border:none;
+  background:transparent;resize:vertical;font-family:var(--font-body);color:var(--paper-ink);}
+.sv-e-texte-libre{font-size:12.5px;line-height:1.6;min-height:70px;}
+.sv-e-texte-principal{font-size:13.5px;line-height:1.7;min-height:160px;}
 .atelier-onglets{flex-shrink:0;display:flex;border-bottom:1px solid var(--surface-line);}
 .atelier-onglets button{flex:1;font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--ink-dim);
   background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;}
@@ -204,26 +220,26 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   font-family:inherit;font-size:inherit;font-weight:inherit;font-style:inherit;text-align:inherit;line-height:1.6;color:var(--ink);background:var(--bg);
   border:1px solid var(--surface-line);border-radius:var(--r);padding:12px 14px;resize:vertical;}
 .sv-page-style{display:block;}
-.sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 18px 4px;}
-.sv-equipe-carte{position:relative;flex:1 1 150px;max-width:190px;background:var(--bg);border:1px solid var(--surface-line);
-  border-radius:var(--r);padding:14px 12px 12px;text-align:center;}
+.sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 4px 4px;justify-content:center;}
+.sv-equipe-carte{position:relative;flex:1 1 150px;max-width:190px;background:var(--paper);border:1px solid var(--paper-line);
+  border-radius:6px;padding:14px 12px 12px;text-align:center;}
 .sv-equipe-leader{display:inline-block;font-family:var(--font-body);font-size:10px;font-weight:700;letter-spacing:.02em;
-  color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);
+  color:var(--gold-deep);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:999px;
   padding:3px 8px;margin-bottom:8px;}
-.sv-equipe-leader.sv-equipe-compagnon{color:var(--ink-dim);border-color:var(--surface-line);}
+.sv-equipe-leader.sv-equipe-compagnon{color:var(--ink-dim);border-color:var(--paper-line);}
 .sv-equipe-av{width:60px;height:60px;border-radius:50%;margin:0 auto 8px;background-size:cover;background-position:center;
-  display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold-text);
-  box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold-a35);}
-.sv-equipe-nom{font-family:var(--font-title);font-weight:700;font-size:13px;color:var(--ink);margin:0 0 4px;}
+  display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold-deep);
+  box-shadow:0 0 0 2px var(--paper),0 0 0 3px var(--gold-a35);}
+.sv-equipe-nom{font-family:var(--font-title);font-weight:700;font-size:13px;color:var(--paper-ink);margin:0 0 4px;}
 .sv-equipe-depuis{font-family:var(--font-body);font-size:11px;color:var(--ink-dim);margin-bottom:6px;}
 .sv-equipe-passions{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:6px;}
-.sv-equipe-chip{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);background:var(--surface);
-  border:1px solid var(--surface-line);border-radius:var(--r-pill);padding:2px 7px;}
+.sv-equipe-chip{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);background:var(--paper);
+  border:1px solid var(--paper-line);border-radius:999px;padding:2px 7px;}
 .sv-equipe-citation{font-family:var(--font-body);font-size:11px;font-style:italic;color:var(--ink-dim);
   line-height:1.4;margin:4px 0 0;}
 .sv-equipe-invite{border-style:dashed;}
 .sv-equipe-invite-retirer{position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;
-  background:var(--surface);color:var(--ink-dim);font-size:11px;line-height:20px;padding:0;cursor:pointer;}
+  background:var(--paper);color:var(--ink-dim);font-size:11px;line-height:20px;padding:0;cursor:pointer;}
 .sv-equipe-av-wrap{position:relative;width:60px;margin:0 auto 8px;}
 .sv-equipe-av-wrap .sv-equipe-av{margin:0;}
 .sv-equipe-av-x{position:absolute;bottom:-2px;right:-4px;width:18px;height:18px;border:none;border-radius:50%;
@@ -234,11 +250,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border:1px solid var(--surface-line);flex-shrink:0;}
 .sv-ph-x{position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;border-radius:50%;
   background:rgba(20,16,10,.72);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
-.sv-equipe-ajout{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 4px;align-items:center;}
-.sv-equipe-ajout input{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--bg);
-  border:1px solid var(--surface-line);border-radius:8px;padding:7px 10px;flex:1 1 140px;min-width:0;}
-.sv-equipe-ajout button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);
-  background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:7px 14px;
+.sv-equipe-ajout{display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px 4px;align-items:center;justify-content:center;}
+.sv-equipe-ajout input{font-family:var(--font-body);font-size:12.5px;color:var(--paper-ink);background:var(--paper);
+  border:1px solid var(--paper-line);border-radius:8px;padding:7px 10px;flex:1 1 140px;min-width:0;}
+.sv-equipe-ajout button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-deep);
+  background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:999px;padding:7px 14px;
   cursor:pointer;white-space:nowrap;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 
@@ -1381,22 +1397,70 @@ function renderMontage(){
   colTri += '</div>';
 
   // ══ colonne de droite : LA page active, seule, sans aucune barre au-dessus ══
+  const enteteZoneHtml = (kicker, titre) => '<div class="sv-zone sv-e-zone-entete">'
+    + (kicker ? '<p class="sv-e-kicker">'+esc(kicker)+'</p>' : '')
+    + '<h2 class="sv-e-titre-page">'+esc(titre)+'</h2>'
+  + '</div>';
+
   const blocLibreHtml = (b) => {
     const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
     const photosBloc = parEtape[b.uid] || [];
-    let cartesHtml='';
+
+    // L'équipe (B134, 22/07) : kicker "Qui embarque" + titre "L'équipe",
+    // calés sur cahier.html — cartes dans leur propre zone, puis un module
+    // libre (photo + mot) pour la place qui reste sur la page.
     if(b.cle==='equipe'){
       const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
       const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
       const cartes = MEMBRES.map(m=>carteMembreSouvenirHtml(m,choixPassions,choixDepuis))
         .concat(ANIMAUX.map(carteAnimalSouvenirHtml))
         .concat((SOUVENIR_CAHIER.invites||[]).map(inv=>carteInviteSouvenirHtml(inv,parEtape)));
-      cartesHtml = (cartes.length ? '<div class="sv-equipe-grid">'+cartes.join('')+'</div>' : '')
+      const cartesEtAjout = (cartes.length ? '<div class="sv-equipe-grid">'+cartes.join('')+'</div>' : '')
         + '<div class="sv-equipe-ajout">'
         +   '<input type="text" id="sv-invite-nom" placeholder="Prénom / surnom" maxlength="40">'
         +   '<input type="text" id="sv-invite-note" placeholder="Un mot (optionnel)" maxlength="80">'
         +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
         + '</div>';
+      return '<div class="sv-cover">'
+        + enteteZoneHtml('Qui embarque', 'L\'équipe')
+        + '<div class="sv-zone sv-e-zone-cartes">'+cartesEtAjout+'</div>'
+        + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
+          + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<p class="sv-e-zone-libre-hint">Dépose une photo ou écris un mot ici, s\'il reste de la place</p>')
+          + '<textarea class="sv-e-texte-libre" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+        + '</div>'
+      + '</div>';
+    }
+
+    // Notre RoadTrip (B134) : kicker "Vue d'ensemble" + titre, calés sur
+    // cahier.html — le résumé du trajet reste un texte libre pour l'instant
+    // (une vraie liste jour par jour viendra dans un futur réglage plus fin).
+    if(b.cle==='trajet'){
+      return '<div class="sv-cover">'
+        + enteteZoneHtml('Vue d\'ensemble', 'Notre RoadTrip')
+        + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
+          + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
+          + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+        + '</div>'
+      + '</div>';
+    }
+
+    // Bonne route (B134) : pas de kicker dans le vrai Cahier, juste le
+    // titre, puis le mot de clôture, puis les 3 vrais chiffres (km/nuits/
+    // étapes) — mêmes calculs que statsVoyage() utilisé partout ailleurs.
+    if(b.cle==='cloture'){
+      const s=statsVoyage();
+      return '<div class="sv-cover">'
+        + enteteZoneHtml(null, 'Bonne route.')
+        + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
+          + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
+          + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+        + '</div>'
+        + '<div class="sv-zone sv-e-zone-stats">'
+          + '<div class="sv-e-stat"><b>'+(s.km?('≈'+s.km):'—')+'</b><span>km</span></div>'
+          + '<div class="sv-e-stat"><b>'+(s.nuits||'—')+'</b><span>Nuits</span></div>'
+          + '<div class="sv-e-stat"><b>'+(s.etapes||'—')+'</b><span>Étapes</span></div>'
+        + '</div>'
+      + '</div>';
     }
     // Page de garde (B133, 22/07) : 4 zones distinctes, calées sur la VRAIE
     // couverture de cahier.html — eyebrow, titre+sous-titre, photo (1-4
@@ -1443,12 +1507,9 @@ function renderMontage(){
       + '</div>';
     }
 
-    return '<div class="montage-card bloc-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'+
-      (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
-      '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'+
-      cartesHtml+
-      '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'+
-    '</div>';
+    // (toutes les pages libres ①②③④ ont désormais leur propre rendu papier
+    // ci-dessus — plus de repli générique nécessaire)
+    return '<div class="sv-cover"><div class="live-vide">Page inconnue : '+esc(b.cle)+'</div></div>';
   };
 
   const pageHtml = pageActive
