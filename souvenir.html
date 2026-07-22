@@ -189,6 +189,28 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   background:transparent;resize:vertical;font-family:var(--font-body);color:var(--paper-ink);}
 .sv-e-texte-libre{font-size:12.5px;line-height:1.6;min-height:70px;}
 .sv-e-texte-principal{font-size:13.5px;line-height:1.7;min-height:160px;}
+
+/* ── Briques modulables (B136, 22/07) : texte ou photo, au choix, ajoutées/
+   retirées librement — même moteur partout (4 pages libres, pages "suite"
+   des étapes, pages entièrement libres). ── */
+.sv-e-zone-briques{margin:0 14px 14px;padding:12px;text-align:left;}
+.sv-brique{position:relative;border:1px dashed var(--paper-line);border-radius:6px;padding:10px;margin-bottom:10px;}
+.sv-brique:last-of-type{margin-bottom:0;}
+.sv-brique-retirer{position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;border-radius:50%;
+  background:var(--paper);color:var(--ink-dim);font-size:11px;line-height:20px;padding:0;cursor:pointer;z-index:2;}
+.sv-brique-photo{min-height:100px;}
+.sv-brique-photo .sv-galerie{margin:0;}
+.sv-brique-texte .sv-e-texte-libre{min-height:50px;}
+.sv-brique-ajout{display:flex;gap:8px;justify-content:center;}
+.sv-brique-ajout button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:var(--gold-deep);
+  background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:999px;padding:6px 12px;cursor:pointer;}
+.page-libre-ajout{padding:6px 12px 10px;}
+.page-libre-ajout button{width:100%;font-family:var(--font-title);font-weight:700;font-size:11.5px;color:var(--gold-text);
+  background:var(--gold-a10);border:1px dashed var(--gold-a35);border-radius:8px;padding:7px;cursor:pointer;}
+.sv-e-titre-page-input{border:none;background:transparent;text-align:center;width:100%;}
+.sv-page-libre-supprimer{display:block;margin:0 14px;font-family:var(--font-body);font-size:11px;color:var(--ink-dim);
+  background:transparent;border:1px dashed var(--paper-line);border-radius:6px;padding:8px;cursor:pointer;width:calc(100% - 28px);}
+.sv-page-libre-supprimer:hover{color:var(--danger,#c0392b);}
 .atelier-onglets{flex-shrink:0;display:flex;border-bottom:1px solid var(--surface-line);}
 .atelier-onglets button{flex:1;font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--ink-dim);
   background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;}
@@ -211,6 +233,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .mini-ph button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger,#c0392b);
   color:#fff;border:none;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
 .sv-e-zone-fiche{position:relative;text-align:left;padding:0;overflow:hidden;}
+/* (B136, 22/07) Maps/Horizon ne servent à rien dans Cahier Souvenir et
+   prennent de la place — masqués depuis ICI seulement (le moteur de fiche
+   partagé, fiche-complete.js, n'est pas touché : Carnet/Horizon les gardent). */
+.sv-e-zone-fiche .gf-bottom-row{display:none;}
 .sv-e-zone-fiche .montage-card-gestion,.sv-e-zone-fiche .montage-card-hint{margin:8px;}
 .sv-e-mot-label{margin:0 0 6px;font-family:var(--font-body);font-size:11px;color:var(--ink-dim);font-style:italic;}
 .sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 4px 4px;justify-content:center;}
@@ -870,6 +896,142 @@ async function sauvegarderZonesPageGarde(cahierId, zones){
   }catch(e){ console.warn('Souvenir: sauvegarde zones page de garde', e); }
 }
 
+// ══ Briques modulables (B136, 22/07) — retour Bruno : "on cadre l'existant
+// venant de cahier et on propose des modules vides sur toutes les pages
+// pour personnaliser". Un SEUL moteur (texte OU photo, au choix, ajouté/
+// retiré librement), réutilisé partout : les 4 pages libres, la "page
+// suite" de chaque étape, et les pages entièrement libres créées à la
+// volée. Stocké par page (n'importe quel uid) dans modules_libres.
+function modulesDePage(uid){
+  return (SOUVENIR_CAHIER && SOUVENIR_CAHIER.modules_libres && SOUVENIR_CAHIER.modules_libres[uid]) || [];
+}
+function uidModule(moduleId){ return '__module__'+moduleId+'__'; }
+function souvAjouterModule(pageUid, type){
+  if(!SOUVENIR_CAHIER) return;
+  const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('mod'+Date.now()+Math.random().toString(36).slice(2));
+  const modules=Object.assign({}, SOUVENIR_CAHIER.modules_libres);
+  modules[pageUid]=(modules[pageUid]||[]).concat([{id,type,texte:''}]);
+  SOUVENIR_CAHIER.modules_libres=modules;
+  sauvegarderModulesLibres(SOUVENIR_CAHIER.id, modules);
+  renderMain();
+}
+window.souvAjouterModule = souvAjouterModule;
+function souvRetirerModule(pageUid, moduleId){
+  if(!SOUVENIR_CAHIER) return;
+  if(!confirm('Retirer ce bloc ?')) return;
+  const modules=Object.assign({}, SOUVENIR_CAHIER.modules_libres);
+  modules[pageUid]=(modules[pageUid]||[]).filter(m=>m.id!==moduleId);
+  SOUVENIR_CAHIER.modules_libres=modules;
+  sauvegarderModulesLibres(SOUVENIR_CAHIER.id, modules);
+  try{
+    sb.from('souvenir_cahier_photos').delete().eq('cahier_id',SOUVENIR_CAHIER.id).eq('etape_uid',uidModule(moduleId))
+      .then(()=>{}).catch(e=>console.warn('Souvenir: nettoyage photo bloc', e));
+  }catch(e){ console.warn('Souvenir: nettoyage photo bloc', e); }
+  renderMain();
+}
+window.souvRetirerModule = souvRetirerModule;
+let _moduleSaveTimer=null;
+function souvModuleTexteChange(pageUid, moduleId, valeur){
+  if(!SOUVENIR_CAHIER) return;
+  const modules=Object.assign({}, SOUVENIR_CAHIER.modules_libres);
+  modules[pageUid]=(modules[pageUid]||[]).map(m=>m.id===moduleId?Object.assign({},m,{texte:valeur}):m);
+  SOUVENIR_CAHIER.modules_libres=modules;
+  const cahierId=SOUVENIR_CAHIER.id;
+  clearTimeout(_moduleSaveTimer);
+  _moduleSaveTimer=setTimeout(()=>sauvegarderModulesLibres(cahierId, modules), 700);
+}
+window.souvModuleTexteChange = souvModuleTexteChange;
+async function sauvegarderModulesLibres(cahierId, modules){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({modules_libres:modules}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde modules libres', e); }
+}
+function rendreModulesHtml(pageUid, parEtape){
+  const modules=modulesDePage(pageUid);
+  const blocs=modules.map(m=>{
+    if(m.type==='photo'){
+      const uid=uidModule(m.id);
+      const photos=parEtape[uid]||[];
+      return '<div class="sv-brique sv-brique-photo" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+uid+'\')">'
+        + '<button class="sv-brique-retirer" onclick="souvRetirerModule(\''+pageUid+'\',\''+m.id+'\')" title="Retirer ce bloc">✕</button>'
+        + (photos.length ? galeriePhotosHtml(photos) : '<div class="sv-zone-vide">Dépose une photo</div>')
+      + '</div>';
+    }
+    return '<div class="sv-brique sv-brique-texte">'
+      + '<button class="sv-brique-retirer" onclick="souvRetirerModule(\''+pageUid+'\',\''+m.id+'\')" title="Retirer ce bloc">✕</button>'
+      + '<textarea class="sv-e-texte-libre" placeholder="Écris ce que tu veux ici…" oninput="souvModuleTexteChange(\''+pageUid+'\',\''+m.id+'\', this.value)">'+esc(m.texte||'')+'</textarea>'
+    + '</div>';
+  }).join('');
+  return '<div class="sv-zone sv-e-zone-briques">'
+    + (blocs || '<p class="sv-e-zone-libre-hint">Ajoute un bloc photo ou texte pour personnaliser cette page</p>')
+    + '<div class="sv-brique-ajout">'
+      + '<button onclick="souvAjouterModule(\''+pageUid+'\',\'texte\')">+ Bloc texte</button>'
+      + '<button onclick="souvAjouterModule(\''+pageUid+'\',\'photo\')">+ Bloc photo</button>'
+    + '</div>'
+  + '</div>';
+}
+
+// ══ Pages entièrement libres (B136) — pour un imprévu du voyage, hors
+// roadbook. Propre carnet, insérées juste avant "Bonne route". ══
+let _pageLibreSaveTimer=null;
+function souvCreerPageLibre(){
+  if(!SOUVENIR_CAHIER) return;
+  const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('pl'+Date.now()+Math.random().toString(36).slice(2));
+  const pages=(SOUVENIR_CAHIER.pages_libres||[]).concat([{id, titre:'Une page à nous'}]);
+  SOUVENIR_CAHIER.pages_libres=pages;
+  sauvegarderPagesLibres(SOUVENIR_CAHIER.id, pages);
+  PAGE_ACTIF='__libre__'+id+'__';
+  renderMain();
+}
+window.souvCreerPageLibre = souvCreerPageLibre;
+function souvRenommerPageLibre(id, titre){
+  if(!SOUVENIR_CAHIER) return;
+  const pages=(SOUVENIR_CAHIER.pages_libres||[]).map(p=>p.id===id?Object.assign({},p,{titre}):p);
+  SOUVENIR_CAHIER.pages_libres=pages;
+  const cahierId=SOUVENIR_CAHIER.id;
+  clearTimeout(_pageLibreSaveTimer);
+  _pageLibreSaveTimer=setTimeout(()=>sauvegarderPagesLibres(cahierId, pages), 700);
+}
+window.souvRenommerPageLibre = souvRenommerPageLibre;
+function souvSupprimerPageLibre(id){
+  if(!SOUVENIR_CAHIER) return;
+  if(!confirm('Supprimer cette page et tout son contenu ?')) return;
+  const pages=(SOUVENIR_CAHIER.pages_libres||[]).filter(p=>p.id!==id);
+  const modules=Object.assign({}, SOUVENIR_CAHIER.modules_libres);
+  delete modules['__libre__'+id+'__'];
+  SOUVENIR_CAHIER.pages_libres=pages;
+  SOUVENIR_CAHIER.modules_libres=modules;
+  sauvegarderPagesLibres(SOUVENIR_CAHIER.id, pages);
+  sauvegarderModulesLibres(SOUVENIR_CAHIER.id, modules);
+  PAGE_ACTIF='__presentation__';
+  renderMain();
+}
+window.souvSupprimerPageLibre = souvSupprimerPageLibre;
+async function sauvegarderPagesLibres(cahierId, pages){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({pages_libres:pages}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde pages libres', e); }
+}
+function rendreSuitePageHtml(item, parEtape){
+  const uid=item.uid+'__suite__';
+  return '<div class="sv-cover">'
+    + '<div class="sv-zone sv-e-zone-entete"><p class="sv-e-kicker">'+esc(item.nom||'')+'</p><h2 class="sv-e-titre-page">Vos ajouts</h2></div>'
+    + rendreModulesHtml(uid, parEtape)
+  + '</div>';
+}
+function rendrePageLibreHtml(pageLibre, parEtape){
+  const uid='__libre__'+pageLibre.id+'__';
+  return '<div class="sv-cover">'
+    + '<div class="sv-zone sv-e-zone-entete">'
+      + '<input type="text" class="sv-e-titre-page sv-e-titre-page-input" value="'+esc(pageLibre.titre||'')+'" placeholder="Titre de cette page" oninput="souvRenommerPageLibre(\''+pageLibre.id+'\', this.value)">'
+    + '</div>'
+    + rendreModulesHtml(uid, parEtape)
+    + '<button class="sv-page-libre-supprimer" onclick="souvSupprimerPageLibre(\''+pageLibre.id+'\')">🗑 Supprimer cette page</button>'
+  + '</div>';
+}
+
 function genererTexteTrajet(){
   const chaine=chaineDuVoyage();
   if(!chaine.length) return '';
@@ -1179,13 +1341,21 @@ window.souvConfirmerEnvoi = souvConfirmerEnvoi;
 function listePagesCahier(){
   let n=0;
   const avant = SOUV_BLOCS_LIBRES.slice(0,3).map(b=>({uid:b.uid, label:b.titre, type:'libre', bloc:b}));
-  const etapes = ITINERAIRE.map(it=>{
+  const etapes = [];
+  ITINERAIRE.forEach(it=>{
     if(!it.rattache) n++;
     const label = (it.rattache?'↳ ':'') + (it.rattache?'':(n+'. ')) + (it.nom||'—');
-    return {uid:it.uid, label, type:'etape', item:it};
+    etapes.push({uid:it.uid, label, type:'etape', item:it});
+    // Page "suite" (B136) : une par étape, pour les briques libres — la
+    // place manque sur la page principale de l'étape (fiche + mot déjà
+    // dense), donc on ouvre une deuxième page dédiée à la personnalisation.
+    etapes.push({uid:it.uid+'__suite__', label:'↳ '+(it.nom||'—')+' — vos ajouts', type:'suite', item:it});
   });
+  const pagesLibres = ((SOUVENIR_CAHIER && SOUVENIR_CAHIER.pages_libres)||[]).map(p=>
+    ({uid:'__libre__'+p.id+'__', label:p.titre||'Page libre', type:'page_libre', pageLibre:p})
+  );
   const apres = [{uid:SOUV_BLOCS_LIBRES[3].uid, label:SOUV_BLOCS_LIBRES[3].titre, type:'libre', bloc:SOUV_BLOCS_LIBRES[3]}];
-  return avant.concat(etapes, apres);
+  return avant.concat(etapes, pagesLibres, apres);
 }
 function optionsItineraireHtml(selectedUid){
   const opts = listePagesCahier().map(p=>
@@ -1374,6 +1544,9 @@ function renderMontage(){
   ).join('')+'</select>';
   selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
   selecteurPage += '</div>';
+  // (B136, 22/07) Pour un imprévu du voyage, hors roadbook — une page
+  // entièrement libre, propre à ce carnet, insérée avant "Bonne route".
+  selecteurPage += '<div class="page-libre-ajout"><button onclick="souvCreerPageLibre()">+ Créer une page libre</button></div>';
 
   // ══ colonne de gauche : le tableau de bord — sélecteurs, onglets Photos/
   // Mise en page (B130, 22/07 : "un moteur comme les css", pas d'outils
@@ -1436,6 +1609,7 @@ function renderMontage(){
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<p class="sv-e-zone-libre-hint">Dépose une photo ou écris un mot ici, s\'il reste de la place</p>')
           + '<textarea class="sv-e-texte-libre" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
         + '</div>'
+        + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
     }
 
@@ -1449,6 +1623,7 @@ function renderMontage(){
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
           + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
         + '</div>'
+        + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
     }
 
@@ -1468,6 +1643,7 @@ function renderMontage(){
           + '<div class="sv-e-stat"><b>'+(s.nuits||'—')+'</b><span>Nuits</span></div>'
           + '<div class="sv-e-stat"><b>'+(s.etapes||'—')+'</b><span>Étapes</span></div>'
         + '</div>'
+        + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
     }
     // Page de garde (B133, 22/07) : 4 zones distinctes, calées sur la VRAIE
@@ -1512,6 +1688,7 @@ function renderMontage(){
           + '<div class="sv-e-stat"><b>'+esc(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
           + '<div class="sv-e-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
         + '</div>'
+        + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
     }
 
@@ -1521,7 +1698,11 @@ function renderMontage(){
   };
 
   const pageHtml = pageActive
-    ? (pageActive.type==='libre' ? blocLibreHtml(pageActive.bloc) : rendreEtapePageHtml(pageActive.item, parEtape))
+    ? (pageActive.type==='libre' ? blocLibreHtml(pageActive.bloc)
+      : pageActive.type==='etape' ? rendreEtapePageHtml(pageActive.item, parEtape)
+      : pageActive.type==='suite' ? rendreSuitePageHtml(pageActive.item, parEtape)
+      : pageActive.type==='page_libre' ? rendrePageLibreHtml(pageActive.pageLibre, parEtape)
+      : '<div class="live-vide">Cette page n\'existe plus.</div>')
     : '<div class="live-vide">Cette page n\'existe plus.</div>';
 
   const colLivre = '<div class="atelier-livre"><div class="feuille-a4"><div class="sv-page-style" style="'+cssPourStylePage(PAGE_ACTIF)+'">'+pageHtml+'</div></div></div>';
