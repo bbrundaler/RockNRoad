@@ -193,6 +193,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   font-style:var(--sv-style,normal);text-align:var(--sv-align,left);}
 .sv-e-texte-libre{font-size:var(--sv-size,12.5px);line-height:1.6;min-height:70px;}
 .sv-e-texte-principal{font-size:var(--sv-size,13.5px);line-height:1.7;min-height:160px;}
+/* (B140, 22/07) contenteditable n'a pas de vrai attribut placeholder — on
+   le simule ; et un léger repère visuel au clic, pour qu'on sache où on
+   écrit (les champs n'ont plus de cadre de formulaire classique). */
+[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:var(--ink-dim);opacity:.6;
+  font-style:italic;pointer-events:none;}
+[contenteditable="true"]:focus{outline:1.5px dashed var(--gold-deep);outline-offset:2px;border-radius:3px;}
 
 /* ── Briques modulables (B136, 22/07) : texte ou photo, au choix, ajoutées/
    retirées librement — même moteur partout (4 pages libres, pages "suite"
@@ -821,68 +827,140 @@ function galeriePhotosHtml(photos){
   ).join('')+'</div>';
 }
 
-// ══ Moteur de style texte (B130, 22/07) — UN SEUL moteur, universel à
-// TOUTES les pages du Cahier Souvenir (retour Bruno : "pas d'outils par
-// page, un moteur comme les CSS"). Chaque page garde son propre réglage,
-// mais le mécanisme qui les applique est unique — ajouter un futur contrôle
-// ici le rend disponible partout, d'un coup.
-// GARDE-FOU (Bruno, souligné trois fois) : ceci n'habille QUE Cahier
-// Souvenir. On n'ajoute et ne modifie RIEN dans fiche-complete.js ni
-// cahier.html — le style s'applique depuis l'EXTÉRIEUR, par héritage CSS
-// sur un simple wrapper (cf. .sv-page-style dans renderMontage), jamais en
-// touchant le moteur de rendu partagé. Sur les pages d'étape, seuls les
-// éléments qui n'ont pas déjà leur propre style explicite dans la fiche
-// partagée en profitent — c'est voulu, pas un bug : l'identité visuelle du
-// lieu (titre, badges) reste celle de la fiche partout ailleurs sur le site.
+// ══ Texte enrichi façon Word (B140, 22/07) — retour Bruno : "je surligne un
+// texte et je choisis une police, elle change" — pas un style de page
+// entière (ce qu'on avait fait avant, mal compris). On surligne, on clique
+// un bouton, SEULE la sélection change — comme Word, Google Docs, tous les
+// outils que les gens connaissent déjà. Repose sur document.execCommand,
+// l'API native des navigateurs pour ça depuis toujours — dépréciée sur le
+// papier, jamais remplacée en pratique pour ce cas d'usage précis, tous les
+// navigateurs la supportent encore. Pas de nouvelle bibliothèque.
+// GARDE-FOU inchangé : ceci n'habille QUE Cahier Souvenir, jamais
+// fiche-complete.js ni cahier.html.
 const SOUV_POLICES=[
   {v:'title', label:'Élégant', css:"'Playfair Display', serif"},
   {v:'manuscrite', label:'Manuscrite', css:"'Caveat', cursive"},
   {v:'machine', label:'Machine à écrire', css:"'Special Elite', monospace"}
 ];
-const SOUV_TAILLES=[
-  {v:'petit', label:'Petit', css:'12px'},
-  {v:'grand', label:'Grand', css:'18px'}
-];
-function styleTextePage(uid){
-  return (SOUVENIR_CAHIER && SOUVENIR_CAHIER.styles_texte && SOUVENIR_CAHIER.styles_texte[uid]) || {};
+// document.execCommand('fontSize', false, N) n'accepte que 1-7 (l'échelle
+// HTML historique) — pas de px arbitraire, c'est une vraie limite de
+// l'API, pas un choix. Correspondance : 2=petit, 3=normal (défaut), 5=grand.
+const SOUV_TAILLES=[ {v:'2', label:'Petit'}, {v:'3', label:'Normal'}, {v:'5', label:'Grand'} ];
+
+// Sanitisation (obligatoire) : le HTML tapé/formaté par une personne est vu
+// par TOUTES les autres qui ouvrent ce carnet — jamais stocker/réafficher
+// du HTML brut sans filtrage (balises et attributs strictement limités à
+// la mise en forme). Liste blanche, pas liste noire.
+const SOUV_RICH_TAGS_OK={B:1,STRONG:1,I:1,EM:1,U:1,SPAN:1,FONT:1,BR:1,DIV:1,P:1};
+// Ces balises doivent disparaître ENTIÈREMENT, contenu compris (jamais
+// dépilées comme les autres) — leur "texte" n'est pas du texte pour
+// l'utilisateur (code, styles, document embarqué).
+const SOUV_RICH_TAGS_SUPPRIMER={SCRIPT:1,STYLE:1,IFRAME:1,OBJECT:1,EMBED:1,LINK:1,META:1};
+function sanitizeRichHtml(html){
+  const tmp=document.createElement('div');
+  tmp.innerHTML=html;
+  (function nettoyer(node){
+    Array.from(node.childNodes).forEach(child=>{
+      if(child.nodeType===1){
+        if(SOUV_RICH_TAGS_SUPPRIMER[child.tagName]){
+          node.removeChild(child);
+          return;
+        }
+        if(!SOUV_RICH_TAGS_OK[child.tagName]){
+          while(child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+          return;
+        }
+        Array.from(child.attributes).forEach(attr=>{
+          if(attr.name==='style'){
+            const okProps=['font-family','font-weight','font-style','text-align','font-size'];
+            const garde=attr.value.split(';').map(s=>s.trim()).filter(s=>{
+              const prop=s.split(':')[0].trim().toLowerCase();
+              return okProps.indexOf(prop)>=0;
+            }).join(';');
+            if(garde) child.setAttribute('style', garde); else child.removeAttribute('style');
+          } else if(!(child.tagName==='FONT' && attr.name==='size')){
+            child.removeAttribute(attr.name);
+          }
+        });
+        nettoyer(child);
+      } else if(child.nodeType!==3){
+        node.removeChild(child);
+      }
+    });
+  })(tmp);
+  return tmp.innerHTML;
 }
-function cssPourStylePage(uid){
-  const s=styleTextePage(uid);
-  const police=SOUV_POLICES.find(p=>p.v===s.police);
-  const taille=SOUV_TAILLES.find(t=>t.v===s.taille);
-  // (B139, 22/07) Des VARIABLES CSS, jamais des propriétés directes : le
-  // titre, le kicker, les stats et le texte libre déclarent chacun leur
-  // propre valeur par défaut via var(--sv-x, défaut-à-eux) — tant que rien
-  // n'est choisi, chacun garde son allure naturelle ; dès qu'un choix est
-  // fait, TOUT le monde bascule d'un coup (un seul moteur, comme demandé).
-  let css='';
-  if(police) css+='--sv-font:'+police.css+';';
-  if(taille) css+='--sv-size:'+taille.css+';';
-  if(s.gras) css+='--sv-weight:700;';
-  if(s.italique) css+='--sv-style:italic;';
-  if(s.alignement) css+='--sv-align:'+s.alignement+';';
-  return css;
+// Valeur affichée dans un champ riche : si déjà édité, c'est du HTML
+// sanitizé stocké tel quel ; sinon, le texte calculé de départ, échappé et
+// avec ses retours à la ligne convertis (jamais de HTML non filtré).
+function valeurRiche(store, texteDefaut){
+  if(store!==undefined && store!==null && store!=='') return store;
+  return esc(texteDefaut||'').replace(/\n/g,'<br>');
 }
-function souvDefinirStylePage(champ, valeur){
-  if(!SOUVENIR_CAHIER || !PAGE_ACTIF) return;
-  const styles=Object.assign({}, SOUVENIR_CAHIER.styles_texte);
-  const page=Object.assign({}, styles[PAGE_ACTIF]);
-  if(valeur==='' || valeur==null) delete page[champ]; else page[champ]=valeur;
-  styles[PAGE_ACTIF]=page;
-  SOUVENIR_CAHIER.styles_texte=styles;
-  sauvegarderStylesTexte(SOUVENIR_CAHIER.id, styles);
-  renderMain();
+let _richBlocsSaveTimer=null, _richZoneSaveTimer=null, _richCadreSaveTimer=null, _richModuleSaveTimer=null;
+function souvRichInput(el){
+  const html=sanitizeRichHtml(el.innerHTML);
+  const store=el.getAttribute('data-store');
+  if(!SOUVENIR_CAHIER) return;
+  if(store==='blocs'){
+    const cle=el.getAttribute('data-cle');
+    SOUVENIR_CAHIER.blocs_texte=Object.assign({}, SOUVENIR_CAHIER.blocs_texte, {[cle]:html});
+    const cahierId=SOUVENIR_CAHIER.id, blocsTexte=SOUVENIR_CAHIER.blocs_texte;
+    clearTimeout(_richBlocsSaveTimer);
+    _richBlocsSaveTimer=setTimeout(()=>sauvegarderTexteLibre(cahierId, blocsTexte), 700);
+  } else if(store==='zone'){
+    const cle=el.getAttribute('data-cle');
+    const zones=Object.assign({}, SOUVENIR_CAHIER.zones_page_garde, {[cle]:html});
+    SOUVENIR_CAHIER.zones_page_garde=zones;
+    const cahierId=SOUVENIR_CAHIER.id;
+    clearTimeout(_richZoneSaveTimer);
+    _richZoneSaveTimer=setTimeout(()=>sauvegarderZonesPageGarde(cahierId, zones), 700);
+  } else if(store==='cadre'){
+    const pageId=el.getAttribute('data-page'), n=el.getAttribute('data-n');
+    const pageLibre=(SOUVENIR_CAHIER.pages_libres||[]).find(p=>p.id===pageId); if(!pageLibre) return;
+    const cadres=Object.assign({}, pageLibre.cadres);
+    cadres['c'+n]=Object.assign({type:'texte'}, cadres['c'+n], {texte:html});
+    const pages=(SOUVENIR_CAHIER.pages_libres||[]).map(p=>p.id===pageId?Object.assign({},p,{cadres}):p);
+    SOUVENIR_CAHIER.pages_libres=pages;
+    const cahierId=SOUVENIR_CAHIER.id;
+    clearTimeout(_richCadreSaveTimer);
+    _richCadreSaveTimer=setTimeout(()=>sauvegarderPagesLibres(cahierId, pages), 700);
+  } else if(store==='titrelibre'){
+    const pageId=el.getAttribute('data-page');
+    _modifierPageLibre(pageId, {titre:html}, false);
+  } else if(store==='module'){
+    const pageUid=el.getAttribute('data-page'), modId=el.getAttribute('data-id');
+    const modules=Object.assign({}, SOUVENIR_CAHIER.modules_libres);
+    modules[pageUid]=(modules[pageUid]||[]).map(m=>m.id===modId?Object.assign({},m,{texte:html}):m);
+    SOUVENIR_CAHIER.modules_libres=modules;
+    const cahierId=SOUVENIR_CAHIER.id;
+    clearTimeout(_richModuleSaveTimer);
+    _richModuleSaveTimer=setTimeout(()=>sauvegarderModulesLibres(cahierId, modules), 700);
+  }
 }
-window.souvDefinirStylePage = souvDefinirStylePage;
-function souvBasculerStylePage(champ){
-  souvDefinirStylePage(champ, styleTextePage(PAGE_ACTIF)[champ] ? '' : true);
+window.souvRichInput = souvRichInput;
+// Les commandes de mise en forme agissent sur LA SÉLECTION EN COURS, jamais
+// sur toute la page — exactement Word/Docs. onmousedown+preventDefault sur
+// chaque bouton empêche le navigateur de "voler" la sélection au clic,
+// avant que la commande n'ait eu la chance de s'appliquer dessus.
+function souvRichCommande(cmd, valeur){
+  document.execCommand(cmd, false, valeur||null);
 }
-window.souvBasculerStylePage = souvBasculerStylePage;
-async function sauvegarderStylesTexte(cahierId, styles){
-  try{
-    const up=await sb.from('souvenir_cahiers').update({styles_texte:styles}).eq('id',cahierId);
-    if(up.error) throw up.error;
-  }catch(e){ console.warn('Souvenir: sauvegarde styles texte', e); }
+window.souvRichCommande = souvRichCommande;
+// Champ de texte enrichi générique, stocké dans blocs_texte — utilisable
+// par TOUTES les fonctions de rendu (pages libres, étapes, en-têtes).
+function richBlocsHtml(cle, defaut, classe, placeholder){
+  const v = SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[cle];
+  return '<div class="'+classe+'" contenteditable="true" data-store="blocs" data-cle="'+esc(cle)+'" '
+    + (placeholder?'data-placeholder="'+esc(placeholder)+'" ':'')
+    + 'oninput="souvRichInput(this)">'+valeurRiche(v, defaut)+'</div>';
+}
+function richZoneHtml(cle, defaut, classe){
+  const z = (SOUVENIR_CAHIER && SOUVENIR_CAHIER.zones_page_garde) || {};
+  const v = z[cle];
+  return '<div class="'+classe+'" contenteditable="true" data-store="zone" data-cle="'+esc(cle)+'" '
+    + 'oninput="souvRichInput(this)">'+valeurRiche(v, defaut)+'</div>';
 }
 function souvChangerOngletAtelier(nom){
   ONGLET_ATELIER=nom;
@@ -890,28 +968,25 @@ function souvChangerOngletAtelier(nom){
 }
 window.souvChangerOngletAtelier = souvChangerOngletAtelier;
 function rendreOngletMiseEnPage(){
-  const s=styleTextePage(PAGE_ACTIF);
   let html='<div class="dash-outils dash-outils-mep">';
-  html+='<p class="dash-outils-hint">Le même outil marche sur toutes les pages — chaque page garde son propre réglage.</p>';
-  // (B139, 22/07) Toujours apparents, comme chez les pros — pas de menu à
-  // ouvrir pour voir les choix. La police se voit en vrai dans le bouton.
+  html+='<p class="dash-outils-hint">Surligne un mot ou une phrase dans le texte, puis clique un bouton — seule la sélection change, comme dans Word.</p>';
   html+='<label class="mep-label">Police</label>';
   html+='<div class="mep-rangee">';
-  html+='<button class="mep-police'+(!s.police?' actif':'')+'" style="font-family:var(--font-body)" onclick="souvDefinirStylePage(\'police\',\'\')" title="Standard">Aa</button>';
-  html+=SOUV_POLICES.map(p=>'<button class="mep-police'+(s.police===p.v?' actif':'')+'" style="font-family:'+p.css+'" onclick="souvDefinirStylePage(\'police\',\''+p.v+'\')" title="'+esc(p.label)+'">Aa</button>').join('');
+  html+='<button class="mep-police" style="font-family:var(--font-body)" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'fontName\',\'inherit\')" title="Standard">Aa</button>';
+  html+=SOUV_POLICES.map(p=>'<button class="mep-police" style="font-family:'+p.css+'" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'fontName\',\''+p.css.replace(/'/g,"\\'")+'\')" title="'+esc(p.label)+'">Aa</button>').join('');
   html+='</div>';
   html+='<label class="mep-label">Taille</label>';
   html+='<div class="mep-rangee">';
-  html+='<button class="mep-taille'+(!s.taille?' actif':'')+'" style="font-size:13px" onclick="souvDefinirStylePage(\'taille\',\'\')" title="Normal">A</button>';
-  html+=SOUV_TAILLES.map(t=>'<button class="mep-taille'+(s.taille===t.v?' actif':'')+'" style="font-size:'+t.css+'" onclick="souvDefinirStylePage(\'taille\',\''+t.v+'\')" title="'+esc(t.label)+'">A</button>').join('');
+  html+=SOUV_TAILLES.map(t=>'<button class="mep-taille" style="font-size:'+(11+Number(t.v)*2)+'px" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'fontSize\',\''+t.v+'\')" title="'+esc(t.label)+'">A</button>').join('');
   html+='</div>';
   html+='<label class="mep-label">Style</label>';
   html+='<div class="mep-boutons">';
-  html+='<button class="mep-btn'+(s.gras?' actif':'')+'" onclick="souvBasculerStylePage(\'gras\')" title="Gras"><b>G</b></button>';
-  html+='<button class="mep-btn'+(s.italique?' actif':'')+'" onclick="souvBasculerStylePage(\'italique\')" title="Italique"><i>I</i></button>';
-  html+='<button class="mep-btn'+(s.alignement==='left'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'left\')" title="Aligner à gauche">⇤</button>';
-  html+='<button class="mep-btn'+(s.alignement==='center'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'center\')" title="Centrer">≡</button>';
-  html+='<button class="mep-btn'+(s.alignement==='right'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'right\')" title="Aligner à droite">⇥</button>';
+  html+='<button class="mep-btn" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'bold\')" title="Gras"><b>G</b></button>';
+  html+='<button class="mep-btn" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'italic\')" title="Italique"><i>I</i></button>';
+  html+='<button class="mep-btn" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'justifyLeft\')" title="Aligner à gauche">⇤</button>';
+  html+='<button class="mep-btn" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'justifyCenter\')" title="Centrer">≡</button>';
+  html+='<button class="mep-btn" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'justifyRight\')" title="Aligner à droite">⇥</button>';
+  html+='<button class="mep-btn mep-btn-annuler" onmousedown="event.preventDefault()" onclick="souvRichCommande(\'undo\')" title="Annuler (Ctrl+Z)">↶</button>';
   html+='</div></div>';
   return html;
 }
@@ -1028,7 +1103,7 @@ function rendreModulesHtml(pageUid, parEtape){
     }
     return '<div class="sv-brique sv-brique-texte">'
       + '<button class="sv-brique-retirer" onclick="souvRetirerModule(\''+pageUid+'\',\''+m.id+'\')" title="Retirer ce bloc">✕</button>'
-      + '<textarea class="sv-e-texte-libre" placeholder="Écris ce que tu veux ici…" oninput="souvModuleTexteChange(\''+pageUid+'\',\''+m.id+'\', this.value)">'+esc(m.texte||'')+'</textarea>'
+      + '<div class="sv-e-texte-libre" contenteditable="true" data-store="module" data-page="'+esc(pageUid)+'" data-id="'+esc(m.id)+'" data-placeholder="Écris ce que tu veux ici…" oninput="souvRichInput(this)">'+valeurRiche(m.texte, '')+'</div>'
     + '</div>';
   }).join('');
   return '<div class="sv-zone sv-e-zone-briques">'
@@ -1153,7 +1228,7 @@ function rendrePageLibreHtml(pageLibre, parEtape){
     const btnBascule='<button class="sv-cadre-bascule" onclick="souvBasculerCadre(\''+pageLibre.id+'\','+n+')" title="'+(type==='photo'?'Transformer en texte':'Transformer en photo')+'">'+(type==='photo'?'T':'📷')+'</button>';
     if(type==='texte'){
       cadresHtml += '<div class="sv-cadre sv-cadre-texte" style="'+span+'">'+btnBascule
-        + '<textarea class="sv-e-texte-libre sv-cadre-textarea" placeholder="Écris ici…" oninput="souvCadreTexteChange(\''+pageLibre.id+'\','+n+', this.value)">'+esc(conf.texte||'')+'</textarea>'
+        + '<div class="sv-e-texte-libre sv-cadre-textarea" contenteditable="true" data-store="cadre" data-page="'+esc(pageLibre.id)+'" data-n="'+n+'" data-placeholder="Écris ici…" oninput="souvRichInput(this)">'+valeurRiche(conf.texte, '')+'</div>'
       + '</div>';
     } else {
       const photos=parEtape[uid]||[];
@@ -1163,7 +1238,7 @@ function rendrePageLibreHtml(pageLibre, parEtape){
     }
   }
   return '<div class="sv-cover sv-cover-libre">'
-    + '<input type="text" class="sv-e-titre-page sv-e-titre-page-input" value="'+esc(pageLibre.titre||'')+'" placeholder="Titre (optionnel)" oninput="souvRenommerPageLibre(\''+pageLibre.id+'\', this.value)">'
+    + '<div class="sv-e-titre-page sv-e-titre-page-input" contenteditable="true" data-store="titrelibre" data-page="'+esc(pageLibre.id)+'" data-placeholder="Titre (optionnel)" oninput="souvRichInput(this)">'+valeurRiche(pageLibre.titre, '')+'</div>'
     + '<div class="sv-cadres-grille" style="'+g.grid+'">'+cadresHtml+'</div>'
     + '<button class="sv-page-libre-supprimer" onclick="souvSupprimerPageLibre(\''+pageLibre.id+'\')">🗑 Supprimer cette page</button>'
   + '</div>';
@@ -1625,7 +1700,6 @@ function rendreEtapePageHtml(item, parEtape){
     '</div>'
   ) : '';
   const estNuit=(window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(item) : false;
-  const noteEtape = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[item.uid]) || '';
   return '<div class="sv-cover sv-cover-etape">'
     + '<div class="sv-zone sv-e-zone-fiche" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'
       + (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')
@@ -1633,7 +1707,7 @@ function rendreEtapePageHtml(item, parEtape){
     + '</div>'
     + '<div class="sv-zone sv-e-zone-libre" style="text-align:left;">'
       + '<p class="sv-e-mot-label">💬 '+(estNuit?'Le mot sur cette nuit':'Le mot du groupe')+'</p>'
-      + '<textarea class="sv-e-texte-libre" placeholder="Comment c\'était, ce qu\'on retient…" oninput="souvTexteLibreChange(\''+item.uid+'\', this.value)">'+esc(noteEtape)+'</textarea>'
+      + richBlocsHtml(item.uid, '', 'sv-e-texte-libre', "Comment c'était, ce qu'on retient…")
     + '</div>'
   + '</div>';
 }
@@ -1729,19 +1803,15 @@ function renderMontage(){
   }
   colTri += '</div>';
 
-  // ══ colonne de droite : LA page active, seule, sans aucune barre au-dessus ══
   // (B138, 22/07) Les en-têtes des pages Cahier deviennent éditables —
   // "interactif de partout", la mise en page reste cadrée. Valeur par
   // défaut = le vrai texte du Cahier ; l'écrasement vit dans blocs_texte
   // avec une clé suffixée ('equipe__kicker', 'trajet__titre'…), même
   // mécanisme de sauvegarde que tout le reste (un comportement, une maison).
-  const valTexte = (cle, defaut) => {
-    const v = SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[cle];
-    return (v!==undefined && v!==null) ? v : defaut;
-  };
+  // (B140, 22/07) contenteditable — texte enrichi, sélection + formatage.
   const enteteZoneHtml = (kickerDefaut, titreDefaut, cle) => '<div class="sv-zone sv-e-zone-entete">'
-    + (kickerDefaut!==null ? '<input type="text" class="sv-e-kicker sv-e-kicker-input" value="'+esc(valTexte(cle+'__kicker', kickerDefaut))+'" oninput="souvTexteLibreChange(\''+cle+'__kicker\', this.value)">' : '')
-    + '<input type="text" class="sv-e-titre-page sv-e-titre-page-input-inline" value="'+esc(valTexte(cle+'__titre', titreDefaut))+'" oninput="souvTexteLibreChange(\''+cle+'__titre\', this.value)">'
+    + (kickerDefaut!==null ? richBlocsHtml(cle+'__kicker', kickerDefaut, 'sv-e-kicker sv-e-kicker-input') : '')
+    + richBlocsHtml(cle+'__titre', titreDefaut, 'sv-e-titre-page sv-e-titre-page-input-inline')
   + '</div>';
 
   const blocLibreHtml = (b) => {
@@ -1768,7 +1838,7 @@ function renderMontage(){
         + '<div class="sv-zone sv-e-zone-cartes">'+cartesEtAjout+'</div>'
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<p class="sv-e-zone-libre-hint">Dépose une photo ou écris un mot ici, s\'il reste de la place</p>')
-          + '<textarea class="sv-e-texte-libre" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+          + richBlocsHtml(b.cle, '', 'sv-e-texte-libre', 'Écris ou complète librement…')
         + '</div>'
         + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
@@ -1782,7 +1852,7 @@ function renderMontage(){
         + enteteZoneHtml('Vue d\'ensemble', 'Notre RoadTrip', 'trajet')
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
-          + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+          + richBlocsHtml(b.cle, '', 'sv-e-texte-principal', 'Écris ou complète librement…')
         + '</div>'
         + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
@@ -1797,7 +1867,7 @@ function renderMontage(){
         + enteteZoneHtml(null, 'Bonne route.', 'cloture')
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
-          + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+          + richBlocsHtml(b.cle, '', 'sv-e-texte-principal', 'Écris ou complète librement…')
         + '</div>'
         + '<div class="sv-zone sv-e-zone-stats">'
           + '<div class="sv-e-stat"><b>'+(s.km?('≈'+s.km):'—')+'</b><span>km</span></div>'
@@ -1834,10 +1904,10 @@ function renderMontage(){
       const animTxt = RB_INFO.nb_animaux ? (RB_INFO.nb_animaux+' 🐕') : '—';
       return '<div class="sv-cover">'
         + '<div class="sv-e-rule"></div>'
-        + '<div class="sv-zone sv-e-zone-eyebrow"><input type="text" class="sv-e-eyebrow" value="'+esc(z.eyebrow)+'" oninput="souvZonePageGardeChange(\'eyebrow\', this.value)"></div>'
+        + '<div class="sv-zone sv-e-zone-eyebrow">'+richZoneHtml('eyebrow', z.eyebrow, 'sv-e-eyebrow')+'</div>'
         + '<div class="sv-zone sv-e-zone-titre">'
-          + '<input type="text" class="sv-e-title" value="'+esc(z.titre)+'" oninput="souvZonePageGardeChange(\'titre\', this.value)">'
-          + '<input type="text" class="sv-e-sub" value="'+esc(z.sousTitre)+'" oninput="souvZonePageGardeChange(\'sousTitre\', this.value)">'
+          + richZoneHtml('titre', z.titre, 'sv-e-title')
+          + richZoneHtml('sousTitre', z.sousTitre, 'sv-e-sub')
         + '</div>'
         + '<div class="sv-zone sv-e-zone-photo">'
           + '<div class="sv-e-photo-nb">'+[1,2,3,4].map(n=>'<button class="'+(nbPhotos===n?'actif':'')+'" onclick="souvDefinirZonePageGarde(\'nbPhotos\','+n+')" title="'+n+' photo'+(n>1?'s':'')+'">'+n+'</button>').join('')+'</div>'
@@ -1851,8 +1921,8 @@ function renderMontage(){
              ['statVoyageurs', String(RB_INFO.nb_participants||'—'), 'Voyageurs'],
              ['statCompagnons', animTxt, 'Compagnons']].map(([cle, defaut, label])=>
             '<div class="sv-e-stat">'
-            + '<input type="text" class="sv-e-stat-val" value="'+esc(z[cle]!==undefined&&z[cle]!==null?z[cle]:defaut)+'" oninput="souvZonePageGardeChange(\''+cle+'\', this.value)">'
-            + '<input type="text" class="sv-e-stat-label" value="'+esc(z[cle+'Label']!==undefined&&z[cle+'Label']!==null?z[cle+'Label']:label)+'" oninput="souvZonePageGardeChange(\''+cle+'Label\', this.value)">'
+            + richZoneHtml(cle, defaut, 'sv-e-stat-val')
+            + richZoneHtml(cle+'Label', label, 'sv-e-stat-label')
             + '</div>'
           ).join('')
         + '</div>'
@@ -1873,7 +1943,7 @@ function renderMontage(){
     : '<div class="live-vide">Cette page n\'existe plus.</div>';
 
   const gabCol = (pageActive && pageActive.type==='page_libre') ? colonneGabaritsHtml(pageActive.pageLibre) : '';
-  const colLivre = '<div class="atelier-livre">'+gabCol+'<div class="feuille-a4"><div class="sv-page-style" style="'+cssPourStylePage(PAGE_ACTIF)+'">'+pageHtml+'</div></div></div>';
+  const colLivre = '<div class="atelier-livre">'+gabCol+'<div class="feuille-a4"><div class="sv-page-style">'+pageHtml+'</div></div></div>';
 
   return {gauche: colTri, droite: colLivre};
 }
