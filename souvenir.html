@@ -137,7 +137,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    viendront plus tard — pour l'instant, juste voir si une page est pleine
    ou vide au format d'impression réel. */
 .feuille-a4{width:100%;max-width:600px;aspect-ratio:210/297;flex-shrink:0;background:var(--paper);
-  box-shadow:0 10px 34px rgba(0,0,0,.35);border-radius:3px;overflow:auto;}
+  box-shadow:0 10px 34px rgba(0,0,0,.35);border-radius:3px;overflow:auto;display:flex;flex-direction:column;}
+.sv-page-style{display:flex;flex-direction:column;flex:1;min-height:0;box-sizing:border-box;}
+.sv-page-garde{display:flex;flex-direction:column;flex:1;min-height:0;max-width:none;margin:0;
+  border:none;border-radius:0;box-shadow:none;background:transparent;}
+.sv-zone{border:1.5px dashed var(--gold-a35);border-radius:var(--r);margin:12px;box-sizing:border-box;}
+.sv-zone-texte{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;}
+.sv-zone-texte .bloc-libre-head{padding:12px 12px 0;flex:0 0 auto;}
+.sv-zone-texte .bloc-libre-texte{margin:6px 12px 12px;width:calc(100% - 24px);border:none;background:transparent;padding:0;flex:1;min-height:60px;resize:none;}
+.sv-zone-photo{flex:0 0 38%;min-height:0;overflow:hidden;position:relative;}
+.sv-zone-photo .sv-galerie{height:100%;width:100%;margin:0;padding:0;display:flex;gap:0;}
+.sv-zone-photo .sv-ph{flex:1;height:100%;border-radius:0;border:none;}
+.sv-zone-vide{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-body);font-size:12.5px;color:var(--gold-text);font-style:italic;}
+.sv-zone-photo-heritee{width:100%;height:100%;background-size:cover;background-position:center;
+  display:flex;align-items:flex-end;}
+.sv-zone-photo-heritee span{display:block;width:100%;box-sizing:border-box;background:rgba(20,16,10,.6);
+  color:#F5EFE0;font-family:var(--font-body);font-size:10.5px;text-align:center;padding:6px 8px;}
 .atelier-onglets{flex-shrink:0;display:flex;border-bottom:1px solid var(--surface-line);}
 .atelier-onglets button{flex:1;font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--ink-dim);
   background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;}
@@ -559,6 +575,18 @@ function calcDistKm(lat1,lng1,lat2,lng2){
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 function chaineDuVoyage(){ return ITINERAIRE.filter(it=>!it.rattache); }
+// (22/07, B131) Même photo que la VRAIE couverture de cahier.html (fonction
+// pageCouverture : la 1ère photo de fiche trouvée dans la chaîne principale)
+// — juste pour ne jamais démarrer sur une page blanche. Remplacée dès
+// qu'une vraie photo souvenir est déposée dessus (jamais une vraie
+// "photo rangée", juste un fond visuel de départ).
+function photoHeriteeCahier(){
+  for(const it of chaineDuVoyage()){
+    const p = it.photo_url || (it.photos_urls && it.photos_urls[0]);
+    if(p) return p;
+  }
+  return null;
+}
 // (note : contrairement à cahier.html, ne compte pas la jambe domicile→1ère
 // étape — Souvenir ne charge pas la position de départ du groupe. Différence
 // assumée, pas un bug : l'essentiel du kilométrage réel y est déjà.)
@@ -1302,6 +1330,34 @@ function renderMontage(){
         +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
         + '</div>';
     }
+    // Page de garde (B131, 22/07) : gabarit calé sur les vraies proportions
+    // de la couverture du Cahier (audit du 22/07 : bandeau texte ≈24%, zone
+    // photo ≈38%, bandeau stats ≈8%) — zones bordées en pointillés pour que
+    // ce soit visible qu'on peut y déposer une photo ou écrire (retour
+    // Bruno : "des pointillés... pour que les gens comprennent"). Préremplie
+    // avec la même photo que la vraie couverture de cahier.html tant
+    // qu'aucune vraie photo souvenir n'a été déposée.
+    if(b.cle==='presentation'){
+      let contenuPhoto;
+      if(photosBloc.length){
+        contenuPhoto = galeriePhotosHtml(photosBloc);
+      } else {
+        const heritee = photoHeriteeCahier();
+        contenuPhoto = heritee
+          ? '<div class="sv-zone-photo-heritee" style="background-image:url(\''+String(heritee).replace(/'/g,'')+'\')"><span>Photo reprise du Cahier — dépose une photo souvenir pour la remplacer</span></div>'
+          : '<div class="sv-zone-vide">Dépose une photo ici</div>';
+      }
+      return '<div class="montage-card bloc-libre sv-page-garde">'
+        + '<div class="sv-zone sv-zone-texte">'
+          + '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'
+          + '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+        + '</div>'
+        + '<div class="sv-zone sv-zone-photo" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
+          + contenuPhoto
+        + '</div>'
+      + '</div>';
+    }
+
     return '<div class="montage-card bloc-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'+
       (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
       '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'+
