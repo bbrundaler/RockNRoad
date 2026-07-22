@@ -44,12 +44,12 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   display:flex;flex-direction:column;min-height:0;overflow:hidden;box-shadow:var(--shadow);}
 .bh{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--surface-line);flex-shrink:0;}
 #souv-bh{background:linear-gradient(90deg,var(--gold-deep),var(--gold) 60%,var(--gold-light));
-  color:#1a1208;padding:0 14px;height:46px;box-sizing:border-box;flex-wrap:nowrap;overflow:hidden;}
-#souv-bh .sb-t{font-family:var(--font-title);font-weight:700;font-size:14.5px;flex:1;min-width:0;
+  color:#1a1208;padding:0 12px;height:24px;box-sizing:border-box;flex-wrap:nowrap;overflow:hidden;}
+#souv-bh .sb-t{font-family:var(--font-title);font-weight:700;font-size:11.5px;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#souv-bh button{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;
-  background:var(--surface);border:none;border-radius:var(--r-pill);padding:7px 16px;cursor:pointer;
-  box-shadow:0 3px 10px rgba(0,0,0,.25);white-space:nowrap;flex-shrink:0;}
+#souv-bh button{font-family:var(--font-title);font-weight:700;font-size:10.5px;color:#1a1208;
+  background:var(--surface);border:none;border-radius:var(--r-pill);padding:4px 11px;cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.22);white-space:nowrap;flex-shrink:0;}
 #souv-bh button:disabled{opacity:.6;cursor:wait;}
 .souv-onglets{display:flex;gap:2px;padding:4px 16px 0;flex-shrink:0;}
 .souv-onglets button{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:var(--ink-dim);
@@ -87,31 +87,36 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .live-vide{padding:20px;text-align:center;font-size:12.5px;color:var(--ink-dim);font-style:italic;}
 
 /* -- l'atelier de montage (après la fenêtre de collecte) -- */
-.cahier-selecteur{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
-.cahier-selecteur select{font-family:var(--font-body);font-size:12.5px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;min-width:160px;}
-.cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;white-space:nowrap;}
-.cahier-selecteur .montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12.5px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:7px 16px;cursor:pointer;margin-left:auto;}
-.cahier-selecteur .montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;font-size:11.5px;color:var(--gold-light);margin-left:auto;}
+/* Atelier = 50/50 franc entre le tableau de bord (gauche) et la page qu'on
+   travaille (droite) — retour Bruno 22/07 : "beaucoup de vide", "un vrai
+   atelier de travail à gauche et la page à droite en pleine largeur". Le
+   sélecteur de carnet ET le sélecteur de page vivent maintenant DANS la
+   colonne de gauche (plus aucune barre ne traverse tout l'écran au-dessus
+   de la page travaillée, qui gagne un maximum de hauteur). */
+.cahier-selecteur{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
+.cahier-selecteur select{font-family:var(--font-body);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:5px 8px;min-width:0;flex:1 1 140px;}
+.cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;white-space:nowrap;}
+.cahier-selecteur .montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;width:100%;}
+.cahier-selecteur .montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;font-size:11px;color:var(--gold-light);width:100%;box-sizing:border-box;text-align:center;}
 
 .atelier-corps{flex:1;min-height:0;display:flex;}
-.atelier-tri{width:320px;flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--bg);}
-.dash-outils{flex-shrink:0;padding:14px 14px 10px;border-bottom:1px solid var(--surface-line);}
+.atelier-tri{flex:1 1 50%;min-width:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--bg);}
+.dash-outils{flex-shrink:0;padding:10px 12px 8px;border-bottom:1px solid var(--surface-line);}
 .dash-outils-hint{font-size:11.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
-.dash-photos{flex:1;min-height:0;overflow:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+.dash-photos{flex:1;min-height:0;overflow:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-content:start;}
 .dash-ph{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;}
 .dash-ph-img{width:100%;aspect-ratio:1;background-size:cover;background-position:center;cursor:pointer;}
-.dash-ph-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:11px;
-  background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:6px 8px;}
+.dash-ph-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:10px;
+  background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:4px 6px;}
 .dash-ph[draggable="true"]{cursor:grab;}
 .dash-ph[draggable="true"]:active{cursor:grabbing;}
-.atelier-livre{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;}
-.page-selecteur{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 24px;border-bottom:1px solid var(--surface-line);}
-.page-selecteur select{flex:1;font-family:var(--font-title);font-weight:700;font-size:13.5px;color:var(--ink);
-  background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:8px 12px;}
-.page-nav{font-family:var(--font-title);font-weight:700;font-size:15px;color:var(--gold-text);background:var(--gold-a10);
-  border:1px solid var(--gold-a35);border-radius:50%;width:32px;height:32px;flex-shrink:0;cursor:pointer;}
+.page-selecteur{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--surface-line);}
+.page-selecteur select{flex:1;min-width:0;font-family:var(--font-title);font-weight:700;font-size:12.5px;color:var(--ink);
+  background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;}
+.page-nav{font-family:var(--font-title);font-weight:700;font-size:14px;color:var(--gold-text);background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:50%;width:28px;height:28px;flex-shrink:0;cursor:pointer;}
 .page-nav:disabled{opacity:.3;cursor:default;}
-.atelier-page-active{flex:1;min-height:0;overflow:auto;padding:20px 24px;}
+.atelier-livre{flex:1 1 50%;min-width:0;overflow:auto;padding:20px 24px;}
 .montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);position:relative;}
 .montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
@@ -1095,27 +1100,41 @@ function renderMontage(){
   rangees.forEach(p=>{ const uid=RANGEMENTS[p.id].etape_uid; (parEtape[uid] = parEtape[uid]||[]).push(p); });
   const uidsOrdonnes = ITINERAIRE.map(it=>it.uid).filter(uid=>parEtape[uid]);
 
-  // ══ la barre : quel carnet, et sa validation ══
-  let barre = '<div class="cahier-selecteur">'+
+  // ══ le sélecteur de carnet ET le sélecteur de page vivent maintenant
+  // TOUS LES DEUX dans la colonne de gauche (B129, 22/07 : "rien ne gêne
+  // notre présentation de page") — la colonne de droite ne porte plus
+  // aucune barre, juste la page, pour un maximum de hauteur.
+  let barreCarnet = '<div class="cahier-selecteur">'+
     '<select onchange="souvChangerCahier(this.value)">'+optionsCahiersHtml()+'</select>'+
     (CAHIERS_DISPONIBLES.find(c=>c.type==='personnel'&&c.membre_id===MON_MEMBRE_ID) ? '' :
       '<button onclick="souvCreerCarnetPerso()">+ Créer mon carnet</button>');
   const estLeader = MON_MEMBRE_ID && LEADERS.has(MON_MEMBRE_ID);
   if(SOUVENIR_CAHIER.type==='officiel'){
     if(SOUVENIR_CAHIER.valide_par){
-      barre += '<span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>';
+      barreCarnet += '<span class="montage-badge">✓ Validé par '+esc(nomEnvoyeur(SOUVENIR_CAHIER.valide_par))+'</span>';
     } else if(estLeader && uidsOrdonnes.length){
-      barre += '<button class="montage-valid-btn" onclick="souvValider()">Valider le Cahier Souvenir</button>';
+      barreCarnet += '<button class="montage-valid-btn" onclick="souvValider()">Valider le Cahier Souvenir</button>';
     }
   }
-  barre += '</div>';
+  barreCarnet += '</div>';
 
-  // ══ colonne de gauche : le tableau de bord — une zone "outils" en haut
-  // (à construire page par page, avec Bruno) et les photos à ranger en
-  // grille en dessous. Clique sur une photo pour la ranger directement sur
-  // la page affichée, ou glisse-la (comme avant) — plus besoin de choisir
-  // la page dans un menu déroulant par photo, une seule est visible à la fois.
+  const listePages = listePagesCahier();
+  if(!PAGE_ACTIF || !listePages.find(p=>p.uid===PAGE_ACTIF)) PAGE_ACTIF = listePages.length ? listePages[0].uid : null;
+  const idxActif = listePages.findIndex(p=>p.uid===PAGE_ACTIF);
+  const pageActive = listePages[idxActif];
+
+  let selecteurPage = '<div class="page-selecteur">';
+  selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>0?listePages[idxActif-1].uid:'')+'\')"'+(idxActif<=0?' disabled':'')+'>‹</button>';
+  selecteurPage += '<select onchange="souvChangerPage(this.value)">'+listePages.map(p=>
+    '<option value="'+esc(p.uid)+'"'+(p.uid===PAGE_ACTIF?' selected':'')+'>'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</option>'
+  ).join('')+'</select>';
+  selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
+  selecteurPage += '</div>';
+
+  // ══ colonne de gauche : le tableau de bord — sélecteurs, outils, photos ══
   let colTri = '<div class="atelier-tri">';
+  colTri += barreCarnet;
+  colTri += selecteurPage;
   colTri += '<div class="dash-outils"><p class="dash-outils-hint">Outils de mise en page — à construire page par page. '
     + 'Clique sur une photo pour la ranger sur la page affichée à droite, ou glisse-la dessus.</p></div>';
   colTri += '<div class="dash-photos">';
@@ -1131,8 +1150,7 @@ function renderMontage(){
   }
   colTri += '</div></div>';
 
-  // ══ colonne de droite : le sélecteur de page, puis LA page active seule,
-  // en pleine hauteur (B128) ══
+  // ══ colonne de droite : LA page active, seule, sans aucune barre au-dessus ══
   const blocLibreHtml = (b) => {
     const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
     const photosBloc = parEtape[b.uid] || [];
@@ -1158,26 +1176,13 @@ function renderMontage(){
     '</div>';
   };
 
-  const listePages = listePagesCahier();
-  if(!PAGE_ACTIF || !listePages.find(p=>p.uid===PAGE_ACTIF)) PAGE_ACTIF = listePages.length ? listePages[0].uid : null;
-  const idxActif = listePages.findIndex(p=>p.uid===PAGE_ACTIF);
-  const pageActive = listePages[idxActif];
-
-  let selecteur = '<div class="page-selecteur">';
-  selecteur += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>0?listePages[idxActif-1].uid:'')+'\')"'+(idxActif<=0?' disabled':'')+'>‹</button>';
-  selecteur += '<select onchange="souvChangerPage(this.value)">'+listePages.map(p=>
-    '<option value="'+esc(p.uid)+'"'+(p.uid===PAGE_ACTIF?' selected':'')+'>'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</option>'
-  ).join('')+'</select>';
-  selecteur += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
-  selecteur += '</div>';
-
   const pageHtml = pageActive
     ? (pageActive.type==='libre' ? blocLibreHtml(pageActive.bloc) : rendreEtapePageHtml(pageActive.item, parEtape))
     : '<div class="live-vide">Cette page n\'existe plus.</div>';
 
-  const colLivre = '<div class="atelier-livre">'+selecteur+'<div class="atelier-page-active">'+pageHtml+'</div></div>';
+  const colLivre = '<div class="atelier-livre">'+pageHtml+'</div>';
 
-  return barre + '<div class="atelier-corps">'+colTri+colLivre+'</div>';
+  return '<div class="atelier-corps">'+colTri+colLivre+'</div>';
 }
 
 // Glisser-déposer : la photo suit la souris depuis la pile de gauche jusqu'à
