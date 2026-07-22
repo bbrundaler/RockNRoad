@@ -1468,7 +1468,7 @@ function etatSouvenir(){
 async function chargerPhotos(){
   if(!VOYAGE_ID) return;
   try{
-    const {data}=await sb.from('voyage_photos').select('id,membre_id,url,created_at,etape_uid,legende').eq('voyage_id',VOYAGE_ID).order('created_at',{ascending:false});
+    const {data}=await sb.from('voyage_photos').select('id,membre_id,url,created_at,etape_uid,legende,hash').eq('voyage_id',VOYAGE_ID).order('created_at',{ascending:false});
     PHOTOS=data||[];
   }catch(e){ console.warn('Souvenir: photos', e); PHOTOS=[]; }
 }
@@ -1487,7 +1487,18 @@ function abonnerRealtime(){
 function souvEnvoyerClic(){ document.getElementById('souv-photo-file').click(); }
 window.souvEnvoyerClic = souvEnvoyerClic;
 
-let SOUV_BLOB_EN_ATTENTE=null;
+let SOUV_BLOB_EN_ATTENTE=null, SOUV_HASH_EN_ATTENTE=null;
+
+// (B143, 22/07, retour Bruno) : empreinte du contenu réel de la photo
+// (SHA-256, Web Crypto — déjà présente dans tous les navigateurs modernes,
+// rien à ajouter) — calculée sur le fichier APRÈS redimensionnement, donc
+// la même vraie photo envoyée deux fois produit toujours la même empreinte,
+// même si le fichier d'origine a un nom différent.
+async function souvHashBlob(blob){
+  const buf=await blob.arrayBuffer();
+  const digest=await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 
 // Même moulinette que partout ailleurs sur le site (redimension canvas, retrait
 // EXIF au passage — obligation S9) mais en plus grande taille : c'est une
@@ -1530,14 +1541,14 @@ function souvRedimensionnerImage(file){
     }
   });
 }
-async function souvUploaderPhoto(blob, legende){
+async function souvUploaderPhoto(blob, legende, hash){
   const chemin=VOYAGE_ID+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'-'+(MON_MEMBRE_ID||'x').slice(0,8)+'.jpg';
   const up=await sb.storage.from('photos-souvenir').upload(chemin, blob, {contentType:'image/jpeg', upsert:true});
   if(up.error) throw up.error;
   const pub=sb.storage.from('photos-souvenir').getPublicUrl(chemin);
   const publicUrl=pub&&pub.data&&pub.data.publicUrl;
   if(!publicUrl) throw new Error('URL publique introuvable');
-  const ins=await sb.from('voyage_photos').insert({voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, membre_id:MON_MEMBRE_ID, url:publicUrl, legende:legende||null});
+  const ins=await sb.from('voyage_photos').insert({voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, membre_id:MON_MEMBRE_ID, url:publicUrl, legende:legende||null, hash:hash||null});
   if(ins.error) throw ins.error;
 }
 // (B142, 22/07) Suppression DÉFINITIVE d'une photo — pas juste la retirer
@@ -1574,7 +1585,13 @@ async function souvPhotoChoisie(input){
   if(images.length===1){
     try{
       const blob=await souvRedimensionnerImage(images[0]);
+      const hash=await souvHashBlob(blob);
+      if(PHOTOS.some(p=>p.hash===hash)){
+        alert('Cette photo a déjà été envoyée pour ce voyage.');
+        return;
+      }
       SOUV_BLOB_EN_ATTENTE=blob;
+      SOUV_HASH_EN_ATTENTE=hash;
       const prev=document.getElementById('souv-apercu-img');
       if(prev) prev.style.backgroundImage="url('"+URL.createObjectURL(blob)+"')";
       const leg=document.getElementById('souv-apercu-legende'); if(leg) leg.value='';
@@ -1588,14 +1605,21 @@ window.souvPhotoChoisie = souvPhotoChoisie;
 
 async function souvEnvoyerPlusieurs(fichiers){
   const total=fichiers.length;
+  // (B143) Empreintes déjà connues pour ce voyage + celles du lot en cours,
+  // au fur et à mesure — pour attraper aussi deux photos identiques
+  // sélectionnées dans le MÊME lot, pas seulement contre l'historique.
+  const dejaVus=new Set(PHOTOS.map(p=>p.hash).filter(Boolean));
   const statut=document.getElementById('souv-envoi-statut');
   if(statut) statut.style.display='block';
-  let reussies=0, echouees=0;
+  let reussies=0, echouees=0, doublons=0;
   for(let i=0;i<fichiers.length;i++){
     if(statut) statut.textContent='Envoi de la photo '+(i+1)+' / '+total+'…';
     try{
       const blob=await souvRedimensionnerImage(fichiers[i]);
-      await souvUploaderPhoto(blob, null);
+      const hash=await souvHashBlob(blob);
+      if(dejaVus.has(hash)){ doublons++; continue; }
+      dejaVus.add(hash);
+      await souvUploaderPhoto(blob, null, hash);
       reussies++;
     }catch(e){
       console.warn('Souvenir: envoi photo (lot)', e);
@@ -1604,27 +1628,32 @@ async function souvEnvoyerPlusieurs(fichiers){
   }
   if(statut) statut.style.display='none';
   await chargerPhotos(); renderMain();
-  if(echouees){
-    alert(reussies+' photo'+(reussies>1?'s':'')+' envoyée'+(reussies>1?'s':'')+', '+echouees+' n\'ont pas pu être envoyée'+(echouees>1?'s':'')+'.');
+  if(doublons || echouees){
+    let msg=reussies+' photo'+(reussies>1?'s':'')+' envoyée'+(reussies>1?'s':'')+'.';
+    if(doublons) msg+=' '+doublons+' déjà envoyée'+(doublons>1?'s':'')+' (ignorée'+(doublons>1?'s':'')+').';
+    if(echouees) msg+=' '+echouees+' n\'a pas pu être envoyée'+(echouees>1?'s':'')+'.';
+    alert(msg);
   }
 }
 window.souvEnvoyerPlusieurs = souvEnvoyerPlusieurs;
 
 function souvAnnulerEnvoi(){
   SOUV_BLOB_EN_ATTENTE=null;
+  SOUV_HASH_EN_ATTENTE=null;
   const ov=document.getElementById('souv-apercu-overlay'); if(ov) ov.style.display='none';
 }
 window.souvAnnulerEnvoi = souvAnnulerEnvoi;
 
 async function souvConfirmerEnvoi(){
   if(!SOUV_BLOB_EN_ATTENTE) return;
-  const blob=SOUV_BLOB_EN_ATTENTE;
+  const blob=SOUV_BLOB_EN_ATTENTE, hash=SOUV_HASH_EN_ATTENTE;
   const legende=(document.getElementById('souv-apercu-legende').value||'').trim();
   const btn=document.getElementById('souv-apercu-envoyer');
   if(btn){ btn.disabled=true; btn.textContent='Envoi…'; }
   try{
-    await souvUploaderPhoto(blob, legende);
+    await souvUploaderPhoto(blob, legende, hash);
     SOUV_BLOB_EN_ATTENTE=null;
+    SOUV_HASH_EN_ATTENTE=null;
     const ov=document.getElementById('souv-apercu-overlay'); if(ov) ov.style.display='none';
     await chargerPhotos(); renderMain();
   }catch(e){
