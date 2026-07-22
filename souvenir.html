@@ -118,6 +118,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .bloc-libre-texte{display:block;width:100%;box-sizing:border-box;min-height:110px;margin:6px 18px 16px;width:calc(100% - 36px);
   font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--bg);
   border:1px solid var(--surface-line);border-radius:var(--r);padding:12px 14px;resize:vertical;}
+.sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 18px 4px;}
+.sv-equipe-carte{position:relative;flex:1 1 150px;max-width:190px;background:var(--bg);border:1px solid var(--surface-line);
+  border-radius:var(--r);padding:14px 12px 12px;text-align:center;}
+.sv-equipe-leader{display:inline-block;font-family:var(--font-body);font-size:10px;font-weight:700;letter-spacing:.02em;
+  color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);
+  padding:3px 8px;margin-bottom:8px;}
+.sv-equipe-leader.sv-equipe-compagnon{color:var(--ink-dim);border-color:var(--surface-line);}
+.sv-equipe-av{width:60px;height:60px;border-radius:50%;margin:0 auto 8px;background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold-text);
+  box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold-a35);}
+.sv-equipe-nom{font-family:var(--font-title);font-weight:700;font-size:13px;color:var(--ink);margin:0 0 4px;}
+.sv-equipe-depuis{font-family:var(--font-body);font-size:11px;color:var(--ink-dim);margin-bottom:6px;}
+.sv-equipe-passions{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:6px;}
+.sv-equipe-chip{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);background:var(--surface);
+  border:1px solid var(--surface-line);border-radius:var(--r-pill);padding:2px 7px;}
+.sv-equipe-citation{font-family:var(--font-body);font-size:11px;font-style:italic;color:var(--ink-dim);
+  line-height:1.4;margin:4px 0 0;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
@@ -314,7 +331,7 @@ async function chargerMembres(){
       const {data:part}=await sb.from('voyage_participants').select('membre_id').eq('voyage_id',VOYAGE_ID);
       if(part && part.length) idsParticipants=part.map(p=>p.membre_id);
     }
-    let q=sb.from('membres').select('id,pseudo,prenom,avatar,photo_url').eq('groupe_id',GROUPE_ID);
+    let q=sb.from('membres').select('id,pseudo,prenom,avatar,photo_url,photo_cahier,voyageur_depuis,passions,presentation').eq('groupe_id',GROUPE_ID);
     if(idsParticipants) q=q.in('id',idsParticipants);
     const {data}=await q;
     MEMBRES=data||[];
@@ -507,6 +524,48 @@ function genererTexteEquipe(){
   if(noms.length) lignes.push('Qui embarque : '+noms.join(', '));
   if(animauxNoms.length) lignes.push('Et aussi : '+animauxNoms.join(', '));
   return lignes.join('\n');
+}
+// Carte équipe complète (info riche, comme cahier.html) mais habillée aux
+// tokens de l'atelier — jamais le papier du Cahier imprimé (retour Bruno
+// 22/07 : même information, présentation différente). Lecture seule, sauf
+// pour SOI-MÊME (ouvre la modale de profil partagée, rnrOuvrirProfil,
+// chrome.js) — le clic "leader pose une photo pour un autre" (photo_cahier)
+// n'existe qu'en un seul endroit aujourd'hui (cahier.html) : pas dupliqué
+// ici pour l'instant, ce serait un chantier à part (une info = une maison).
+function carteMembreSouvenirHtml(m, choixPassions, choixDepuis){
+  const nom=m.prenom||m.pseudo||'Voyageur';
+  const estMoi = m.id===MON_MEMBRE_ID;
+  const photoAffichee = m.photo_url || m.photo_cahier || null;
+  const av = window.rnrAvatarMembre ? window.rnrAvatarMembre(m,'') : null;
+  let bg, avTxt;
+  if(photoAffichee){ bg="background-image:url('"+String(photoAffichee).replace(/'/g,'')+"');"; avTxt=''; }
+  else if(av && av.emoji){ bg='background:var(--gold-a20);'; avTxt=av.emoji; }
+  else { bg='background:var(--gold-a20);'; avTxt=(av&&av.initiale)||(nom.charAt(0)||'?').toUpperCase(); }
+  const clicAttrs = estMoi
+    ? ' style="'+bg+'cursor:pointer;" onclick="window.rnrOuvrirProfil&&window.rnrOuvrirProfil('+esc(JSON.stringify(m)).replace(/"/g,'&quot;')+')" title="Voir / modifier ton profil"'
+    : ' style="'+bg+'"';
+  const depuisLabel=(choixDepuis.find(o=>o.v===m.voyageur_depuis)||{}).label;
+  const passionsLabels=(m.passions||[]).map(v=>{ const f=choixPassions.find(p=>p.v===v); return f?f.label:v; });
+  const estLeader = LEADERS.has(m.id);
+  return '<div class="sv-equipe-carte">'
+    +(estLeader?'<span class="sv-equipe-leader">Leader de ce voyage</span>':'')
+    +'<div class="sv-equipe-av"'+clicAttrs+'>'+avTxt+'</div>'
+    +'<p class="sv-equipe-nom">'+esc(nom)+'</p>'
+    +(depuisLabel&&depuisLabel!=='—'?'<div class="sv-equipe-depuis">Voyageur '+esc(depuisLabel)+'</div>':'')
+    +(passionsLabels.length?'<div class="sv-equipe-passions">'+passionsLabels.map(p=>'<span class="sv-equipe-chip">'+esc(p)+'</span>').join('')+'</div>':'')
+    +(m.presentation?'<p class="sv-equipe-citation">« '+esc(m.presentation)+' »</p>':'')
+  +'</div>';
+}
+function carteAnimalSouvenirHtml(a){
+  const nom=a.nom||'Compagnon';
+  const bg = a.photo_url ? ("background-image:url('"+String(a.photo_url).replace(/'/g,'')+"');") : 'background:var(--gold-a20);';
+  const avTxt = a.photo_url ? '' : (nom.charAt(0)||'?').toUpperCase();
+  return '<div class="sv-equipe-carte">'
+    +'<span class="sv-equipe-leader sv-equipe-compagnon">Compagnon de route</span>'
+    +'<div class="sv-equipe-av" style="'+bg+'">'+avTxt+'</div>'
+    +'<p class="sv-equipe-nom">'+esc(nom)+'</p>'
+    +(a.infos?'<p class="sv-equipe-citation">'+esc(a.infos)+'</p>':'')
+  +'</div>';
 }
 function genererTexteTrajet(){
   const chaine=chaineDuVoyage();
@@ -954,6 +1013,13 @@ function renderMontage(){
   const blocLibreHtml = (b) => {
     const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
     const photosBloc = parEtape[b.uid] || [];
+    let cartesHtml='';
+    if(b.cle==='equipe' && (MEMBRES.length || ANIMAUX.length)){
+      const choixPassions=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.passions)||[];
+      const choixDepuis=(window.RNR_PROFIL_CHOIX&&window.RNR_PROFIL_CHOIX.voyageurDepuis)||[];
+      const cartes = MEMBRES.map(m=>carteMembreSouvenirHtml(m,choixPassions,choixDepuis)).concat(ANIMAUX.map(carteAnimalSouvenirHtml));
+      cartesHtml = '<div class="sv-equipe-grid">'+cartes.join('')+'</div>';
+    }
     const gestion = photosBloc.length ? (
       '<div class="montage-card-gestion"><span class="lbl">Photos de cette page :</span>'+
       photosBloc.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
@@ -963,6 +1029,7 @@ function renderMontage(){
     return '<div class="montage-card bloc-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'+
       (photosBloc.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
       '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'+
+      cartesHtml+
       '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'+
       gestion+
     '</div>';
