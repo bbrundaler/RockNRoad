@@ -138,7 +138,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .sv-equipe-invite{border-style:dashed;}
 .sv-equipe-invite-retirer{position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;
   background:var(--surface);color:var(--ink-dim);font-size:11px;line-height:20px;padding:0;cursor:pointer;}
+.sv-equipe-av-wrap{position:relative;width:60px;margin:0 auto 8px;}
+.sv-equipe-av-wrap .sv-equipe-av{margin:0;}
+.sv-equipe-av-x{position:absolute;bottom:-2px;right:-4px;width:18px;height:18px;border:none;border-radius:50%;
+  background:rgba(20,16,10,.75);color:#fff;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
 .sv-equipe-invite-hint{font-family:var(--font-body);font-size:10px;color:var(--ink-dim);font-style:italic;margin:2px 0 0;}
+.sv-galerie{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px 0;}
+.sv-ph{position:relative;width:84px;height:84px;border-radius:var(--r);background-size:cover;background-position:center;
+  border:1px solid var(--surface-line);flex-shrink:0;}
+.sv-ph-x{position:absolute;top:4px;right:4px;width:20px;height:20px;border:none;border-radius:50%;
+  background:rgba(20,16,10,.72);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
 .sv-equipe-ajout{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 4px;align-items:center;}
 .sv-equipe-ajout input{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--bg);
   border:1px solid var(--surface-line);border-radius:8px;padding:7px 10px;flex:1 1 140px;min-width:0;}
@@ -590,15 +599,32 @@ function carteInviteSouvenirHtml(inv, parEtape){
   const photoUrl=photos.length?photos[0].url:null;
   const bg = photoUrl ? ("background-image:url('"+String(photoUrl).replace(/'/g,'')+"');") : 'background:var(--gold-a20);';
   const avTxt = photoUrl ? '' : ((inv.nom||'?').charAt(0).toUpperCase());
-  return '<div class="sv-equipe-carte sv-equipe-invite" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+uid+'\')">'
+  return '<div class="sv-equipe-carte sv-equipe-invite" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="event.stopPropagation();souvDropSurEtape(event,\''+uid+'\')">'
     +'<button class="sv-equipe-invite-retirer" onclick="souvRetirerInvite(\''+inv.id+'\')" title="Retirer cette personne">✕</button>'
     +'<span class="sv-equipe-leader sv-equipe-compagnon">Rencontré·e en route</span>'
-    +'<div class="sv-equipe-av" style="'+bg+'">'+avTxt+'</div>'
+    +'<div class="sv-equipe-av-wrap">'
+      +'<div class="sv-equipe-av" style="'+bg+'">'+avTxt+'</div>'
+      +(photoUrl?'<button class="sv-equipe-av-x" onclick="event.stopPropagation();souvRetirerUnePhoto(\''+photos[0].id+'\')" title="Retirer cette photo">✕</button>':'')
+    +'</div>'
     +'<p class="sv-equipe-nom">'+esc(inv.nom||'—')+'</p>'
     +(inv.note?'<p class="sv-equipe-citation">'+esc(inv.note)+'</p>':'')
     +(photos.length?'':'<p class="sv-equipe-invite-hint">Dépose une photo ici</p>')
   +'</div>';
 }
+// Galerie avec croix directement sur chaque photo (retour Bruno 22/07 : la
+// liste séparée en dessous est "lourde à l'usage"). Un seul rendu — utilisé
+// ici par les pages libres ①②③④ ; les étapes gardent pour l'instant leur
+// propre affichage (RNR_FICHE_COMPLETE, partagé avec Carnet/Horizon —
+// pas touché sans en discuter d'abord).
+function galeriePhotosHtml(photos){
+  if(!photos.length) return '';
+  return '<div class="sv-galerie">'+photos.map(p=>
+    '<div class="sv-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'
+      +'<button class="sv-ph-x" onclick="event.stopPropagation();souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button>'
+    +'</div>'
+  ).join('')+'</div>';
+}
+
 function genererTexteTrajet(){
   const chaine=chaineDuVoyage();
   if(!chaine.length) return '';
@@ -1059,18 +1085,11 @@ function renderMontage(){
         +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
         + '</div>';
     }
-    const gestion = photosBloc.length ? (
-      '<div class="montage-card-gestion"><span class="lbl">Photos de cette page :</span>'+
-      photosBloc.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
-        '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
-      '</div>'
-    ) : '';
     return '<div class="montage-card bloc-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'+
-      (photosBloc.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
+      (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
       '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'+
       cartesHtml+
       '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'+
-      gestion+
     '</div>';
   };
 
