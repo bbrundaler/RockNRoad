@@ -136,21 +136,43 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .feuille-a4{width:100%;max-width:600px;aspect-ratio:210/297;flex-shrink:0;background:var(--paper);
   box-shadow:0 10px 34px rgba(0,0,0,.35);border-radius:3px;overflow:auto;display:flex;flex-direction:column;}
 .sv-page-style{display:flex;flex-direction:column;flex:1;min-height:0;box-sizing:border-box;}
-.sv-page-garde{display:flex;flex-direction:column;flex:1;min-height:0;max-width:none;margin:0;
-  border:none;border-radius:0;box-shadow:none;background:transparent;}
-.sv-zone{border:1.5px dashed var(--gold-a35);border-radius:var(--r);margin:12px;box-sizing:border-box;}
-.sv-zone-texte{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;}
-.sv-zone-texte .bloc-libre-head{padding:12px 12px 0;flex:0 0 auto;}
-.sv-zone-texte .bloc-libre-texte{margin:6px 12px 12px;width:calc(100% - 24px);border:none;background:transparent;padding:0;flex:1;min-height:60px;resize:none;}
-.sv-zone-photo{flex:0 0 38%;min-height:0;overflow:hidden;position:relative;}
-.sv-zone-photo .sv-galerie{height:100%;width:100%;margin:0;padding:0;display:flex;gap:0;}
-.sv-zone-photo .sv-ph{flex:1;height:100%;border-radius:0;border:none;}
+.sv-zone{border:1.5px dashed var(--gold-a35);border-radius:6px;box-sizing:border-box;}
 .sv-zone-vide{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-body);font-size:12.5px;color:var(--gold-text);font-style:italic;}
+  font-family:var(--font-body);font-size:12.5px;color:var(--gold-deep);font-style:italic;}
 .sv-zone-photo-heritee{width:100%;height:100%;background-size:cover;background-position:center;
   display:flex;align-items:flex-end;}
 .sv-zone-photo-heritee span{display:block;width:100%;box-sizing:border-box;background:rgba(20,16,10,.6);
   color:#F5EFE0;font-family:var(--font-body);font-size:10.5px;text-align:center;padding:6px 8px;}
+
+/* ── Page de garde (B133, 22/07) — calée sur la VRAIE couverture de
+   cahier.html (thème Edition) : bandeau, titre+sous-titre, photo, stats.
+   Texte sombre sur papier clair (--paper-ink), comme le vrai Cahier —
+   jamais l'habillage sombre/or du reste de l'atelier. ── */
+.sv-cover{padding:32px 26px 20px;text-align:center;}
+.sv-e-rule{width:32px;height:1px;background:var(--gold-deep);margin:0 auto 12px;}
+.sv-e-zone-eyebrow{display:inline-block;padding:3px 10px;margin:0 auto 14px;}
+.sv-e-eyebrow{display:block;border:none;background:transparent;text-align:center;font-family:var(--font-body);
+  font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-deep);font-weight:600;width:230px;max-width:60vw;}
+.sv-e-zone-titre{padding:8px 16px 12px;margin:0 auto 16px;max-width:92%;}
+.sv-e-title{display:block;width:100%;border:none;background:transparent;text-align:center;
+  font-family:var(--font-title);font-weight:700;font-size:32px;color:var(--paper-ink);margin-bottom:6px;}
+.sv-e-sub{display:block;width:100%;border:none;background:transparent;text-align:center;
+  font-family:var(--font-title);font-style:italic;font-size:12.5px;color:var(--ink-dim);}
+.sv-e-zone-photo{margin:0 14px 14px;overflow:hidden;}
+.sv-e-photo-nb{display:flex;justify-content:center;gap:6px;padding:6px;border-bottom:1px dashed var(--gold-a35);}
+.sv-e-photo-nb button{width:20px;height:20px;font-size:10.5px;font-family:var(--font-title);font-weight:700;
+  color:var(--ink-dim);background:var(--surface);border:1px solid var(--surface-line);border-radius:50%;cursor:pointer;padding:0;}
+.sv-e-photo-nb button.actif{color:var(--gold-deep);background:var(--gold-a10);border-color:var(--gold-a35);}
+.sv-e-photo-slots{display:grid;height:210px;}
+.sv-e-photo-slot{position:relative;overflow:hidden;border-right:1px solid var(--paper-line);}
+.sv-e-photo-slot:last-child{border-right:none;}
+.sv-e-photo-slot .sv-galerie{height:100%;width:100%;margin:0;padding:0;}
+.sv-e-photo-slot .sv-ph{width:100%;height:100%;border-radius:0;border:none;}
+.sv-e-zone-stats{margin:0 14px 14px;display:flex;padding:12px 0;}
+.sv-e-stat{flex:1;text-align:center;border-left:1px solid var(--paper-line);padding:0 6px;}
+.sv-e-stat:first-child{border-left:none;}
+.sv-e-stat b{display:block;font-family:var(--font-title);font-size:15px;color:var(--paper-ink);}
+.sv-e-stat span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);}
 .atelier-onglets{flex-shrink:0;display:flex;border-bottom:1px solid var(--surface-line);}
 .atelier-onglets button{flex:1;font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--ink-dim);
   background:transparent;border:none;border-bottom:2px solid transparent;padding:9px 6px;cursor:pointer;}
@@ -495,7 +517,7 @@ async function chargerOuCreerCahier(type, membreId){
       voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, type, membre_id:membreId||null,
       nom: type==='personnel' ? 'Le carnet de '+nomEnvoyeur(membreId) : null,
       infos_snapshot:infosSnapshot, cahier_theme:RB_INFO.cahier_theme||null,
-      blocs_texte:blocsTexte, cree_par:MON_MEMBRE_ID
+      blocs_texte:blocsTexte, zones_page_garde:genererZonesPageGarde(), cree_par:MON_MEMBRE_ID
     }).select().single();
     if(ins.error) throw ins.error;
     return ins.data;
@@ -789,6 +811,54 @@ function rendreOngletMiseEnPage(){
   html+='<button class="mep-btn'+(s.alignement==='right'?' actif':'')+'" onclick="souvDefinirStylePage(\'alignement\',\'right\')" title="Aligner à droite">⇥</button>';
   html+='</div></div>';
   return html;
+}
+
+// ══ Zones de la Page de garde (B133, 22/07) — calées sur la VRAIE
+// couverture de cahier.html (thème Edition, audit du 22/07 : bandeau
+// "RockNRoad · Carnet de route", titre = destination, sous-titre calculé,
+// bande photo, bandeau 4 chiffres). Chaque bloc devient une zone en
+// pointillés, éditable indépendamment, propre à ce carnet — jamais un
+// simple bloc de texte unique comme avant (retour Bruno : "ça n'a rien à
+// voir"). La photo peut se scinder en 1 à 4 emplacements côte à côte, sans
+// jamais changer la taille globale de la zone.
+function genererZonesPageGarde(){
+  const s=statsVoyage();
+  const nuitsTxt = s.nuits ? (s.nuits+' nuit'+(s.nuits>1?'s':'')) : '';
+  const partTxt = RB_INFO.nb_participants ? (RB_INFO.nb_participants+' voyageur'+(RB_INFO.nb_participants>1?'s':'')) : '';
+  const sousTitre = (nuitsTxt && partTxt) ? (nuitsTxt+', '+partTxt+', une route à raconter') : 'Une route à raconter';
+  return {
+    eyebrow:'RockNRoad · Carnet de route',
+    titre: RB_INFO.destination_libre || RB_INFO.nom || 'Notre voyage',
+    sousTitre: sousTitre,
+    nbPhotos: 1
+  };
+}
+function zonesPageGarde(){
+  return Object.assign({eyebrow:'', titre:'', sousTitre:'', nbPhotos:1}, (SOUVENIR_CAHIER && SOUVENIR_CAHIER.zones_page_garde)||{});
+}
+function uidPresentationSlot(i){ return i<=1 ? '__presentation__' : '__presentation_'+i+'__'; }
+let _zonePageGardeSaveTimer=null;
+function souvZonePageGardeChange(champ, valeur){
+  if(!SOUVENIR_CAHIER) return;
+  SOUVENIR_CAHIER.zones_page_garde = Object.assign({}, SOUVENIR_CAHIER.zones_page_garde, {[champ]:valeur});
+  const cahierId=SOUVENIR_CAHIER.id, zones=SOUVENIR_CAHIER.zones_page_garde;
+  clearTimeout(_zonePageGardeSaveTimer);
+  _zonePageGardeSaveTimer=setTimeout(()=>sauvegarderZonesPageGarde(cahierId, zones), 700);
+}
+window.souvZonePageGardeChange = souvZonePageGardeChange;
+function souvDefinirZonePageGarde(champ, valeur){
+  if(!SOUVENIR_CAHIER) return;
+  const zones=Object.assign({}, SOUVENIR_CAHIER.zones_page_garde, {[champ]:valeur});
+  SOUVENIR_CAHIER.zones_page_garde=zones;
+  sauvegarderZonesPageGarde(SOUVENIR_CAHIER.id, zones);
+  renderMain();
+}
+window.souvDefinirZonePageGarde = souvDefinirZonePageGarde;
+async function sauvegarderZonesPageGarde(cahierId, zones){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({zones_page_garde:zones}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde zones page de garde', e); }
 }
 
 function genererTexteTrajet(){
@@ -1328,30 +1398,47 @@ function renderMontage(){
         +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
         + '</div>';
     }
-    // Page de garde (B131, 22/07) : gabarit calé sur les vraies proportions
-    // de la couverture du Cahier (audit du 22/07 : bandeau texte ≈24%, zone
-    // photo ≈38%, bandeau stats ≈8%) — zones bordées en pointillés pour que
-    // ce soit visible qu'on peut y déposer une photo ou écrire (retour
-    // Bruno : "des pointillés... pour que les gens comprennent"). Préremplie
-    // avec la même photo que la vraie couverture de cahier.html tant
-    // qu'aucune vraie photo souvenir n'a été déposée.
+    // Page de garde (B133, 22/07) : 4 zones distinctes, calées sur la VRAIE
+    // couverture de cahier.html — eyebrow, titre+sous-titre, photo (1-4
+    // emplacements), stats. Chacune en pointillés, éditable à part.
     if(b.cle==='presentation'){
-      let contenuPhoto;
-      if(photosBloc.length){
-        contenuPhoto = galeriePhotosHtml(photosBloc);
-      } else {
-        const heritee = photoHeriteeCahier();
-        contenuPhoto = heritee
-          ? '<div class="sv-zone-photo-heritee" style="background-image:url(\''+String(heritee).replace(/'/g,'')+'\')"><span>Photo reprise du Cahier — dépose une photo souvenir pour la remplacer</span></div>'
-          : '<div class="sv-zone-vide">Dépose une photo ici</div>';
+      const z=zonesPageGarde();
+      const nbPhotos=Math.max(1,Math.min(4, z.nbPhotos||1));
+      let slotsHtml='';
+      for(let i=1;i<=nbPhotos;i++){
+        const uid=uidPresentationSlot(i);
+        const photosSlot=parEtape[uid]||[];
+        let contenu;
+        if(photosSlot.length){
+          contenu=galeriePhotosHtml(photosSlot);
+        } else if(i===1){
+          const heritee=photoHeriteeCahier();
+          contenu = heritee
+            ? '<div class="sv-zone-photo-heritee" style="background-image:url(\''+String(heritee).replace(/'/g,'')+'\')"><span>Photo reprise du Cahier</span></div>'
+            : '<div class="sv-zone-vide">Dépose une photo</div>';
+        } else {
+          contenu = '<div class="sv-zone-vide">Dépose une photo</div>';
+        }
+        slotsHtml += '<div class="sv-e-photo-slot" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+uid+'\')">'+contenu+'</div>';
       }
-      return '<div class="montage-card bloc-libre sv-page-garde">'
-        + '<div class="sv-zone sv-zone-texte">'
-          + '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'
-          + '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
+      const s=statsVoyage();
+      const animTxt = RB_INFO.nb_animaux ? (RB_INFO.nb_animaux+' 🐕') : '—';
+      return '<div class="sv-cover">'
+        + '<div class="sv-e-rule"></div>'
+        + '<div class="sv-zone sv-e-zone-eyebrow"><input type="text" class="sv-e-eyebrow" value="'+esc(z.eyebrow)+'" oninput="souvZonePageGardeChange(\'eyebrow\', this.value)"></div>'
+        + '<div class="sv-zone sv-e-zone-titre">'
+          + '<input type="text" class="sv-e-title" value="'+esc(z.titre)+'" oninput="souvZonePageGardeChange(\'titre\', this.value)">'
+          + '<input type="text" class="sv-e-sub" value="'+esc(z.sousTitre)+'" oninput="souvZonePageGardeChange(\'sousTitre\', this.value)">'
         + '</div>'
-        + '<div class="sv-zone sv-zone-photo" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
-          + contenuPhoto
+        + '<div class="sv-zone sv-e-zone-photo">'
+          + '<div class="sv-e-photo-nb">'+[1,2,3,4].map(n=>'<button class="'+(nbPhotos===n?'actif':'')+'" onclick="souvDefinirZonePageGarde(\'nbPhotos\','+n+')" title="'+n+' photo'+(n>1?'s':'')+'">'+n+'</button>').join('')+'</div>'
+          + '<div class="sv-e-photo-slots" style="grid-template-columns:repeat('+nbPhotos+',1fr)">'+slotsHtml+'</div>'
+        + '</div>'
+        + '<div class="sv-zone sv-e-zone-stats">'
+          + '<div class="sv-e-stat"><b>'+(s.km?('≈'+s.km+' km'):'—')+'</b><span>Parcourus</span></div>'
+          + '<div class="sv-e-stat"><b>'+(s.nuits||'—')+'</b><span>Nuits</span></div>'
+          + '<div class="sv-e-stat"><b>'+esc(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
+          + '<div class="sv-e-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
         + '</div>'
       + '</div>';
     }
