@@ -203,23 +203,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .mep-btn{width:34px;height:34px;font-family:var(--font-title);font-size:14px;color:var(--ink-dim);
   background:var(--surface);border:1px solid var(--surface-line);border-radius:8px;cursor:pointer;}
 .mep-btn.actif{color:var(--gold-text);background:var(--gold-a10);border-color:var(--gold-a35);}
-.montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);position:relative;}
-.montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
-  color:var(--gold-text);font-size:11px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);pointer-events:none;}
-.montage-card-retirer{display:block;width:100%;font-family:var(--font-body);font-size:11.5px;color:var(--ink-dim);
-  background:var(--bg);border:none;border-top:1px solid var(--surface-line);padding:9px;cursor:pointer;text-align:center;}
-.montage-card-retirer:hover{color:var(--danger,#c0392b);}
-.montage-card-gestion{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:var(--bg);border-top:1px solid var(--surface-line);}
+  color:var(--gold-deep);font-size:11px;font-weight:600;padding:5px 12px;border-radius:999px;pointer-events:none;}
+.montage-card-gestion{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0 0;margin-top:8px;border-top:1px dashed var(--gold-a35);}
 .montage-card-gestion .lbl{font-size:11px;color:var(--ink-dim);flex-shrink:0;}
 .mini-ph{position:relative;width:44px;height:44px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;}
 .mini-ph button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger,#c0392b);
   color:#fff;border:none;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
-.bloc-libre-head{padding:16px 18px 6px;}
-.bloc-libre-texte{display:block;width:100%;box-sizing:border-box;min-height:110px;margin:6px 18px 16px;width:calc(100% - 36px);
-  font-family:inherit;font-size:inherit;font-weight:inherit;font-style:inherit;text-align:inherit;line-height:1.6;color:var(--ink);background:var(--bg);
-  border:1px solid var(--surface-line);border-radius:var(--r);padding:12px 14px;resize:vertical;}
-.sv-page-style{display:block;}
+.sv-e-zone-fiche{position:relative;text-align:left;padding:0;overflow:hidden;}
+.sv-e-zone-fiche .montage-card-gestion,.sv-e-zone-fiche .montage-card-hint{margin:8px;}
+.sv-e-mot-label{margin:0 0 6px;font-family:var(--font-body);font-size:11px;color:var(--ink-dim);font-style:italic;}
 .sv-equipe-grid{display:flex;flex-wrap:wrap;gap:12px;padding:10px 4px 4px;justify-content:center;}
 .sv-equipe-carte{position:relative;flex:1 1 150px;max-width:190px;background:var(--paper);border:1px solid var(--paper-line);
   border-radius:6px;padding:14px 12px 12px;text-align:center;}
@@ -1293,6 +1286,13 @@ function optionsCahiersHtml(){
 // pour servir la page active seule, B128 22/07). Inchangé sur le fond —
 // même moteur RNR_FICHE_COMPLETE, même gestion photo — juste appelable pour
 // un seul item à la fois désormais.
+// Page d'étape (B135, 22/07) : même moteur RNR_FICHE_COMPLETE que Carnet/
+// Horizon — JAMAIS touché ici, juste habillé depuis l'extérieur (zones
+// papier en pointillés, cohérentes avec les autres pages). Ajout du "mot du
+// groupe" calé sur la vraie page jour de cahier.html (💬 Le mot sur cette
+// nuit / du groupe + textarea) — stocké dans blocs_texte, comme les 4 pages
+// libres, mais avec l'uid de l'étape comme clé (jsonb, pas besoin d'un
+// nouveau champ : un comportement, un seul mécanisme, même pour les étapes).
 function rendreEtapePageHtml(item, parEtape){
   const photosEtape=parEtape[item.uid]||[];
   const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
@@ -1302,16 +1302,24 @@ function rendreEtapePageHtml(item, parEtape){
     commentaire: legendes.join(' — ') || item.commentaire || ''
   });
   const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
-  const vide = photosEtape.length ? '' : ' vide';
   const gestion = photosEtape.length ? (
     '<div class="montage-card-gestion"><span class="lbl">Photos de cette étape :</span>'+
     photosEtape.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
       '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
     '</div>'
   ) : '';
-  return '<div class="montage-card'+vide+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
-    (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
-    contenu+gestion+'</div>';
+  const estNuit=(window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(item) : false;
+  const noteEtape = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[item.uid]) || '';
+  return '<div class="sv-cover sv-cover-etape">'
+    + '<div class="sv-zone sv-e-zone-fiche" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'
+      + (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')
+      + contenu + gestion
+    + '</div>'
+    + '<div class="sv-zone sv-e-zone-libre" style="text-align:left;">'
+      + '<p class="sv-e-mot-label">💬 '+(estNuit?'Le mot sur cette nuit':'Le mot du groupe')+'</p>'
+      + '<textarea class="sv-e-texte-libre" placeholder="Comment c\'était, ce qu\'on retient…" oninput="souvTexteLibreChange(\''+item.uid+'\', this.value)">'+esc(noteEtape)+'</textarea>'
+    + '</div>'
+  + '</div>';
 }
 
 // Le montage : les photos déjà rangées DANS CE CARNET se regroupent par étape
