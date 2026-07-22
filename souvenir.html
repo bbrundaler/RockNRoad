@@ -205,15 +205,42 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .sv-brique-ajout button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:var(--gold-deep);
   background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:999px;padding:6px 12px;cursor:pointer;}
 /* ── Gabarits & cadres (B137, 22/07 — modèle CEWE) ── */
-.page-nav-plus{font-size:16px;}
+/* (B138) La colonne des gabarits vit ENTRE l'atelier et la feuille — plus
+   jamais en haut de la page, qui reste pleine page. */
+.sv-gab-col{display:flex;flex-direction:column;gap:8px;padding-right:14px;flex-shrink:0;align-self:flex-start;position:sticky;top:0;}
 .sv-cover-libre{display:flex;flex-direction:column;flex:1;min-height:0;padding:16px 18px;}
-.sv-gab-choix{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-shrink:0;}
-.sv-gab-vignette{width:44px;height:56px;padding:5px;background:var(--paper);border:1.5px solid var(--paper-line);
+.sv-gab-vignette{width:44px;height:56px;padding:5px;background:var(--surface);border:1.5px solid var(--surface-line);
   border-radius:6px;cursor:pointer;}
-.sv-gab-vignette.actif{border-color:var(--gold-deep);background:var(--gold-a10);}
+.sv-gab-vignette.actif{border-color:var(--gold);background:var(--gold-a10);}
 .sv-gab-mini{display:grid;gap:3px;width:100%;height:100%;}
 .sv-gab-mini span{background:var(--gold-a35);border-radius:2px;}
-.sv-gab-vignette.actif .sv-gab-mini span{background:var(--gold-deep);}
+.sv-gab-vignette.actif .sv-gab-mini span{background:var(--gold);}
+/* Menu déroulant maison des pages (B138) — un "+" par ligne */
+.page-dd{position:relative;flex:1;min-width:0;}
+.page-dd-btn{width:100%;box-sizing:border-box;text-align:left;font-family:var(--font-title);font-weight:700;font-size:12.5px;
+  color:var(--ink);background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;overflow:hidden;}
+.page-dd-btn{white-space:nowrap;text-overflow:ellipsis;}
+.page-dd-caret{margin-left:auto;color:var(--gold-text);flex-shrink:0;}
+.page-dd-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;background:var(--surface);
+  border:1px solid var(--gold-a35);border-radius:8px;max-height:320px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4);}
+.page-dd-row{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--surface-line);}
+.page-dd-row:last-child{border-bottom:none;}
+.page-dd-row.actif{background:var(--gold-a10);}
+.page-dd-label{flex:1;min-width:0;font-family:var(--font-body);font-size:12px;color:var(--ink);cursor:pointer;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 0;}
+.page-dd-row.actif .page-dd-label{color:var(--gold-text);font-weight:600;}
+.page-dd-plus{width:22px;height:22px;flex-shrink:0;font-family:var(--font-title);font-weight:700;font-size:13px;
+  color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:6px;padding:0;cursor:pointer;}
+/* En-têtes et stats éditables (B138) — mêmes rendus visuels qu'avant, juste en input */
+.sv-e-kicker-input{display:block;border:none;background:transparent;text-align:center;width:100%;
+  font-family:var(--font-body);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;}
+.sv-e-titre-page-input-inline{display:block;border:none;background:transparent;text-align:center;width:100%;
+  font-family:var(--font-title);font-weight:700;font-size:26px;color:var(--paper-ink);margin:0;}
+.sv-e-stat-val{display:block;width:100%;border:none;background:transparent;text-align:center;
+  font-family:var(--font-title);font-weight:700;font-size:15px;color:var(--paper-ink);}
+.sv-e-stat-label{display:block;width:100%;border:none;background:transparent;text-align:center;
+  font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);}
 .sv-e-titre-page-input{border:none;background:transparent;text-align:center;width:100%;flex-shrink:0;
   font-family:var(--font-title);font-weight:700;font-size:20px;color:var(--paper-ink);margin-bottom:10px;}
 .sv-cadres-grille{display:grid;gap:10px;flex:1;min-height:340px;}
@@ -506,6 +533,7 @@ let PAGE_ACTIF=null; // uid de la page affichée dans l'atelier (B128, 22/07) �
 // seul endroit affiché à la fois, PAS remis à zéro en changeant de carnet
 // (les pages ont le même uid dans tous les carnets, seul leur contenu diffère)
 let ONGLET_ATELIER='photos'; // 'photos' | 'style' — l'onglet actif du tableau de bord (B130, 22/07)
+let DD_PAGES_OUVERT=false; // menu déroulant maison des pages (B138, 22/07) — un "+" par ligne, impossible avec un <select> natif
 let RANGEMENTS={}; // rangement du carnet actif : { voyage_photo_id: {id, etape_uid, legende} }
 
 // ══ ÉTAPE A — la copie figée des étapes (21/07, retour Bruno) ══
@@ -1009,18 +1037,25 @@ const SOUV_GABARITS=[
 function gabaritDe(v){ return SOUV_GABARITS.find(g=>g.v===v) || SOUV_GABARITS[0]; }
 function uidCadre(pageId, n){ return '__libre__'+pageId+'__c'+n+'__'; }
 
-function souvCreerPageLibre(){
+function souvCreerPageLibre(apresUid){
   if(!SOUVENIR_CAHIER) return;
   const id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('pl'+Date.now()+Math.random().toString(36).slice(2));
-  // Insérée juste APRÈS la page actuellement affichée (B137 — le "+" du
-  // sélecteur : chacun décide s'il veut une page en plus, et où).
-  const pages=(SOUVENIR_CAHIER.pages_libres||[]).concat([{id, titre:'', apres:PAGE_ACTIF||null, gabarit:'g1', cadres:{}}]);
+  // Insérée juste APRÈS la page choisie (B138 — le "+" sur CHAQUE ligne du
+  // menu déroulant : chacun décide s'il veut une page en plus, et où).
+  const ancre = apresUid || PAGE_ACTIF || null;
+  const pages=(SOUVENIR_CAHIER.pages_libres||[]).concat([{id, titre:'', apres:ancre, gabarit:'g1', cadres:{}}]);
   SOUVENIR_CAHIER.pages_libres=pages;
   sauvegarderPagesLibres(SOUVENIR_CAHIER.id, pages);
   PAGE_ACTIF='__libre__'+id+'__';
+  DD_PAGES_OUVERT=false;
   renderMain();
 }
 window.souvCreerPageLibre = souvCreerPageLibre;
+function souvToggleDdPages(){
+  DD_PAGES_OUVERT=!DD_PAGES_OUVERT;
+  renderMain();
+}
+window.souvToggleDdPages = souvToggleDdPages;
 function _modifierPageLibre(id, patch, immediat){
   if(!SOUVENIR_CAHIER) return;
   const pages=(SOUVENIR_CAHIER.pages_libres||[]).map(p=>p.id===id?Object.assign({},p,patch):p);
@@ -1104,11 +1139,15 @@ function rendrePageLibreHtml(pageLibre, parEtape){
     }
   }
   return '<div class="sv-cover sv-cover-libre">'
-    + '<div class="sv-gab-choix">'+SOUV_GABARITS.map(gg=>vignetteGabaritHtml(gg, gg.v===g.v, pageLibre.id)).join('')+'</div>'
     + '<input type="text" class="sv-e-titre-page sv-e-titre-page-input" value="'+esc(pageLibre.titre||'')+'" placeholder="Titre (optionnel)" oninput="souvRenommerPageLibre(\''+pageLibre.id+'\', this.value)">'
     + '<div class="sv-cadres-grille" style="'+g.grid+'">'+cadresHtml+'</div>'
     + '<button class="sv-page-libre-supprimer" onclick="souvSupprimerPageLibre(\''+pageLibre.id+'\')">🗑 Supprimer cette page</button>'
   + '</div>';
+}
+// (B138) La colonne verticale des gabarits — posée ENTRE l'atelier et la
+// feuille (plus jamais en haut de la page, qui reste pleine page).
+function colonneGabaritsHtml(pageLibre){
+  return '<div class="sv-gab-col">'+SOUV_GABARITS.map(gg=>vignetteGabaritHtml(gg, gg.v===(pageLibre.gabarit||'g1'), pageLibre.id)).join('')+'</div>';
 }
 
 function genererTexteTrajet(){
@@ -1497,6 +1536,7 @@ window.souvChangerCahier = souvChangerCahier;
 function souvChangerPage(uid){
   if(!uid) return;
   PAGE_ACTIF=uid;
+  DD_PAGES_OUVERT=false;
   renderMain();
 }
 window.souvChangerPage = souvChangerPage;
@@ -1621,13 +1661,19 @@ function renderMontage(){
 
   let selecteurPage = '<div class="page-selecteur">';
   selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>0?listePages[idxActif-1].uid:'')+'\')"'+(idxActif<=0?' disabled':'')+'>‹</button>';
-  selecteurPage += '<select onchange="souvChangerPage(this.value)">'+listePages.map(p=>
-    '<option value="'+esc(p.uid)+'"'+(p.uid===PAGE_ACTIF?' selected':'')+'>'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</option>'
-  ).join('')+'</select>';
+  // (B138, 22/07) Menu déroulant MAISON : un <select> natif ne peut pas
+  // porter de bouton par ligne — ici chaque ligne a son "+" qui crée une
+  // page juste après ELLE. Plus explicite, comme demandé.
+  selecteurPage += '<div class="page-dd">'
+    + '<button class="page-dd-btn" onclick="souvToggleDdPages()">'+(pageActive?esc(pageActive.label):'—')+' <span class="page-dd-caret">▾</span></button>'
+    + (DD_PAGES_OUVERT ? ('<div class="page-dd-panel">'+listePages.map(p=>
+        '<div class="page-dd-row'+(p.uid===PAGE_ACTIF?' actif':'')+'">'
+        + '<span class="page-dd-label" onclick="souvChangerPage(\''+esc(p.uid)+'\')">'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</span>'
+        + '<button class="page-dd-plus" onclick="souvCreerPageLibre(\''+esc(p.uid)+'\')" title="Ajouter une page après celle-ci">+</button>'
+        + '</div>'
+      ).join('')+'</div>') : '')
+    + '</div>';
   selecteurPage += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
-  // (B137, 22/07) Le "+" en bout de ligne : ajoute une page libre juste
-  // après la page affichée — chacun décide s'il en veut, et où.
-  selecteurPage += '<button class="page-nav page-nav-plus" onclick="souvCreerPageLibre()" title="Ajouter une page après celle-ci">+</button>';
   selecteurPage += '</div>';
 
   // ══ colonne de gauche : le tableau de bord — sélecteurs, onglets Photos/
@@ -1660,9 +1706,18 @@ function renderMontage(){
   colTri += '</div>';
 
   // ══ colonne de droite : LA page active, seule, sans aucune barre au-dessus ══
-  const enteteZoneHtml = (kicker, titre) => '<div class="sv-zone sv-e-zone-entete">'
-    + (kicker ? '<p class="sv-e-kicker">'+esc(kicker)+'</p>' : '')
-    + '<h2 class="sv-e-titre-page">'+esc(titre)+'</h2>'
+  // (B138, 22/07) Les en-têtes des pages Cahier deviennent éditables —
+  // "interactif de partout", la mise en page reste cadrée. Valeur par
+  // défaut = le vrai texte du Cahier ; l'écrasement vit dans blocs_texte
+  // avec une clé suffixée ('equipe__kicker', 'trajet__titre'…), même
+  // mécanisme de sauvegarde que tout le reste (un comportement, une maison).
+  const valTexte = (cle, defaut) => {
+    const v = SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[cle];
+    return (v!==undefined && v!==null) ? v : defaut;
+  };
+  const enteteZoneHtml = (kickerDefaut, titreDefaut, cle) => '<div class="sv-zone sv-e-zone-entete">'
+    + (kickerDefaut!==null ? '<input type="text" class="sv-e-kicker sv-e-kicker-input" value="'+esc(valTexte(cle+'__kicker', kickerDefaut))+'" oninput="souvTexteLibreChange(\''+cle+'__kicker\', this.value)">' : '')
+    + '<input type="text" class="sv-e-titre-page sv-e-titre-page-input-inline" value="'+esc(valTexte(cle+'__titre', titreDefaut))+'" oninput="souvTexteLibreChange(\''+cle+'__titre\', this.value)">'
   + '</div>';
 
   const blocLibreHtml = (b) => {
@@ -1685,7 +1740,7 @@ function renderMontage(){
         +   '<button onclick="souvAjouterInvite()">+ Ajouter quelqu\'un rencontré en route</button>'
         + '</div>';
       return '<div class="sv-cover">'
-        + enteteZoneHtml('Qui embarque', 'L\'équipe')
+        + enteteZoneHtml('Qui embarque', 'L\'équipe', 'equipe')
         + '<div class="sv-zone sv-e-zone-cartes">'+cartesEtAjout+'</div>'
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '<p class="sv-e-zone-libre-hint">Dépose une photo ou écris un mot ici, s\'il reste de la place</p>')
@@ -1700,7 +1755,7 @@ function renderMontage(){
     // (une vraie liste jour par jour viendra dans un futur réglage plus fin).
     if(b.cle==='trajet'){
       return '<div class="sv-cover">'
-        + enteteZoneHtml('Vue d\'ensemble', 'Notre RoadTrip')
+        + enteteZoneHtml('Vue d\'ensemble', 'Notre RoadTrip', 'trajet')
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
           + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
@@ -1715,7 +1770,7 @@ function renderMontage(){
     if(b.cle==='cloture'){
       const s=statsVoyage();
       return '<div class="sv-cover">'
-        + enteteZoneHtml(null, 'Bonne route.')
+        + enteteZoneHtml(null, 'Bonne route.', 'cloture')
         + '<div class="sv-zone sv-e-zone-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'
           + (photosBloc.length ? galeriePhotosHtml(photosBloc) : '')
           + '<textarea class="sv-e-texte-principal" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'
@@ -1764,11 +1819,18 @@ function renderMontage(){
           + '<div class="sv-e-photo-nb">'+[1,2,3,4].map(n=>'<button class="'+(nbPhotos===n?'actif':'')+'" onclick="souvDefinirZonePageGarde(\'nbPhotos\','+n+')" title="'+n+' photo'+(n>1?'s':'')+'">'+n+'</button>').join('')+'</div>'
           + '<div class="sv-e-photo-slots" style="grid-template-columns:repeat('+nbPhotos+',1fr)">'+slotsHtml+'</div>'
         + '</div>'
+        // (B138) Les 4 chiffres deviennent éditables — le calcul réel reste
+        // la valeur de départ, l'écrasement vit dans zones_page_garde.
         + '<div class="sv-zone sv-e-zone-stats">'
-          + '<div class="sv-e-stat"><b>'+(s.km?('≈'+s.km+' km'):'—')+'</b><span>Parcourus</span></div>'
-          + '<div class="sv-e-stat"><b>'+(s.nuits||'—')+'</b><span>Nuits</span></div>'
-          + '<div class="sv-e-stat"><b>'+esc(RB_INFO.nb_participants||'—')+'</b><span>Voyageurs</span></div>'
-          + '<div class="sv-e-stat"><b>'+esc(animTxt)+'</b><span>Compagnons</span></div>'
+          + [['statKm', s.km?('≈'+s.km+' km'):'—', 'Parcourus'],
+             ['statNuits', String(s.nuits||'—'), 'Nuits'],
+             ['statVoyageurs', String(RB_INFO.nb_participants||'—'), 'Voyageurs'],
+             ['statCompagnons', animTxt, 'Compagnons']].map(([cle, defaut, label])=>
+            '<div class="sv-e-stat">'
+            + '<input type="text" class="sv-e-stat-val" value="'+esc(z[cle]!==undefined&&z[cle]!==null?z[cle]:defaut)+'" oninput="souvZonePageGardeChange(\''+cle+'\', this.value)">'
+            + '<input type="text" class="sv-e-stat-label" value="'+esc(z[cle+'Label']!==undefined&&z[cle+'Label']!==null?z[cle+'Label']:label)+'" oninput="souvZonePageGardeChange(\''+cle+'Label\', this.value)">'
+            + '</div>'
+          ).join('')
         + '</div>'
         + rendreModulesHtml(b.uid, parEtape)
       + '</div>';
@@ -1786,7 +1848,8 @@ function renderMontage(){
       : '<div class="live-vide">Cette page n\'existe plus.</div>')
     : '<div class="live-vide">Cette page n\'existe plus.</div>';
 
-  const colLivre = '<div class="atelier-livre"><div class="feuille-a4"><div class="sv-page-style" style="'+cssPourStylePage(PAGE_ACTIF)+'">'+pageHtml+'</div></div></div>';
+  const gabCol = (pageActive && pageActive.type==='page_libre') ? colonneGabaritsHtml(pageActive.pageLibre) : '';
+  const colLivre = '<div class="atelier-livre">'+gabCol+'<div class="feuille-a4"><div class="sv-page-style" style="'+cssPourStylePage(PAGE_ACTIF)+'">'+pageHtml+'</div></div></div>';
 
   return {gauche: colTri, droite: colLivre};
 }
