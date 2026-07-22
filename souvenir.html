@@ -114,6 +114,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .mini-ph{position:relative;width:44px;height:44px;border-radius:6px;background-size:cover;background-position:center;flex-shrink:0;}
 .mini-ph button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger,#c0392b);
   color:#fff;border:none;font-size:10px;line-height:18px;padding:0;cursor:pointer;}
+.bloc-libre-head{padding:16px 18px 6px;}
+.bloc-libre-texte{display:block;width:100%;box-sizing:border-box;min-height:110px;margin:6px 18px 16px;width:calc(100% - 36px);
+  font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--ink);background:var(--bg);
+  border:1px solid var(--surface-line);border-radius:var(--r);padding:12px 14px;resize:vertical;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
 .atelier-tri-item[draggable="true"]{cursor:grab;}
 .atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
@@ -234,6 +238,7 @@ const {createClient}=supabase;
 const sb=createClient(RNR_SURL,RNR_SKEY);
 let VOYAGE_ID=null, GROUPE_ID=null, MON_MEMBRE_ID=null;
 let MEMBRES=[];
+let ANIMAUX=[]; // pour le texte de départ du bloc② Équipe — même source que cahier.html (RNR_ANIMAUX, chrome.js)
 let RB_INFO={nom:'',date_debut:null,date_fin_envisagee:null,destination_libre:'',nb_participants:null,nb_animaux:null,but_voyage:'',notes_groupe:'',budget_estime:null,cahier_theme:null};
 let PHOTOS=[];
 let CANAL_PHOTOS=null;
@@ -297,12 +302,28 @@ async function chargerInfosVoyage(){
   }catch(e){ console.warn('Souvenir: infos voyage', e); }
 }
 
+// (22/07) Même filtre que cahier.html (20/07, retour Bruno) : l'équipe suit
+// les participants COCHÉS pour CE voyage (voyage_participants, géré dans
+// voyage.html — un seul endroit qui décide qui coche quoi), repli sur tout
+// le groupe si aucune ligne n'existe (anciens voyages, pré-remplissage raté).
 async function chargerMembres(){
   if(!GROUPE_ID) return;
   try{
-    const {data}=await sb.from('membres').select('id,pseudo,prenom,avatar,photo_url').eq('groupe_id',GROUPE_ID);
+    let idsParticipants=null;
+    if(VOYAGE_ID){
+      const {data:part}=await sb.from('voyage_participants').select('membre_id').eq('voyage_id',VOYAGE_ID);
+      if(part && part.length) idsParticipants=part.map(p=>p.membre_id);
+    }
+    let q=sb.from('membres').select('id,pseudo,prenom,avatar,photo_url').eq('groupe_id',GROUPE_ID);
+    if(idsParticipants) q=q.in('id',idsParticipants);
+    const {data}=await q;
     MEMBRES=data||[];
   }catch(e){ console.warn('Souvenir: membres', e); }
+}
+
+async function chargerAnimaux(){
+  if(!GROUPE_ID){ ANIMAUX=[]; return; }
+  ANIMAUX = window.RNR_ANIMAUX ? await window.RNR_ANIMAUX.lister(GROUPE_ID, sb) : [];
 }
 
 // Même source que le Cahier (voyage_itineraire + lieux) — le montage range
@@ -361,11 +382,17 @@ async function chargerOuCreerCahier(type, membreId){
       budget_estime:RB_INFO.budget_estime||null
       // volontairement PAS memo_blocs — page technique, exclue de la copie (consigne Bruno)
     };
+    // Blocs libres ①②③④ (B126) : un texte de départ copié depuis les mêmes
+    // calculs que cahier.html, généré UNE FOIS à la création — chaque carnet
+    // (officiel ou personnel) reçoit ensuite sa PROPRE copie, totalement
+    // libre à modifier sans jamais affecter les autres carnets.
+    const blocsTexte={};
+    SOUV_BLOCS_LIBRES.forEach(b=>{ blocsTexte[b.cle]=b.generer(); });
     const ins=await sb.from('souvenir_cahiers').insert({
       voyage_id:VOYAGE_ID, groupe_id:GROUPE_ID, type, membre_id:membreId||null,
       nom: type==='personnel' ? 'Le carnet de '+nomEnvoyeur(membreId) : null,
       infos_snapshot:infosSnapshot, cahier_theme:RB_INFO.cahier_theme||null,
-      cree_par:MON_MEMBRE_ID
+      blocs_texte:blocsTexte, cree_par:MON_MEMBRE_ID
     }).select().single();
     if(ins.error) throw ins.error;
     return ins.data;
@@ -396,10 +423,13 @@ async function chargerRangements(){
 async function preparerMontage(){
   const ok=await assurerEtapesSnapshot();
   if(!ok) return;
-  await chargerListeCahiers();
+  // L'itinéraire doit être en mémoire AVANT de créer un carnet : les textes
+  // de départ des blocs ①②③④ (B126) s'appuient dessus (genererTexteTrajet,
+  // statsVoyage). Ordre important — avant, l'itinéraire n'arrivait qu'après.
+  await Promise.all([chargerListeCahiers(), chargerItineraire()]);
   SOUVENIR_CAHIER = CAHIERS_DISPONIBLES.find(c=>c.type==='officiel') || await chargerOuCreerCahier('officiel', null);
   if(SOUVENIR_CAHIER && !CAHIERS_DISPONIBLES.find(c=>c.id===SOUVENIR_CAHIER.id)) CAHIERS_DISPONIBLES.push(SOUVENIR_CAHIER);
-  await Promise.all([chargerItineraire(), chargerRangements()]);
+  await chargerRangements();
 }
 
 async function chargerItineraire(){
@@ -428,6 +458,79 @@ async function chargerLeaders(){
     LEADERS=new Set((data||[]).map(r=>r.membre_id));
   }catch(e){ console.warn('Souvenir: leaders', e); }
 }
+
+// ══ Blocs libres ①②③④ (Présentation/Équipe/Trajet/Clôture, B126) ══
+// Un texte de départ généré UNE FOIS à la création du carnet, à partir des
+// mêmes calculs que cahier.html (jamais inventé) — ensuite totalement libre
+// à modifier/compléter, indépendamment par carnet (retour Bruno 21/07 :
+// "on copie juste cahier d'origine, pas d'invention de plus").
+function calcDistKm(lat1,lng1,lat2,lng2){
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+function chaineDuVoyage(){ return ITINERAIRE.filter(it=>!it.rattache); }
+// (note : contrairement à cahier.html, ne compte pas la jambe domicile→1ère
+// étape — Souvenir ne charge pas la position de départ du groupe. Différence
+// assumée, pas un bug : l'essentiel du kilométrage réel y est déjà.)
+function statsVoyage(){
+  const chaine=chaineDuVoyage();
+  let km=0;
+  for(let i=1;i<chaine.length;i++){
+    if(chaine[i-1].lat!=null && chaine[i].lat!=null) km+=calcDistKm(chaine[i-1].lat,chaine[i-1].lng,chaine[i].lat,chaine[i].lng);
+  }
+  const nuits=ITINERAIRE.reduce((s,it)=>{
+    const estNuit=(window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(it) : false;
+    return s+(estNuit?((it.nb_nuits&&it.nb_nuits>0)?it.nb_nuits:1):0);
+  },0);
+  return {km, nuits, etapes:chaine.length};
+}
+
+function genererTextePresentation(){
+  const lignes=[];
+  if(RB_INFO.destination_libre) lignes.push('Destination : '+RB_INFO.destination_libre);
+  if(RB_INFO.date_debut) lignes.push('Départ : '+RB_INFO.date_debut+(RB_INFO.date_fin_envisagee?' → '+RB_INFO.date_fin_envisagee:''));
+  const gens=[];
+  if(RB_INFO.nb_participants) gens.push(RB_INFO.nb_participants+' participant'+(RB_INFO.nb_participants>1?'s':''));
+  if(RB_INFO.nb_animaux) gens.push(RB_INFO.nb_animaux+' animal'+(RB_INFO.nb_animaux>1?'aux':''));
+  if(gens.length) lignes.push(gens.join(' et '));
+  const s=statsVoyage();
+  if(s.etapes) lignes.push((s.km?('≈'+s.km+' km · '):'')+s.nuits+' nuit'+(s.nuits>1?'s':'')+' · '+s.etapes+' étape'+(s.etapes>1?'s':''));
+  return lignes.join('\n');
+}
+function genererTexteEquipe(){
+  const noms=MEMBRES.map(m=>m.prenom||m.pseudo).filter(Boolean);
+  const animauxNoms=ANIMAUX.map(a=>a.nom).filter(Boolean);
+  const total=noms.length+animauxNoms.length;
+  const tagline=total>1 ? (total+' voyageurs, une seule route') : (total===1 ? 'Un voyageur, une route rien qu\'à lui' : '');
+  const lignes=[]; if(tagline) lignes.push(tagline);
+  if(noms.length) lignes.push('Qui embarque : '+noms.join(', '));
+  if(animauxNoms.length) lignes.push('Et aussi : '+animauxNoms.join(', '));
+  return lignes.join('\n');
+}
+function genererTexteTrajet(){
+  const chaine=chaineDuVoyage();
+  if(!chaine.length) return '';
+  const lignes=['Notre RoadTrip :'];
+  chaine.forEach((it,i)=>{
+    const nuit=(window.RNR_TAGS && RNR_TAGS.estCouchage) ? RNR_TAGS.estCouchage(it) : false;
+    const nb=(it.nb_nuits&&it.nb_nuits>0)?it.nb_nuits:1;
+    lignes.push((i+1)+'. '+(it.nom||'—')+(nuit?' · '+nb+' nuit'+(nb>1?'s':''):''));
+  });
+  return lignes.join('\n');
+}
+function genererTexteCloture(){
+  const s=statsVoyage();
+  const lignes=['Bonne route.', 'Ce carnet vit avec vous — complétez-le au fil des souvenirs.'];
+  if(s.etapes) lignes.push((s.km?('≈'+s.km+' km · '):'')+s.nuits+' nuit'+(s.nuits>1?'s':'')+' · '+s.etapes+' étape'+(s.etapes>1?'s':''));
+  return lignes.join('\n');
+}
+const SOUV_BLOCS_LIBRES=[
+  {cle:'presentation', uid:'__presentation__', titre:'Présentation', generer:genererTextePresentation},
+  {cle:'equipe', uid:'__equipe__', titre:'Équipe', generer:genererTexteEquipe},
+  {cle:'trajet', uid:'__trajet__', titre:'Trajet', generer:genererTexteTrajet},
+  {cle:'cloture', uid:'__cloture__', titre:'Clôture', generer:genererTexteCloture}
+];
 
 // Tourniquet + carte à tags (bloc④) : les VRAIS voyages du groupe, jamais une
 // liste inventée. Couverture = la première photo Souvenir de ce voyage (si
@@ -700,11 +803,15 @@ window.souvConfirmerEnvoi = souvConfirmerEnvoi;
 
 function optionsItineraireHtml(selectedUid){
   let n=0;
-  return '<option value="">— choisir une étape —</option>' + ITINERAIRE.map(it=>{
+  const optBloc=(b)=>'<option value="'+b.uid+'"'+(b.uid===selectedUid?' selected':'')+'>— '+esc(b.titre)+' —</option>';
+  const avant = SOUV_BLOCS_LIBRES.slice(0,3).map(optBloc).join(''); // ①②③, dans l'ordre du cahier d'origine
+  const etapes = ITINERAIRE.map(it=>{
     if(!it.rattache) n++;
     const label = (it.rattache?'↳ ':'') + (it.rattache?'':(n+'. ')) + (it.nom||'—');
     return '<option value="'+esc(it.uid)+'"'+(it.uid===selectedUid?' selected':'')+'>'+esc(label)+'</option>';
   }).join('');
+  const apres = optBloc(SOUV_BLOCS_LIBRES[3]); // ④ Clôture, toujours après les étapes
+  return '<option value="">— choisir une page —</option>' + avant + etapes + apres;
 }
 
 async function assignerPhotoAEtape(photoId, uid, legende){
@@ -840,7 +947,29 @@ function renderMontage(){
   // au fil de l'eau, pas une liste qui grandit sans repère). Chaque page est
   // une cible de dépôt pour le glisser-déposer. Même moteur que le Cahier
   // (RNR_FICHE_COMPLETE), juste toute la largeur pour être lisible (B114/Q4).
+  // ══ pages libres ①②③④ (B126) : même dropzone, même gestion photo par
+  // photo que les cartes d'étape (etape_uid spécial __presentation__ etc.) —
+  // un texte de départ copié depuis les mêmes calculs que cahier.html à la
+  // création du carnet, ensuite totalement libre par carnet.
+  const blocLibreHtml = (b) => {
+    const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
+    const photosBloc = parEtape[b.uid] || [];
+    const gestion = photosBloc.length ? (
+      '<div class="montage-card-gestion"><span class="lbl">Photos de cette page :</span>'+
+      photosBloc.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
+        '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
+      '</div>'
+    ) : '';
+    return '<div class="montage-card bloc-libre" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+b.uid+'\')">'+
+      (photosBloc.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette page</div>')+
+      '<div class="bloc-libre-head"><span class="day-sub">'+esc(b.titre)+'</span></div>'+
+      '<textarea class="bloc-libre-texte" placeholder="Écris ou complète librement…" oninput="souvTexteLibreChange(\''+b.cle+'\', this.value)">'+esc(texte)+'</textarea>'+
+      gestion+
+    '</div>';
+  };
+
   let colLivre = '<div class="atelier-livre">';
+  colLivre += SOUV_BLOCS_LIBRES.slice(0,3).map(blocLibreHtml).join(''); // ① Présentation, ② Équipe, ③ Trajet
   if(!ITINERAIRE.length){
     colLivre += '<div class="live-vide">Le voyage n\'a pas encore d\'itinéraire.</div>';
   } else {
@@ -865,6 +994,7 @@ function renderMontage(){
         contenu+gestion+'</div>';
     }).join('');
   }
+  colLivre += blocLibreHtml(SOUV_BLOCS_LIBRES[3]); // ④ Clôture, toujours après les étapes
   colLivre += '</div>';
 
   return barre + '<div class="atelier-corps">'+colTri+colLivre+'</div>';
@@ -922,6 +1052,27 @@ async function souvRetirerUnePhoto(photoId){
   }
 }
 window.souvRetirerUnePhoto = souvRetirerUnePhoto;
+
+// Édition libre des blocs ①②③④ (B126) : chaque frappe met à jour la copie
+// locale tout de suite (pas de saut du curseur au ré-affichage) et planifie
+// une sauvegarde groupée par carnet, même patron que le Cahier
+// (planifierSauvegarde/onNoteChange) — jamais un ré-render complet à chaque
+// lettre.
+let _texteLibreSaveTimer=null;
+function souvTexteLibreChange(cle, val){
+  if(!SOUVENIR_CAHIER) return;
+  SOUVENIR_CAHIER.blocs_texte = Object.assign({}, SOUVENIR_CAHIER.blocs_texte, {[cle]:val});
+  const cahierId=SOUVENIR_CAHIER.id, blocsTexte=SOUVENIR_CAHIER.blocs_texte;
+  clearTimeout(_texteLibreSaveTimer);
+  _texteLibreSaveTimer=setTimeout(()=>sauvegarderTexteLibre(cahierId, blocsTexte), 700);
+}
+window.souvTexteLibreChange = souvTexteLibreChange;
+async function sauvegarderTexteLibre(cahierId, blocsTexte){
+  try{
+    const up=await sb.from('souvenir_cahiers').update({blocs_texte:blocsTexte}).eq('id',cahierId);
+    if(up.error) throw up.error;
+  }catch(e){ console.warn('Souvenir: sauvegarde texte libre', e); }
+}
 
 function souvOngletsHtml(){
   return '<div class="souv-onglets">'+
@@ -1018,7 +1169,7 @@ document.getElementById('souv-main').addEventListener('click', function(e){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){ window.location.href="index.html"; return; }
   await resoutVoyageId(session.user.id);
-  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerPhotos(), chargerLeaders(), chargerTourniquetEtCarte()]);
+  await Promise.all([chargerInfosVoyage(), chargerMembres(), chargerAnimaux(), chargerPhotos(), chargerLeaders(), chargerTourniquetEtCarte()]);
   // La copie figée (souvenir_cahiers) ne se fabrique qu'une fois la fenêtre de
   // collecte terminée — jamais avant, pour ne pas figer un itinéraire encore
   // en construction pendant la préparation du voyage.
