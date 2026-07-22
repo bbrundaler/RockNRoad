@@ -106,16 +106,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    colonne de gauche (plus aucune barre ne traverse tout l'écran au-dessus
    de la page travaillée, qui gagne un maximum de hauteur). */
 .cahier-selecteur{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--surface-line);flex-shrink:0;flex-wrap:wrap;}
-.cahier-selecteur select{font-family:var(--font-body);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:5px 8px;min-width:0;flex:1 1 140px;}
+.cahier-selecteur select{font-family:var(--font-body);font-size:12px;background:var(--bg);color:var(--ink);border:1px solid var(--gold-a35);border-radius:8px;padding:5px 8px;min-width:0;flex:1 1 140px;}
 .cahier-selecteur button{font-family:var(--font-title);font-weight:700;font-size:11.5px;color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;cursor:pointer;white-space:nowrap;}
 .cahier-selecteur .montage-valid-btn{font-family:var(--font-title);font-weight:700;font-size:12px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:6px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .cahier-selecteur .montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:5px 12px;font-size:11px;color:var(--gold-light);white-space:nowrap;flex-shrink:0;}
 
-.atelier-tri{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--bg);}
+.atelier-tri{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--surface);}
 .dash-outils{flex-shrink:0;padding:10px 12px 8px;border-bottom:1px solid var(--surface-line);}
 .dash-outils-hint{font-size:11.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
 .dash-photos{flex:1;min-height:0;overflow:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-content:start;}
-.dash-ph{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;}
+.dash-ph{background:var(--bg);border:1px solid var(--gold-a20);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);}
 .dash-ph-img{width:100%;aspect-ratio:1;background-size:cover;background-position:center;cursor:pointer;}
 .dash-ph-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:10px;
   background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:4px 6px;}
@@ -180,15 +180,19 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .sv-e-zone-entete{padding:6px 14px;margin:0 auto 14px;display:inline-block;}
 .sv-e-kicker{margin:0 0 2px;font-family:var(--font-body);font-size:10.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--ink-dim);}
-.sv-e-titre-page{margin:0;font-family:var(--font-title);font-weight:700;font-size:26px;color:var(--paper-ink);}
+.sv-e-titre-page{margin:0;color:var(--paper-ink);
+  font-family:var(--sv-font,var(--font-title));font-size:var(--sv-size,26px);
+  font-weight:var(--sv-weight,700);font-style:var(--sv-style,normal);text-align:var(--sv-align,center);}
 .sv-e-zone-cartes{margin:0 14px 14px;padding:10px 4px;}
 .sv-e-zone-libre{margin:0 14px 14px;padding:12px;min-height:70px;text-align:left;}
 .sv-e-zone-libre-hint{margin:0 0 8px;font-family:var(--font-body);font-size:11.5px;color:var(--gold-deep);
   font-style:italic;text-align:center;}
 .sv-e-texte-libre,.sv-e-texte-principal{display:block;width:100%;box-sizing:border-box;border:none;
-  background:transparent;resize:vertical;font-family:var(--font-body);color:var(--paper-ink);}
-.sv-e-texte-libre{font-size:12.5px;line-height:1.6;min-height:70px;}
-.sv-e-texte-principal{font-size:13.5px;line-height:1.7;min-height:160px;}
+  background:transparent;resize:vertical;color:var(--paper-ink);
+  font-family:var(--sv-font,var(--font-body));font-weight:var(--sv-weight,400);
+  font-style:var(--sv-style,normal);text-align:var(--sv-align,left);}
+.sv-e-texte-libre{font-size:var(--sv-size,12.5px);line-height:1.6;min-height:70px;}
+.sv-e-texte-principal{font-size:var(--sv-size,13.5px);line-height:1.7;min-height:160px;}
 
 /* ── Briques modulables (B136, 22/07) : texte ou photo, au choix, ajoutées/
    retirées librement — même moteur partout (4 pages libres, pages "suite"
@@ -209,7 +213,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    jamais en haut de la page, qui reste pleine page. */
 .sv-gab-col{display:flex;flex-direction:column;gap:8px;padding-right:14px;flex-shrink:0;align-self:flex-start;position:sticky;top:0;}
 .sv-cover-libre{display:flex;flex-direction:column;flex:1;min-height:0;padding:16px 18px;}
-.sv-gab-vignette{width:44px;height:56px;padding:5px;background:var(--surface);border:1.5px solid var(--surface-line);
+.sv-gab-vignette{width:44px;height:56px;padding:5px;background:var(--bg);border:1.5px solid var(--gold-a20);
   border-radius:6px;cursor:pointer;}
 .sv-gab-vignette.actif{border-color:var(--gold);background:var(--gold-a10);}
 .sv-gab-mini{display:grid;gap:3px;width:100%;height:100%;}
@@ -218,11 +222,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 /* Menu déroulant maison des pages (B138) — un "+" par ligne */
 .page-dd{position:relative;flex:1;min-width:0;}
 .page-dd-btn{width:100%;box-sizing:border-box;text-align:left;font-family:var(--font-title);font-weight:700;font-size:12.5px;
-  color:var(--ink);background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;cursor:pointer;
+  color:var(--ink);background:var(--bg);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;cursor:pointer;
   display:flex;align-items:center;gap:6px;overflow:hidden;}
 .page-dd-btn{white-space:nowrap;text-overflow:ellipsis;}
 .page-dd-caret{margin-left:auto;color:var(--gold-text);flex-shrink:0;}
-.page-dd-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;background:var(--surface);
+.page-dd-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;background:var(--bg);
   border:1px solid var(--gold-a35);border-radius:8px;max-height:320px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4);}
 .page-dd-row{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--surface-line);}
 .page-dd-row:last-child{border-bottom:none;}
@@ -232,17 +236,23 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .page-dd-row.actif .page-dd-label{color:var(--gold-text);font-weight:600;}
 .page-dd-plus{width:22px;height:22px;flex-shrink:0;font-family:var(--font-title);font-weight:700;font-size:13px;
   color:var(--gold-text);background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:6px;padding:0;cursor:pointer;}
-/* En-têtes et stats éditables (B138) — mêmes rendus visuels qu'avant, juste en input */
-.sv-e-kicker-input{display:block;border:none;background:transparent;text-align:center;width:100%;
-  font-family:var(--font-body);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;}
-.sv-e-titre-page-input-inline{display:block;border:none;background:transparent;text-align:center;width:100%;
-  font-family:var(--font-title);font-weight:700;font-size:26px;color:var(--paper-ink);margin:0;}
-.sv-e-stat-val{display:block;width:100%;border:none;background:transparent;text-align:center;
-  font-family:var(--font-title);font-weight:700;font-size:15px;color:var(--paper-ink);}
-.sv-e-stat-label{display:block;width:100%;border:none;background:transparent;text-align:center;
-  font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);}
-.sv-e-titre-page-input{border:none;background:transparent;text-align:center;width:100%;flex-shrink:0;
-  font-family:var(--font-title);font-weight:700;font-size:20px;color:var(--paper-ink);margin-bottom:10px;}
+/* En-têtes et stats éditables (B138/B139) — chacun garde SA propre allure
+   par défaut (var(--sv-x, défaut)) tant que rien n'est choisi ; répond au
+   moteur de style dès qu'un choix est fait, comme le reste de la page. */
+.sv-e-kicker-input{display:block;border:none;background:transparent;width:100%;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-dim);margin:0 0 2px;
+  font-family:var(--sv-font,var(--font-body));font-size:var(--sv-size,10.5px);
+  font-weight:var(--sv-weight,600);font-style:var(--sv-style,normal);text-align:var(--sv-align,center);}
+.sv-e-titre-page-input-inline{display:block;border:none;background:transparent;width:100%;margin:0;}
+.sv-e-stat-val{display:block;width:100%;border:none;background:transparent;color:var(--paper-ink);
+  font-family:var(--sv-font,var(--font-title));font-size:var(--sv-size,15px);
+  font-weight:var(--sv-weight,700);font-style:var(--sv-style,normal);text-align:var(--sv-align,center);}
+.sv-e-stat-label{display:block;width:100%;border:none;background:transparent;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-dim);
+  font-family:var(--sv-font,var(--font-body));font-size:var(--sv-size,8px);
+  font-weight:var(--sv-weight,400);font-style:var(--sv-style,normal);text-align:var(--sv-align,center);}
+.sv-e-titre-page-input{border:none;background:transparent;width:100%;flex-shrink:0;margin-bottom:10px;
+  font-size:var(--sv-size,20px);}
 .sv-cadres-grille{display:grid;gap:10px;flex:1;min-height:340px;}
 .sv-cadre{position:relative;border:1.5px dashed var(--gold-a35);border-radius:6px;overflow:hidden;min-height:80px;}
 .sv-cadre-bascule{position:absolute;top:6px;right:6px;z-index:3;width:24px;height:24px;border:1px solid var(--paper-line);
@@ -262,11 +272,17 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   border-radius:var(--r-pill);font-size:10px;font-weight:700;line-height:16px;text-align:center;}
 .dash-outils-mep{display:flex;flex-direction:column;gap:6px;}
 .mep-label{font-size:10.5px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:4px;}
-.dash-outils-mep select{font-family:var(--font-body);font-size:12.5px;color:var(--ink);background:var(--surface);
-  border:1px solid var(--surface-line);border-radius:8px;padding:6px 8px;}
+.mep-rangee{display:flex;gap:6px;flex-wrap:wrap;}
+.mep-police{min-width:34px;height:34px;padding:0 8px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--gold-a20);border-radius:8px;cursor:pointer;font-size:14px;}
+.mep-police.actif{color:var(--gold-text);background:var(--gold-a10);border-color:var(--gold-a35);}
+.mep-taille{width:34px;height:34px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--gold-a20);border-radius:8px;cursor:pointer;font-family:var(--font-title);font-weight:700;
+  display:flex;align-items:center;justify-content:center;}
+.mep-taille.actif{color:var(--gold-text);background:var(--gold-a10);border-color:var(--gold-a35);}
 .mep-boutons{display:flex;gap:6px;margin-top:4px;}
 .mep-btn{width:34px;height:34px;font-family:var(--font-title);font-size:14px;color:var(--ink-dim);
-  background:var(--surface);border:1px solid var(--surface-line);border-radius:8px;cursor:pointer;}
+  background:var(--bg);border:1px solid var(--gold-a20);border-radius:8px;cursor:pointer;}
 .mep-btn.actif{color:var(--gold-text);background:var(--gold-a10);border-color:var(--gold-a35);}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
   color:var(--gold-deep);font-size:11px;font-weight:600;padding:5px 12px;border-radius:999px;pointer-events:none;}
@@ -834,12 +850,17 @@ function cssPourStylePage(uid){
   const s=styleTextePage(uid);
   const police=SOUV_POLICES.find(p=>p.v===s.police);
   const taille=SOUV_TAILLES.find(t=>t.v===s.taille);
-  let css='font-family:var(--font-body);font-size:13.5px;font-weight:400;font-style:normal;text-align:left;';
-  if(police) css+='font-family:'+police.css+';';
-  if(taille) css+='font-size:'+taille.css+';';
-  if(s.gras) css+='font-weight:700;';
-  if(s.italique) css+='font-style:italic;';
-  if(s.alignement) css+='text-align:'+s.alignement+';';
+  // (B139, 22/07) Des VARIABLES CSS, jamais des propriétés directes : le
+  // titre, le kicker, les stats et le texte libre déclarent chacun leur
+  // propre valeur par défaut via var(--sv-x, défaut-à-eux) — tant que rien
+  // n'est choisi, chacun garde son allure naturelle ; dès qu'un choix est
+  // fait, TOUT le monde bascule d'un coup (un seul moteur, comme demandé).
+  let css='';
+  if(police) css+='--sv-font:'+police.css+';';
+  if(taille) css+='--sv-size:'+taille.css+';';
+  if(s.gras) css+='--sv-weight:700;';
+  if(s.italique) css+='--sv-style:italic;';
+  if(s.alignement) css+='--sv-align:'+s.alignement+';';
   return css;
 }
 function souvDefinirStylePage(champ, valeur){
@@ -872,16 +893,19 @@ function rendreOngletMiseEnPage(){
   const s=styleTextePage(PAGE_ACTIF);
   let html='<div class="dash-outils dash-outils-mep">';
   html+='<p class="dash-outils-hint">Le même outil marche sur toutes les pages — chaque page garde son propre réglage.</p>';
+  // (B139, 22/07) Toujours apparents, comme chez les pros — pas de menu à
+  // ouvrir pour voir les choix. La police se voit en vrai dans le bouton.
   html+='<label class="mep-label">Police</label>';
-  html+='<select onchange="souvDefinirStylePage(\'police\', this.value)">';
-  html+='<option value="">Standard</option>';
-  html+=SOUV_POLICES.map(p=>'<option value="'+p.v+'"'+(s.police===p.v?' selected':'')+'>'+esc(p.label)+'</option>').join('');
-  html+='</select>';
+  html+='<div class="mep-rangee">';
+  html+='<button class="mep-police'+(!s.police?' actif':'')+'" style="font-family:var(--font-body)" onclick="souvDefinirStylePage(\'police\',\'\')" title="Standard">Aa</button>';
+  html+=SOUV_POLICES.map(p=>'<button class="mep-police'+(s.police===p.v?' actif':'')+'" style="font-family:'+p.css+'" onclick="souvDefinirStylePage(\'police\',\''+p.v+'\')" title="'+esc(p.label)+'">Aa</button>').join('');
+  html+='</div>';
   html+='<label class="mep-label">Taille</label>';
-  html+='<select onchange="souvDefinirStylePage(\'taille\', this.value)">';
-  html+='<option value="">Normal</option>';
-  html+=SOUV_TAILLES.map(t=>'<option value="'+t.v+'"'+(s.taille===t.v?' selected':'')+'>'+esc(t.label)+'</option>').join('');
-  html+='</select>';
+  html+='<div class="mep-rangee">';
+  html+='<button class="mep-taille'+(!s.taille?' actif':'')+'" style="font-size:13px" onclick="souvDefinirStylePage(\'taille\',\'\')" title="Normal">A</button>';
+  html+=SOUV_TAILLES.map(t=>'<button class="mep-taille'+(s.taille===t.v?' actif':'')+'" style="font-size:'+t.css+'" onclick="souvDefinirStylePage(\'taille\',\''+t.v+'\')" title="'+esc(t.label)+'">A</button>').join('');
+  html+='</div>';
+  html+='<label class="mep-label">Style</label>';
   html+='<div class="mep-boutons">';
   html+='<button class="mep-btn'+(s.gras?' actif':'')+'" onclick="souvBasculerStylePage(\'gras\')" title="Gras"><b>G</b></button>';
   html+='<button class="mep-btn'+(s.italique?' actif':'')+'" onclick="souvBasculerStylePage(\'italique\')" title="Italique"><i>I</i></button>';
