@@ -94,14 +94,24 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .cahier-selecteur .montage-badge{background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:6px 14px;font-size:11.5px;color:var(--gold-light);margin-left:auto;}
 
 .atelier-corps{flex:1;min-height:0;display:flex;}
-.atelier-tri{width:320px;flex-shrink:0;overflow:auto;padding:14px;border-right:1px solid var(--surface-line);background:var(--bg);}
-.atelier-tri-item{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
-.atelier-tri-item .img{width:100%;height:170px;background-size:cover;background-position:center;}
-.atelier-tri-item .corps{padding:10px 12px;}
-.atelier-tri-item .meta{font-size:11.5px;color:var(--ink-dim);margin-bottom:8px;}
-.atelier-tri-item select,.atelier-tri-item input[type=text]{display:block;width:100%;font-family:var(--font-body);font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--surface-line);border-radius:8px;padding:8px 10px;margin-bottom:8px;box-sizing:border-box;}
-.atelier-tri-item button{width:100%;font-family:var(--font-title);font-weight:700;font-size:13px;color:#1a1208;background:linear-gradient(90deg,var(--gold),var(--gold-light));border:none;border-radius:var(--r-pill);padding:9px;cursor:pointer;}
-.atelier-livre{flex:1;min-width:0;overflow:auto;padding:20px 24px;}
+.atelier-tri{width:320px;flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--bg);}
+.dash-outils{flex-shrink:0;padding:14px 14px 10px;border-bottom:1px solid var(--surface-line);}
+.dash-outils-hint{font-size:11.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
+.dash-photos{flex:1;min-height:0;overflow:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+.dash-ph{background:var(--surface);border:1px solid var(--surface-line);border-radius:var(--r);overflow:hidden;}
+.dash-ph-img{width:100%;aspect-ratio:1;background-size:cover;background-position:center;cursor:pointer;}
+.dash-ph-legende{display:block;width:100%;box-sizing:border-box;font-family:var(--font-body);font-size:11px;
+  background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:6px 8px;}
+.dash-ph[draggable="true"]{cursor:grab;}
+.dash-ph[draggable="true"]:active{cursor:grabbing;}
+.atelier-livre{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;}
+.page-selecteur{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 24px;border-bottom:1px solid var(--surface-line);}
+.page-selecteur select{flex:1;font-family:var(--font-title);font-weight:700;font-size:13.5px;color:var(--ink);
+  background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:8px 12px;}
+.page-nav{font-family:var(--font-title);font-weight:700;font-size:15px;color:var(--gold-text);background:var(--gold-a10);
+  border:1px solid var(--gold-a35);border-radius:50%;width:32px;height:32px;flex-shrink:0;cursor:pointer;}
+.page-nav:disabled{opacity:.3;cursor:default;}
+.atelier-page-active{flex:1;min-height:0;overflow:auto;padding:20px 24px;}
 .montage-card{max-width:760px;margin:0 auto 20px;border:1px solid var(--surface-line);border-radius:var(--r-lg);overflow:hidden;background:var(--surface);box-shadow:0 4px 16px rgba(0,0,0,.1);position:relative;}
 .montage-card.vide{opacity:.75;border:2px dashed var(--gold-a35);box-shadow:none;}
 .montage-card-hint{position:absolute;top:10px;right:10px;z-index:2;background:var(--gold-a10);border:1px solid var(--gold-a35);
@@ -155,8 +165,6 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
   background:var(--gold-a10);border:1px solid var(--gold-a35);border-radius:var(--r-pill);padding:7px 14px;
   cursor:pointer;white-space:nowrap;}
 .stage.mode-montage .gf-cover,.stage.mode-montage .gf-galerie-grande-ph{cursor:default!important;}
-.atelier-tri-item[draggable="true"]{cursor:grab;}
-.atelier-tri-item[draggable="true"]:active{cursor:grabbing;}
 
 /* ══════════ CARTE À TAGS (1/3) — à venir, bloc④ ══════════ */
 .b-map{flex:2;min-height:0;}
@@ -366,6 +374,9 @@ async function chargerAnimaux(){
 // une photo brute sur une VRAIE étape du voyage, jamais une liste inventée.
 let SOUVENIR_CAHIER=null; // le carnet actuellement affiché (officiel ou personnel) — {id, type, membre_id, cree_le, valide_par, valide_le, ...}
 let CAHIERS_DISPONIBLES=[]; // tous les carnets de ce voyage (officiel + un par participant qui en a créé un)
+let PAGE_ACTIF=null; // uid de la page affichée dans l'atelier (B128, 22/07) — un
+// seul endroit affiché à la fois, PAS remis à zéro en changeant de carnet
+// (les pages ont le même uid dans tous les carnets, seul leur contenu diffère)
 let RANGEMENTS={}; // rangement du carnet actif : { voyage_photo_id: {id, etape_uid, legende} }
 
 // ══ ÉTAPE A — la copie figée des étapes (21/07, retour Bruno) ══
@@ -642,11 +653,16 @@ function genererTexteCloture(){
   if(s.etapes) lignes.push((s.km?('≈'+s.km+' km · '):'')+s.nuits+' nuit'+(s.nuits>1?'s':'')+' · '+s.etapes+' étape'+(s.etapes>1?'s':''));
   return lignes.join('\n');
 }
+// Titres alignés sur le vocabulaire RÉEL de cahier.html (B128, 22/07 —
+// "prends la classification dans cahier quand c'est possible") : "Qui
+// embarque"/"L'équipe" et "Notre RoadTrip" y sont déjà les vrais intitulés
+// des pages (day-sub/day-title), "Bonne route." celui de la clôture.
+// "Page de garde", lui, est le terme que Bruno a employé lui-même.
 const SOUV_BLOCS_LIBRES=[
-  {cle:'presentation', uid:'__presentation__', titre:'Présentation', generer:genererTextePresentation},
-  {cle:'equipe', uid:'__equipe__', titre:'Équipe', generer:genererTexteEquipe},
-  {cle:'trajet', uid:'__trajet__', titre:'Trajet', generer:genererTexteTrajet},
-  {cle:'cloture', uid:'__cloture__', titre:'Clôture', generer:genererTexteCloture}
+  {cle:'presentation', uid:'__presentation__', titre:'Page de garde', generer:genererTextePresentation},
+  {cle:'equipe', uid:'__equipe__', titre:'L\'équipe', generer:genererTexteEquipe},
+  {cle:'trajet', uid:'__trajet__', titre:'Notre RoadTrip', generer:genererTexteTrajet},
+  {cle:'cloture', uid:'__cloture__', titre:'Bonne route', generer:genererTexteCloture}
 ];
 
 // Tourniquet + carte à tags (bloc④) : les VRAIS voyages du groupe, jamais une
@@ -918,17 +934,30 @@ async function souvConfirmerEnvoi(){
 }
 window.souvConfirmerEnvoi = souvConfirmerEnvoi;
 
-function optionsItineraireHtml(selectedUid){
+// Source UNIQUE de la liste ordonnée des pages d'un carnet (B128, 22/07) —
+// utilisée par le sélecteur de page ET l'ancien menu déroulant du tri. Ordre
+// aujourd'hui = position réelle dans l'itinéraire (souvenir_cahier_etapes.
+// ordre, déjà la copie figée du RÉEL, pas du prévu). Bruno a soulevé un vrai
+// sujet pour plus tard : pouvoir réordonner les pages DANS un carnet (le
+// prévu jour 2 devenu réel jour 5, etc.), indépendamment par carnet — pas
+// construit maintenant ("on verra"), mais c'est ICI, et seulement ici,
+// qu'il faudra brancher un ordre stocké/propre au carnet le jour venu.
+function listePagesCahier(){
   let n=0;
-  const optBloc=(b)=>'<option value="'+b.uid+'"'+(b.uid===selectedUid?' selected':'')+'>— '+esc(b.titre)+' —</option>';
-  const avant = SOUV_BLOCS_LIBRES.slice(0,3).map(optBloc).join(''); // ①②③, dans l'ordre du cahier d'origine
+  const avant = SOUV_BLOCS_LIBRES.slice(0,3).map(b=>({uid:b.uid, label:b.titre, type:'libre', bloc:b}));
   const etapes = ITINERAIRE.map(it=>{
     if(!it.rattache) n++;
     const label = (it.rattache?'↳ ':'') + (it.rattache?'':(n+'. ')) + (it.nom||'—');
-    return '<option value="'+esc(it.uid)+'"'+(it.uid===selectedUid?' selected':'')+'>'+esc(label)+'</option>';
-  }).join('');
-  const apres = optBloc(SOUV_BLOCS_LIBRES[3]); // ④ Clôture, toujours après les étapes
-  return '<option value="">— choisir une page —</option>' + avant + etapes + apres;
+    return {uid:it.uid, label, type:'etape', item:it};
+  });
+  const apres = [{uid:SOUV_BLOCS_LIBRES[3].uid, label:SOUV_BLOCS_LIBRES[3].titre, type:'libre', bloc:SOUV_BLOCS_LIBRES[3]}];
+  return avant.concat(etapes, apres);
+}
+function optionsItineraireHtml(selectedUid){
+  const opts = listePagesCahier().map(p=>
+    '<option value="'+esc(p.uid)+'"'+(p.uid===selectedUid?' selected':'')+'>'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</option>'
+  ).join('');
+  return '<option value="">— choisir une page —</option>' + opts;
 }
 
 async function assignerPhotoAEtape(photoId, uid, legende){
@@ -954,13 +983,17 @@ async function assignerPhotoAEtape(photoId, uid, legende){
   }
 }
 
-async function souvRangerPhoto(photoId){
-  const row=document.getElementById('tri-'+photoId); if(!row) return;
-  const uid=row.querySelector('.tri-select').value;
-  const legende=row.querySelector('.tri-legende').value.trim();
-  await assignerPhotoAEtape(photoId, uid, legende);
+// (22/07, B128) Remplace l'ancien souvRangerPhoto (menu déroulant par photo,
+// devenu inutile : on ne voit plus qu'UNE page à la fois, donc "ranger" veut
+// dire "sur la page affichée en ce moment"). Le glisser-déposer reste
+// disponible en plus, pour qui préfère.
+async function souvRangerSurPageActive(photoId){
+  if(!PAGE_ACTIF){ alert('Choisis d\'abord une page.'); return; }
+  const row=document.getElementById('tri-'+photoId);
+  const legende = row ? (row.querySelector('.dash-ph-legende')||{}).value : '';
+  await assignerPhotoAEtape(photoId, PAGE_ACTIF, (legende||'').trim());
 }
-window.souvRangerPhoto = souvRangerPhoto;
+window.souvRangerSurPageActive = souvRangerSurPageActive;
 
 // Bascule d'un carnet à l'autre (officiel ↔ personnels) — même base d'étapes,
 // rangement propre à chacun.
@@ -971,6 +1004,16 @@ async function souvChangerCahier(cahierId){
   renderMain();
 }
 window.souvChangerCahier = souvChangerCahier;
+
+// Change la page affichée dans l'atelier (B128, 22/07) — PAGE_ACTIF n'est
+// jamais remis à zéro par un changement de carnet (cf. sa déclaration) : on
+// reste sur "Notre RoadTrip" même en passant au carnet personnel de Bruno.
+function souvChangerPage(uid){
+  if(!uid) return;
+  PAGE_ACTIF=uid;
+  renderMain();
+}
+window.souvChangerPage = souvChangerPage;
 
 async function souvCreerCarnetPerso(){
   if(!MON_MEMBRE_ID) return;
@@ -1005,12 +1048,42 @@ function optionsCahiersHtml(){
   }).join('');
 }
 
+// Rendu d'UNE étape (extrait de l'ancien rendu "tout le cahier qui défile"
+// pour servir la page active seule, B128 22/07). Inchangé sur le fond —
+// même moteur RNR_FICHE_COMPLETE, même gestion photo — juste appelable pour
+// un seul item à la fois désormais.
+function rendreEtapePageHtml(item, parEtape){
+  const photosEtape=parEtape[item.uid]||[];
+  const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
+  const synthetique=Object.assign({}, item, {
+    photo_url: photosEtape.length ? photosEtape[0].url : (item.photo_url||null),
+    photos_urls: photosEtape.length ? photosEtape.slice(1).map(p=>p.url) : (item.photos_urls||[]),
+    commentaire: legendes.join(' — ') || item.commentaire || ''
+  });
+  const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
+  const vide = photosEtape.length ? '' : ' vide';
+  const gestion = photosEtape.length ? (
+    '<div class="montage-card-gestion"><span class="lbl">Photos de cette étape :</span>'+
+    photosEtape.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
+      '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
+    '</div>'
+  ) : '';
+  return '<div class="montage-card'+vide+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
+    (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
+    contenu+gestion+'</div>';
+}
+
 // Le montage : les photos déjà rangées DANS CE CARNET se regroupent par étape
 // et se rendent via le MÊME moteur que le Cahier (RNR_FICHE_COMPLETE) — la
 // fiche réelle du lieu, dont on remplace juste la galerie par les vraies
 // photos du voyage et la citation par la légende posée pour ce carnet. Un
 // seul moteur, jamais une redite (B114/Q4). Chaque carnet (officiel ou
 // personnel, étape B) range les MÊMES photos à sa façon, sans se marcher dessus.
+//
+// (22/07, B128, retour Bruno) : refonte de la mise en page — plus un cahier
+// qui défile en continu, mais UNE page à la fois (sélecteur en haut de la
+// colonne de travail), et à gauche un vrai tableau de bord (outils en haut,
+// photos en grille en dessous) plutôt qu'une pile étroite.
 function renderMontage(){
   if(!SOUVENIR_CAHIER){
     return '<div class="etat-vide"><div class="t">Le Cahier Souvenir n\'a pas pu être préparé</div>'+
@@ -1037,37 +1110,29 @@ function renderMontage(){
   }
   barre += '</div>';
 
-  // ══ colonne de gauche : la pile des photos à ranger, une par une, en grand.
-  // Glisse une photo directement sur sa page à droite (comme Mixbook/Canva/
-  // Shutterfly) — le menu déroulant reste disponible pour qui préfère cliquer.
+  // ══ colonne de gauche : le tableau de bord — une zone "outils" en haut
+  // (à construire page par page, avec Bruno) et les photos à ranger en
+  // grille en dessous. Clique sur une photo pour la ranger directement sur
+  // la page affichée, ou glisse-la (comme avant) — plus besoin de choisir
+  // la page dans un menu déroulant par photo, une seule est visible à la fois.
   let colTri = '<div class="atelier-tri">';
+  colTri += '<div class="dash-outils"><p class="dash-outils-hint">Outils de mise en page — à construire page par page. '
+    + 'Clique sur une photo pour la ranger sur la page affichée à droite, ou glisse-la dessus.</p></div>';
+  colTri += '<div class="dash-photos">';
   if(!aRanger.length){
     colTri += '<div class="live-vide">Tout est rangé !</div>';
   } else {
-    colTri += aRanger.map(p=>{
-      return '<div class="atelier-tri-item" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')">'+
-        '<div class="img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')"></div>'+
-        '<div class="corps">'+
-          '<div class="meta">'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+' · <i>glisse-la sur sa page →</i></div>'+
-          '<select class="tri-select">'+optionsItineraireHtml(null)+'</select>'+
-          '<input type="text" class="tri-legende" placeholder="Petite légende (optionnel)"'+(p.legende?' value="'+esc(p.legende)+'"':'')+'>'+
-          '<button onclick="souvRangerPhoto(\''+p.id+'\')">Ranger dans le cahier</button>'+
-        '</div>'+
-      '</div>';
-    }).join('');
+    colTri += aRanger.map(p=>
+      '<div class="dash-ph" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'">'+
+        '<div class="dash-ph-img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" onclick="souvRangerSurPageActive(\''+p.id+'\')" title="Ranger sur la page affichée"></div>'+
+        '<input type="text" class="dash-ph-legende" placeholder="légende" value="'+(p.legende?esc(p.legende):'')+'">'+
+      '</div>'
+    ).join('');
   }
-  colTri += '</div>';
+  colTri += '</div></div>';
 
-  // ══ colonne de droite : TOUT le cahier, page par page, dans l'ordre réel du
-  // voyage — même les étapes sans photo Souvenir pour l'instant (retour
-  // Bruno : "injecter tout le cahier", comme une vraie page qu'on remplit
-  // au fil de l'eau, pas une liste qui grandit sans repère). Chaque page est
-  // une cible de dépôt pour le glisser-déposer. Même moteur que le Cahier
-  // (RNR_FICHE_COMPLETE), juste toute la largeur pour être lisible (B114/Q4).
-  // ══ pages libres ①②③④ (B126) : même dropzone, même gestion photo par
-  // photo que les cartes d'étape (etape_uid spécial __presentation__ etc.) —
-  // un texte de départ copié depuis les mêmes calculs que cahier.html à la
-  // création du carnet, ensuite totalement libre par carnet.
+  // ══ colonne de droite : le sélecteur de page, puis LA page active seule,
+  // en pleine hauteur (B128) ══
   const blocLibreHtml = (b) => {
     const texte = (SOUVENIR_CAHIER.blocs_texte && SOUVENIR_CAHIER.blocs_texte[b.cle]) || '';
     const photosBloc = parEtape[b.uid] || [];
@@ -1093,34 +1158,24 @@ function renderMontage(){
     '</div>';
   };
 
-  let colLivre = '<div class="atelier-livre">';
-  colLivre += SOUV_BLOCS_LIBRES.slice(0,3).map(blocLibreHtml).join(''); // ① Présentation, ② Équipe, ③ Trajet
-  if(!ITINERAIRE.length){
-    colLivre += '<div class="live-vide">Le voyage n\'a pas encore d\'itinéraire.</div>';
-  } else {
-    colLivre += ITINERAIRE.map(item=>{
-      const photosEtape=parEtape[item.uid]||[];
-      const legendes=[...new Set(photosEtape.map(p=>RANGEMENTS[p.id].legende).filter(Boolean))];
-      const synthetique=Object.assign({}, item, {
-        photo_url: photosEtape.length ? photosEtape[0].url : (item.photo_url||null),
-        photos_urls: photosEtape.length ? photosEtape.slice(1).map(p=>p.url) : (item.photos_urls||[]),
-        commentaire: legendes.join(' — ') || item.commentaire || ''
-      });
-      const contenu = window.RNR_FICHE_COMPLETE ? RNR_FICHE_COMPLETE.html(synthetique, {galerieGrande:true}) : '';
-      const vide = photosEtape.length ? '' : ' vide';
-      const gestion = photosEtape.length ? (
-        '<div class="montage-card-gestion"><span class="lbl">Photos de cette étape :</span>'+
-        photosEtape.map(p=>'<div class="mini-ph" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+'">'+
-          '<button onclick="souvRetirerUnePhoto(\''+p.id+'\')" title="Retirer cette photo">✕</button></div>').join('')+
-        '</div>'
-      ) : '';
-      return '<div class="montage-card'+vide+'" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="souvDropSurEtape(event,\''+item.uid+'\')">'+
-        (photosEtape.length ? '' : '<div class="montage-card-hint">Dépose une photo ici pour cette étape</div>')+
-        contenu+gestion+'</div>';
-    }).join('');
-  }
-  colLivre += blocLibreHtml(SOUV_BLOCS_LIBRES[3]); // ④ Clôture, toujours après les étapes
-  colLivre += '</div>';
+  const listePages = listePagesCahier();
+  if(!PAGE_ACTIF || !listePages.find(p=>p.uid===PAGE_ACTIF)) PAGE_ACTIF = listePages.length ? listePages[0].uid : null;
+  const idxActif = listePages.findIndex(p=>p.uid===PAGE_ACTIF);
+  const pageActive = listePages[idxActif];
+
+  let selecteur = '<div class="page-selecteur">';
+  selecteur += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>0?listePages[idxActif-1].uid:'')+'\')"'+(idxActif<=0?' disabled':'')+'>‹</button>';
+  selecteur += '<select onchange="souvChangerPage(this.value)">'+listePages.map(p=>
+    '<option value="'+esc(p.uid)+'"'+(p.uid===PAGE_ACTIF?' selected':'')+'>'+(p.type==='libre'?'— '+esc(p.label)+' —':esc(p.label))+'</option>'
+  ).join('')+'</select>';
+  selecteur += '<button class="page-nav" onclick="souvChangerPage(\''+(idxActif>=0&&idxActif<listePages.length-1?listePages[idxActif+1].uid:'')+'\')"'+(idxActif<0||idxActif>=listePages.length-1?' disabled':'')+'>›</button>';
+  selecteur += '</div>';
+
+  const pageHtml = pageActive
+    ? (pageActive.type==='libre' ? blocLibreHtml(pageActive.bloc) : rendreEtapePageHtml(pageActive.item, parEtape))
+    : '<div class="live-vide">Cette page n\'existe plus.</div>';
+
+  const colLivre = '<div class="atelier-livre">'+selecteur+'<div class="atelier-page-active">'+pageHtml+'</div></div>';
 
   return barre + '<div class="atelier-corps">'+colTri+colLivre+'</div>';
 }
@@ -1139,8 +1194,8 @@ async function souvDropSurEtape(e, uid){
   const photoId=e.dataTransfer.getData('text/plain');
   if(!photoId) return;
   const row=document.getElementById('tri-'+photoId);
-  const legende = row ? row.querySelector('.tri-legende').value.trim() : '';
-  await assignerPhotoAEtape(photoId, uid, legende);
+  const legende = row ? (row.querySelector('.dash-ph-legende')||{}).value||'' : '';
+  await assignerPhotoAEtape(photoId, uid, legende.trim());
 }
 window.souvDropSurEtape = souvDropSurEtape;
 
