@@ -63,7 +63,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
    droite, posé dans le HTML statique), pas un bricolage CSS qui essaie de
    faire sortir des éléments de leurs parents. Bandeau confiné à la colonne
    de gauche, page de droite = grid-row 1/3, pleine hauteur dès le sommet. */
-.stage.mode-montage .b-main{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;height:100%;}
+.stage.mode-montage .b-main{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;}
 .stage.mode-montage #souv-bh{grid-column:1;grid-row:1;}
 .stage.mode-montage #souv-main{grid-column:1;grid-row:2;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
 .stage.mode-montage #souv-page-droite{grid-column:2;grid-row:1/3;min-height:0;overflow:hidden;display:block;}
