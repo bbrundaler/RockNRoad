@@ -121,7 +121,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .atelier-tri{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--surface);}
 .dash-outils{flex-shrink:0;padding:10px 12px 8px;border-bottom:1px solid var(--surface-line);}
 .dash-outils-hint{font-size:11.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
-.dash-photos{flex:1;min-height:0;max-height:calc(100vh - 220px);overflow-y:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-content:start;}
+.dash-photos{flex:1;min-height:0;overflow-y:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-content:start;}
 .dash-ph{position:relative;min-width:0;background:var(--bg);border:1px solid var(--gold-a20);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);}
 .dash-ph-suppr{position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;border:none;border-radius:50%;
   background:rgba(20,16,10,.7);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
@@ -2304,7 +2304,23 @@ function renderMain(){
     el.innerHTML = souvOngletsHtml() + renderGalerie();
     if(droiteEl) droiteEl.innerHTML = '';
   }
+  // (B145, 22/07) Le calcul CSS en cascade (flex/grid imbriqués) échouait à
+  // borner correctement la colonne photos — après plusieurs correctifs CSS
+  // sans effet, on mesure la VRAIE place disponible directement dans le
+  // navigateur, une fois la page posée. Aucune dépendance à la propagation
+  // de hauteur à travers les niveaux de blocs.
+  setTimeout(souvAjusterHauteurDashPhotos, 0);
 }
+function souvAjusterHauteurDashPhotos(){
+  const el=document.querySelector('.dash-photos');
+  if(!el) return;
+  const rect=el.getBoundingClientRect();
+  const disponible=window.innerHeight - rect.top - 12; // petite marge en bas
+  el.style.maxHeight=Math.max(120, disponible)+'px';
+  el.style.overflowY='auto';
+}
+window.souvAjusterHauteurDashPhotos = souvAjusterHauteurDashPhotos;
+window.addEventListener('resize', ()=>{ clearTimeout(window.__souvResizeT); window.__souvResizeT=setTimeout(souvAjusterHauteurDashPhotos, 150); });
 
 // En Montage, cliquer une photo déjà placée ne doit PAS ouvrir le lecteur
 // plein écran (c'est le rôle de la Galerie, pas de l'atelier — retour Bruno
