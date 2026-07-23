@@ -121,15 +121,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);}
 .atelier-tri{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;border-right:1px solid var(--surface-line);background:var(--surface);}
 .dash-outils{flex-shrink:0;padding:10px 12px 8px;border-bottom:1px solid var(--surface-line);}
 .dash-outils-hint{font-size:11.5px;color:var(--ink-dim);line-height:1.4;margin:0;}
-.dash-photos{flex:1;min-height:0;overflow-y:auto;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-content:start;}
-.dash-ph{position:relative;min-width:0;background:var(--bg);border:1px solid var(--gold-a20);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.dash-grid{flex:1;min-height:0;overflow-y:auto;column-count:3;column-gap:8px;padding:10px;}
+.dash-grid-item{break-inside:avoid;margin-bottom:8px;border-radius:var(--r);overflow:hidden;position:relative;
+  background:var(--bg);border:1px solid var(--gold-a20);box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.dash-grid-item img{display:block;width:100%;height:auto;cursor:pointer;}
 .dash-ph-suppr{position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;border:none;border-radius:50%;
   background:rgba(20,16,10,.7);color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer;}
-.dash-ph-img{width:100%;height:110px;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:var(--surface);cursor:pointer;}
 .dash-ph-legende{display:block;width:100%;min-width:0;box-sizing:border-box;font-family:var(--font-body);font-size:10px;
   background:var(--bg);color:var(--ink);border:none;border-top:1px solid var(--surface-line);padding:4px 6px;}
-.dash-ph[draggable="true"]{cursor:grab;}
-.dash-ph[draggable="true"]:active{cursor:grabbing;}
+.dash-grid-item[draggable="true"]{cursor:grab;}
+.dash-grid-item[draggable="true"]:active{cursor:grabbing;}
 .page-selecteur{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--surface-line);}
 .page-selecteur select{flex:1;min-width:0;font-family:var(--font-title);font-weight:700;font-size:12.5px;color:var(--ink);
   background:var(--surface);border:1px solid var(--gold-a35);border-radius:8px;padding:6px 10px;}
@@ -1945,14 +1946,14 @@ function renderMontage(){
     colTri += rendreOngletMiseEnPage();
   } else {
     colTri += '<div class="dash-outils"><p class="dash-outils-hint">Clique sur une photo pour la ranger sur la page affichée à droite, ou glisse-la dessus.</p></div>';
-    colTri += '<div class="dash-photos">';
+    colTri += '<div class="dash-grid">';
     if(!aRanger.length){
       colTri += '<div class="live-vide">Tout est rangé !</div>';
     } else {
       colTri += aRanger.map(p=>
-        '<div class="dash-ph" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'">'+
+        '<div class="dash-grid-item" id="tri-'+p.id+'" draggable="true" ondragstart="souvDragStart(event,\''+p.id+'\')" title="'+esc(nomEnvoyeur(p.membre_id))+' · '+esc(fmtRelatif(p.created_at))+'">'+
           '<button class="dash-ph-suppr" onclick="event.stopPropagation();souvSupprimerPhotoDefinitivement(\''+p.id+'\')" title="Supprimer définitivement cette photo">✕</button>'+
-          '<div class="dash-ph-img" style="background-image:url(\''+String(p.url).replace(/'/g,'')+'\')" onclick="souvRangerSurPageActive(\''+p.id+'\')" title="Ranger sur la page affichée"></div>'+
+          '<img src="'+String(p.url).replace(/"/g,'')+'" loading="lazy" alt="" onclick="souvRangerSurPageActive(\''+p.id+'\')" title="Ranger sur la page affichée">'+
           '<input type="text" class="dash-ph-legende" placeholder="légende" value="'+(p.legende?esc(p.legende):'')+'">'+
         '</div>'
       ).join('');
@@ -2312,7 +2313,7 @@ function renderMain(){
   setTimeout(souvAjusterHauteurDashPhotos, 0);
 }
 function souvAjusterHauteurDashPhotos(){
-  const el=document.querySelector('.dash-photos');
+  const el=document.querySelector('.dash-grid');
   if(!el) return;
   const rect=el.getBoundingClientRect();
   const disponible=window.innerHeight - rect.top - 12; // petite marge en bas
