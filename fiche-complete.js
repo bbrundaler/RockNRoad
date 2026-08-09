@@ -85,7 +85,7 @@
     const cover = photos[0] ? `url('${photos[0]}')` : 'linear-gradient(135deg,#3a2f1a,#1a1510)';
     const mapsUrl = l.nom
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.nom + (l.sous_region||l.region ? ', '+(l.sous_region||l.region) : ''))}`
-      : (l.lat&&l.lng ? `https://www.google.com/maps?q=${l.lat},${l.lng}` : 'https://maps.google.com/');
+      : (l.lat&&l.lng ? `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}` : 'https://maps.google.com/');
 
     // (17/07) Deux présentations de la galerie, TOUJOURS depuis ce seul
     // générateur : la bande de vignettes compacte (défaut, cartes/fiches à
