@@ -306,6 +306,9 @@ body.hz-explo-on #hz-btn-revue{display:none;}
 .hz-rond-hint-off{display:none;}
 .hz-rond-rayon{font-size:12px;font-weight:700;color:var(--gold-text);font-family:var(--font-title);}
 .hz-rond-compte{font-size:12px;color:var(--ink-dim);white-space:nowrap;}
+.hz-rond-valider{font-family:var(--font-title);font-weight:700;font-size:12px;color:var(--chrome-bg);
+  background:var(--gold);border:none;border-radius:999px;padding:5px 12px;cursor:pointer;margin-left:2px;}
+.hz-rond-valider:hover{background:var(--gold-text);}
 body.hz-coin-carte #hz-carte-repos.leaflet-container{cursor:crosshair;}
 .hz-rond-poignee{width:10px;height:10px;border-radius:50%;background:var(--gold);
   border:2px solid var(--mk-bord);box-shadow:0 2px 6px rgba(0,0,0,.35);}
@@ -943,6 +946,8 @@ body.hz-explo-on #hz-rail{display:none;}
           <span class="hz-ov-ic">◎</span>
           <span class="hz-rond-rayon" id="hz-rond-rayon-txt">—</span>
           <span class="hz-rond-compte" id="hz-rond-compte-txt">—</span>
+          <button class="hz-rond-valider" id="hz-rond-valider" type="button" onclick="hzRondFigerEtLancer()"
+            title="Voir la liste des fiches dans ce rayon">Voir →</button>
         </span>
       </div>
       <!-- Jauge de rayon (08/07 v6, retour Bruno) : ressortie de hz-ov-rond —
@@ -2313,6 +2318,17 @@ function hzRondDepuisCamping(lieuId){
   if(menu) menu.classList.remove('open');
   const f=(HZ_FICHES||[]).find(x=>x.id===lieuId);
   if(!f || f.lat==null || f.lng==null || !HZ_CARTE_COIN) return;
+  // Le décalage constaté (retour Bruno 09/08) venait d'ouvrir la liste tout de
+  // suite : ouvrir #hz-explo redimensionne la carte, et son centre géographique
+  // « bouge » par rapport à l'écran sans que Leaflet le sache déjà — la jauge,
+  // rebranchée ensuite depuis getCenter(), repartait donc d'un point décalé.
+  // Corrigé en deux temps : (1) invalidateSize AVANT de centrer, pour que
+  // Leaflet connaisse la vraie taille du conteneur ; (2) la liste ne s'ouvre
+  // plus automatiquement — le rond reste « en attente », réglable tout de
+  // suite avec la jauge (déjà positionnée sur le rayon de départ), jusqu'à ce
+  // qu'on valide avec le bouton « Voir → » du pill. Plus de redimensionnement
+  // surprise entre le réglage et l'ouverture.
+  HZ_CARTE_COIN.invalidateSize();
   const centre=L.latLng(+f.lat,+f.lng);
   HZ_CARTE_COIN.setView(centre, Math.max(HZ_CARTE_COIN.getZoom()||9, 10));
   hzRondDemarre(centre);
@@ -2320,7 +2336,10 @@ function hzRondDepuisCamping(lieuId){
   HZ_ROND_COIN.setRadius(HZ_ROND_RAYON_M);
   hzRondMajAffichage(centre);
   if(typeof HZ_MAJ_THUMB_ROND==='function') HZ_MAJ_THUMB_ROND(HZ_RAYON_CAMPING_DEFAUT_KM);
-  hzRondFigerEtLancer();
+  // On fige l'état SANS ouvrir la liste (voir commentaire ci-dessus) : prêt à
+  // être réglé (jauge) ou validé (bouton "Voir →" du pill) tout de suite.
+  HZ_ROND_EN_COURS=false;
+  HZ_CARTE_COIN.dragging.enable();
 }
 // Referme le petit menu si on clique ailleurs — même réflexe que les autres
 // menus flottants du site (chrome.js notamment).
