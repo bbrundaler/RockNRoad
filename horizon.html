@@ -1791,8 +1791,7 @@ function hzAfficheTousLesPoints(){
     // (10/07) Dormant = jamais engagé (ni cœur, ni épingle) — un point placé
     // dans le Roadbook (num!=null) a nécessairement déjà été épinglé (A6), donc
     // il reste toujours dans la couche active sans cas particulier à écrire.
-    const etat=hzEtatLieu(f.id);
-    const dormant = !etat.epingle && !etat.coeurMoi && !etat.coeurAutre;
+    const dormant = hzEstDormant(f.id);
     (dormant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ).addLayer(m);
     HZ_CARTE_REPOS_MARQ_PAR_ID[f.id]={marker:m, dormant:dormant};
   });
@@ -4300,6 +4299,18 @@ function basculeVersDormir(){
 //  Plus de couleur-par-type en dur : la FORME dit jour/nuit, la COULEUR
 //  dit mon rapport (neutre/mon cœur/cœur des autres/épingle).
 // ════════════════════════════════════════════════════════════════
+// Dormant = jamais engagé POUR CE VOYAGE (10/07 ; corrigé 09/08, retour Bruno).
+// Piège trouvé : un lieu peut être partagé par plusieurs voyages du même
+// groupe (les fiches vivent dans le Carnet, pas dans un voyage) — le cœur
+// brut (table `reactions`) est donc group-wide et jamais remis à zéro d'un
+// voyage à l'autre. HZ_RETENUS et HZ_CANDIDATES, eux, sont déjà filtrés par HZ_VOYAGE_ID
+// dans hzChargerCoeurs(). Sans ce filtre ici, une fiche aimée pendant un
+// AUTRE voyage restait "active" pour toujours, polluant "Points en veille"
+// sur chaque nouveau voyage (elle ne pouvait jamais se mettre en veille).
+// Un seul endroit — ex-dupliqué à deux endroits (rendu initial + refresh live).
+function hzEstDormant(lieuId){
+  return !HZ_RETENUS.has(lieuId) && !HZ_CANDIDATES.has(lieuId);
+}
 // Rapport du groupe à un lieu → { epingle, coeurMoi, coeurAutre } pour le moteur.
 function hzEtatLieu(lieuId){
   const c = hzCoeursDe(lieuId).love;           // {count, mine, qui}
@@ -4340,8 +4351,7 @@ function hzMajMarqueur(lieuId, type){
   const r=HZ_CARTE_REPOS_MARQ_PAR_ID && HZ_CARTE_REPOS_MARQ_PAR_ID[lieuId];
   if(r && r.marker){
     r.marker.setIcon(icon);
-    const etat=hzEtatLieu(lieuId);
-    const dormantMaintenant = !etat.epingle && !etat.coeurMoi && !etat.coeurAutre;
+    const dormantMaintenant = hzEstDormant(lieuId);
     if(dormantMaintenant!==r.dormant && HZ_CARTE_REPOS_MARQ && HZ_CARTE_REPOS_MARQ_DORMANTS){
       const coucheAvant = r.dormant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ;
       const coucheApres = dormantMaintenant?HZ_CARTE_REPOS_MARQ_DORMANTS:HZ_CARTE_REPOS_MARQ;
