@@ -3350,22 +3350,22 @@ async function chargeVoyageActif(groupeId){
     if(!HZ_VOYAGES.length){ HZ_VOYAGE_ID=null; return; }
     // actif = celui mémorisé en session, sinon le principal, sinon le 1er
     let actifId=null;
-    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    try{ actifId=localStorage.getItem('rnr_voyage_id'); }catch(e){}
     let actif = HZ_VOYAGES.find(v=>v.id===actifId)
              || HZ_VOYAGES.find(v=>v.est_principal)
              || HZ_VOYAGES[0];
     HZ_VOYAGE_ID = actif.id;
     try{
-      sessionStorage.setItem('rnr_voyage_id', actif.id);
-      sessionStorage.setItem('rnr_voyage_nom', actif.nom);
+      localStorage.setItem('rnr_voyage_id', actif.id);
+      localStorage.setItem('rnr_voyage_nom', actif.nom);
     }catch(e){}
     // alimente le titre + menu déroulant du chrome
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, HZ_VOYAGES, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ sessionStorage.setItem('rnr_voyage_id', id); }catch(e){}
+        try{ localStorage.setItem('rnr_voyage_id', id); }catch(e){}
         const v=HZ_VOYAGES.find(x=>x.id===id);
-        if(v){ try{ sessionStorage.setItem('rnr_voyage_nom', v.nom); }catch(e){} }
+        if(v){ try{ localStorage.setItem('rnr_voyage_nom', v.nom); }catch(e){} }
         window.location.reload(); // recharge Horizon sur le nouveau voyage (tout se re-filtre)
       });
     }

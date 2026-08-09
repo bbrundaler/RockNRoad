@@ -367,7 +367,7 @@
           reg.textContent = '⚙️';
           reg.addEventListener('click', function(e){
             e.stopPropagation(); e.preventDefault(); vyMenu.classList.remove('open');
-            try{ sessionStorage.setItem('rnr_voyage_id', v.id); sessionStorage.setItem('rnr_voyage_nom', v.nom); }catch(err){}
+            try{ localStorage.setItem('rnr_voyage_id', v.id); localStorage.setItem('rnr_voyage_nom', v.nom); }catch(err){}
             window.location.href = 'voyage.html?modifier=1';
           });
           row.appendChild(it); row.appendChild(reg);
@@ -410,7 +410,7 @@
         var g = JSON.parse(cached);
         if(g.is_superadmin) cons.classList.add('rnrc-sa-visible');
       }
-      var cv = sessionStorage.getItem('rnr_voyage_nom');
+      var cv = localStorage.getItem('rnr_voyage_nom');
       if(cv){ vyWrap.style.display='flex'; vyBtn.querySelector('.rnrc-vy-nom').textContent = cv; }
     } catch(e){}
   }
@@ -996,7 +996,7 @@
         var del = await _sbChrome.from('voyages').delete().eq('id', voyageId);
         if(del.error) throw del.error;
 
-        try{ sessionStorage.removeItem('rnr_voyage_id'); sessionStorage.removeItem('rnr_voyage_nom'); }catch(e){}
+        try{ localStorage.removeItem('rnr_voyage_id'); localStorage.removeItem('rnr_voyage_nom'); }catch(e){}
 
         var reste = await _sbChrome.from('voyages').select('id,est_principal,created_at')
           .eq('groupe_id', _monGroupeId).order('created_at',{ascending:true});

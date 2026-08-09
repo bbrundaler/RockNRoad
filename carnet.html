@@ -460,7 +460,7 @@ function requestIdleCallbackSafe(cb){
   // (le Carnet n'a pas de rail existant, contrairement à Horizon).
   if(window.RNR_RAIL_GROUPE && currentGroupeId){
     (async()=>{
-      let voyageId=null; try{ voyageId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+      let voyageId=null; try{ voyageId=localStorage.getItem('rnr_voyage_id'); }catch(e){}
       if(!voyageId) return;
       const {data:moi}=await sb.from('membres').select('id').eq('user_id',RNR_userId).eq('groupe_id',currentGroupeId).limit(1).single();
       RNR_RAIL_GROUPE.init({ sb, voyageId, groupeId:currentGroupeId, userId:RNR_userId, membreId:moi?moi.id:null, membres:[] });
@@ -572,7 +572,7 @@ async function chargerCoeurs(){
   retenus = new Set();
   ecartees = new Set();
   let voyageActif=null;
-  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ voyageActif=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   if(voyageActif){
     const {data:vf,error:eV} = await sb.from('voyage_fiches')
       .select('lieu_id,statut').eq('voyage_id',voyageActif);
@@ -624,7 +624,7 @@ function applyVoteFilter(lieux) {
 // zéro candidate n'avait jamais été créée depuis Carnet, faute de ce relais).
 async function envoieCandidate(lieuId){
   let voyageActif=null;
-  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ voyageActif=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   if(!voyageActif || !lieuId) return;
   if(retenus.has(lieuId)) return;   // déjà retenue : ne pas rétrograder en candidate
   try{
@@ -636,7 +636,7 @@ async function envoieCandidate(lieuId){
 }
 async function retireCandidate(lieuId){
   let voyageActif=null;
-  try{ voyageActif=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ voyageActif=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   if(!voyageActif || !lieuId) return;
   if(retenus.has(lieuId)) return;   // décision de groupe : on n'y touche pas depuis Carnet
   try{
@@ -747,13 +747,13 @@ async function CR_chargeVoyageActif(groupeId){
     const liste=vs||[];
     if(!liste.length) return;
     let actifId=null;
-    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    try{ actifId=localStorage.getItem('rnr_voyage_id'); }catch(e){}
     const actif = liste.find(v=>v.id===actifId) || liste.find(v=>v.est_principal) || liste[0];
-    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    try{ localStorage.setItem('rnr_voyage_id',actif.id); localStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }

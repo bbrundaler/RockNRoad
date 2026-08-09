@@ -510,7 +510,7 @@ function fmtRelatif(iso){
 
 async function resoutVoyageId(userId){
   let sess=null;
-  try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ sess=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   const {data:mem}=await sb.from('membres').select('id,groupe_id').eq('user_id',userId).limit(1).single();
   if(mem){ MON_MEMBRE_ID=mem.id; GROUPE_ID=mem.groupe_id; }
   if(sess){ VOYAGE_ID=sess; return; }
@@ -531,7 +531,7 @@ async function chargeSelecteurChrome(){
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }
@@ -1409,7 +1409,7 @@ window.souvOuvrirLightbox = souvOuvrirLightbox;
 function souvSwitchVoyage(id){
   if(!id||id===VOYAGE_ID) return;
   const v=TOUS_VOYAGES.find(x=>x.id===id);
-  try{ sessionStorage.setItem('rnr_voyage_id',id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+  try{ localStorage.setItem('rnr_voyage_id',id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
   window.location.reload();
 }
 window.souvSwitchVoyage = souvSwitchVoyage;

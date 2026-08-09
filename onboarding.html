@@ -663,7 +663,7 @@ function rendreVoyagesGroupe(){
 // le Roadbook avec son formulaire déjà déplié — un seul geste, pas de jeu de piste.
 function ouvrirVoyagePourModif(voyageId){
   const v = GM_voyages.find(x=>x.id===voyageId);
-  try{ sessionStorage.setItem('rnr_voyage_id', voyageId); if(v) sessionStorage.setItem('rnr_voyage_nom', v.nom||''); }catch(e){}
+  try{ localStorage.setItem('rnr_voyage_id', voyageId); if(v) localStorage.setItem('rnr_voyage_nom', v.nom||''); }catch(e){}
   window.location.href = 'voyage.html?modifier=1';
 }
 

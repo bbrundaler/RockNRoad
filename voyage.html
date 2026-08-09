@@ -469,7 +469,7 @@ let DOMICILE = null;    // {lat,lng,nom} point de départ du groupe (groupes.*_d
 async function resoutVoyageId(userId){
   if(VOYAGE_ID) return VOYAGE_ID;
   let sess=null;
-  try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ sess=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
   if(mem){
     GROUPE_ID = mem.groupe_id;
@@ -505,7 +505,7 @@ async function voyageChargeSelecteurChrome(){
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }
@@ -1339,7 +1339,7 @@ async function rbInfosSave(){
     if(error) throw error;
     await rbParticipantsSauver();
     RB_INFO = Object.assign({}, RB_INFO, row);
-    try{ sessionStorage.setItem('rnr_voyage_nom', nom); }catch(e){}  // le sélecteur du chrome lit ce cache (même moteur qu'Horizon/Carnet)
+    try{ localStorage.setItem('rnr_voyage_nom', nom); }catch(e){}  // le sélecteur du chrome lit ce cache (même moteur qu'Horizon/Carnet)
     rbInfosRender();
     rbRemplirBookends();   // la date de départ vit aussi sur la fiche Départ — les deux se suivent
     render();              // les dates de chaque étape dépendent de RB_INFO.date_debut

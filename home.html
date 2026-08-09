@@ -494,7 +494,7 @@ async function creerPremierVoyage(){
     }catch(e){ console.warn('Hub: pré-remplissage participants', e); }
     // le nouveau voyage devient l'actif → Horizon s'ouvrira dessus (vierge)
     try{
-      if(cree){ sessionStorage.setItem('rnr_voyage_id',cree.id); sessionStorage.setItem('rnr_voyage_nom',cree.nom); }
+      if(cree){ localStorage.setItem('rnr_voyage_id',cree.id); localStorage.setItem('rnr_voyage_nom',cree.nom); }
     }catch(e){}
     const m=document.getElementById('vy-modal'); if(m) m.style.display='none';
     window.location.href='horizon.html';
@@ -1078,7 +1078,7 @@ function hubMajDashboard(d){
 
 // Résolution du voyage actif (même logique que voyage.html : session → principal → premier).
 async function hubResoutVoyage(userId){
-  let sess=null; try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+  let sess=null; try{ sess=localStorage.getItem('rnr_voyage_id'); }catch(e){}
   if(sess) return sess;
   const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
   if(!mem) return null;
@@ -1102,13 +1102,13 @@ async function hubChargeVoyageActif(groupeId){
     const liste=vs||[];
     if(!liste.length) return;   // aucun voyage : verifierPremierVoyage() ouvrira la modale juste après
     let actifId=null;
-    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
+    try{ actifId=localStorage.getItem('rnr_voyage_id'); }catch(e){}
     const actif=liste.find(v=>v.id===actifId)||liste.find(v=>v.est_principal)||liste[0];
-    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    try{ localStorage.setItem('rnr_voyage_id',actif.id); localStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }
