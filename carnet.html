@@ -916,6 +916,26 @@ function normalizeRegionKey(region){
     .replace(/[^a-z]/g,'');
 }
 
+// Groupement par département (sous_region), retour Bruno 09/08 : une grande
+// région (ex. Midi-Pyrénées) peut couvrir des départements très éloignés les
+// uns des autres — la liste plate mélangeait tout. Même principe que
+// buildRecapView (qui groupait déjà par sous_region pour Carte & Récap),
+// appliqué ici à la liste de fiches elle-même. "Autres lieux" (sans
+// sous_region) toujours affiché en dernier, jamais mélangé aux vrais groupes.
+function groupeParDepartement(lieux){
+  const groupes={};
+  lieux.forEach(l=>{
+    const sr=l.sous_region||'Autres lieux';
+    if(!groupes[sr]) groupes[sr]=[];
+    groupes[sr].push(l);
+  });
+  return Object.keys(groupes).sort((a,b)=>{
+    if(a==='Autres lieux') return 1;
+    if(b==='Autres lieux') return -1;
+    return a.localeCompare(b,'fr');
+  }).map(sr=>({sr, lieux:groupes[sr]}));
+}
+
 function populateRegionContent(rk, regionName, lieux){
   const contentEl = document.getElementById(rk+'-content');
   if(!contentEl) return;
@@ -932,10 +952,11 @@ function populateRegionContent(rk, regionName, lieux){
   const loveCount = lieux.filter(l=>{const c=coeurs[l.id];return c&&c.love.count>0;}).length;
   const saveCount = lieux.filter(l=>retenus.has(l.id)).length;
 
-  // Sous-groupes Activités
-  const sites      = activites.filter(l=>['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation'].includes(l.type)||!l.type);
-  const restaurants= activites.filter(l=>['Restaurant','Brasserie'].includes(l.type));
-  const autres     = activites.filter(l=>!['Site','Randonnee','Plage','Lac','Musee','Culture','Chateau','Monument','Cave','Degustation','Camping','Halte','Restaurant','Brasserie'].includes(l.type)&&l.type);
+  // (22/07→session dept) : l'ancienne subdivision par type (sites/restaurants/
+  // autres) est remplacée par le groupement par département ci-dessous — même
+  // principe que buildRecapView, qui le faisait déjà pour l'onglet Carte &
+  // Récap (reproduire la technique qui marche déjà, pas en inventer une 2e).
+  // Le type reste visible sur chaque carte (icône/couleur), rien n'est perdu.
 
   // Barre de filtres votes (si au moins 1 vote dans cette région)
   const hasVotes = loveCount>0||saveCount>0;
@@ -970,25 +991,19 @@ function populateRegionContent(rk, regionName, lieux){
     contentEl.innerHTML=html; return;
   }
 
-  // ── BLOC ACTIVITÉS (jour) ──
+  // ── BLOC ACTIVITÉS (jour), groupé par département ──
   if(activites.length){
     html+='<div class="rg-bloc-jour">';
-    if(sites.length){
-      html+=`<div class="divl"><div class="divl-t">🗺 ${sites.length} site${sites.length>1?'s':''} à visiter</div></div>
-        <div class="sites-grid">${sites.map(l=>makeDynCard(l,'site')).join('')}</div>`;
-    }
-    if(restaurants.length){
-      html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">🍽️ ${restaurants.length} restaurant${restaurants.length>1?'s':''}</div></div>
-        <div class="sites-grid">${restaurants.map(l=>makeDynCard(l,'restaurant')).join('')}</div>`;
-    }
-    if(autres.length){
-      html+=`<div class="divl" style="margin-top:24px;"><div class="divl-t">📍 Autres lieux</div></div>
-        <div class="sites-grid">${autres.map(l=>makeDynCard(l,'autre')).join('')}</div>`;
-    }
+    groupeParDepartement(activites).forEach(grp=>{
+      html+=`<div class="rg-dept-group" data-dept="${grp.sr}">
+        <div class="divl rg-dept-header"><div class="divl-t">📍 ${grp.sr} — ${grp.lieux.length} lieu${grp.lieux.length>1?'x':''}</div></div>
+        <div class="sites-grid">${grp.lieux.map(l=>makeDynCard(l,'site')).join('')}</div>
+      </div>`;
+    });
     html+='</div>';
   }
 
-  // ── BLOC NUIT ──
+  // ── BLOC NUIT, groupé par département ──
   if(nuits.length){
     const nuitCount = nuits.length;
     html+=`
@@ -998,9 +1013,14 @@ function populateRegionContent(rk, regionName, lieux){
         <span class="nuit-title">Où dormir</span>
         <span class="nuit-count">${nuitCount} lieu${nuitCount>1?'x':''}</span>
       </div>
-      <div class="nuit-divider"></div>
-      <div class="sites-grid">${nuits.map(l=>makeNuitCard(l)).join('')}</div>
+      <div class="nuit-divider"></div>`;
+    groupeParDepartement(nuits).forEach(grp=>{
+      html+=`<div class="rg-dept-group" data-dept="${grp.sr}">
+        <div class="divl rg-dept-header" style="margin-top:14px;"><div class="divl-t">📍 ${grp.sr} — ${grp.lieux.length} lieu${grp.lieux.length>1?'x':''}</div></div>
+        <div class="sites-grid">${grp.lieux.map(l=>makeNuitCard(l)).join('')}</div>
       </div>`;
+    });
+    html+=`</div>`;
   }
 
   if(html){
@@ -1665,6 +1685,20 @@ function estNuitCarnet(l){
 // UNE seule ligne quel que soit le nombre d'options, et le tactile sait déjà
 // s'en servir (le sélecteur du système). Calculé sur les tags RÉELLEMENT
 // présents dans la région, jamais une liste figée avec des options mortes.
+// Filtre Département (09/08, retour Bruno) : même mécanique que le filtre
+// Tags juste en dessous — un menu déroulant natif calculé sur les vrais
+// départements présents dans la région ouverte, jamais une liste figée.
+// Complète le groupement visuel (groupeParDepartement) sans le remplacer :
+// le groupement montre la structure, ce filtre isole un seul coin d'un coup.
+function construitFiltreDeptRegion(rk, lieux){
+  const deps = [...new Set(lieux.map(l=>l.sous_region).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+  if(deps.length<2) return ''; // rien à filtrer si un seul département dans la région
+  return `<select class="rg-filtre-select" id="filtre-dept-${rk}" onchange="appliquerFiltreTagsRegion('${rk}')">
+    <option value="">📍 Filtrer département — tout voir</option>
+    ${deps.map(d=>`<option value="${d}">${d}</option>`).join('')}
+  </select>`;
+}
+
 function construitFiltreTagsRegion(rk, lieux){
   const jourLieux = lieux.filter(l=>!estNuitCarnet(l));
   const nuitLieux = lieux.filter(l=>estNuitCarnet(l));
@@ -1702,8 +1736,10 @@ function construitFiltreTagsRegion(rk, lieux){
 function appliquerFiltreTagsRegion(rk){
   const selJour = document.getElementById('filtre-jour-'+rk);
   const selNuit = document.getElementById('filtre-nuit-'+rk);
+  const selDept = document.getElementById('filtre-dept-'+rk);
   const valJour = selJour ? selJour.value : '';
   const valNuitRaw = selNuit ? selNuit.value : '';
+  const valDept = selDept ? selDept.value : '';
   const nuitTag    = valNuitRaw.startsWith('tag:')    ? valNuitRaw.slice(4) : null;
   const nuitEtoile = valNuitRaw.startsWith('etoiles:') ? parseInt(valNuitRaw.slice(8),10) : null;
 
@@ -1720,7 +1756,20 @@ function appliquerFiltreTagsRegion(rk){
       if(nuitTag)    visible = (l.tags||[]).includes(nuitTag);
       else if(nuitEtoile!==null) visible = (l.etoiles===nuitEtoile);
     }
+    // Filtre Département : indépendant de jour/nuit, se combine en ET avec le reste.
+    if(visible && valDept){
+      visible = (l.sous_region||'') === valDept;
+    }
     card.style.display = visible ? '' : 'none';
+  });
+
+  // Les en-têtes de groupe département (regroupeParDepartement) doivent
+  // disparaître avec leur contenu — sinon un titre "📍 Ariège" resterait
+  // affiché tout seul, sans aucune carte dessous, une fois filtré ailleurs.
+  document.querySelectorAll(`#${rk}-content .rg-dept-group`).forEach(grp=>{
+    const aUneCarteVisible = [...grp.querySelectorAll('.site-card, .nuit-card')]
+      .some(c=>c.style.display!=='none');
+    grp.style.display = aUneCarteVisible ? '' : 'none';
   });
 }
 function rnrNavStyleRegion(rk, survol){
@@ -1822,7 +1871,7 @@ function rnrNavMajBandeau(rk){
   // compteurs — reconstruit à chaque changement de région (les tags présents
   // changent d'une région à l'autre).
   const filtresEl=document.getElementById('rnr-band-filtres');
-  if(filtresEl) filtresEl.innerHTML=construitFiltreTagsRegion(rk, lieux);
+  if(filtresEl) filtresEl.innerHTML=construitFiltreDeptRegion(rk, lieux)+construitFiltreTagsRegion(rk, lieux);
   document.getElementById('rnr-band-btn-horizon').href='horizon.html?region='+rk;
   document.getElementById('rnr-band-btn-fiches').classList.add('active');
   document.getElementById('rnr-band-btn-recap').classList.remove('active');
