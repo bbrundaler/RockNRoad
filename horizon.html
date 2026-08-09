@@ -248,6 +248,17 @@ body.hz-coin-carte .hz-ov-tl .hz-ov-titre{display:none;}  /* « Clique une régi
 .hz-ov-tr{top:12px;right:12px;}
 .hz-ov-bl{bottom:14px;left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .hz-ov-br{bottom:14px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+/* Menu "Autour de mon camping" (09/08) : liste des campings retenus pour ce
+   voyage, quand il y en a plus d'un — même gabarit que les autres petits
+   menus flottants du site (surface + ombre + bord or), rien de nouveau. */
+.hz-camping-menu{display:none;position:absolute;bottom:calc(100% + 6px);right:0;min-width:200px;
+  max-width:260px;background:var(--surface);border:1px solid var(--gold-a35);border-radius:11px;
+  box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;z-index:6;}
+.hz-camping-menu.open{display:block;}
+.hz-camping-menu button{display:block;width:100%;text-align:left;padding:10px 14px;border:none;
+  background:transparent;color:var(--ink);font-family:var(--font-body);font-size:13.5px;cursor:pointer;}
+.hz-camping-menu button:hover{background:var(--gold-a10);}
+.hz-camping-menu button+button{border-top:1px solid var(--surface-line);}
 .hz-ov-vote{left:12px;right:12px;bottom:14px;}
 .hz-ov-pill{display:inline-flex;align-items:center;gap:9px;background:var(--surface);
   border:1px solid var(--gold-a35);border-radius:13px;padding:10px 16px;
@@ -910,6 +921,16 @@ body.hz-explo-on #hz-rail{display:none;}
       <div class="hz-ov hz-ov-br">
         <button class="hz-porte-btn" id="hz-btn-dormants" type="button" onclick="hzToggleDormants()"
           title="Masquer les fiches pas encore engagées (ni cœur, ni épingle) — pour alléger la carte">😴 Points en veille</button>
+        <!-- (09/08, retour Bruno) : sur place, il faut pouvoir chercher une
+             activité du lendemain autour du camping du soir, sans avoir à viser
+             le bon pixel sur la carte. Réemploie le rond de précision existant
+             (hzRondDemarre/hzRondFigerEtLancer) — un geste de plus vers le même
+             mécanisme, jamais un second moteur de recherche par distance. -->
+        <div style="position:relative;">
+          <button class="hz-porte-btn" id="hz-btn-camping" type="button" onclick="hzOuvrirChoixCamping()"
+            title="Voir les activités autour du camping retenu pour ce voyage">🏕️ Autour de mon camping</button>
+          <div class="hz-camping-menu" id="hz-camping-menu"></div>
+        </div>
       </div>
       <!-- Rond de précision (2b-2/2b-3) : clic-glisser-relâcher directement sur
            la carte. Hint tant qu'aucun geste n'a eu lieu ; lecture rayon+compte
@@ -2261,6 +2282,55 @@ function hzRondFigerEtLancer(){
   if(typeof majEnAvant==='function') majEnAvant(paquet);
   ouvreExplo();   // (re)monte/rafraîchit le panneau swipe avec ce nouveau paquet
 }
+// « Autour de mon camping » (09/08, retour Bruno) : sur place en vacances,
+// trouver une activité pour le lendemain autour du camping du soir — sans
+// viser précisément le bon pixel sur la carte. Réutilise le pipeline du rond
+// (hzRondDemarre/hzRondFigerEtLancer, même moteur que la jauge du 04/07) :
+// un point de départ de plus vers le même mécanisme, jamais un second filtre
+// par distance à maintenir en parallèle.
+const HZ_RAYON_CAMPING_DEFAUT_KM=15;
+function hzFichesNuitRetenues(){
+  return (HZ_FICHES||[]).filter(f=>f && f.lat!=null && f.lng!=null
+    && HZ_RETENUS.has(f.id) && window.RNR_TAGS && RNR_TAGS.estCouchage(f));
+}
+function hzOuvrirChoixCamping(){
+  const camps=hzFichesNuitRetenues();
+  const menu=document.getElementById('hz-camping-menu');
+  if(!camps.length){
+    alert('Aucun lieu de nuit retenu pour ce voyage — retiens d\'abord ton camping (📌) pour pouvoir chercher autour.');
+    return;
+  }
+  if(camps.length===1){ hzRondDepuisCamping(camps[0].id); return; }
+  // Plusieurs campings retenus (voyage à étapes) : petit menu pour choisir lequel.
+  if(!menu) return;
+  menu.innerHTML=camps.map(f=>
+    '<button type="button" onclick="hzRondDepuisCamping(\''+f.id+'\')">🏕️ '+escapeHtmlHz(f.nom||'Camping')+'</button>'
+  ).join('');
+  menu.classList.toggle('open');
+}
+function hzRondDepuisCamping(lieuId){
+  const menu=document.getElementById('hz-camping-menu');
+  if(menu) menu.classList.remove('open');
+  const f=(HZ_FICHES||[]).find(x=>x.id===lieuId);
+  if(!f || f.lat==null || f.lng==null || !HZ_CARTE_COIN) return;
+  const centre=L.latLng(+f.lat,+f.lng);
+  HZ_CARTE_COIN.setView(centre, Math.max(HZ_CARTE_COIN.getZoom()||9, 10));
+  hzRondDemarre(centre);
+  HZ_ROND_RAYON_M=Math.max(HZ_ROND_RAYON_MIN_M, HZ_RAYON_CAMPING_DEFAUT_KM*1000);
+  HZ_ROND_COIN.setRadius(HZ_ROND_RAYON_M);
+  hzRondMajAffichage(centre);
+  if(typeof HZ_MAJ_THUMB_ROND==='function') HZ_MAJ_THUMB_ROND(HZ_RAYON_CAMPING_DEFAUT_KM);
+  hzRondFigerEtLancer();
+}
+// Referme le petit menu si on clique ailleurs — même réflexe que les autres
+// menus flottants du site (chrome.js notamment).
+document.addEventListener('click', (e)=>{
+  const menu=document.getElementById('hz-camping-menu');
+  const btn=document.getElementById('hz-btn-camping');
+  if(menu && menu.classList.contains('open') && !menu.contains(e.target) && e.target!==btn){
+    menu.classList.remove('open');
+  }
+});
 // « Élargir le cercle » : correctif 02/07 — la question posée était « pas de
 // quoi dormir », donc la réponse doit être UNIQUEMENT des couchages (pas tout
 // remélanger), et ne jamais représenter une fiche déjà vue dans ce coin
