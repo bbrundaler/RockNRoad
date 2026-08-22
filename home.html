@@ -37,6 +37,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
 .fil-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .fil-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .fil-top h1{margin:0;font-size:17px;}
+/* (22/08) La salutation a laissé la place au logo. Hauteur calée sur la colonne
+   de boutons d'en face (deux boutons empilés + gouttière ≈ 67px) : le logo
+   occupe une place DÉJÀ prise par la rangée, le bloc ne regrossit donc pas d'un
+   pixel — cette bannière avait été resserrée deux fois (10 et 18/07) pour garder
+   « Construire mon voyage » visible sans défiler.
+   ATTENTION, à l'inverse du bandeau : ce bloc est posé sur --surface, qui BASCULE
+   avec le thème dans tokens.css. Les deux déclinaisons sont donc nécessaires ici.
+   Voir TECHNIQUE.md §22 — toujours ouvrir tokens.css avant de décider. */
+.fil-logo{height:64px;width:auto;display:block;flex-shrink:0;}
+.fil-logo-nuit{display:none;}
+[data-theme="sombre"] .fil-logo-jour{display:none;}
+[data-theme="sombre"] .fil-logo-nuit{display:block;}
+@media(max-width:700px){.fil-logo{height:48px;}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;}
 /* (18/07, retour Bruno) : les deux boutons se posent maintenant l'un sur
    l'autre — plus de place regagnée à droite pour les avatars en colonnes. */
 .fil-top-right{display:flex;flex-direction:column;align-items:stretch;gap:6px;}
@@ -221,7 +236,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-heig
   <div class="fil">
     <div class="fil-body">
       <div class="fil-top">
-        <h1 id="hub-salut">Bonjour</h1>
+        <a href="home.html" class="fil-logo-lien" aria-label="RockNRoad">
+          <img class="fil-logo fil-logo-jour" src="rocknroadcomplet600.png" alt="RockNRoad">
+          <img class="fil-logo fil-logo-nuit" src="rocknroadcompletfondsombre600.png" alt="RockNRoad">
+        </a>
+        <h1 class="sr-only">RockNRoad — Accueil</h1>
         <div class="fil-top-right">
           <a href="onboarding.html" id="gr-lien" class="rr-btn rr-btn-ghost rr-btn-sm gr-lien-groupe" title="Réglages du groupe (nom, membres)">⚙️ <span id="gr-lien-nom">Mon groupe</span></a>
           <a class="rr-btn rr-btn-ghost rr-btn-sm" href="admin.html">＋ Nouvelle fiche</a>
@@ -350,12 +369,9 @@ function normalizeRegionKey(region){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){window.location.href="index.html";return;}
 
-  /* Salutation selon l'heure seule ; le prénom réel est posé dans loadHubData (règle
-     canonique rnrNomMembre), une fois le membre résolu — jamais un calcul maison sur
-     l'email ailleurs (05/07 soir : "Bruno.brundaler" venait de là). */
-  const h=new Date().getHours();
-  const salut=(h>=18||h<5)?"Bonsoir":"Bonjour";
-  document.getElementById('hub-salut').textContent=salut+' 👋';
+  /* (22/08) La salutation selon l'heure, puis le prénom, ont laissé la place au
+     logo dans la bannière : plus rien à écrire ici. `userNom` reste calculé dans
+     loadHubData — il sert au module de discussion, pas seulement à cette ligne. */
 
   loadHubData(session.user.id, session.user.email);
 })();
@@ -494,7 +510,7 @@ async function creerPremierVoyage(){
     }catch(e){ console.warn('Hub: pré-remplissage participants', e); }
     // le nouveau voyage devient l'actif → Horizon s'ouvrira dessus (vierge)
     try{
-      if(cree){ localStorage.setItem('rnr_voyage_id',cree.id); localStorage.setItem('rnr_voyage_nom',cree.nom); }
+      if(cree){ sessionStorage.setItem('rnr_voyage_id',cree.id); sessionStorage.setItem('rnr_voyage_nom',cree.nom); }
     }catch(e){}
     const m=document.getElementById('vy-modal'); if(m) m.style.display='none';
     window.location.href='horizon.html';
@@ -559,12 +575,10 @@ async function loadHubData(userId, email){
     const groupeId=mem.groupe_id;
     const nomGroupe=(mem.groupes&&mem.groupes.nom)?mem.groupes.nom:'Mon groupe';
 
-    /* Prénom réel de la salutation — règle canonique rnrNomMembre (chrome.js), la MÊME
-       que pour la discussion plus bas : jamais un 2e calcul pour le même nom. */
+    /* Prénom réel du membre — règle canonique rnrNomMembre (chrome.js). Ne sert
+       plus à saluer (retiré le 22/08) mais TOUJOURS au module de discussion plus
+       bas : ne pas le supprimer. */
     const userNom=(window.rnrNomMembre ? window.rnrNomMembre(mem, email) : (mem.pseudo||mem.prenom||'Voyageur'));
-    const salutEl=document.getElementById('hub-salut');
-    if(salutEl) salutEl.textContent=salutEl.textContent.replace(' 👋','')+', '+userNom+' 👋';
-
     /* Stocker dans sessionStorage pour que chrome.js et les autres pages lisent le cache */
     try {
       var gCache = Object.assign({}, mem.groupes||{}, {is_superadmin: mem.is_superadmin===true});
@@ -1078,7 +1092,7 @@ function hubMajDashboard(d){
 
 // Résolution du voyage actif (même logique que voyage.html : session → principal → premier).
 async function hubResoutVoyage(userId){
-  let sess=null; try{ sess=localStorage.getItem('rnr_voyage_id'); }catch(e){}
+  let sess=null; try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
   if(sess) return sess;
   const {data:mem}=await sb.from('membres').select('groupe_id').eq('user_id',userId).limit(1).single();
   if(!mem) return null;
@@ -1102,13 +1116,13 @@ async function hubChargeVoyageActif(groupeId){
     const liste=vs||[];
     if(!liste.length) return;   // aucun voyage : verifierPremierVoyage() ouvrira la modale juste après
     let actifId=null;
-    try{ actifId=localStorage.getItem('rnr_voyage_id'); }catch(e){}
+    try{ actifId=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
     const actif=liste.find(v=>v.id===actifId)||liste.find(v=>v.est_principal)||liste[0];
-    try{ localStorage.setItem('rnr_voyage_id',actif.id); localStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
+    try{ sessionStorage.setItem('rnr_voyage_id',actif.id); sessionStorage.setItem('rnr_voyage_nom',actif.nom); }catch(e){}
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }

@@ -153,6 +153,25 @@ body[data-theme="kraft"] .page{background-image:none;}
   }
 }
 
+/* ── SIGNATURE DE MARQUE (22/08) ──
+   Papier à en-tête : le logo en haut à gauche de chaque page, SAUF les
+   couvertures (chacune est bespoke par thème, une signature générique
+   l'abîmerait). Positionnée en ABSOLU dans la bande de marge haute que les
+   pages réservent déjà (padding-top 34-54px) : elle ne décale donc AUCUN
+   contenu. C'est décisif ici — les pages sont à hauteur A4 fixe avec
+   overflow:hidden, tout décalage vertical ferait disparaître du contenu en
+   bas de page. Calée à 54px de la gauche = la marge de texte des pages,
+   ce qui la met aussi à l'écart de la spirale de reliure (qui occupe 10-24px).
+   La page de clôture est la seule page SOMBRE du Cahier : elle prend la
+   déclinaison à encre crème. */
+.cah-sign{position:absolute;top:8px;left:54px;z-index:6;line-height:0;pointer-events:none;}
+.cah-sign img{height:30px;width:auto;display:block;}
+.cah-sign .cah-sign-nuit{display:none;}
+.closing .cah-sign .cah-sign-jour{display:none;}
+.closing .cah-sign .cah-sign-nuit{display:block;}
+.closing .cah-sign{left:60px;}
+@media print{ .cah-sign img{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+
 .spirale{position:absolute;left:10px;top:30px;bottom:30px;width:14px;display:flex;flex-direction:column;justify-content:space-between;z-index:5;}
 .spirale .ring{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--cah-spirale);background:transparent;box-shadow:inset 0 0 0 3px var(--cah-paper);}
 body[data-theme="atlas"] .spirale{display:none;} /* un carnet d'expédition relié, pas à spirale */
@@ -497,7 +516,7 @@ function esc(t){ const d=document.createElement('div'); d.textContent=(t==null?'
 
 async function resoutVoyageId(userId){
   let sess=null;
-  try{ sess=localStorage.getItem('rnr_voyage_id'); }catch(e){}
+  try{ sess=sessionStorage.getItem('rnr_voyage_id'); }catch(e){}
   const {data:mem}=await sb.from('membres').select('id,groupe_id').eq('user_id',userId).limit(1).single();
   if(mem){
     MON_MEMBRE_ID=mem.id;
@@ -527,7 +546,7 @@ async function cahierChargeSelecteurChrome(){
     if(window.rnrChrome && rnrChrome.setVoyage){
       rnrChrome.setVoyage(actif.nom, liste, function(id){
         if(id==='__new__'){ window.location.href='home.html?nouveau=1'; return; }
-        try{ localStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) localStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
+        try{ sessionStorage.setItem('rnr_voyage_id',id); const v=liste.find(x=>x.id===id); if(v) sessionStorage.setItem('rnr_voyage_nom',v.nom); }catch(e){}
         window.location.reload();
       });
     }
@@ -1050,6 +1069,20 @@ function temaActif(){
   return ['edition','kraft','atlas'].includes(v) ? v : 'edition';
 }
 
+/* Signature de marque en haut à gauche de chaque page, hors couvertures.
+   Idempotente : on peut la rappeler après un re-rendu sans doubler le logo. */
+function poserSignature(racine){
+  const SIGN = '<div class="cah-sign">'
+    + '<img class="cah-sign-jour" src="rocknroadcomplet300.png" alt="">'
+    + '<img class="cah-sign-nuit" src="rocknroadcompletfondsombre300.png" alt="">'
+    + '</div>';
+  racine.querySelectorAll('.page').forEach(function(p){
+    if(/cover/.test(p.className)) return;      /* couvertures : intactes */
+    if(p.querySelector(':scope > .cah-sign')) return;
+    p.insertAdjacentHTML('afterbegin', SIGN);
+  });
+}
+
 // (17/07, B69) La couverture est le seul endroit vraiment bespoke par thème —
 // c'est une illustration, pas un gabarit de données. Un seul point d'entrée
 // (cette fonction), trois branches, jamais trois générateurs séparés dans
@@ -1340,6 +1373,12 @@ function render(){
     +'</div></div>';
 
   host.innerHTML=html;
+
+  /* (22/08) La signature est posée ICI, en UNE passe sur le rendu, plutôt que
+     recopiée dans chacun des six générateurs de page — un comportement, un seul
+     endroit. Les couvertures en sont exclues. */
+  poserSignature(host);
+
   host.querySelectorAll('.editable-text').forEach(ta=>{
     ta.addEventListener('input', ()=>onNoteChange(ta.dataset.uid, ta.value));
   });
