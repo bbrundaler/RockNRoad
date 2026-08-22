@@ -5,7 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>RockNRoad Aventures · Nouveau mot de passe</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link rel="icon" href="favicon512.png" sizes="512x512">
+<link rel="apple-touch-icon" href="appletouchicon180.png" sizes="180x180">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="app.css">
@@ -42,14 +43,18 @@ body::before{
   border:1px solid var(--gold-a35);
 }
 .logo{text-align:center;margin-bottom:32px;}
-.logo-icon{font-size:48px;display:block;margin-bottom:12px;animation:bob 3s ease-in-out infinite;}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.logo-badge{
-  display:inline-block;background:var(--gold-a20);
-  border:1px solid var(--gold-a35);
-  color:var(--gold-deep);font-size:12px;letter-spacing:4px;
-  text-transform:uppercase;padding:5px 18px;border-radius:var(--r-pill);margin-bottom:14px;
-}
+/* (22/08) Identité de marque : le logo dessiné remplace l'emoji + le titre
+   en Playfair. La carte est en papier crème dans les DEUX thèmes (--paper ne
+   bascule pas, cf. tokens.css §--paper-ink du 19/07) : c'est donc la
+   déclinaison à ENCRE SOMBRE qui va ici, pas celle du bandeau. */
+.logo-img{display:block;width:78%;max-width:250px;margin:0 auto;}
+/* Texte réservé aux lecteurs d'écran et aux moteurs : le nom du site ne doit
+   pas disparaître du document sous prétexte qu'il est devenu une image. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+/* Ici le logo est plus discret : le titre de la page (« Nouveau mot de passe »,
+   « Bienvenue ! ») reste la vedette, il est fonctionnel. */
+.logo-img{max-width:190px;margin-bottom:14px;}
 .logo h1{
   font-family:'Playfair Display',serif;
   color:#1a1208;line-height:1.2;margin-bottom:4px;
@@ -133,8 +138,7 @@ input::placeholder{color:#b8ad96;}
 
 <div class="card">
   <div class="logo">
-    <span class="logo-icon">🔑</span>
-    <div class="logo-badge">🐾 Family Road Trip App</div>
+    <img class="logo-img" src="rocknroadcomplet600.png" alt="RockNRoad">
     <h1 id="titrePage" style="font-size:30px;letter-spacing:-1px;">Nouveau mot de passe</h1>
     <p id="sousTitrePage" style="font-size:12.5px;color:#6B5F4A;margin-top:6px;">Choisissez votre nouveau code d'accès</p>
   </div>
