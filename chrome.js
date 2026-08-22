@@ -50,6 +50,21 @@
   ];
   var ICONS = {hub:'🏠', horizon:'🌅', carnet:'📖', voyage:'🗺️', cahier:'📓', souvenir:'📸'};
 
+  /* ── Images de marque (22/08) — le logo du bandeau et le favicon vivent ICI,
+     dans un seul fichier, pour les 13 pages qui incluent chrome.js.
+     IMG est le SEUL endroit à changer si les fichiers déménagent
+     (racine du dépôt : mettre IMG = ''). Deux déclinaisons du logo « texte »
+     (nom + rose des vents) : encre sombre pour le thème clair, encre crème
+     pour le thème sombre — la bascule est purement CSS, pilotée par
+     [data-theme] posé sur <html> plus bas. Le 300 suffit largement : le
+     bandeau l'affiche à 34px de haut, soit ~78px de large (couvert même en
+     écran 3x). */
+  var IMG        = 'img/';
+  var LOGO_JOUR  = IMG + 'rocknroadtexte300.png';
+  var LOGO_NUIT  = IMG + 'rocknroadtextefondsombre300.png';
+  var FAVICON    = IMG + 'favicon512.png';
+  var APPLEICON  = IMG + 'appletouchicon180.png';
+
   /* ── 1 · THÈME : posé IMMÉDIATEMENT (avant le rendu) ──
      (19/07) Défaut basculé clair→sombre — décision Bruno du 03/06 (« sombre+or
      = défaut et âme de la marque »), appliquée seulement après validation du
@@ -63,14 +78,41 @@
   if(theme !== 'clair' && theme !== 'sombre') theme = 'sombre';
   document.documentElement.setAttribute('data-theme', theme);
 
+  /* ── 1bis · FAVICON DE MARQUE (22/08) ──
+     Chaque page portait jusqu'ici son propre favicon emoji en data-URI
+     (🐾, 🛠️, 📓). Un site a UNE identité : le chrome retire ces icônes de
+     page et pose le monogramme (le N d'or sur tuile sombre) pour les 13
+     pages qui l'incluent. index.html et nouveau-mot-de-passe.html, qui ne
+     chargent pas ce fichier, gardent leur <link> écrit à la main.
+     Posé ici, avant le CSS, parce que le navigateur lit la tête très tôt. */
+  function poserIcone(rel, href, sizes){
+    var l = document.createElement('link');
+    l.rel = rel; l.href = href;
+    if(sizes) l.setAttribute('sizes', sizes);
+    document.head.appendChild(l);
+  }
+  try {
+    var anciens = document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]');
+    for(var i=0;i<anciens.length;i++){ anciens[i].parentNode.removeChild(anciens[i]); }
+    poserIcone('icon', FAVICON, '512x512');
+    poserIcone('apple-touch-icon', APPLEICON, '180x180');
+  } catch(e){}
+
   /* ── 2 · CSS du chrome ── */
   var css = ''
   +'.rnrc-nav{height:56px;display:flex;align-items:center;gap:26px;padding:0 24px;'
   +'background:var(--chrome-bg);border-bottom:1px solid var(--gold-a20);'
   +'position:sticky;top:0;z-index:900;}'
-  +'.rnrc-logo{font-family:var(--font-title);font-size:19px;color:var(--chrome-ink);'
-  +'text-decoration:none;white-space:nowrap;}'
-  +'.rnrc-logo em{color:var(--gold);font-style:italic;}'
+  /* (22/08) Le logo du bandeau n'est plus du texte : c'est l'image de marque.
+     Les DEUX déclinaisons sont dans le DOM, une seule est affichée — un
+     display:none piloté par [data-theme] est instantané, là où changer le
+     src en JS ferait clignoter l'image à chaque bascule de thème. */
+  +'.rnrc-logo{display:flex;align-items:center;text-decoration:none;flex-shrink:0;}'
+  +'.rnrc-logo img{height:34px;width:auto;display:block;}'
+  +'.rnrc-logo .rnrc-logo-nuit{display:none;}'
+  +'[data-theme="sombre"] .rnrc-logo .rnrc-logo-jour{display:none;}'
+  +'[data-theme="sombre"] .rnrc-logo .rnrc-logo-nuit{display:block;}'
+  +'@media(max-width:700px){.rnrc-logo img{height:28px;}}'
   +'.rnrc-links{display:flex;gap:2px;flex:1;}'
   +'.rnrc-links a{font-size:14.5px;font-weight:500;color:var(--chrome-ink-dim);'
   +'text-decoration:none;padding:7px 13px;border-radius:var(--r-pill);'
@@ -240,7 +282,9 @@
     var logo = document.createElement('a');
     logo.className = 'rnrc-logo';
     logo.href = 'home.html';
-    logo.innerHTML = 'Rock <em>N</em> Road';
+    logo.innerHTML =
+        '<img class="rnrc-logo-jour" src="' + LOGO_JOUR + '" alt="RockNRoad">'
+      + '<img class="rnrc-logo-nuit" src="' + LOGO_NUIT + '" alt="RockNRoad">';
     nav.appendChild(logo);
 
     var links = document.createElement('div');
@@ -367,7 +411,7 @@
           reg.textContent = '⚙️';
           reg.addEventListener('click', function(e){
             e.stopPropagation(); e.preventDefault(); vyMenu.classList.remove('open');
-            try{ localStorage.setItem('rnr_voyage_id', v.id); localStorage.setItem('rnr_voyage_nom', v.nom); }catch(err){}
+            try{ sessionStorage.setItem('rnr_voyage_id', v.id); sessionStorage.setItem('rnr_voyage_nom', v.nom); }catch(err){}
             window.location.href = 'voyage.html?modifier=1';
           });
           row.appendChild(it); row.appendChild(reg);
@@ -410,7 +454,7 @@
         var g = JSON.parse(cached);
         if(g.is_superadmin) cons.classList.add('rnrc-sa-visible');
       }
-      var cv = localStorage.getItem('rnr_voyage_nom');
+      var cv = sessionStorage.getItem('rnr_voyage_nom');
       if(cv){ vyWrap.style.display='flex'; vyBtn.querySelector('.rnrc-vy-nom').textContent = cv; }
     } catch(e){}
   }
@@ -996,7 +1040,7 @@
         var del = await _sbChrome.from('voyages').delete().eq('id', voyageId);
         if(del.error) throw del.error;
 
-        try{ localStorage.removeItem('rnr_voyage_id'); localStorage.removeItem('rnr_voyage_nom'); }catch(e){}
+        try{ sessionStorage.removeItem('rnr_voyage_id'); sessionStorage.removeItem('rnr_voyage_nom'); }catch(e){}
 
         var reste = await _sbChrome.from('voyages').select('id,est_principal,created_at')
           .eq('groupe_id', _monGroupeId).order('created_at',{ascending:true});
